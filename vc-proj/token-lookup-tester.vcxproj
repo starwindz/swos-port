@@ -86,7 +86,7 @@
     <None Include="..\ida2asm\gen-lookup\tokens.lst" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="token-lookup-tester\Debug\main.cpp" />
+    <ClCompile Include="$(IntDir)\main.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
