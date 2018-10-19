@@ -686,3 +686,8 @@
 - implemented mouse selection in menus
 - fixed ADL fade out (regression)
 - increased the size of pitch patterns buffer (and placed it in a separate array of its own)
+18.10.2018.
+/
+19.10.2018.
+- fixed issue with git & swos.asm; git was doing CR/LF conversion and it made ida2asm crash (it was violating some
+  assumptions about the file) -- starwindz was downloading the source 7z and it got Linux new lines by defaults
