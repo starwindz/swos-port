@@ -148,6 +148,7 @@
   <ItemGroup>
     <ClCompile Include="..\src\controls.cpp" />
     <ClCompile Include="..\src\crash.cpp" />
+    <ClCompile Include="..\src\debug\dump.cpp" />
     <ClCompile Include="..\src\file.cpp" />
     <ClCompile Include="..\src\game.cpp" />
     <ClCompile Include="..\src\init.cpp" />
@@ -169,6 +170,7 @@
   <ItemGroup>
     <ClInclude Include="..\src\controls.h" />
     <ClInclude Include="..\src\crash.h" />
+    <ClInclude Include="..\src\debug\dump.h" />
     <ClInclude Include="..\src\file.h" />
     <ClInclude Include="..\src\log.h" />
     <ClInclude Include="..\src\menus\menu.h" />
@@ -261,11 +263,11 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(OutDir);$(VC_IncludePath);$(WindowsSDK_IncludePath);..\include;..\include\SDL2;..\include\SDL2_image;..\include\SDL_net;..\include\adlmidi;..\include\crashrpt;..\include\simpleini;$(ProjectDir)..\src\menus;$(IncludePath)</IncludePath>
+    <IncludePath>$(OutDir);$(VC_IncludePath);$(WindowsSDK_IncludePath);..\include;..\include\SDL2;..\include\SDL2_image;..\include\SDL_net;..\include\adlmidi;..\include\crashrpt;..\include\simpleini;$(ProjectDir)..\src;$(ProjectDir)..\src\menus;$(ProjectDir)..\src\debug;$(IncludePath)</IncludePath>
     <LibraryPath>..\lib\$(Configuration);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>$(OutDir);$(VC_IncludePath);$(WindowsSDK_IncludePath);..\include;..\include\SDL2;..\include\SDL2_image;..\include\SDL_net;..\include\adlmidi;..\include\crashrpt;..\include\simpleini;$(ProjectDir)..\src\menus;$(IncludePath)</IncludePath>
+    <IncludePath>$(OutDir);$(VC_IncludePath);$(WindowsSDK_IncludePath);..\include;..\include\SDL2;..\include\SDL2_image;..\include\SDL_net;..\include\adlmidi;..\include\crashrpt;..\include\simpleini;$(ProjectDir)..\src;$(ProjectDir)..\src\menus;$(ProjectDir)..\src\debug;$(IncludePath)</IncludePath>
     <LibraryPath>..\lib\$(Configuration);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">

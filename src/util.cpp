@@ -2,6 +2,10 @@
 #include "log.h"
 #include <ctime>
 #include <chrono>
+#include <random>
+
+static std::random_device m_randomDevice;
+static std::mt19937 m_mt(m_randomDevice());
 
 void sdlErrorExit(const char *format, ...)
 {
@@ -72,14 +76,54 @@ std::string formatNumberWithCommas(int64_t num)
     return result;
 }
 
-static char savedRegisters[k68kRegisterTotalSize];
+char getDirSeparator()
+{
+    return '\\';
+}
+
+std::string joinPaths(const char *path1, const char *path2)
+{
+    return std::string(path1) + getDirSeparator() + path2;
+}
+
+constexpr int kMaxRegStorageCapacity = 10;
+static std::array<char[k68kRegisterTotalSize], kMaxRegStorageCapacity> m_savedRegisters;
+static int m_regStorageIndex;
 
 void save68kRegisters()
 {
-    memcpy(savedRegisters, &D0, k68kRegisterTotalSize);
+    if (m_regStorageIndex >= static_cast<int>(m_savedRegisters.size()))
+        errorExit("Capacity for saving 68k registers exceeded (%d spots)", m_savedRegisters.size());
+
+    memcpy(m_savedRegisters[m_regStorageIndex++], &D0, k68kRegisterTotalSize);
 }
 
 void restore68kRegisters()
 {
-    memcpy(&D0, savedRegisters, k68kRegisterTotalSize);
+    if (m_regStorageIndex <= 0)
+        errorExit("Saved 68k registers stack underflow");
+
+    memcpy(&D0, m_savedRegisters[--m_regStorageIndex], k68kRegisterTotalSize);
+}
+
+constexpr size_t kInitialHashValue = 1021;
+
+size_t hash(const void *buffer, size_t length)
+{
+    size_t hash = kInitialHashValue;
+    auto p = reinterpret_cast<const char *>(buffer);
+
+    for (size_t i = 0; i < length; i++, p++) {
+        hash += i + *p;
+        hash = _rotl(hash, 1);
+        hash ^= i + *p;
+    }
+
+    return hash;
+}
+
+int getRandomInRange(int min, int max)
+{
+    std::uniform_int_distribution<int> dist(min, max);
+    return dist(m_mt);
 }

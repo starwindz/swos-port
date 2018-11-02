@@ -269,6 +269,27 @@ CToken *IdaAsmParser::parseInstruction(CToken *token, TokenList& comments)
 {
     assert(token->category == Token::Instruction);
 
+    if (m_currentLineHook < static_cast<int>(m_lineNo))
+        verifyHookLine(token);
+
+    if (m_currentProc && m_currentLineHook == m_lineNo) {
+        auto hookProc = outputCallInstruction(token, [this](auto nameToken) {
+            auto buffer = const_cast<char *>(nameToken->text());
+
+            memcpy(buffer, m_currentProc->text(), m_currentProc->textLength);
+
+            auto lineNumber = std::to_string(m_currentProcHookLine);
+
+            buffer[m_currentProc->textLength] = '_';
+            memcpy(buffer + m_currentProc->textLength + 1, lineNumber.c_str(), lineNumber.length());
+
+            nameToken->textLength = m_currentProc->textLength + 1 + lineNumber.length();
+        });
+
+        m_references.addReference(hookProc.first);
+        m_currentLineHook = -1;
+    }
+
     CToken *prefix{};
 
     if (token->instructionType == Token::PrefixInstruction) {
@@ -550,6 +571,12 @@ CToken *IdaAsmParser::parseProc(CToken *token, TokenList& comments)
     if (!(action.first & SymbolFileParser::kRemove)) {
         m_references.addProc(token);
         m_currentProc = token;
+
+        if (action.first & SymbolFileParser::kInsertCall) {
+            verifyHookLine(token);
+            m_currentProcHookLine = *reinterpret_cast<int32_t *>(action.second.c_str());
+            m_currentLineHook = m_lineNo + m_currentProcHookLine;
+        }
     }
 
     token = token->next()->next();
@@ -603,9 +630,19 @@ CToken *IdaAsmParser::parseProc(CToken *token, TokenList& comments)
         token = outputSaveCppRegistersInstructions(token);
         m_restoreRegsProc = m_currentProc;
     }
+
     if (action.first & SymbolFileParser::kOnEnter) {
         CToken *hookProc;
-        std::tie(hookProc, token) = outputOnEnterHook(token);
+
+        std::tie(hookProc, token) = outputCallInstruction(token, [this](auto nameToken) {
+            auto buffer = const_cast<char *>(nameToken->text());
+
+            memcpy(buffer, m_currentProc->text(), m_currentProc->textLength);
+            memcpy(buffer + m_currentProc->textLength, Util::kOnEnterSuffix, sizeof(Util::kOnEnterSuffix) - 1);
+
+            nameToken->textLength = m_currentProc->textLength + sizeof(Util::kOnEnterSuffix) - 1;
+        });
+
         m_references.addReference(hookProc);
     }
 
@@ -618,6 +655,9 @@ CToken *IdaAsmParser::parseEndProc(CToken *token, TokenList& comments)
 
     auto name = token;
     advance(token);
+
+    verifyHookLine(name);
+    m_currentLineHook = -1;
 
     expect(Token::T_ENDP, token);
     advance(token);
@@ -902,7 +942,8 @@ void IdaAsmParser::outputRestoreCppRegistersInstructions()
             { instructionToken->next(), instructionToken->next()->next() });
 }
 
-std::pair<CToken *, CToken *> IdaAsmParser::outputOnEnterHook(CToken *token)
+template <typename F>
+std::pair<CToken *, CToken *> IdaAsmParser::outputCallInstruction(CToken *token, F fillNameProc)
 {
     assert(m_currentProc && m_currentProc->textLength);
 
@@ -914,22 +955,18 @@ std::pair<CToken *, CToken *> IdaAsmParser::outputOnEnterHook(CToken *token)
     assert(m_currentProc->textLength <= sizeof(tokenBuff) - 2 * sizeof(Token) - 4);
 
     auto callToken = reinterpret_cast<CToken *>(tokenBuff);
-    auto hookToken = callToken->next();
+    auto procNameToken = callToken->next();
 
-    auto hookTokenText = const_cast<char *>(hookToken->text());
-    hookToken->textLength = m_currentProc->textLength + sizeof(Util::kOnEnterSuffix) - 1;
+    fillNameProc(procNameToken);
 
-    memcpy(hookTokenText, m_currentProc->text(), m_currentProc->textLength);
-    memcpy(hookTokenText + m_currentProc->textLength, Util::kOnEnterSuffix, sizeof(Util::kOnEnterSuffix) - 1);
-
-    hookToken->hash = Util::hash(hookToken->text(), hookToken->textLength);
+    procNameToken->hash = Util::hash(procNameToken->text(), procNameToken->textLength);
 
     auto comments = collectComments(token);
     token = comments.first;
 
-    m_outputItems.addInstruction(comments.second, {}, {}, callToken, {}, { Instruction::kLabel }, { hookToken, hookToken->next() });
+    m_outputItems.addInstruction(comments.second, {}, {}, callToken, {}, { Instruction::kLabel }, { procNameToken, procNameToken->next() });
 
-    return { hookToken, token };
+    return { procNameToken, token };
 }
 
 CToken *IdaAsmParser::skipUntilNewLine(CToken *token)
@@ -982,7 +1019,8 @@ std::pair<CToken *, size_t> IdaAsmParser::getNextSignificantToken(CToken *token)
 
 std::pair<CToken *, std::vector<CToken *>> IdaAsmParser::collectComments(CToken *token)
 {
-    assert(token->isNewLine());
+    if (!token->isNewLine())
+        return {};
 
     std::vector<CToken *> comments;
     auto prev = token;
@@ -1062,6 +1100,12 @@ void IdaAsmParser::expectNumber(CToken *token)
 void IdaAsmParser::unexpected(CToken *token)
 {
     error(std::string("unexpected token ") + token->typeToString() + " encountered", token);
+}
+
+void IdaAsmParser::verifyHookLine(CToken *token)
+{
+    if (m_currentLineHook >= 0)
+        error("insertion point for call passed", token);
 }
 
 std::string IdaAsmParser::tokenToString(CToken *token)

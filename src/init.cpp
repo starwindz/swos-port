@@ -22,9 +22,6 @@ static char pitchPatternsBuffer[(42 * 53 + 42) * 256 + kSentinelSize];
 
 // extended memory buffers
 static char linBuf384k[393'216 + kSentinelSize];
-static char linBuf982k[1'005'773 + kSentinelSize];
-static char linBuf2_6Mb[2'812'420 + kSentinelSize];
-static char linBuf120k[122'880 + kSentinelSize];
 
 #ifndef NDEBUG
 template <size_t N>
@@ -38,9 +35,6 @@ void checkMemory()
     verifyBlock(dosMemBuffer);
     verifyBlock(pitchPatternsBuffer);
     verifyBlock(linBuf384k);
-    verifyBlock(linBuf982k);
-    verifyBlock(linBuf2_6Mb);
-    verifyBlock(linBuf120k);
 }
 #endif
 
@@ -71,17 +65,12 @@ static void setupDosBaseMemory()
 static void setupExtendedMemory()
 {
     linAdr384k = linBuf384k;
-    linAdr982k = linBuf982k;
-    linAdr2_6Mb = linBuf2_6Mb;
-    linAdr120k = linBuf120k;
 
-    memAllOk = 1;
+    g_memAllOk = 1;
+    g_gotExtraMemoryForSamples = 1;
 
 #ifndef NDEBUG
     memcpy(linBuf384k + sizeof(linBuf384k) - kSentinelSize, kSentinelMagic, kSentinelSize);
-    memcpy(linBuf982k + sizeof(linBuf982k) - kSentinelSize, kSentinelMagic, kSentinelSize);
-    memcpy(linBuf2_6Mb + sizeof(linBuf2_6Mb) - kSentinelSize, kSentinelMagic, kSentinelSize);
-    memcpy(linBuf120k + sizeof(linBuf120k) - kSentinelSize, kSentinelMagic, kSentinelSize);
 #endif
 }
 
@@ -324,28 +313,28 @@ static char *introDrawFrame(char *frameData)
         updateScreen(introScreenBuffer, 32, 148);
         while (introCountDownTimer) {
             introDelay();
-            TimerProc();
+            timerProc();
         }
-        TimerProc();
+        timerProc();
         introCountDownTimer = introWaitInterval;
     } else {
         frameData += introFrameDataSize - 1768;
         if (introAnimationTimer < 4) {
             while (introCountDownTimer > 4 - introAnimationTimer) {
                 introDelay();
-                TimerProc();
+                timerProc();
             }
             introCountDownTimer = 4;
             introAnimationTimer = 0;
         } else {
             while (!introCountDownTimer) {
                 introDelay();
-                TimerProc();
+                timerProc();
             }
             introCountDownTimer = 4;
             introAnimationTimer = 4;
         }
-        TimerProc();
+        timerProc();
     }
 
     SAFE_INVOKE(IntroFillSoundBuffer);

@@ -17,9 +17,14 @@ struct TimeInfo {
 
 TimeInfo getCurrentTime();
 std::string formatNumberWithCommas(int64_t num);
+char getDirSeparator();
+std::string joinPaths(const char *path1, const char *path2);
 
 void save68kRegisters();
 void restore68kRegisters();
+
+size_t hash(const void *buffer, size_t length);
+int getRandomInRange(int min, int max);
 
 inline bool hiBitSet(dword d) {
     return (d & 0x80000000) != 0;

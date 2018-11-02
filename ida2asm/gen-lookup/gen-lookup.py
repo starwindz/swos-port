@@ -1047,7 +1047,7 @@ def createTestbed(outputDir, tokens, tokenSet, testPerformance):
             testString += ' ' + raw
 
         # dup test cases
-        dupTokens = (('dup(56)', 'T_NUM'), ('dup(-10)', 'T_NUM'), ('dup(+0aa7h)', 'T_HEX'), ('dup(110101b)', 'T_BIN'),
+        dupTokens = (('dup(56)', 'T_NUM'), ('dup(-10)', 'T_NUM'), ('dup(0aa7h)', 'T_HEX'), ('dup(110101b)', 'T_BIN'),
             ("dup('IRBT')", 'T_STRING'), ('dup(?)', 'T_DUP_QMARK'), ('dup(<0>)', 'T_DUP_STRUCT_INIT'), ('dup(blabla)', 'T_ID'),
             ('dup(-moar)', 'T_ID'), ('dup(fo+ul+l)', 'T_ID'))
         for token in dupTokens:

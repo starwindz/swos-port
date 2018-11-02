@@ -31,5 +31,6 @@ void clearScreen();
 void skipFrameUpdate();
 void updateScreen(const char *data = nullptr, int offsetLine = 0, int numLines = kVgaHeight);
 void frameDelay(float factor = 1.0);
+void timerProc();
 
 void showVideoOptionsMenu();

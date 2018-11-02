@@ -16,6 +16,7 @@ public:
         kSaveCppRegisters = 16,
         kOnEnter = 32,
         kReplace = 64,
+        kInsertCall = 128,
     };
 
     SymbolFileParser(const char *symbolsFilePath, const char *headerFilePath);
@@ -86,15 +87,16 @@ private:
     struct ExportEntry {
         String symbol;
         String prefix;
-        bool function = false;
         String type;
         String arraySize;
+        bool function = false;
+        bool functionPointer = false;
         bool array = false;
     };
 
     std::vector<ExportEntry> m_exportEntries;
 
-    enum KeywordType { kNotKeyword, kPrefix, kFunction, kPointer, kPtr, kArray };
+    enum KeywordType { kNotKeyword, kPrefix, kFunction, kFunctionPointer, kPointer, kPtr, kArray };
 
     std::pair<KeywordType, const char *> lookupKeyword(const char *p, const char *limit);
 };

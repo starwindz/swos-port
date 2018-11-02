@@ -3,6 +3,7 @@
 #include "util.h"
 #include "controls.h"
 #include "videoOptions.mnu.h"
+#include "dump.h"
 
 static SDL_Window *m_window;
 static SDL_Renderer *m_renderer;
@@ -312,6 +313,11 @@ void updateScreen(const char *inData /* = nullptr */, int offsetLine /* = 0 */, 
 
     auto data = reinterpret_cast<const uint8_t *>(inData ? inData : (vsPtr ? vsPtr : linAdr384k));
 
+#ifndef NDEBUG
+    if (screenWidth == 384)
+        dumpVariables();
+#endif
+
     if (SDL_LockTexture(m_texture, nullptr, (void **)&pixels, &pitch)) {
         logWarn("Failed to lock drawing texture");
         return;
@@ -331,19 +337,6 @@ void updateScreen(const char *inData /* = nullptr */, int offsetLine /* = 0 */, 
     m_lastRenderEndTime = SDL_GetTicks();
 
     determineIfDelayNeeded();
-}
-
-// simulate SWOS procedure executed at each interrupt 8 tick
-static void timerProc()
-{
-    currentTick++;
-    menuCycleTimer++;
-    if (!paused) {
-        stoppageTimer++;
-        timerBoolean = (timerBoolean + 1) & 1;
-        if (!timerBoolean)
-            bumpBigSFrame = -1;
-    }
 }
 
 void frameDelay(float factor /* = 1.0 */)
@@ -384,6 +377,19 @@ void frameDelay(float factor /* = 1.0 */)
         do {
             startTicks = SDL_GetTicks();
         } while (m_lastRenderStartTime + delay > startTicks);
+    }
+}
+
+// simulate SWOS procedure executed at each interrupt 8 tick
+void timerProc()
+{
+    currentTick++;
+    menuCycleTimer++;
+    if (!paused) {
+        stoppageTimer++;
+        timerBoolean = (timerBoolean + 1) & 1;
+        if (!timerBoolean)
+            bumpBigSFrame = -1;
     }
 }
 

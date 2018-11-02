@@ -4,19 +4,9 @@
 
 @remove
 # procs
-Initialization
-InitializationError
-DetectCPU
-ReadSetupDat
-ReadCommandLineParameters
-InitAIL22khz
-AllocateDosMemory
-CalcMaxBlock
-MemAllocError
-NumberToString6Digits
-EndProgramInterruptHandler
-Int9KeyboardHandler
-EndProgramSetTextVideoMode
+__int_3 - SelectAndShowSquadToView
+Initialization - RingABell
+cseg_1994F
 FillPalettes
 InitIntroAnimation
 OpenSoccerBin
@@ -27,21 +17,14 @@ EGAFlip
 ChangeMenuMusic
 ValidateHilPointerAdd - InitHighlightsPointers
 NullInterruptHandler - Text2Sprite
-DumpSfxSampleChannel - RestoreOldInt9Handler
 FindFirstFile - SelectFilesInit
 cseg_1A35C - FillPalettes
 
 # CD-ROM routines
-CDROM_InitCheck
-CheckForCD
-FindCdrom
-CDROM_GetInfo
-CDROM_Input
-CDROM_DriverError
-
-# AIL routines
-#AIL_play_MIDI
-#AIL_start_sequence
+CDROM_GetInfo - IOCTL_CDROM_Read
+cseg_1B194
+SetSomeMoreCDROMStuff - FadeOutCDAudio
+cseg_1B45B - CDROM_Seek
 
 # joypads
 Joy1NormalizeX
@@ -52,15 +35,41 @@ Joy1NormalizeReadings
 Joy2NormalizeReadings
 VerifyJoypadControls
 
+# commentary & sfx
+PlayCommentarySample
+PlaySampleFromTable
+commentarySampleHandle
+PlayHitFrameComment
+SetVolumeOrStopChants
+PlayGoodJumpHeaderComment
+
+# big AIL & C-lib removal
+# unfortunately, these ranges will have to be updated when file limits change
+cseg_98EFD
+cseg_9A9E1 - AIL_Sample_set_volume
+cseg_A34A8 - __init_80x87
+__init_80x87
+Int8Handler
+dataStart - aChairmanScenes
+goalSamples - aSfxPierceM158_
+jumpHeadersSamples - PIT_countdown
+aSwos_xmi - cdAudioPlaying
+g_prevScanCode - timerBoolean
+aAsave_256 - dosMemSegment
+PlaySwosXmi - SelectDefaultDrive
+cseg_18236
+dseg_16AECB
+dosVariablesStart - dseg_185BA8
+dseg_185BA8
+PlayStartGameSample - EnqueueCornerSample
+sfxLowerQualityTable - introTeamChantsTable
+aSfxFx11Bgcrd3l - aSfxFxCombrown_
+
 # variables
-#prevVideoMode
-#errorCheckWord
-a386ProcessorFoundIntroUnavailbleSk
-freeMemBuffer
-handle384k
-handle2_6Mb
-handle982k
-handle120k
+prevVideoMode
+errorCheckWord
+linAdr120k - linAdr982k
+handle982k - g_workingPalette
 maxKbInMaxBlock
 aPressEscToReturnToDosOrSpaceToCont
 aErrorIncorrectDosVersion5_0OrHighe
@@ -68,48 +77,35 @@ aErrorWrongProcessor80386OrAboveReq
 aErrorInsufficientBaseMemory_
 aErrorInsufficientXmsMemory_
 aErrorErrorInitializingXms_
-aError8MegVersion000000kMore
-#int9Ofs
+int9Ofs
 int9Seg
-aErrorInsufficentBaseMemo
-#SWOS_StackTop
 dta - totalNumberOfFiles
 aDemo_dat
 aDemo_dat_0 - friendlyGameMenu
 # extend this range when removing options menu
 aDemo1_car - SWOS_MainMenu
 optionsMenu - pitchTypeStrTable
-# AIL data
-#dataStart - aChairmanScenes
-#dosVariablesStart - dataEnd
 
 # CD ROM variables
-#rmRegs
 dosMemSegment
 dosMemSelector
-#mem1kSeg
-mem1kSelector
-#linAdr1k
-defaultDiskNumber
-numOfCdrom
-#cdDriveLetter
-cdromLettersBuffer
-firstCdLetter - PIT_countdown
-aErrorCdromDriverError_
+aErrorCdromDriverError_ - aSensibleWorldOfSoccerV2_0
 
 
 # turn these into null procs, consisting of retn only
 @null
-RestoreOldInt9Handler
-Int8Handler
-LockMemory
 DummyProc01
 ProgramPIT
-SetEGAPalette
-EGAGetVisibleScreenPtr
 CDROM_PlayAudio
 ReadGamePort
 SetDefaultOptions
+
+#TODO: remove EGA crap
+SetEGAPalette
+EGA_GetVisibleScreenPtr
+EGA_FillRectangle
+EGA_DrawSprite
+EGA_DrawSpriteInGame
 
 # CD-ROM (kill these as soon as you can)
 CDChangeToRootDir
@@ -128,7 +124,7 @@ aQuitToDos, 'QUIT TO WINDOWS', 0
 
 # these functions destroy registers C++ assumes will not change with a function call,
 # so inject the code to save and restore them
-# warning: do not list MenuProc & DrawSprite16Pixels here, it can exit by jumping to other procs!
+# warning: do not list MenuProc & DrawSprite16Pixels here, they can exit by jumping to other procs!
 
 @save-regs
 DrawSprite
@@ -151,19 +147,19 @@ FadeAndSaveReplay
 SortSprites
 SaveCoordinatesForHighlights
 DarkenRectangle
-PlaySamples
 CommonMenuExit
 ShowMenu
 DrawMenuItem
 CalcMenuEntryAddress
 DrawMenuText
 SetCurrentEntry
+SaveSprite
 
 
 # list of symbols to export to header so they can be accessible from C++
 # inside asm files they will be prefixed with underscore, and made public
 # syntax for generating SWOS C++ header files is:
-# <symbol> [, prefix <prefix>][, function |, (array | pointer | ptr) <type>['['<size>']'] |, <type>]
+# <symbol> [, prefix <prefix>][, function |, (array | pointer | ptr | functionPointer) <type>['['<size>']'] |, <type>]
 
 @export
 # options
@@ -179,6 +175,7 @@ g_pitchType, int16_t
 g_commentary, int16_t
 g_chairmanScenes, int16_t
 g_spinBigS, int16_t
+g_crowdChantsOn, int16_t
 
 g_upScanCode, byte
 g_downScanCode, byte
@@ -197,9 +194,6 @@ aSensibleWorldOfSoccerV2_0, array const char
 selTeamsPtr, dword
 aSetup_dat, array const char
 linAdr384k, char *
-linAdr982k, char *
-linAdr2_6Mb, char *
-linAdr120k, char *
 FadeOutToBlack, function
 partOneImages, array const char *
 partTwoImages, array const char *
@@ -218,7 +212,6 @@ goalBasePtr, dword *
 nextGoalPtr, dword *
 hilFileBuffer, array char
 currentHilBuffer, array dword
-spritesIndex, array char
 randomSeed, word
 LoadTitleAndStartMusic, function
 FixupInitialCharset, function
@@ -229,8 +222,6 @@ screenWidth, dword
 spriteFixupFlag, word
 InitMainMenu, function
 MenuProc, function
-TimerProc, function
-g_prevScanCode, word
 g_scanCode, word
 keyCount, word
 keyBuffer, array char[10]
@@ -261,11 +252,10 @@ bumpBigSFrame, word
 ClearBackground, function
 aChairmanScenes, array const char
 aMenu_xmi, array const char
-aSwos_xmi, array const char
 cdAudioPlaying, word
 g_soundOff, int16_t
-memAllOk, word
-commentarySampleHandle, int
+g_memAllOk, word
+g_gotExtraMemoryForSamples, word
 PlayIntroAnimation, function
 IntroFillSoundBuffer, function
 aArcSoccer_bin, array const char
@@ -292,7 +282,6 @@ g_midiPlaying, word
 ReadTimerDelta, function
 playHighlightFlag, word
 MainKeysCheck, function
-PlaySamples, function
 replayState, word
 hilSceneNumber, word
 numReplaysInHilFile, word
@@ -386,24 +375,119 @@ SetCurrentEntry, function
 
 ConvertMenu, function
 player1ClearFlag, word
-###
+
 smallCharsTable, array const char
-###
-  Rand, function
-  seed, byte
+
+spritesIndex, array SpriteGraphics *
+SaveSprite, function
+DrawSpriteInColor, function
+numSpritesSaved, word
+
+# comments
+commentaryTable, array const char *
+aHardM10_v__raw, array const char
+aHardM10_w__raw, array const char
+aHardM10_y__raw, array const char
+aHardM313_1__ra, array const char
+aHardM313_2__ra, array const char
+aHardM313_3__ra, array const char
+aHardM10_5__raw, array const char
+aHardM10_7__raw, array const char
+aHardM10_8__raw, array const char
+aHardM10_9__raw, array const char
+aHardM10_a__raw, array const char
+aHardM10_b__raw, array const char
+aHardM233_j__ra, array const char
+aHardM233_k__ra, array const char
+aHardM233_l__ra, array const char
+aHardM233_m__ra, array const char
+aHardM10_3__raw, array const char
+aHardM10_4__raw, array const char
+aHardM196_8__ra, array const char
+aHardM196_9__ra, array const char
+aHardM196_a__ra, array const char
+aHardM196_b__ra, array const char
+aHardM196_c__ra, array const char
+aHardM196_d__ra, array const char
+aHardM196_e__ra, array const char
+aHardM196_f__ra, array const char
+aHardM196_g__ra, array const char
+aHardM196_h__ra, array const char
+aHardM196_i__ra, array const char
+aHardM196_j__ra, array const char
+aHardM406_f__ra, array const char
+aHardM406_g__ra, array const char
+aHardM406_h__ra, array const char
+aHardM406_i__ra, array const char
+aHardM406_j__ra, array const char
+aHardM443_7__ra, array const char
+aHardM443_8__ra, array const char
+aHardM443_9__ra, array const char
+aHardM443_a__ra, array const char
+aHardM443_b__ra, array const char
+aHardM443_c__ra, array const char
+aHardM443_d__ra, array const char
+aHardM443_e__ra, array const char
+aHardM443_f__ra, array const char
+aHardM443_g__ra, array const char
+aHardM443_h__ra, array const char
+aHardM443_i__ra, array const char
+aHardM443_j__ra, array const char
+aHardM406_3__ra, array const char
+aHardM406_8__ra, array const char
+aHardM406_7__ra, array const char
+aHardM406_9__ra, array const char
+
+playIntroChantSampleOffset, functionPointer
+playFansChant8lOffset, functionPointer
+playFansChant10lOffset, functionPointer
+playFansChant4lOffset, functionPointer
+goodPassTimer, word
+soundEffectsTable, array const char *
+leftTeamIngame, TeamGame
+introTeamChantIndices, array const int8_t[16]
+introTeamChantsTable, array const char *
+loadCrowdChantSampleFlag, word
+
+playingYellowCardTimer, int16_t
+playingRedCardTimer, int16_t
+playingGoodPassTimer, int16_t
+playingThrowInSample, int16_t
+playingCornerSample, int16_t
+substituteSampleTimer, int16_t
+tacticsChangedSampleTimer, int16_t
+
+statsTeam1Goals, word
+statsTeam2Goals, word
+resultChantFilenames, array const char *
+
+g_trainingGame, word
+team1GoalsDigit2, word
+team2GoalsDigit2, word
+endGameCrowdSamples, array const char *
+
+### debug dump
+breakCameraMode, word
+
 
 # at the beginning of each listed proc Foo insert a call to external Foo_OnEnter
-
 @on-enter
 DoUnchainSpriteInMenus
 InitGame
 ClearBackground
-PlayCrowdNoiseSample
 FadeOutToBlack
 FindStartingDword
 DrawBenchAndSubsMenu
 GameOver
 MenuProc
+
+
+# insert call into a proc at a given line, in the form of call <proc name>_<line number>
+# it's effectively and import entry
+@insert-hook
+RunStoppageEventsAndSetAnimationTables, 320
+GameLoop, 224
+PlayerDoingHeader, 157
 
 
 # list of symbols that will be replaced by code from C++
@@ -433,13 +517,8 @@ PlayMidi
 StopMidiSequence
 CDROM_StopAudio
 IOCTL_CDROM_Read
-PlayChantSample22Khz
-PlaySfxSample22Khz
-PlayCommentarySample22Khz
-PlayRefereeWhistleSample
 FadeOutXmidi
 StopAudio
-IsSamplePlaying
 IntroEnsureFrameDataLoaded
 IntroDrawFrame
 JoyKeyOrCtrlPressed
@@ -452,3 +531,51 @@ PlayReplayLoop
 DrawSprites
 OptionsMenuSelected
 PrepareMenu
+LoadCommentary
+LoadSoundEffects
+LoadIntroChant
+PlayPenaltyGoalComment
+PlayPenaltyMissComment
+PlaySavedPenaltyComment
+PlayPenaltyComment
+PlayFoulComment
+PlayHarderFoulComment
+PlayGoodPassComment
+PlayGoodTackleComment
+PlayPostHitComment
+PlayBarHitComment
+PlayKeeperClaimedComment
+PlayNearMissComment
+PlayGoalkeeperSavedComment
+PlayOwnGoalComment
+PlayGoalComment
+PlayYellowCardSample
+PlayRedCardSample
+PlayCornerSample
+PlayTacticsChangeSample
+PlaySubstituteSample
+PlayThrowInSample
+PlaySensationalGameComment
+PlayCrowdNoiseSample
+LoadCrowdChantSample
+PlayMissGoalSample
+PlayHomeGoalSample
+PlayAwayGoalSample
+PlayRefereeWhistleSample
+PlayEndGameWhistleSample
+PlayFoulWhistleSample
+PlayKickSample
+PlayBallBounceSample
+LoadAndPlayEndGameComment
+PlayFansChant4lSample
+PlayFansChant8lSample
+PlayFansChant10lSample
+PlayIntroChantSample
+PlayResultSample
+PlayEnqueuedSamples
+TurnCrowdChantsOn
+TurnCrowdChantsOff
+PlayDrawComment
+PlayItsBeenACompleteRoutComment
+PlayCrowdChants
+EndProgram

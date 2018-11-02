@@ -12,48 +12,71 @@ FILE *openFile(const char *path, const char *mode /* = "rb" */)
     return fopen((m_rootDir + path).c_str(), mode);
 }
 
-// Internal routine that does all the work.
-int loadFile(const char *filename, void *buffer, bool required /* = true */)
+// Return size of the given file
+int getFileSize(const char *path, bool required /* = true */)
 {
-    auto f = openFile(filename);
-
-    if (!f) {
-        auto error = "Could not open %s for reading";
-        if (required)
-            errorExit(error, filename);
-
-        logWarn(error, filename);
-        return -1;
-    }
-
     struct stat st;
-    if (stat((m_rootDir + filename).c_str(), &st)) {
-        auto error = "Failed to stat file %s";
+
+    if (stat((m_rootDir + path).c_str(), &st) != 0) {
         if (required)
-            errorExit(error, filename);
+            errorExit("Failed to stat file %s", path);
 
-        logWarn(error, filename);
-        return -1;
-    }
-
-    setbuf(f, nullptr);
-    bool plural = st.st_size != 1;
-    logInfo("Loading `%s' [%s byte%s]", filename, formatNumberWithCommas(st.st_size).c_str(), plural ? "s" : "");
-
-    bool readOk = fread(buffer, st.st_size, 1, f) == 1;
-
-    fclose(f);
-
-    if (!readOk) {
-        auto error = "Error reading file %s";
-        if (required)
-            errorExit(error, filename);
-
-        logWarn(error, filename);
         return -1;
     }
 
     return st.st_size;
+}
+
+// Internal routine that does all the work.
+static int loadFile(const char *path, void *buffer, int bufferSize, bool required)
+{
+    auto f = openFile(path);
+    if (!f) {
+        if (required)
+            errorExit("Could not open %s for reading", path);
+
+        return -1;
+    }
+
+    setbuf(f, nullptr);
+    bool plural = bufferSize != 1;
+    logInfo("Loading `%s' [%s byte%s]", path, formatNumberWithCommas(bufferSize).c_str(), plural ? "s" : "");
+
+    bool readOk = fread(buffer, bufferSize, 1, f) == 1;
+    fclose(f);
+
+    if (!readOk) {
+        if (required)
+            errorExit("Error reading file %s", path);
+
+        return -1;
+    }
+
+    return bufferSize;
+}
+
+int loadFile(const char *path, void *buffer, bool required /* = true */)
+{
+    auto size = getFileSize(path, required);
+    if (size < 0)
+        return -1;
+
+    return loadFile(path, buffer, size, required);
+}
+
+// Load entire file into allocated buffer that caller needs to free
+std::pair<char *, size_t> loadFile(const char *path, size_t offset /* = 0 */)
+{
+    auto size = getFileSize(path, false);
+    if (size < 0)
+        return {};
+
+    auto buffer = new char[size + offset];
+
+    if (loadFile(path, buffer + offset, size, false) != size)
+        delete[] buffer;
+
+    return { buffer, size + offset };
 }
 
 // LoadFile
@@ -77,20 +100,8 @@ void SWOS::LoadFile()
 
     auto savedSelTeamsPtr = selTeamsPtr; // why does a load file routine do this?!?!
 
-    // treat raw files as optional
-    auto len = strlen(filename);
-    bool isRawFile = len >= 4 && filename[len - 4] == '.' && tolower(filename[len - 3]) == 'r' &&
-        tolower(filename[len - 2]) == 'a' && tolower(filename[len - 1]) == 'w';
-    bool required = !isRawFile;
-
     D0 = 0;
-    D1 = loadFile(filename, buffer, required);
-
-    if (D1.asInt() <= 0 && isRawFile) {
-        // turn off sound if any raw file is missing (really difficult to do anything else)
-        g_soundOff = 1;
-        D1 = 0;
-    }
+    D1 = loadFile(filename, buffer);
 
     selTeamsPtr = savedSelTeamsPtr;
 
@@ -153,7 +164,7 @@ void SWOS::FindFiles()
     constexpr int kMaxFilenameLen = 31;
 
     std::string extension(g_extension, 3);
-    if (strlen(extension.c_str()))
+    if (strlen(g_extension))
         std::reverse(extension.begin(), extension.end());
     else
         extension = "*";
@@ -284,5 +295,5 @@ std::string rootDir()
 
 std::string pathInRootDir(const char *filename)
 {
-    return m_rootDir.empty() ? filename : m_rootDir + '\\' + filename;
+    return m_rootDir.empty() ? filename : m_rootDir + filename;
 }

@@ -43,7 +43,8 @@ private:
     void outputNullProc();
     CToken *outputSaveCppRegistersInstructions(CToken *token);
     void outputRestoreCppRegistersInstructions();
-    std::pair<CToken *, CToken *> outputOnEnterHook(CToken *token);
+    template <typename F>
+    std::pair<CToken *, CToken *> outputCallInstruction(CToken *token, F fillNameProc);
     CToken *skipUntilNewLine(CToken *token);
     CToken *skipUntilSymbol(CToken *token, const String& sym);
     std::pair<CToken *, size_t> getNextSignificantToken(CToken *token);
@@ -70,6 +71,7 @@ private:
     void expectNumber(CToken *token);
     void expectedCustom(const char *what, CToken *token);
     void unexpected(CToken *token);
+    void verifyHookLine(CToken *token);
     std::string tokenToString(CToken *token);
 
     const SymbolFileParser& m_symbolFileParser;
@@ -85,6 +87,8 @@ private:
     CToken *m_currentProc = nullptr;
     CToken *m_restoreRegsProc = nullptr;
     std::vector<String> m_localVars;
+    int m_currentLineHook = -1;
+    int m_currentProcHookLine;
 
     SegmentSet m_segments;
     CToken *m_currentSegment = nullptr;

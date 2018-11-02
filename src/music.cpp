@@ -346,7 +346,7 @@ static bool playTitleSong()
 
     assert(!m_adlPlayer.load());
 
-    for (auto song : { "title.xmi", aSwos_xmi }) {
+    for (auto song : { "title.xmi", "swos.xmi" }) {
         if (loadXmi(song, false)) {
             logInfo("Playing title music \"%s\"", song);
             playXmi();
@@ -378,18 +378,21 @@ static void playMenuSong()
     }
 }
 
-// called at startup, when initializing main menu
+// called at startup, when initializing main menu, and each time when coming back from the game
 void SWOS::InitMenuMusic()
 {
+    static bool playedAtStart;
+
     if (noMusic())
         return;
 
     ensureMenuAudioFrequency();
 
-    if (m_titleSongDone || !playTitleSong())
+    if (!playedAtStart && (m_titleSongDone || !playTitleSong()))
         playMenuSong();
 
     cdAudioPlaying = -1;
+    playedAtStart = true;
 }
 
 // called once when a song needs to be played

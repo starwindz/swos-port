@@ -15,6 +15,9 @@
     <Filter Include="Source Files\menu">
       <UniqueIdentifier>{298749e9-7815-41de-b5ca-8f839b8c6c5f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\debug">
+      <UniqueIdentifier>{17fb11e0-ae3c-431c-8383-13eaab94c0c2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="swos-asm\swos-08.asm">
@@ -97,6 +100,9 @@
     <ClCompile Include="..\src\music.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\debug\dump.cpp">
+      <Filter>Source Files\debug</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\swos.h">
@@ -134,6 +140,9 @@
     </ClInclude>
     <ClInclude Include="..\src\menus\menu.h">
       <Filter>Source Files\menu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\debug\dump.h">
+      <Filter>Source Files\debug</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

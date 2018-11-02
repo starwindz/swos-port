@@ -691,3 +691,52 @@
 19.10.2018.
 - fixed issue with git & swos.asm; git was doing CR/LF conversion and it made ida2asm crash (it was violating some
   assumptions about the file) -- starwindz was downloading the source 7z and it got Linux new lines by defaults
+20.10.2018.
+- worked on describing SWOS sound reproduction into sound.txt, discovered some new stuff
+- fixed not playing intro crowd chants
+21.10.2018.
+- added crowd chants on/off to audio options menu
+- discovered memory overwrite when loading result crowd chant (and it's only loaded when auto-replays are on?!)
+  (however it might not be observed in original SWOS due to another bug)
+- I think I understand sounds now very well (if not completely), I'll let it sleep over before deciding what
+  to do next
+22.10.2018.
+/
+23.10.2018.
+- contemplating on new audio implementation
+24.10.2018.
+- started implementing new audio routines a bit
+25.10.2018.
+- worked on audio, but didn't make as much progress as I would want, ran into a bug in ida2asm file separation,
+  same function ended up in two different files
+26.10.2018.
+- fixed a bug in ida2asm where it would put same function in two files if limit between files ended up somewhere in
+  the function leading comments
+27.10.2018.
+- finished writing new comment loading code
+- added new kind of variable to symbols.txt, functionPointer
+28.10.2018.
+- removed AIL + C lib + most of CD-ROM routines
+- connected sound routines with stubs
+- implemented comments & most of sfx, only crowd noise is missing atm
+29.10.2018.
+- added @insert-hook section to symbols.txt, name of the function comma line number goes there, and it will insert
+  a <proc name>_<line number> call to external procedure; it's crapily done, only supports one call per proc but it
+  was fairly quick to implement :P
+- fixed bug when crowd chant wouldn't get reloaded with auto-replays off
+- added more log lines for sound reproduction
+- fixed a bug with incorrectly calculating random sample index
+30.10.2018.
+- fixed sample volumes
+- implemented enqueued samples reproduction
+- finally, it works nicely with original samples ;) now on to enable custom ones
+31.10.2018.
+- fixed custom comment loading
+- connected header comments :)
+- fixed menu song played twice when coming back from the game
+- trying to implement delayed loading of samples (first we load data from files into memory, and later convert to
+  Mix chunks, if ever needed)
+01.11.2018.
+- fixed delayed loading of samples, it all works great now
+- fixed header comment also being played when CPU does it :)
+- fixed same comments being picked twice in a row

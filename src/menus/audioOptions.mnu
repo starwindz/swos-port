@@ -39,6 +39,7 @@ Menu audioOptionsMenu
     Entry { text: "SOUND" }
     Entry { text: aMenuMusic }
     Entry { text: aCommentary }
+    Entry { text: "CROWD CHANTS" }
 
     // column 2
 
@@ -129,7 +130,7 @@ Menu audioOptionsMenu
     }
 
     Entry toggleMasterSound {
-        stringTable: [ g_soundOff, aOn, aOff ]
+        stringTable: [ g_soundOff, aOn, aOff ]  // notice backward order
 
         onSelect: toggleMasterSound
 
@@ -150,6 +151,15 @@ Menu audioOptionsMenu
         stringTable: ~commentaryStrTable
 
         onSelect: ~ChangeCommentary
+
+        upEntry: <
+        downEntry: >
+    }
+
+    Entry crowdChants {
+        stringTable: [ g_crowdChantsOn, aOff, aOn ]
+
+        onSelect: toggleCrowdChants
 
         upEntry: <
         downEntry: >

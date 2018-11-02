@@ -12,7 +12,7 @@ static int xfseek(FILE *file, long int offset, int origin)
 
 void Util::exit(const char *format, int exitCode /* = EXIT_FAILURE */, ...)
 {
-    char buffer[256];
+    char buffer[32 * 1024];
     va_list args;
 
     va_start(args, exitCode);

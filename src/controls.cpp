@@ -2,21 +2,23 @@
 #include "render.h"
 #include "swossym.h"
 
+static int m_prevScanCode;
+
 SDL_JoystickID m_joypad1Id = -1;
 SDL_JoystickID m_joypad2Id = -1;
 
 SDL_Joystick *m_joypad1;
 SDL_Joystick *m_joypad2;
 
-int m_joy1XValue;
-int m_joy1YValue;
-bool m_joy1Fire1;
-bool m_joy1Fire2;
+static int m_joy1XValue;
+static int m_joy1YValue;
+static bool m_joy1Fire1;
+static bool m_joy1Fire2;
 
-int m_joy2XValue;
-int m_joy2YValue;
-bool m_joy2Fire1;
-bool m_joy2Fire2;
+static int m_joy2XValue;
+static int m_joy2YValue;
+static bool m_joy2Fire1;
+static bool m_joy2Fire2;
 
 struct JoypadDeadZone {
     int xPos;
@@ -226,7 +228,7 @@ static void registerKey(uint8_t pcScanCode, bool pressed)
     if (!pressed)
         pcScanCode |= 0x80;
 
-    g_prevScanCode = g_scanCode;
+    m_prevScanCode = g_scanCode;
     g_scanCode = pcScanCode;
 
     if (pressed && keyCount < 9)
@@ -377,14 +379,13 @@ void SWOS::GetKey()
         convertedKey = convertKeysTable[lastKey];
 
         // preserve alt-F1, ultra fast exit from SWOS (actually meant for invoking the debugger ;))
-        if (g_prevScanCode == 0x38 && lastKey == 0x3b)
+        if (m_prevScanCode == 0x38 && lastKey == 0x3b)
             std::exit(0);
 
-        if (g_prevScanCode == 0x38 && lastKey == 0x1c)
+        if (m_prevScanCode == 0x38 && lastKey == 0x1c)
             toggleBorderlessMaximizedMode();
     }
 }
-
 
 __declspec(naked) void SWOS::JoyKeyOrCtrlPressed()
 {

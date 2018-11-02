@@ -29,8 +29,8 @@ static void menuDelay()
 #endif
 
     if (!menuCycleTimer) {
-        TimerProc();
-        TimerProc();    // imitate int 8 ;)
+        timerProc();
+        timerProc();    // imitate int 8 ;)
     }
 }
 

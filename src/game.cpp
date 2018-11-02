@@ -59,7 +59,7 @@ static void highlightsPausedLoop()
     while (paused) {
         SWOS::GetKey();
         MainKeysCheck();
-        PlaySamples();
+        SWOS::PlayEnqueuedSamples();
     }
 }
 
@@ -534,4 +534,9 @@ __declspec(naked) void SWOS::DrawBenchAndSubsMenu_OnEnter()
         xor  ebp, ebp
         retn
     }
+}
+
+void SWOS::EndProgram()
+{
+    std::exit(1);
 }

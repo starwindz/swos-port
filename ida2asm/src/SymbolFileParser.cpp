@@ -2,14 +2,14 @@
 #include "AmigaRegs.h"
 #include "Util.h"
 
-constexpr int kCapacity = 9000;
-constexpr int kImportsCapacity = 1500;
+constexpr int kProcCapacity = 9000;
+constexpr int kImportsCapacity = 3000;
 constexpr int kExportsCapacity = 5000;
 constexpr int kReplacementsCapacity = 200;
-constexpr int kMaxExportEntries = 200;
+constexpr int kMaxExportEntries = 400;
 
 SymbolFileParser::SymbolFileParser(const char *symbolFilePath, const char *headerFilePath)
-    : m_path(symbolFilePath), m_headerPath(headerFilePath), m_procs(kCapacity), m_replacements(kReplacementsCapacity),
+    : m_path(symbolFilePath), m_headerPath(headerFilePath), m_procs(kProcCapacity), m_replacements(kReplacementsCapacity),
     m_imports(kImportsCapacity), m_exports(kExportsCapacity)
 {
     auto result = Util::loadFile(symbolFilePath, true);
@@ -84,12 +84,18 @@ void SymbolFileParser::outputHeaderFile(const char *path)
     for (const auto& exp : m_exportEntries) {
         xfwrite(file, "    extern ");
 
-        if (exp.function) {
+        if (exp.function || exp.functionPointer) {
             xfwrite(file, "void ");
+
+            if (exp.functionPointer)
+                xfwrite(file, "(*");
 
             if (!exp.prefix.empty())
                 xfwrite(file, exp.prefix);
             xfwrite(file, exp.symbol);
+
+            if (exp.functionPointer)
+                xfwrite(file, ")");
 
             xfwrite(file, "();");
         } else {
@@ -233,7 +239,7 @@ void SymbolFileParser::parseSymbolFile()
             auto symStart = start;
             auto symEnd = p;
 
-            if (action == kReplace) {
+            if (action == kReplace || action == kInsertCall) {
                 while (Util::isSpace(*p) && *p != '\n')
                     p++;
 
@@ -269,12 +275,39 @@ void SymbolFileParser::parseSymbolFile()
                 }
             }
 
-            if (action == kRemove || action == kNull) {
+            if (action == kRemove || action == kNull || action == kInsertCall) {
                 ensureUniqueSymbol(symStart, symEnd, kGlobal);
-                ensureUniqueSymbol(start, p, kEndRange);
-                m_procs.add(symStart, symEnd - symStart, action, start, p - start);
+                if (action == kInsertCall) {
+                    if (p == start)
+                        error("missing line number");
+
+                    int32_t line = 0;
+                    while (start < p && !Util::isSpace(*start)) {
+                        if (*start < '0' || *start > '9')
+                            error("decimal numeric value expected");
+
+                        line = line * 10 + *start++ - '0';
+                    }
+
+                    if (!line)
+                        error("line number can't be zero");
+
+                    auto len = symEnd - symStart;
+                    m_procs.add(symStart, len, kInsertCall, reinterpret_cast<char *>(&line), 4);
+
+                    char buf[512];
+                    memcpy(buf, symStart, len);
+                    buf[len] = '_';
+                    auto lineString = std::to_string(line);
+                    memcpy(buf + len + 1, lineString.c_str(), lineString.length());
+
+                    m_imports.add(buf, buf + len + 1 + lineString.length());
+                } else {
+                    ensureUniqueSymbol(start, p, kEndRange);
+                    m_procs.add(symStart, symEnd - symStart, action, start, p - start);
+                }
             } else {
-                if (action != kReplace && start != p)
+                if (action != kReplace && action != kInsertCall && start != p)
                     error("ranges only supported for removing/nullifying procs/data items");
 
                 auto ns = kGlobal;
@@ -354,6 +387,9 @@ auto SymbolFileParser::getSectionName(const char *begin, const char *end) -> Sym
     } else if (len == 9) {
         if (!memcmp(begin, "save-regs", 9))
             action = kSaveCppRegisters;
+    } else if (len == 11) {
+        if (!memcmp(begin, "insert-hook", 11))
+            action = kInsertCall;
     }
 
     return action;
@@ -399,11 +435,15 @@ const char *SymbolFileParser::addExportEntry(const char *start, const char *p)
 
         switch (keyword) {
         case kFunction:
-            e.function = true;
+        case kFunctionPointer:
+            if (keyword == kFunction)
+                e.function = true;
+            else
+                e.functionPointer = true;
 
             skipWhiteSpace();
             if (*p != '\n')
-                error("unexpected input after keyword `function'");
+                error(std::string("unexpected input after keyword `function") + (keyword == kFunction ? "" : "Pointer") + "'");
             break;
 
         case kPointer:
@@ -494,8 +534,13 @@ auto SymbolFileParser::lookupKeyword(const char *p, const char *limit) -> std::p
                 if (Util::isSpace(p[7]))
                     return !memcmp("pointer", p, 7) ? std::make_pair(kPointer, p + 7) : notKeywordResult;
 
-                if (maxLen >= 8 && Util::isSpace(p[8]) && !memcmp("function", p, 8))
-                    return { kFunction, p + 8 };
+                if (maxLen >= 8) {
+                    if (Util::isSpace(p[8]))
+                        return !memcmp("function", p, 8) ? std::make_pair(kFunction, p + 8) : notKeywordResult;
+
+                    if (maxLen >= 15 && !memcmp("functionPointer", p, 15))
+                        return { kFunctionPointer, p + 15 };
+                }
             }
         }
     }
