@@ -30,16 +30,16 @@ Menu audioOptionsMenu
 
     Entry {
         y: kStartY
-        text: "GAME VOLUME"
+        text: "SOUND"
     }
 
     defaultY: @prevEndY + kRowDistance + 1
 
-    Entry { text: "MUSIC VOLUME" }
-    Entry { text: "SOUND" }
     Entry { text: aMenuMusic }
     Entry { text: aCommentary }
     Entry { text: "CROWD CHANTS" }
+    Entry { text: "MATCH VOLUME" }
+    Entry { text: "MUSIC VOLUME" }
 
     // column 2
 
@@ -50,91 +50,17 @@ Menu audioOptionsMenu
     }
 
     kChangerWidth = 16
-    kChangerColor = @kPurple
+    kChangerColorPlus = @kGreen
+    kChangerColorMinus = @kRed
     kChangerOptionWidth = kOptionWidth - 2 * kChangerWidth - 2
 
-    Entry increaseVolume {
+    Entry masterSound {
         y: kStartY
-        width: kChangerWidth
 
-        color: kChangerColor
-        text: aPlus
-
-        onSelect: increaseVolume
-
-        downEntry: increaseMusicVolume
-        rightEntry: decreaseVolume
-    }
-
-    Entry {
-        x: @prevEndX + 1
-        y: @prevY
-        width: kChangerOptionWidth
-
-        number: 0
-
-        beforeDraw: volumeBeforeDraw
-    }
-
-    Entry decreaseVolume {
-        x: @prevEndX + 1
-        y: @prevY
-        width: kChangerWidth
-
-        color: kChangerColor
-        text: aMinus
-
-        onSelect: decreaseVolume
-
-        leftEntry: increaseVolume
-        downEntry: decreaseMusicVolume
-    }
-
-
-    Entry increaseMusicVolume {
-        width: kChangerWidth
-
-        color: kChangerColor
-        text: aPlus
-
-        onSelect: increaseMusicVolume
-
-        upEntry: increaseVolume
-        downEntry: toggleMasterSound
-        rightEntry: decreaseMusicVolume
-    }
-
-    Entry {
-        x: @prevEndX + 1
-        y: @prevY
-        width: kChangerOptionWidth
-
-        number: 0
-
-        beforeDraw: musicVolumeBeforeDraw
-    }
-
-    Entry decreaseMusicVolume {
-        x: @prevEndX + 1
-        y: @prevY
-        width: kChangerWidth
-
-        color: kChangerColor
-        text: aMinus
-
-        onSelect: decreaseMusicVolume
-
-        upEntry: decreaseVolume
-        leftEntry: increaseMusicVolume
-        downEntry: toggleMasterSound
-    }
-
-    Entry toggleMasterSound {
         stringTable: [ g_soundOff, aOn, aOff ]  // notice backward order
 
         onSelect: toggleMasterSound
 
-        upEntry: increaseMusicVolume
         downEntry: >
     }
 
@@ -165,6 +91,82 @@ Menu audioOptionsMenu
         downEntry: >
     }
 
+    Entry decreaseVolumeButton {
+        width: kChangerWidth
+
+        color: kChangerColorMinus
+        text: aMinus
+
+        onSelect: decreaseVolume
+
+        upEntry: <
+        rightEntry: increaseVolumeButton
+        downEntry: decreaseMusicVolumeButton
+    }
+
+    Entry volume {
+        x: @prevEndX + 1
+        y: @prevY
+        width: kChangerOptionWidth
+
+        number: 0
+
+        beforeDraw: volumeBeforeDraw
+    }
+
+    Entry increaseVolumeButton {
+        x: @prevEndX + 1
+        y: @prevY
+        width: kChangerWidth
+
+        color: kChangerColorPlus
+        text: aPlus
+
+        onSelect: increaseVolume
+
+        upEntry: crowdChants
+        downEntry: increaseMusicVolumeButton
+        leftEntry: decreaseVolumeButton
+    }
+
+    Entry decreaseMusicVolumeButton {
+        width: kChangerWidth
+
+        color: kChangerColorMinus
+        text: aMinus
+
+        onSelect: decreaseMusicVolume
+
+        upEntry: decreaseVolumeButton
+        rightEntry: increaseMusicVolumeButton
+        downEntry: exit
+    }
+
+    Entry musicVolume {
+        x: @prevEndX + 1
+        y: @prevY
+        width: kChangerOptionWidth
+
+        number: 0
+
+        beforeDraw: musicVolumeBeforeDraw
+    }
+
+    Entry increaseMusicVolumeButton {
+        x: @prevEndX + 1
+        y: @prevY
+        width: kChangerWidth
+
+        color: kChangerColorPlus
+        text: aPlus
+
+        onSelect: increaseMusicVolume
+
+        upEntry: increaseVolumeButton
+        downEntry: exit
+        leftEntry: decreaseMusicVolumeButton
+    }
+
     Entry exit {
         x: kBaseX
         y: kExitY
@@ -176,6 +178,6 @@ Menu audioOptionsMenu
 
         onSelect: ~SetExitMenuFlag
 
-        upEntry: <
+        upEntry: decreaseMusicVolumeButton
     }
 }

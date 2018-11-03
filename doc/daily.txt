@@ -740,3 +740,12 @@
 - fixed delayed loading of samples, it all works great now
 - fixed header comment also being played when CPU does it :)
 - fixed same comments being picked twice in a row
+02.11.2018.
+- commentary categories are now neatly sorted to match the document ;)
+- fixed some chants wrongly loaded from hard\*
+- rearranged audio options menu
+- injury comments are played now
+- fixed intro chant not being played
+- fixed F8 not turning comments on/off
+- increased chants volume a bit
+- fixed errors when playing with sound off

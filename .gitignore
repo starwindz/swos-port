@@ -11,3 +11,4 @@ dll
 /vc-proj/swos-asm
 /vc-proj/token-lookup-tester
 /doc/TODO.txt
+/src/swossym.h

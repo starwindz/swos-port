@@ -10,6 +10,10 @@
 constexpr int kMaxVolume = MIX_MAX_VOLUME;
 constexpr int kMinVolume = 0;
 
+constexpr int kChantsVolume = 55;
+
+constexpr char *kSentinel = reinterpret_cast<char *>(-1);
+
 static int16_t m_volume = 100;                      // master sound volume
 static std::atomic<int16_t> m_musicVolume = 100;    // atomic since ADL thread will need access to it
 
@@ -19,13 +23,6 @@ static int m_actualChannels;
 static bool m_hasAudioDir;
 
 static const std::array<const char *, 5> kAudioExtensions = { "raw", "mp3", "wav", "ogg", "flac" };
-
-enum CommentarySampleTableIndex {
-    kHeader, kPenaltyGoal, kPenaltyMissed, kPenaltySaved, kPenalty, kFoul, kGoodPass, kDirtyTackle, kGoodTackle,
-    kHitBar, kHitPost, kNearMiss, kKeeperClaimed, kKeeperSaved, kGoal, kOwnGoal, kChangeTactics, kSubstitution,
-    kCorner, kThrowIn, kYellowCard, kRedCard, kEndGameRout, kEndGameSensational, kEndGameSoClose, kInjury,
-    kNumSampleTables,
-};
 
 enum SfxSampleIndex {
     kBackgroundCrowd, kBounce, kHomeGoal, kKick, kWhistle, kMissGoal, kEndGameWhistle, kFoulWhistle, kChant4l, kChant10l, kChant8l,
@@ -148,36 +145,42 @@ struct SampleTable {
     SampleTable(const char *dir) : dir(dir) {}
 };
 
-constexpr char *kSentinel = reinterpret_cast<char *>(-1);
+// these must match exactly with directories in the sample tables below
+enum CommentarySampleTableIndex {
+    kCorner, kDirtyTackle, kEndGameRout, kEndGameSensational, kEndGameSoClose, kFoul, kGoal, kGoodPass, kGoodTackle,
+    kHeader, kHitBar, kHitPost, kInjury, kKeeperClaimed, kKeeperSaved, kNearMiss, kOwnGoal, kPenalty, kPenaltyMissed,
+    kPenaltySaved, kPenaltyGoal, kRedCard, kSubstitution, kChangeTactics, kThrowIn, kYellowCard,
+    kNumSampleTables,
+};
 
 // all the comments heard in the game
 static std::array<SampleTable, kNumSampleTables> m_sampleTables = {{
-    { "header" },
-    { "penalty_scored" },
-    { "penalty_missed" },
-    { "penalty_saved" },
-    { "penalty" },
-    { "free_kick" },
-    { "good_play" },
-    { "dirty_tackle" },
-    { "good_tackle" },
-    { "hit_bar" },
-    { "hit_post" },
-    { "near_miss" },
-    { "keeper_claimed" },
-    { "keeper_saved" },
-    { "goal" },
-    { "own_goal" },
-    { "tactic_changed" },
-    { "substitution" },
     { "corner" },
-    { "throw_in" },
-    { "yellow_card" },
-    { "red_card" },
+    { "dirty_tackle" },
     { "end_game_rout" },
     { "end_game_sensational" },
     { "end_game_so_close" },
+    { "free_kick" },
+    { "goal" },
+    { "good_play" },
+    { "good_tackle" },
+    { "header" },
+    { "hit_bar" },
+    { "hit_post" },
     { "injury" },
+    { "keeper_claimed" },
+    { "keeper_saved" },
+    { "near_miss" },
+    { "own_goal" },
+    { "penalty" },
+    { "penalty_missed" },
+    { "penalty_saved" },
+    { "penalty_scored" },
+    { "red_card" },
+    { "substitution" },
+    { "tactic_changed" },
+    { "throw_in" },
+    { "yellow_card" },
 }};
 
 static int getSampleFrequency(const char *str, size_t len)
@@ -292,6 +295,7 @@ static void loadCustomCommentary()
 {
     assert(m_sampleTables.size() == kNumSampleTables);
     assert(!strcmp(m_sampleTables[kEndGameSoClose].dir, "end_game_so_close"));
+    assert(!strcmp(m_sampleTables[kYellowCard].dir, "yellow_card"));
 
     const std::string audioPath = joinPaths("audio", "commentary") + getDirSeparator();
 
@@ -424,58 +428,14 @@ static void loadOriginalSamples()
 {
     // unique samples used in tables of on-demand comment filenames
     static const char *kOnDemandSamples[] = {
-        aHardM10_v__raw,
-        aHardM10_w__raw,
-        aHardM10_y__raw,
-        aHardM313_1__ra,
-        aHardM313_2__ra,
-        aHardM313_3__ra,
-        aHardM10_5__raw,
-        aHardM10_7__raw,
-        aHardM10_8__raw,
-        aHardM10_9__raw,
-        aHardM10_a__raw,
-        aHardM10_b__raw,
-        aHardM233_j__ra,
-        aHardM233_k__ra,
-        aHardM233_l__ra,
-        aHardM233_m__ra,
-        aHardM10_3__raw,
-        aHardM10_4__raw,
-        aHardM196_8__ra,
-        aHardM196_9__ra,
-        aHardM196_a__ra,
-        aHardM196_b__ra,
-        aHardM196_c__ra,
-        aHardM196_d__ra,
-        aHardM196_e__ra,
-        aHardM196_f__ra,
-        aHardM196_g__ra,
-        aHardM196_h__ra,
-        aHardM196_i__ra,
-        aHardM196_j__ra,
-        aHardM406_f__ra,
-        aHardM406_g__ra,
-        aHardM406_h__ra,
-        aHardM406_i__ra,
-        aHardM406_j__ra,
-        aHardM443_7__ra,
-        aHardM443_8__ra,
-        aHardM443_9__ra,
-        aHardM443_a__ra,
-        aHardM443_b__ra,
-        aHardM443_c__ra,
-        aHardM443_d__ra,
-        aHardM443_e__ra,
-        aHardM443_f__ra,
-        aHardM443_g__ra,
-        aHardM443_h__ra,
-        aHardM443_i__ra,
-        aHardM443_j__ra,
-        aHardM406_3__ra,
-        aHardM406_8__ra,
-        aHardM406_7__ra,
-        aHardM406_9__ra,
+        aHardM10_v__raw, aHardM10_w__raw, aHardM10_y__raw, aHardM313_1__ra, aHardM313_2__ra, aHardM313_3__ra, aHardM10_5__raw,
+        aHardM10_7__raw, aHardM10_8__raw, aHardM10_9__raw, aHardM10_a__raw, aHardM10_b__raw, aHardM233_j__ra, aHardM233_k__ra,
+        aHardM233_l__ra, aHardM233_m__ra, aHardM10_3__raw, aHardM10_4__raw, aHardM196_8__ra, aHardM196_9__ra, aHardM196_a__ra,
+        aHardM196_b__ra, aHardM196_c__ra, aHardM196_d__ra, aHardM196_e__ra, aHardM196_f__ra, aHardM196_g__ra, aHardM196_h__ra,
+        aHardM196_i__ra, aHardM196_j__ra, aHardM406_f__ra, aHardM406_g__ra, aHardM406_h__ra, aHardM406_i__ra, aHardM406_j__ra,
+        aHardM443_7__ra, aHardM443_8__ra, aHardM443_9__ra, aHardM443_a__ra, aHardM443_b__ra, aHardM443_c__ra, aHardM443_d__ra,
+        aHardM443_e__ra, aHardM443_f__ra, aHardM443_g__ra, aHardM443_h__ra, aHardM443_i__ra, aHardM443_j__ra, aHardM406_3__ra,
+        aHardM406_8__ra, aHardM406_7__ra, aHardM406_9__ra,
         kSentinel,
     };
 
@@ -603,7 +563,7 @@ void SWOS::LoadIntroChant()
 
     if (chantIndex >= 0) {
         auto introChantFile = introTeamChantsTable[chantIndex];
-        delete[] m_introChantSample.buffer;
+        m_introChantSample.free();
 
         logInfo("Picked intro chant %d `%s'", chantIndex, introChantFile);
 
@@ -628,8 +588,11 @@ void SWOS::LoadIntroChant()
 
 static void playChant(Mix_Chunk *chunk)
 {
+    if (g_soundOff || !g_crowdChantsOn)
+        return;
+
     if (chunk) {
-        Mix_VolumeChunk(chunk, 0);
+        Mix_VolumeChunk(chunk, kChantsVolume);
         m_chantsChannel = Mix_PlayChannel(-1, chunk, -1);
         m_chantsSample = chunk;
     }
@@ -637,6 +600,9 @@ static void playChant(Mix_Chunk *chunk)
 
 static void playChant(SfxSampleIndex index)
 {
+    if (g_soundOff || !g_crowdChantsOn)
+        return;
+
     assert(index == kChant4l || index == kChant8l || index == kChant10l);
 
     logDebug("Playing chant index %d", index);
@@ -664,6 +630,9 @@ void SWOS::PlayIntroChantSample()
 
 static void playSfx(SfxSampleIndex index, int volume = MIX_MAX_VOLUME, int loopCount = 0)
 {
+    if (g_soundOff)
+        return;
+
     assert(index >= 0 && index < kNumSoundEffects);
 
     auto chunk = m_sfxSamples[index].getChunk();
@@ -710,7 +679,7 @@ static bool isLastPlayedComment(const Sample& sample)
 
 static void playComment(CommentarySampleTableIndex tableIndex, bool interrupt = true)
 {
-    if (g_soundOff || !g_commentary)
+    if (g_soundOff || !g_commentary || g_muteCommentary)
         return;
 
     auto& table = m_sampleTables[tableIndex];
@@ -739,7 +708,7 @@ static void playComment(CommentarySampleTableIndex tableIndex, bool interrupt = 
                 logWarn("Failed to load comment %d from category %d", j, tableIndex);
                 samples.erase(samples.begin() + j);
                 table.lastPlayedIndex -= table.lastPlayedIndex >= static_cast<int>(j);
-                j -= j == samples.size() - 1;
+                j -= j == samples.size();
                 continue;
             }
 
@@ -777,6 +746,18 @@ void SWOS::PlayerDoingHeader_157()
 
     if (team->playerNumber)
         playComment(kHeader, false);
+}
+
+// in:
+//     A6 -> player's team
+//
+void SWOS::PlayerTackled_59()
+{
+    auto team = A6.as<TeamGeneralInfo *>();
+    assert(team);
+
+    if (team->playerNumber)
+        playComment(kInjury);
 }
 
 void SWOS::PlayPenaltyGoalComment()
@@ -974,7 +955,12 @@ static void loadAndPlayEndGameCrowdSample(int index)
     m_endGameCrowdSample.free();
 
     auto filename = endGameCrowdSamples[index];
-    auto fileData = loadAnyAudioFile(filename);
+
+    std::string path;
+    if (m_hasAudioDir)
+        path = joinPaths("audio", "fx") + getDirSeparator() + (filename + 5);   // skip "hard\" part
+
+    auto fileData = loadAnyAudioFile(m_hasAudioDir ? path.c_str() : filename);
     assert(std::get<0>(fileData));
 
     m_endGameCrowdSample = { std::get<0>(fileData), std::get<1>(fileData), std::get<2>(fileData), false };
@@ -1123,7 +1109,12 @@ void SWOS::LoadCrowdChantSample()
             m_resultSample.free();
 
             auto filename = resultChantFilenames[sampleIndex];
-            auto fileData = loadAnyAudioFile(filename);
+
+            std::string path;
+            if (m_hasAudioDir)
+                path = joinPaths("audio", "fx") + getDirSeparator() + (filename + 5);   // skip "hard\" part
+
+            auto fileData = loadAnyAudioFile(m_hasAudioDir ? path.c_str() : filename);
 
             assert(std::get<0>(fileData));
             m_resultSample = { std::get<0>(fileData), std::get<1>(fileData), std::get<2>(fileData), false };
@@ -1305,7 +1296,6 @@ static void initGameAudio()
     m_commentaryChannel = -1;
     m_chantsChannel = -1;
 
-    m_introChantSample.free();
     m_chantsSample = nullptr;
 
     m_resultSample.free();

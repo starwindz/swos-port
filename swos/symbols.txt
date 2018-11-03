@@ -46,10 +46,10 @@ PlayGoodJumpHeaderComment
 # big AIL & C-lib removal
 # unfortunately, these ranges will have to be updated when file limits change
 cseg_98EFD
-cseg_9A9E1 - AIL_Sample_set_volume
-cseg_A34A8 - __init_80x87
+cseg_9A9E1 - cseg_A3368
+cseg_A3368
+cseg_A3375 - __init_80x87
 __init_80x87
-Int8Handler
 dataStart - aChairmanScenes
 goalSamples - aSfxPierceM158_
 jumpHeadersSamples - PIT_countdown
@@ -384,6 +384,7 @@ DrawSpriteInColor, function
 numSpritesSaved, word
 
 # comments
+g_muteCommentary, word
 commentaryTable, array const char *
 aHardM10_v__raw, array const char
 aHardM10_w__raw, array const char
@@ -488,6 +489,7 @@ MenuProc
 RunStoppageEventsAndSetAnimationTables, 320
 GameLoop, 224
 PlayerDoingHeader, 157
+PlayerTackled, 59
 
 
 # list of symbols that will be replaced by code from C++
