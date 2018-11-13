@@ -71,7 +71,7 @@ static uchar char2Sprite(char c, bool big)
                "one \rline - \ranchor here\nsecond line" gives the same result.
                Anchors are ignored when strings are x centered.
 */
-void getStringLength(char *str, int *w, int *h, int align, bool big)
+void getStringLength(char *str, int *w, int *h, bool align, bool big)
 {
     int dx, dy = 6 + 2 * big, len = 0, height = dy, anchor = 0;
     uchar spr;
@@ -156,7 +156,7 @@ void printString(char *str, int x, int y, int color, bool big /* = false */, int
         return;
     }
 
-    getStringLength(str, &dx, &dy, align & ALIGN_CENTERX, big);
+    getStringLength(str, &dx, &dy, (align & ALIGN_CENTERX) != 0, big);
     dx = std::min(dx, kVgaWidth);
     dy = std::min(dy, kVgaHeight);
 
@@ -228,7 +228,7 @@ void printString(char *str, int x, int y, int color, bool big /* = false */, int
 void dumpVariables()
 {
     char buf[256];
-    sprintf_s(buf, "%d", breakCameraMode);
+    sprintf_s(buf, "%hd", animPatternsState);
     printString(buf, 0, 16, kYellowText, false, ALIGN_LEFT);
 }
 

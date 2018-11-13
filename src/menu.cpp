@@ -1,8 +1,9 @@
+#include "menu.h"
 #include "log.h"
 #include "util.h"
 #include "render.h"
+#include "music.h"
 #include "controls.h"
-#include "menu.h"
 
 using ReachabilityMap = std::array<bool, 256>;
 static ReachabilityMap m_reachableEntries;
@@ -38,12 +39,14 @@ static void checkMousePosition()
 {
     static int lastX = -1, lastY = -1;
     static bool clickedLastFrame;
-    static bool selectedLastFrame;
+    static bool selectedLastFrame = true;
+    static Uint32 startingTIcks = SDL_GetTicks();
 
     int x, y;
     auto buttons = SDL_GetMouseState(&x, &y);
 
-    if (x != lastX || y != lastY)
+    // make sure to discard initial activity while the window is initializing
+    if ((x != lastX || y != lastY) && SDL_GetTicks() - startingTIcks > 100)
         selectedLastFrame = false;
 
     lastX = x;
@@ -96,7 +99,7 @@ static void menuProcCycle()
 {
     menuDelay();
     checkMousePosition();
-    SAFE_INVOKE(MenuProc);
+    SWOS::MenuProc();
 }
 
 void SWOS::WaitRetrace()
@@ -107,7 +110,7 @@ void SWOS::WaitRetrace()
 void SWOS::MainMenu()
 {
     logInfo("Initializing main menu");
-    SAFE_INVOKE(InitMainMenu);
+    InitMainMenu();
 
     while (true)
         menuProcCycle();
@@ -136,7 +139,7 @@ static void determineReachableEntries(const MenuBase *menu)
     static_assert(offsetof(MenuEntry, downEntry) == offsetof(MenuEntry, upEntry) + 1 &&
         offsetof(MenuEntry, upEntry) == offsetof(MenuEntry, rightEntry) + 1 &&
         offsetof(MenuEntry, rightEntry) == offsetof(MenuEntry, leftEntry) + 1 &&
-        sizeof(MenuEntry::leftEntry) == 1, "MenuEntry next entries assumptions failed");
+        sizeof(MenuEntry::leftEntry) == 1, "MenuEntry(): assumptions about next entries failed");
 
     std::vector<std::pair<const MenuEntry *, int>> entryStack;
     entryStack.reserve(256);
@@ -245,11 +248,6 @@ __declspec(naked) void SWOS::DoUnchainSpriteInMenus_OnEnter()
     }
 }
 
-void SWOS::MenuProc_OnEnter()
-{
-    g_videoSpeedIndex = 50;
-}
-
 // PrepareMenu
 //
 // in:
@@ -283,4 +281,128 @@ void SWOS::PrepareMenu()
     assert(currentMenu->numEntries < 256);
 
     determineReachableEntries(packedMenu);
+}
+
+void SWOS::InitMainMenu()
+{
+    InitMenuMusic();
+    SAFE_INVOKE(InitMainMenuStuff);
+    menuFade = 1;
+}
+
+static MenuEntry *findNextEntry(byte nextEntryIndex, int nextEntryDirection)
+{
+    auto currentMenu = getCurrentMenu();
+
+    while (nextEntryIndex != 255) {
+        auto nextEntry = getMenuEntryAddress(nextEntryIndex);
+
+        if (!nextEntry->disabled && !nextEntry->invisible)
+            return nextEntry;
+
+        auto newDirection = (&nextEntry->leftDirection)[nextEntryDirection];
+        if (newDirection != 255) {
+            nextEntryIndex = (&nextEntry->leftEntryDis)[nextEntryDirection];
+            nextEntryDirection = newDirection;
+            assert(newDirection >= 0 && newDirection <= 3);
+            assert(nextEntryIndex != 255);
+        } else {
+            nextEntryIndex = (&nextEntry->leftEntry)[nextEntryDirection];
+        }
+    }
+
+    return nullptr;
+}
+
+void SWOS::MenuProc()
+{
+    g_videoSpeedIndex = 50;     // just in case
+
+    ReadTimerDelta();
+    DrawMenu();
+    menuCycleTimer = 0;         // must come after DrawMenu(), set to 1 to slow down input
+
+    if (menuFade) {
+        FadeIn();
+        menuFade = 0;
+    }
+
+    CheckControls();
+    updateSongState();
+
+    auto currentMenu = reinterpret_cast<Menu *>(g_currentMenu);
+    MenuEntry *nextEntry = nullptr;
+
+    if (currentMenu->selectedEntry || finalControlsStatus >= 0 && !previousMenuItem) {
+        auto activeEntry = currentMenu->selectedEntry;
+
+        int controlMask = 0;
+        controlsStatus = 0;
+
+        if (activeEntry->onSelect) {
+            if (shortFire)
+                controlMask |= 0x20;
+            if (fire)
+                controlMask |= 0x01;
+            if (left)
+                controlMask |= 0x02;
+            if (right)
+                controlMask |= 0x04;
+            if (up)
+                controlMask |= 0x08;
+            if (down)
+                controlMask |= 0x10;
+
+            if (finalControlsStatus >= 0) {
+                switch (finalControlsStatus >> 1) {
+                case 0:
+                    controlMask |= 0x100;   // up-right
+                    break;
+                case 1:
+                    controlMask |= 0x80;    // down-right
+                    break;
+                case 2:
+                    controlMask |= 0x200;   // down-left
+                    break;
+                default:
+                    controlMask |= 0x40;    // up-left
+                }
+            }
+
+            controlMask &= activeEntry->controlMask;
+
+            if (activeEntry->controlMask == -1 || controlMask) {
+                stopTitleSong();
+
+                controlsStatus = controlMask;
+
+                save68kRegisters();
+                auto func = activeEntry->onSelect;
+                SAFE_INVOKE(func);
+                restore68kRegisters();
+            }
+        }
+
+        // if no fire but there's movement, move to next entry
+        if (!fire && finalControlsStatus >= 0) {
+            static const size_t nextDirectionOffsets[4] = { 2, 1, 3, 0, };
+
+            // will hold offset of next entry to move to (direction)
+            int nextEntryDirection = nextDirectionOffsets[(finalControlsStatus >> 1) & 3];
+            auto nextEntryIndex = (&activeEntry->leftEntry)[nextEntryDirection];
+
+            nextEntry = findNextEntry(nextEntryIndex, nextEntryDirection);
+        }
+    } else if (finalControlsStatus < 0) {
+        return;
+    } else if (previousMenuItem) {
+        currentMenu->selectedEntry = previousMenuItem;
+        nextEntry = previousMenuItem;
+    }
+
+    if (nextEntry) {
+        previousMenuItem = currentMenu->selectedEntry;
+        currentMenu->selectedEntry = nextEntry;
+        nextEntry->type1 == NO_BACKGROUND ? DrawMenu() : DrawMenuItem();
+    }
 }

@@ -13,38 +13,6 @@ void SWOS::InitGame_OnEnter()
     memcpy(linAdr384k + 2 * kVgaScreenSize, linAdr384k, kVgaScreenSize);
 }
 
-// in:
-//      D1 - x index in g_pitchDatBuffer
-//      D2 - y         - || -
-//      D3 - x screen coordinate / 16
-//      D4 - y      - || -       / 16
-//
-void SWOS::DrawBackPattern()
-{
-    auto xTile = D1.as<int16_t>();
-    auto yTile = D2.as<int16_t>();
-    auto xScreenTile = D3.as<int16_t>();
-    auto yScreenTile = D4.as<int16_t>();
-
-    constexpr int kMaxTileX = 43;
-    constexpr int kMaxTileY = 56;
-
-    // do the clipping
-    if (xTile < 0 || xTile > kMaxTileX || yTile < 0 || yTile > kMaxTileY ||
-        xScreenTile < 0 || xScreenTile > kMaxTileX || yScreenTile < 0 || yScreenTile > kMaxTileY)
-        return;
-
-    auto base = reinterpret_cast<char **>(g_pitchDatBuffer);
-    auto src = base[44 * yTile + xTile];
-    auto dst = linAdr384k + 16 * (384 * yScreenTile + xScreenTile);
-
-    for (int i = 0; i < 16; i++) {
-        memcpy(dst, src, 16);
-        dst += 384;
-        src += 16;
-    }
-}
-
 __declspec(naked) void SWOS::ClearBackground_OnEnter()
 {
     // fix SWOS bug, just in case
@@ -190,9 +158,7 @@ static void initReplayFrame(dword *p)
     oldCameraY = 0;
     cameraY = 349;
 
-    save68kRegisters();
-    SAFE_INVOKE(ResetAnimatedPatternsForBothTeams);
-    restore68kRegisters();
+    SWOS::ResetAnimatedPatternsForBothTeams();
 
     InitSavedSprites();
     InitBackground();

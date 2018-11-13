@@ -4,6 +4,7 @@
 #include "log.h"
 #include "file.h"
 #include "swos.h"
+#include "render.h"
 #include "audioOptions.mnu.h"
 #include <dirent.h>
 
@@ -37,7 +38,7 @@ struct SampleData {
     bool isRaw = false;
     bool is11Khz = false;
     Mix_Chunk *chunk = nullptr;
-    size_t hash;
+    size_t hash = 0;
 
     SampleData() {}
     SampleData(char *buffer, size_t size, bool isRaw, bool is11Khz) : buffer(buffer), size(size), isRaw(isRaw), is11Khz(is11Khz) {
@@ -51,6 +52,10 @@ struct SampleData {
         buffer = nullptr;
     }
     Mix_Chunk *getChunk() {
+        assert(buffer);
+        if (!buffer)
+            return nullptr;
+
         if (!chunk) {
             if (isRaw) {
                 chunk = loadRaw(buffer, size, is11Khz);
@@ -75,6 +80,7 @@ static std::array<SampleData, kNumSoundEffects> m_sfxSamples;
 static int m_refereeWhistleSampleChannel = -1;
 static int m_commentaryChannel = -1;
 static int m_chantsChannel = -1;
+static int m_crowdLoopChannel = -1;
 
 static Mix_Chunk *m_chantsSample;
 static SampleData m_resultSample;
@@ -619,7 +625,7 @@ static void playChant(SfxSampleIndex index)
 void SWOS::PlayIntroChantSample()
 {
     if (m_introChantSample.buffer) {
-        logDebug("Playing intro chant %#x", m_introChantSample);
+        logDebug("Playing intro chant %#x", m_introChantSample.chunk);
         auto chunk = m_introChantSample.getChunk();
 
         if (chunk)
@@ -629,19 +635,20 @@ void SWOS::PlayIntroChantSample()
     }
 }
 
-static void playSfx(SfxSampleIndex index, int volume = MIX_MAX_VOLUME, int loopCount = 0)
+static int playSfx(SfxSampleIndex index, int volume = MIX_MAX_VOLUME, int loopCount = 0)
 {
     if (g_soundOff)
-        return;
+        return -1;
 
     assert(index >= 0 && index < kNumSoundEffects);
 
     auto chunk = m_sfxSamples[index].getChunk();
     if (chunk) {
         Mix_VolumeChunk(chunk, volume);
-        Mix_PlayChannel(-1, chunk, loopCount);
+        return Mix_PlayChannel(-1, chunk, loopCount);
     } else {
         logWarn("Failed to load sound effect %d", index);
+        return -1;
     }
 }
 
@@ -705,7 +712,7 @@ static void playComment(CommentarySampleTableIndex tableIndex, bool interrupt = 
                 break;
         }
 
-        assert(j >= 0 && j < static_cast<int>(samples.size()));
+        assert(j < static_cast<int>(samples.size()));
 
         while (!samples.empty()) {
             auto chunk = samples[j].sampleData.getChunk();
@@ -740,7 +747,7 @@ static void playComment(CommentarySampleTableIndex tableIndex, bool interrupt = 
 }
 
 //
-// SWOS play sound hooks
+// SWOS sound hooks
 //
 
 // in:
@@ -898,12 +905,18 @@ void SWOS::PlayThrowInSample()
     playComment(kThrowIn);
 }
 
+static void playCrowdNoiseSample()
+{
+    m_crowdLoopChannel = playSfx(kBackgroundCrowd, 100, -1);
+}
+
 void SWOS::PlayCrowdNoiseSample()
 {
     // this is the first audio function to be called right before the game
     initGameAudio();
 
-    playSfx(kBackgroundCrowd, 100, -1);
+    if (g_crowdChantsOn)
+        playCrowdNoiseSample();
 }
 
 void SWOS::PlayMissGoalSample()
@@ -974,6 +987,10 @@ void SWOS::PlayEnqueuedSamples()
         tacticsChangedSampleTimer = -1;
     }
 
+    // strange place to decrement this...
+    if (goalCounter)
+        goalCounter--;
+
     playCrowdChants();
 }
 
@@ -1009,7 +1026,7 @@ static void loadAndPlayEndGameCrowdSample(int index)
 
 void SWOS::LoadAndPlayEndGameComment()
 {
-    if (g_soundOff)
+    if (g_soundOff || !g_commentary)
         return;
 
     int index;
@@ -1024,13 +1041,13 @@ void SWOS::LoadAndPlayEndGameComment()
     loadAndPlayEndGameCrowdSample(index);
 
     int goalDiff = std::abs(statsTeam1Goals - statsTeam2Goals);
-    if (goalDiff >= 3) {
+
+    if (goalDiff >= 3)
         PlayItsBeenACompleteRoutComment();
-    } else if (!goalDiff) {
+    else if (!goalDiff)
         PlayDrawComment();
-    } else if (statsTeam1Goals + statsTeam2Goals >= 4) {
+    else if (statsTeam1Goals + statsTeam2Goals >= 4)
         PlaySensationalGameComment();
-    }
 }
 
 void SWOS::PlayDrawComment()
@@ -1235,12 +1252,25 @@ void SWOS::TurnCrowdChantsOn()
     m_fadeOutChantTimer = 0;
     m_nextChantTimer = 0;
     g_crowdChantsOn = 1;
+
+    if (screenWidth == kGameScreenWidth)
+        playCrowdNoiseSample();
+}
+
+static void stopBackgroudCrowdNoise()
+{
+    if (m_crowdLoopChannel >= 0) {
+        logDebug("Stopping background crowd noise loop");
+        Mix_HaltChannel(m_crowdLoopChannel);
+        m_crowdLoopChannel = -1;
+    }
 }
 
 void SWOS::TurnCrowdChantsOff()
 {
     g_crowdChantsOn = 0;
     stopChants();
+    stopBackgroudCrowdNoise();
 }
 
 static void verifySpec(int frequency, int format, int channels)
@@ -1262,6 +1292,7 @@ static void resetMenuAudio()
     m_refereeWhistleSampleChannel = -1;
     m_commentaryChannel = -1;
     m_chantsChannel = -1;
+    m_crowdLoopChannel = -1;
 
     if (Mix_OpenAudio(kMenuFrequency, MIX_DEFAULT_FORMAT, 2, kMenuChunkSize))
         sdlErrorExit("SDL Mixer failed to initialize for the menus");
@@ -1328,6 +1359,7 @@ static void initGameAudio()
     m_refereeWhistleSampleChannel = -1;
     m_commentaryChannel = -1;
     m_chantsChannel = -1;
+    m_crowdLoopChannel = -1;
 
     m_lastPlayedCategory = -1;
     m_lastPlayedComment = nullptr;
@@ -1339,9 +1371,9 @@ static void initGameAudio()
 
     m_lastResultSampleIndex = -1;
 
-    int m_fadeInChantTimer = 0;
-    int m_fadeOutChantTimer = 0;
-    int m_nextChantTimer = 0;
+    m_fadeInChantTimer = 0;
+    m_fadeOutChantTimer = 0;
+    m_nextChantTimer = 0;
 
     m_playCrowdChantsFunction = nullptr;
 }
@@ -1433,13 +1465,6 @@ void setMusicVolume(int volume, bool apply /* = true */)
 void showAudioOptionsMenu()
 {
     showMenu(audioOptionsMenu);
-}
-
-static void restartMusic()
-{
-    g_midiPlaying = 0;
-    SWOS::CDROM_StopAudio();
-    TryRestartingMusic();
 }
 
 static void toggleMasterSound()

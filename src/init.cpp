@@ -406,7 +406,7 @@ void SWOS::SWOS()
     SAFE_INVOKE(Randomize2);
 
     vsPtr = linAdr384k;
-    screenWidth = 320;
+    screenWidth = kVgaWidth;
     spriteFixupFlag = 0;
 
     // flush controls

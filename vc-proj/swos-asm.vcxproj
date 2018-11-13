@@ -70,14 +70,16 @@
   <ItemGroup>
     <CustomBuild Include="..\swos\swos.asm">
       <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)Release\ida2asm.exe ..\swos\swos.asm swos-asm\swos.asm ..\swos\symbols.txt ..\src\swossym.h masm 8</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)Release\ida2asm.exe ..\swos\swos.asm swos-asm\swos.asm ..\swos\symbols.txt ..\src\swossym.h masm 8</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)Release\ida2asm.exe ..\swos\swos.asm swos-asm\swos.asm ..\swos\symbols.txt swos-asm\swossym.h masm 8</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)Release\ida2asm.exe ..\swos\swos.asm swos-asm\swos.asm ..\swos\symbols.txt swos-asm\swossym.h masm 8</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Generating SWOS asm files...</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">swos-asm\swos-01.asm;swos-asm\swos-02.asm;swos-asm\swos-03.asm;swos-asm\swos-04.asm;swos-asm\swos-05.asm;swos-asm\swos-06.asm;swos-asm\swos-07.asm;swos-asm\swos-08.asm</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">swos-asm\swos-01.asm;swos-asm\swos-02.asm;swos-asm\swos-03.asm;swos-asm\swos-04.asm;swos-asm\swos-05.asm;swos-asm\swos-06.asm;swos-asm\swos-07.asm;swos-asm\swos-08.asm;swos-asm\swossym.h</Outputs>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\swos\swos.asm;..\swos\symbols.txt;$(ProjectDir)Release\ida2asm.exe</AdditionalInputs>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Generating SWOS asm files...</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">swos-asm\swos-01.asm;swos-asm\swos-02.asm;swos-asm\swos-03.asm;swos-asm\swos-04.asm;swos-asm\swos-05.asm;swos-asm\swos-06.asm;swos-asm\swos-07.asm;swos-asm\swos-08.asm</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">swos-asm\swos-01.asm;swos-asm\swos-02.asm;swos-asm\swos-03.asm;swos-asm\swos-04.asm;swos-asm\swos-05.asm;swos-asm\swos-06.asm;swos-asm\swos-07.asm;swos-asm\swos-08.asm;swos-asm\swossym.h</Outputs>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\swos\swos.asm;..\swos\symbols.txt;$(ProjectDir)Release\ida2asm.exe</AdditionalInputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</LinkObjects>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkObjects>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>

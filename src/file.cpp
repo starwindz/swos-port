@@ -1,7 +1,6 @@
 #include "file.h"
 #include "log.h"
 #include "util.h"
-#include "render.h"
 #include <dirent.h>
 
 static std::string m_rootDir;
@@ -244,41 +243,6 @@ void SWOS::FindFiles()
 void SWOS::FindFilesExtensionPresent()
 {
     FindFiles();
-}
-
-// in:
-//     D0 - pitch file number(0 - based)
-//
-void SWOS::ReadPitchFile()
-{
-    assert(D0 < 6);
-
-    logInfo("Loading pitch file %d", D0.data);
-
-    // this runs right after virtual screen for menus is trashed; restore it so it can fade-out properly
-    // also note that screen pitch is changed by this point
-    memcpy(linAdr384k, linAdr384k + 2 * kVgaScreenSize, kVgaScreenSize);
-    for (int i = 0; i < kVgaHeight; i++)
-        memcpy(linAdr384k + i * screenWidth, linAdr384k + 2 * kVgaScreenSize + i * kVgaWidth, kVgaWidth);
-
-    memset(g_pitchDatBuffer, 0, sizeof(g_pitchDatBuffer));
-    memset(g_currentMenu, 0, skillsPerQuadrant - g_currentMenu);
-
-    auto pitchFilenamesTable = &ofsPitch1Dat;
-    auto pitchFilename = pitchFilenamesTable[D0];
-    auto buffer = g_pitchDatBuffer + 180;
-
-    if (auto file = openFile(pitchFilename)) {
-        for (int i = 0; i < 55; i++) {
-            if (!fread(buffer, 168, 1, file))
-                logWarn("Failed reading pitch file %s, line %d", pitchFilename, i);
-            buffer += 176;
-        }
-        fclose(file);
-    }
-
-    auto blkFilename = aPitch1_blk + 16 * D0;
-    loadFile(blkFilename, g_pitchPatterns);
 }
 
 void setRootDir(const char *dir)

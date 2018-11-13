@@ -38,7 +38,7 @@ enum StringAlignment {
 };
 
 #ifndef NDEBUG
-void getStringLength(char *str, int *w, int *h, int align, bool big);
+void getStringLength(char *str, int *w, int *h, bool align, bool big);
 void printString(char *str, int x, int y, int color, bool big = false, int align = NO_ALIGNMENT);
 void dumpVariables();
 #else

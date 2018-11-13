@@ -63,11 +63,16 @@ void setWindowMode(WindowMode newMode, bool apply /* = true */)
         switch (newMode) {
             case kModeWindow:
                 success = SDL_SetWindowFullscreen(m_window, 0) == 0;
-                SDL_SetWindowSize(m_window, m_windowWidth, m_windowHeight);
+                if (success) {
+                    SDL_ShowCursor(SDL_ENABLE);
+                    SDL_SetWindowSize(m_window, m_windowWidth, m_windowHeight);
+                }
                 break;
 
             case kModeBorderlessMaximized:
                 success = SDL_SetWindowFullscreen(m_window, SDL_WINDOW_FULLSCREEN_DESKTOP) == 0;
+                if (success)
+                    SDL_ShowCursor(SDL_DISABLE);
                 mode = "borderless maximized";
                 break;
 
@@ -314,7 +319,7 @@ void updateScreen(const char *inData /* = nullptr */, int offsetLine /* = 0 */, 
     auto data = reinterpret_cast<const uint8_t *>(inData ? inData : (vsPtr ? vsPtr : linAdr384k));
 
 #ifndef NDEBUG
-    if (screenWidth == 384)
+    if (screenWidth == kGameScreenWidth)
         dumpVariables();
 #endif
 
@@ -607,6 +612,7 @@ static std::pair<bool, int> inputNumber(MenuEntry *entry)
             return { false, 0 };
         }
 
+        // this buffer will live while in this function, and then we return the type back to number
         inputBuffer[bufferLen] = '\0';
         entry->u2.string = inputBuffer;
 

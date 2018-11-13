@@ -5,7 +5,7 @@
 constexpr int kProcCapacity = 9000;
 constexpr int kImportsCapacity = 3000;
 constexpr int kExportsCapacity = 5000;
-constexpr int kReplacementsCapacity = 200;
+constexpr int kReplacementsCapacity = 400;
 constexpr int kMaxExportEntries = 400;
 
 SymbolFileParser::SymbolFileParser(const char *symbolFilePath, const char *headerFilePath)

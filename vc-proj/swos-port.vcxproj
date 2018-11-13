@@ -157,6 +157,7 @@
     <ClCompile Include="..\src\menu.cpp" />
     <ClCompile Include="..\src\music.cpp" />
     <ClCompile Include="..\src\options.cpp" />
+    <ClCompile Include="..\src\pitch.cpp" />
     <ClCompile Include="..\src\render.cpp" />
     <ClCompile Include="..\src\audio.cpp" />
     <ClCompile Include="..\src\stdinc.cpp">
@@ -179,7 +180,6 @@
     <ClInclude Include="..\src\render.h" />
     <ClInclude Include="..\src\audio.h" />
     <ClInclude Include="..\src\swos.h" />
-    <ClInclude Include="..\src\swossym.h" />
     <ClInclude Include="..\src\util.h" />
   </ItemGroup>
   <ItemGroup>
@@ -263,11 +263,11 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(OutDir);$(VC_IncludePath);$(WindowsSDK_IncludePath);..\include;..\include\SDL2;..\include\SDL2_image;..\include\SDL_net;..\include\adlmidi;..\include\crashrpt;..\include\simpleini;$(ProjectDir)..\src;$(ProjectDir)..\src\menus;$(ProjectDir)..\src\debug;$(IncludePath)</IncludePath>
+    <IncludePath>$(OutDir);$(VC_IncludePath);$(WindowsSDK_IncludePath);..\include;..\include\SDL2;..\include\SDL2_image;..\include\SDL_net;..\include\adlmidi;..\include\crashrpt;..\include\simpleini;$(ProjectDir)..\src;$(ProjectDir)..\src\menus;$(ProjectDir)..\src\debug;$(ProjectDir)\swos-asm;$(IncludePath)</IncludePath>
     <LibraryPath>..\lib\$(Configuration);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>$(OutDir);$(VC_IncludePath);$(WindowsSDK_IncludePath);..\include;..\include\SDL2;..\include\SDL2_image;..\include\SDL_net;..\include\adlmidi;..\include\crashrpt;..\include\simpleini;$(ProjectDir)..\src;$(ProjectDir)..\src\menus;$(ProjectDir)..\src\debug;$(IncludePath)</IncludePath>
+    <IncludePath>$(OutDir);$(VC_IncludePath);$(WindowsSDK_IncludePath);..\include;..\include\SDL2;..\include\SDL2_image;..\include\SDL_net;..\include\adlmidi;..\include\crashrpt;..\include\simpleini;$(ProjectDir)..\src;$(ProjectDir)..\src\menus;$(ProjectDir)..\src\debug;$(ProjectDir)\swos-asm;$(IncludePath)</IncludePath>
     <LibraryPath>..\lib\$(Configuration);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">

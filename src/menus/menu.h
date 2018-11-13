@@ -242,6 +242,11 @@ static inline void showError(const char *error)
     ShowErrorMenu();
 }
 
+static inline Menu *getCurrentMenu()
+{
+    return reinterpret_cast<Menu *>(g_currentMenu);
+}
+
 static inline MenuEntry *getMenuEntryAddress(int ordinal)
 {
     assert(ordinal >= 0 && ordinal < 256);

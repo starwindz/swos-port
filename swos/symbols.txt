@@ -15,24 +15,19 @@ ReadFromSoccerBin
 IntroWaitNextFrameInterval
 EGAFlip
 ChangeMenuMusic
+ExitOptions
+OptionsMenuBeforeDraw
 ValidateHilPointerAdd - InitHighlightsPointers
-NullInterruptHandler - Text2Sprite
+ResetAnimatedPatterns
+
+# CD ROM routines
+CDROM_GetInfo - Text2Sprite
 FindFirstFile - SelectFilesInit
 cseg_1A35C - FillPalettes
 
-# CD-ROM routines
-CDROM_GetInfo - IOCTL_CDROM_Read
-cseg_1B194
-SetSomeMoreCDROMStuff - FadeOutCDAudio
-cseg_1B45B - CDROM_Seek
-
 # joypads
-Joy1NormalizeX
-Joy1NormalizeY
-Joy2NormalizeX
-Joy2NormalizeY
-Joy1NormalizeReadings
-Joy2NormalizeReadings
+Joy1NormalizeReadings - Joy2SetStatus
+Joy2NormalizeReadings - Player1StatusProc
 VerifyJoypadControls
 
 # commentary & sfx
@@ -53,8 +48,7 @@ __init_80x87
 dataStart - aChairmanScenes
 goalSamples - aSfxPierceM158_
 jumpHeadersSamples - PIT_countdown
-aSwos_xmi - cdAudioPlaying
-g_prevScanCode - timerBoolean
+aSwos_xmi - timerBoolean
 aAsave_256 - dosMemSegment
 PlaySwosXmi - SelectDefaultDrive
 cseg_18236
@@ -71,15 +65,12 @@ errorCheckWord
 linAdr120k - linAdr982k
 handle982k - g_workingPalette
 maxKbInMaxBlock
-aPressEscToReturnToDosOrSpaceToCont
-aErrorIncorrectDosVersion5_0OrHighe
-aErrorWrongProcessor80386OrAboveReq
-aErrorInsufficientBaseMemory_
-aErrorInsufficientXmsMemory_
-aErrorErrorInitializingXms_
+aPressEscToReturnToDosOrSpaceToCont - convertKeysTable
+nextEntryDirectionOffsets
 int9Ofs
 int9Seg
 dta - totalNumberOfFiles
+aBenc2_dat
 aDemo_dat
 aDemo_dat_0 - friendlyGameMenu
 # extend this range when removing options menu
@@ -96,9 +87,9 @@ aErrorCdromDriverError_ - aSensibleWorldOfSoccerV2_0
 @null
 DummyProc01
 ProgramPIT
-CDROM_PlayAudio
 ReadGamePort
 SetDefaultOptions
+PlayChairmanScene
 
 #TODO: remove EGA crap
 SetEGAPalette
@@ -110,9 +101,6 @@ EGA_DrawSpriteInGame
 # CD-ROM (kill these as soon as you can)
 CDChangeToRootDir
 SelectDefaultDrive
-RequestToCDRom
-CDROM_Seek
-FadeOutCDAudio
 
 
 # replace variable's content with what's given here
@@ -120,11 +108,16 @@ FadeOutCDAudio
 # careful when changing strings, as offsets must not change
 aCommentary, 'COMMENTARY****', 0
 aQuitToDos, 'QUIT TO WINDOWS', 0
+# make sounds/music/commentary all ON by default
+g_soundOff, 0
+g_musicOff, 0
+g_menuMusic, 1
+g_commentary, 1
 
 
 # these functions destroy registers C++ assumes will not change with a function call,
 # so inject the code to save and restore them
-# warning: do not list MenuProc & DrawSprite16Pixels here, they can exit by jumping to other procs!
+# warning: do not list DrawSprite16Pixels here, it can exit by jumping to other procs!
 
 @save-regs
 DrawSprite
@@ -163,7 +156,6 @@ SaveSprite
 
 @export
 # options
-
 g_menuMusic, int16_t
 g_musicOff, int16_t
 g_inputControls, int16_t
@@ -220,8 +212,6 @@ Randomize2, function
 vsPtr, char *
 screenWidth, dword
 spriteFixupFlag, word
-InitMainMenu, function
-MenuProc, function
 g_scanCode, word
 keyCount, word
 keyBuffer, array char[10]
@@ -252,7 +242,6 @@ bumpBigSFrame, word
 ClearBackground, function
 aChairmanScenes, array const char
 aMenu_xmi, array const char
-cdAudioPlaying, word
 g_soundOff, int16_t
 g_memAllOk, word
 g_gotExtraMemoryForSamples, word
@@ -304,7 +293,6 @@ savedCameraY, word
 oldCameraX, word
 oldCameraY, word
 currentGoalPtr, dword *
-ResetAnimatedPatternsForBothTeams, function
 InitSavedSprites, function
 InitBackground, function
 ScrollToCurrent, function
@@ -335,7 +323,6 @@ CommonMenuExit, function
 # options menu
 aOptions, array const char
 aExit, array const char
-ExitOptions, function
 SetExitMenuFlag, function
 controlsStatus, word
 showPrereleaseCounter, word
@@ -457,6 +444,7 @@ playingThrowInSample, int16_t
 playingCornerSample, int16_t
 substituteSampleTimer, int16_t
 tacticsChangedSampleTimer, int16_t
+goalCounter, int16_t
 
 performingPenalty, word
 penaltiesState, word
@@ -469,6 +457,24 @@ g_trainingGame, word
 team1GoalsDigit2, word
 team2GoalsDigit2, word
 endGameCrowdSamples, array const char *
+
+DrawMenu, function
+menuFade, word
+CheckControls, function
+finalControlsStatus, int16_t
+previousMenuItem, MenuEntry *
+InitMainMenuStuff, function
+
+fire, word
+shortFire, word
+longFireTime, word
+longFireFlag, word
+up, byte
+down, byte
+left, byte
+right, byte
+
+animatedPatterns, array int16_t[8]
 
 ### debug dump
 breakCameraMode, word
@@ -483,7 +489,6 @@ FadeOutToBlack
 FindStartingDword
 DrawBenchAndSubsMenu
 GameOver
-MenuProc
 
 
 # insert call into a proc at a given line, in the form of call <proc name>_<line number>
@@ -506,6 +511,8 @@ ToMainGameLoop
 LoadFile
 WriteFile
 MainMenu
+InitMainMenu
+MenuProc
 FlipInMenu
 SetPalette
 ShowMenu
@@ -521,8 +528,6 @@ DrawBackPattern
 InitMenuMusic
 PlayMidi
 StopMidiSequence
-CDROM_StopAudio
-IOCTL_CDROM_Read
 FadeOutXmidi
 StopAudio
 IntroEnsureFrameDataLoaded
@@ -585,3 +590,4 @@ PlayDrawComment
 PlayItsBeenACompleteRoutComment
 PlayCrowdChants
 EndProgram
+ResetAnimatedPatternsForBothTeams

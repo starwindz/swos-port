@@ -44,7 +44,7 @@ struct MenuEntry {
         void *spriteCopy;
     } u2;
     void (*onSelect)();
-    word controlMask;
+    int16_t controlMask;
     void (*beforeDraw)();
     void (*afterDraw)();
 };
@@ -264,6 +264,13 @@ struct TeamGeneralInfo {
 };
 static_assert(sizeof(TeamGeneralInfo) == 145, "TeamGeneralInfo is invalid");
 #pragma pack(pop)
+
+enum MenuEntryBackgroundType {
+    NO_BACKGROUND = 0,
+    ENTRY_FUNC1 = 1,
+    ENTRY_FRAME_AND_BACK_COLOR = 2,
+    ENTRY_SPRITE1 = 3,
+};
 
 enum MenuEntryContentType {
     NO_FOREGROUND = 0,

@@ -752,3 +752,30 @@
 03.11.2018.
 - fixed penalty comments not being played
 - fixed original SWOS bugs with penalty flag staying on (discovered by Michael Mihelakakis)
+- removed even more CD-ROM routines (sadly, some small number still remains)
+- rewriting MenuProc in C++
+04.11.2018.
+/
+05.11.2018.
+/
+06.11.2018.
+/
+07.11.2018.
+/
+08.11.2018.
+/
+09.11.2018.
+- rewrote MenuProc in C++ (hopefully correctly! :))
+10.11.2018.
+- moved swossym.h out of source dir into output dir, since it's a generated file
+- removed crazy, probably invalid high bit clearing of pitch pattern pointers
+- fixed ida2asm file splitting when it has align directive preceding a proc that's on the limit
+11.11.2018.
+- added prevention of mouse selecting whatever item it is on initially when the program starts
+- solved starwindz's problem with pitch (I hope!) :)
+12.11.2018.
+- fade-out title song at start
+- hide the cursor while in borderless window full-screen mode
+- crowd background noise (that loops the whole game) is now turned on/off together with chants
+- temporarily disabled chairman scenes
+- starting converting some of the control functions in order to implement new control methods more easily

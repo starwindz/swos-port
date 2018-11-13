@@ -10,12 +10,19 @@
 #pragma comment(lib, "winmm.lib")
 #endif
 
+enum class State {
+    kStart,
+    kPlayingTitleSong,
+    kTitleSongFadeOut,
+    kPlayingMenuSong,
+    kMenuSongFadeOut,
+    kPlaybackError,
+} static m_state = State::kStart;
+
 static Mix_Music *m_titleMusic;
 static Mix_Music *m_menuMusic;
 
 static bool m_titleSongDone;
-static bool m_playingMenuSong;
-static bool m_failed;
 
 static std::atomic<ADL_MIDIPlayer *> m_adlPlayer;
 static std::atomic<bool> m_adlPlayerActive;
@@ -24,9 +31,9 @@ static std::thread m_adlPrefetchThread;
 static std::atomic<int> m_adlBufferStart;
 static std::atomic<int> m_adlBufferEnd;
 static std::atomic<int> m_adlSongDone;
+static std::atomic<uint64_t> m_fadeOutData; // holds start tick and length of fade
 
-constexpr int kFadeOutMusicLength = 1'800;
-static std::atomic<Uint32> m_startFadeMusicTicks;
+constexpr int kFadeOutMenuMusicLength = 1'800;
 static std::atomic<bool> m_midiMuted;
 
 constexpr int kMidiNumBufferedChunks = 32;
@@ -64,13 +71,28 @@ static bool noMusic()
     return g_soundOff || g_musicOff || !g_menuMusic;
 }
 
+static void setAdlFadeOutData(Uint32 start, Uint32 length)
+{
+    auto fadeOutData = static_cast<uint64_t>(start) << 32 | length;
+    m_fadeOutData = fadeOutData;
+}
+
+static std::pair<Uint32, Uint32> getAdlFadeOutData()
+{
+    auto fadeOutData = m_fadeOutData.load();
+    Uint32 start = fadeOutData >> 32;
+    Uint32 length = fadeOutData & 0xffffffff;
+    return { start, length };
+}
+
+// Called when the game is about to start.
 void fadeOutMusic()
 {
-    if (noMusic() || m_failed)
+    if (noMusic() || m_state == State::kPlaybackError)
         return;
 
     if (m_adlPlayerActive) {
-        while (m_startFadeMusicTicks)
+        while (getAdlFadeOutData().first)
             SDL_Delay(20);
         finishAdl();
     } else {
@@ -82,10 +104,10 @@ void fadeOutMusic()
         }
     }
 
-    m_startFadeMusicTicks = 0;
+    setAdlFadeOutData(0, 0);
 
     // set up to try again
-    m_failed = false;
+    m_state = State::kStart;
 }
 
 void synchronizeMixVolume()
@@ -115,6 +137,119 @@ void synchronizeSystemVolume()
     else
         ::waveOutSetVolume(nullptr, MAKELONG(sysVolume, sysVolume));
 #endif
+}
+
+// called each frame by MenuProc
+void updateSongState()
+{
+    if (noMusic())
+        return;
+
+    if (m_state == State::kTitleSongFadeOut) {
+        m_titleSongDone = m_adlPlayerActive ? m_midiMuted.load() : !Mix_PlayingMusic();
+        if (m_titleSongDone) {
+            if (m_adlPlayerActive)
+                finishAdl();
+            m_state = State::kPlayingMenuSong;
+            startMenuSong();
+        }
+    }
+}
+
+void stopTitleSong()
+{
+    if (noMusic())
+        return;
+
+    constexpr int kTitleSongFadeOutInterval = 1'200;
+
+    if (m_state == State::kPlayingTitleSong) {
+        if (m_adlPlayerActive)
+            setAdlFadeOutData(SDL_GetTicks(), kTitleSongFadeOutInterval);
+        else
+            Mix_FadeOutMusic(kTitleSongFadeOutInterval);
+
+        m_state = State::kTitleSongFadeOut;
+    }
+}
+
+static std::pair<Mix_Music *, std::string> loadMixMusicFile(const char *name)
+{
+    std::string nameStr(name);
+    nameStr += '.';
+
+    for (const auto ext : { "mp3", "ogg", "wav", "flac", "mid", }) {
+        auto filename = nameStr + ext;
+        auto path = rootDir() + filename;
+
+        auto music = Mix_LoadMUS(path.c_str());
+        if (music)
+            return { music, filename };
+    }
+
+    return {};
+}
+
+static Mix_Music *playMixSong(const char *basename, bool loop, Mix_Music *musicChunk = nullptr, void (onFinished)() = nullptr)
+{
+    static std::string filename;
+
+    if (!musicChunk)
+        std::tie(musicChunk, filename) = loadMixMusicFile(basename);
+
+    if (musicChunk) {
+        // OGG does a short pop when music starts playing again
+        auto musicType = Mix_GetMusicType(musicChunk);
+        bool isOgg = musicType == MUS_OGG;
+        bool isMidi = musicType == MUS_MID;
+
+        if (isOgg)
+            Mix_VolumeMusic(0);
+
+        logInfo("Playing %s music \"%s\"", basename, filename.c_str());
+        Mix_PlayMusic(musicChunk, loop ? -1 : 0);
+
+        if (!isOgg)
+            Mix_VolumeMusic(getMusicVolume());
+
+        synchronizeSystemVolume();
+
+        Mix_HookMusicFinished(onFinished);
+
+        if (isOgg) {
+            SDL_Delay(200);
+            Mix_VolumeMusic(getMusicVolume());
+        }
+    }
+
+    return musicChunk;
+}
+
+static void initAdl()
+{
+    m_adlPlayer = adl_init(kMenuFrequency);
+
+    if (!m_adlPlayer.load())
+        errorExit("Couldn't initialize ADLMIDI: %s", adl_errorString());
+
+    m_adlBufferStart = 0;
+    m_adlBufferEnd = 0;
+    m_adlSongDone = false;
+    setAdlFadeOutData(0, 0);
+    m_midiMuted = false;
+
+    m_adlPlayerActive = true;
+
+    adl_setDebugMessageHook(m_adlPlayer, [](void *, const char *format, ...) {
+        va_list args;
+        va_start(args, format);
+        logv(kWarning, format, args);
+        va_end(args);
+    }, nullptr);
+
+    adl_setBank(m_adlPlayer, midiBankNumber());
+
+    logInfo("ADLMIDI initialized");
 }
 
 // keep prefetching chunks from ADL as fast as possible to keep the MIDI buffer filled to the max
@@ -153,56 +288,17 @@ static void adlPrefetch(bool loop)
     }
 }
 
-static void initAdl()
-{
-    m_adlPlayer = adl_init(kMenuFrequency);
-
-    if (!m_adlPlayer.load())
-        errorExit("Couldn't initialize ADLMIDI: %s", adl_errorString());
-
-    m_adlBufferStart = 0;
-    m_adlBufferEnd = 0;
-    m_adlSongDone = false;
-    m_startFadeMusicTicks = 0;
-    m_midiMuted = false;
-
-    m_adlPlayerActive = true;
-
-    adl_setDebugMessageHook(m_adlPlayer, [](void *, const char *format, ...) {
-        va_list args;
-        va_start(args, format);
-        logv(kWarning, format, args);
-        va_end(args);
-    }, nullptr);
-
-    adl_setBank(m_adlPlayer, midiBankNumber());
-
-    logInfo("ADLMIDI initialized");
-}
-
-static std::pair<Mix_Music *, std::string> loadMixMusicFile(const char *name)
-{
-    std::string nameStr(name);
-    nameStr += '.';
-
-    for (const auto ext : { "mp3", "ogg", "wav", "flac", "mid", }) {
-        auto filename = nameStr + ext;
-        auto path = rootDir() + filename;
-
-        auto music = Mix_LoadMUS(path.c_str());
-        if (music)
-            return { music, filename };
-    }
-
-    return { nullptr, std::string() };
-}
-
 static bool fadeOutAdl(Uint8 *stream, int sampleCount)
 {
-    if (m_startFadeMusicTicks) {
+    Uint32 startTicks, length;
+    std::tie(startTicks, length) = getAdlFadeOutData();
+
+    if (startTicks) {
         auto now = SDL_GetTicks();
-        if (!m_midiMuted && now <= m_startFadeMusicTicks + kFadeOutMusicLength) {
-            int volume = (kFadeOutMusicLength - (now - m_startFadeMusicTicks)) * getMusicVolume() / kFadeOutMusicLength;
+        assert(length);
+
+        if (!m_midiMuted && now <= startTicks + length) {
+            int volume = (length - (now - startTicks)) * getMusicVolume() / length;
             assert(volume >= 0 && volume <= MIX_MAX_VOLUME);
 
             auto dest = reinterpret_cast<int16_t *>(stream);
@@ -210,7 +306,7 @@ static bool fadeOutAdl(Uint8 *stream, int sampleCount)
             for (int i = 0; i < sampleCount; i++)
                 dest[i] = static_cast<int>(m_adlBuffer[m_adlBufferStart][i]) * volume / MIX_MAX_VOLUME;
         } else {
-            m_startFadeMusicTicks = 0;
+            setAdlFadeOutData(0, 0);
             m_midiMuted = true;
             memset(stream, 0, sampleCount * 2);
         }
@@ -223,12 +319,13 @@ static bool fadeOutAdl(Uint8 *stream, int sampleCount)
 
 static void adlCustomHook(void *data, Uint8 *stream, int len)
 {
+    assert(data);
     auto midiPlayer = reinterpret_cast<ADL_MIDIPlayer *>(data);
 
     int sampleCount = std::min(len / 2, 2 * kMenuChunkSize);
     assert(2 * sampleCount == sizeof(m_adlBuffer[m_adlBufferStart]));
 
-    if (m_adlBufferStart != m_adlBufferEnd) {
+    if (m_adlBufferStart != m_adlBufferEnd && !m_midiMuted) {
         if (!fadeOutAdl(stream, sampleCount)) {
             int volume = getMusicVolume();
             assert(volume >= 0 && volume <= MIX_MAX_VOLUME);
@@ -241,7 +338,7 @@ static void adlCustomHook(void *data, Uint8 *stream, int len)
 
         m_adlBufferStart = (m_adlBufferStart + 1) % kMidiNumBufferedChunks;
     } else {
-        // aw no data ready :/
+        // no data ready, or we must shut up
         memset(stream, 0, len);
     }
 }
@@ -253,7 +350,7 @@ static bool loadXmi(const char *filename, bool loop)
 
     auto path = rootDir() + filename;
     if (adl_openFile(m_adlPlayer, path.c_str()) >= 0) {
-        // menu song plays too fast for some reason, this will make it approximately the same
+        // menu song plays too fast for some reason, this will make it approximately the same as original
         adl_setTempo(m_adlPlayer, 0.6);
 
         assert(!m_adlPrefetchThread.joinable());
@@ -270,27 +367,6 @@ static bool loadXmi(const char *filename, bool loop)
     return false;
 }
 
-void SWOS::CDROM_StopAudio()
-{
-    if (!m_playingMenuSong) {
-        m_titleSongDone = true;
-        g_midiPlaying = false;
-    }
-}
-
-static int cdromStatus()
-{
-    if (m_adlSongDone)
-        m_titleSongDone = true;
-
-    return m_titleSongDone ? 0 : 0x200;
-}
-
-__declspec(naked) void SWOS::IOCTL_CDROM_Read()
-{
-    __asm jmp cdromStatus
-}
-
 static void playXmi()
 {
     if (!m_adlPlayer.load())
@@ -302,44 +378,58 @@ static void playXmi()
         SDL_PauseAudio(0);
 }
 
-static Mix_Music *playMixSong(const char *basename, bool loop, Mix_Music *musicChunk = nullptr, void (onFinished)() = nullptr)
+static void playMenuSong()
 {
-    static std::string filename;
+    finishAdl();
 
-    if (!musicChunk)
-        std::tie(musicChunk, filename) = loadMixMusicFile(basename);
+    m_menuMusic = playMixSong("menu", true, m_menuMusic);
 
-    if (musicChunk) {
-        // OGG does a short pop when music starts playing again
-        auto musicType = Mix_GetMusicType(musicChunk);
-        bool isOgg = musicType == MUS_OGG;
-        bool isMidi = musicType == MUS_MID;
-
-        if (isOgg)
-            Mix_VolumeMusic(0);
-
-        logInfo("Playing %s music \"%s\"", basename, filename.c_str());
-        Mix_PlayMusic(musicChunk, loop ? -1 : 0);
-
-        if (!isOgg)
-            Mix_VolumeMusic(getMusicVolume());
-
-        synchronizeSystemVolume();
-
-        Mix_HookMusicFinished(onFinished);
-
-        if (isOgg) {
-            SDL_Delay(200);
-            Mix_VolumeMusic(getMusicVolume());
+    if (!m_menuMusic) {
+        if (loadXmi(aMenu_xmi, true)) {
+            logInfo("Playing menu music \"%s\"", aMenu_xmi);
+            m_state = State::kPlayingMenuSong;
+            playXmi();
+        } else {
+            logInfo("Couldn't find a suitable menu music file");
+            m_state = State::kPlaybackError;
         }
     }
+}
 
-    return musicChunk;
+// called once when a song needs to be played
+void startMenuSong()
+{
+    if (noMusic())
+        return;
+
+    if (m_state != State::kPlaybackError && m_titleSongDone) {
+        Mix_FreeMusic(m_titleMusic);
+        m_titleMusic = nullptr;
+        Mix_HookMusicFinished(nullptr);
+
+        finishAdl();
+
+        playMenuSong();
+    }
+}
+
+void restartMusic()
+{
+    if (noMusic())
+        return;
+
+    g_midiPlaying = 0;
+
+    if (m_state != State::kPlayingMenuSong)
+        m_titleSongDone = true;
+
+    TryRestartingMusic();
 }
 
 static bool playTitleSong()
 {
     m_titleMusic = playMixSong("title", false, m_titleMusic, [] { m_titleSongDone = true; });
+    m_state = State::kPlayingTitleSong;
 
     if (m_titleMusic)
         return true;
@@ -358,26 +448,6 @@ static bool playTitleSong()
     return false;
 }
 
-static void playMenuSong()
-{
-    m_playingMenuSong = true;
-
-    finishAdl();
-
-    m_menuMusic = playMixSong("menu", true, m_menuMusic);
-
-    if (!m_menuMusic) {
-        if (loadXmi(aMenu_xmi, true)) {
-            logInfo("Playing menu music \"%s\"", aMenu_xmi);
-            playXmi();
-        } else {
-            logInfo("Couldn't find a suitable menu music file");
-            m_playingMenuSong = false;
-            m_failed = true;
-        }
-    }
-}
-
 // called at startup, when initializing main menu, and each time when coming back from the game
 void SWOS::InitMenuMusic()
 {
@@ -391,42 +461,40 @@ void SWOS::InitMenuMusic()
     if (!playedAtStart && (m_titleSongDone || !playTitleSong()))
         playMenuSong();
 
-    cdAudioPlaying = -1;
     playedAtStart = true;
 }
 
-// called once when a song needs to be played
 void SWOS::PlayMidi()
 {
-    if (noMusic())
-        return;
-
-    if (!m_failed && m_titleSongDone) {
-        Mix_FreeMusic(m_titleMusic);
-        m_titleMusic = nullptr;
-        Mix_HookMusicFinished(nullptr);
-
-        finishAdl();
-
-        playMenuSong();
-    }
+    startMenuSong();
 }
 
 void SWOS::StopMidiSequence()
 {
-    if (SDL_GetTicks() > m_startFadeMusicTicks + kFadeOutMusicLength) {
-        finishAdl();
-        Mix_HaltMusic();
-    }
+    // must have a dummy function
 }
 
 void SWOS::FadeOutXmidi()
 {
     if (!noMusic()) {
         logInfo("Fading out music...");
+
         synchronizeMixVolume();
-        Mix_FadeOutMusic(kFadeOutMusicLength);
-        assert(!m_startFadeMusicTicks);
-        m_startFadeMusicTicks = SDL_GetTicks();
+        Mix_FadeOutMusic(kFadeOutMenuMusicLength);
+
+        Uint32 startTicks, length;
+        std::tie(startTicks, length) = getAdlFadeOutData();
+
+        if (startTicks) {
+            auto now = SDL_GetTicks();
+            int volume = (length - (now - startTicks)) * getMusicVolume() / length;
+            length = kFadeOutMenuMusicLength * getMusicVolume() / volume;
+            startTicks = now - (length - kFadeOutMenuMusicLength);
+        } else {
+            length = kFadeOutMenuMusicLength;
+            startTicks = SDL_GetTicks();
+        }
+
+        setAdlFadeOutData(startTicks, length);
     }
 }

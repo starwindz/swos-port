@@ -186,7 +186,8 @@ std::tuple<std::string, bool, bool> Tokenizer::determineBlockLimits(const TokenR
             break;
         } else {
             comment = nullptr;
-            states[kTrailingDebris] = 1;
+            if (token->type != Token::T_ALIGN)
+                states[kTrailingDebris] = 1;
 
             if (!states[kSeenLimitCheckpoint]) {
                 bool isInstruction = token->category == Token::Instruction;

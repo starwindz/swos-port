@@ -103,6 +103,9 @@
     <ClCompile Include="..\src\debug\dump.cpp">
       <Filter>Source Files\debug</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\pitch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\swos.h">
@@ -133,9 +136,6 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\music.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\swossym.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\menus\menu.h">
