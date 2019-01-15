@@ -220,7 +220,7 @@ static const char *entryText(const MenuEntry *entry)
 {
     static char buf[16];
     if (entry) {
-        switch (entry->type1) {
+        switch (entry->type2) {
         case kEntryString: return entry->u2.string;
         case kEntryMultiLineText: return reinterpret_cast<char *>(entry->u2.multiLineText) + 1;
         case kEntrySprite2:
@@ -566,8 +566,10 @@ void SWOS::ExitPlayMatch()
 }
 
 // in:
-//      D0 - word to convert
-//      A1 - buffer
+//      D0 -  word to convert
+//      A1 -> buffer
+// out:
+//      A1 -> points to terminating zero in the buffer
 //
 void SWOS::Int2Ascii()
 {
@@ -580,6 +582,7 @@ void SWOS::Int2Ascii()
     } else if (!num) {
         dest[0] = '0';
         dest[1] = '\0';
+        A1++;
         return;
     }
 
@@ -591,6 +594,7 @@ void SWOS::Int2Ascii()
     }
 
     *end = '\0';
+    A1 = end;
 
     for (end--; dest < end; dest++, end--)
         std::swap(*dest, *end);

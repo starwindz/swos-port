@@ -251,6 +251,19 @@
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)..\src\menus\mnu2h.py;$(ProjectDir)..\src\menus\optionsCommon.mh</AdditionalInputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkObjects>
     </CustomBuild>
+    <CustomBuild Include="..\src\menus\main.mnu">
+      <FileType>Document</FileType>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compiling %(Filename) menu...</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compiling %(Filename) menu...</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">python $(ProjectDir)..\src\menus\mnu2h.py %(FullPath) $(OutputPath)%(Filename)%(Extension).h</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">python $(ProjectDir)..\src\menus\mnu2h.py %(FullPath) $(OutputPath)%(Filename)%(Extension).h</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutputPath)%(Filename)%(Extension).h</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OutputPath)%(Filename)%(Extension).h</Outputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)..\src\menus\mnu2h.py;$(ProjectDir)..\src\menus\optionsCommon.mh</AdditionalInputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</LinkObjects>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)..\src\menus\mnu2h.py;$(ProjectDir)..\src\menus\optionsCommon.mh</AdditionalInputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkObjects>
+    </CustomBuild>
     <None Include="..\src\menus\mnu2h.py" />
     <None Include="..\src\menus\optionsCommon.mh" />
     <CustomBuild Include="..\src\menus\replayExit.mnu">

@@ -77,7 +77,7 @@ void installCrashHandler()
     logInfo("Crash reporter installed OK");
     crSetCrashCallback(crashCallback, nullptr);
     crAddFile2(logPath().c_str(), nullptr, "Log file", CR_AF_MAKE_FILE_COPY | CR_AF_MISSING_FILE_OK);
-    crAddFile2((rootDir() + "setup.dat").c_str(), nullptr, "Settings file", CR_AF_MAKE_FILE_COPY | CR_AF_MISSING_FILE_OK);
+    crAddFile2((rootDir() + "swos.ini").c_str(), nullptr, "Settings file", CR_AF_MAKE_FILE_COPY | CR_AF_MISSING_FILE_OK);
     crAddScreenshot2(CR_AS_PROCESS_WINDOWS | CR_AS_VIRTUAL_SCREEN, 0);
     crAddProperty("BuiltAt", __DATE__ ", " __TIME__);
 }

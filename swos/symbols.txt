@@ -142,6 +142,7 @@ DrawMenuText
 SetCurrentEntry
 SaveSprite
 FilterKeys
+GetTextSize
 
 
 # list of symbols to export to header so they can be accessible from C++

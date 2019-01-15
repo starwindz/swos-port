@@ -71,6 +71,9 @@
     <CustomBuild Include="..\src\menus\joypadConfig.mnu">
       <Filter>Source Files\menu</Filter>
     </CustomBuild>
+    <CustomBuild Include="..\src\menus\main.mnu">
+      <Filter>Source Files\menu</Filter>
+    </CustomBuild>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\main.cpp">

@@ -150,10 +150,8 @@ void initJoypads()
     updateControls();
 
     if (getPl1Controls() == kJoypad || getPl2Controls() == kJoypad) {
-        SDL_JoystickGUID joy1Guid{}, joy2Guid{};
-
-        joy1Guid = SDL_JoystickGetGUIDFromString(m_joy1GuidStr.c_str());
-        joy2Guid = SDL_JoystickGetGUIDFromString(m_joy2GuidStr.c_str());
+        SDL_JoystickGUID joy1Guid = SDL_JoystickGetGUIDFromString(m_joy1GuidStr.c_str());
+        SDL_JoystickGUID joy2Guid = SDL_JoystickGetGUIDFromString(m_joy2GuidStr.c_str());
 
         int numJoypadsToFind = (getPl1Controls() == kJoypad) + (getPl2Controls() == kJoypad);
         int joypadsFound = 0;

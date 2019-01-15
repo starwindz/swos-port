@@ -1,0 +1,178 @@
+//
+// Recreation of main menu
+//
+
+Menu mainMenu {
+    y: 1
+    onInit: ~SWOSMainMenuInit
+    initialEntry: 5
+
+    kButtonWidth = 150
+    kButtonHeight = 16
+
+    kLongButtonWidth = 250
+    kLongButtonHeight = 14
+
+    kColumn1X = 0
+    kColumn2X = 154
+    kBottomEntriesX = 27
+    kStartY = 40
+
+    defaultX: kColumn1X
+    defaultY: @prevEndY + 4
+
+    defaultWidth: kButtonWidth
+    defaultHeight: kButtonHeight
+
+    defaultTextFlags: @kBigText
+
+    Entry editTactics {
+        y: kStartY
+
+        color: @kDarkBlue
+
+        downEntry: editCustomTeams
+        rightEntry: friendly
+
+        text: aEditTactics
+        onSelect: ~EditTacticsMenu
+    }
+
+    Entry editCustomTeams {
+        color: @kDarkBlue
+
+        upEntry: editTactics
+        downEntry: highlights
+        rightEntry: diyCompetition
+
+        text: aEditCustomTeam
+        onSelect: ~EditCustomTeamMenu
+    }
+
+    Entry highlights {
+        color: @kPurple
+
+        upEntry: editCustomTeams
+        downEntry: options
+        rightEntry: presetCompetition
+
+        text: aHighlights
+        onSelect: ~HighligtsMenu
+    }
+
+    Entry options {
+        color: @kDarkBlue
+
+        upEntry: highlights
+        downEntry: career
+        rightEntry: season
+
+        text: aOptions
+        onSelect: ~OptionsMenuSelected
+    }
+
+    // invisible entry in place of "SAVE DISK FILING" to keep everything in place
+    Entry {
+        invisible: true
+    }
+
+    defaultX: kColumn2X
+
+    Entry friendly {
+        y: kStartY
+
+        color: @kLightBrownWithOrangeFrame
+
+        downEntry: diyCompetition
+        leftEntry: editTactics
+
+        text: aFriendly
+        onSelect: ~FriendlyMenu
+    }
+
+    Entry diyCompetition {
+        color: @kLightBrownWithOrangeFrame
+
+        upEntry: friendly
+        downEntry: presetCompetition
+        leftEntry: editCustomTeams
+
+        text: aDiyCompetition
+        onSelect: ~DIYCompetitionMenu
+    }
+
+    Entry presetCompetition {
+        color: @kLightBrownWithOrangeFrame
+
+        upEntry: diyCompetition
+        downEntry: season
+        leftEntry: highlights
+
+        text: aPresetCompetit
+        onSelect: ~PresetCompetitionMenu
+    }
+
+    Entry season {
+        color: @kLightBrownWithOrangeFrame
+
+        upEntry: presetCompetition
+        downEntry: career
+        leftEntry: options
+
+        text: aSeason
+        onSelect: ~SeasonMenu
+    }
+
+    Entry career {
+        color: @kLightBrownWithOrangeFrame
+
+        upEntry: season
+        downEntry: continueContest
+
+        text: aCareer
+        onSelect: ~CareerMenu
+    }
+
+    x: 0
+    y: 0
+
+    defaultX: kBottomEntriesX
+    defaultWidth: kLongButtonWidth
+    defaultHeight: kLongButtonHeight
+    defaultTextFlags: 0
+
+    Entry continueContest {
+        y: 144
+
+        color: @kGreen
+
+        upEntry: career
+        downEntry: saveContest
+
+        text: @kAlloc
+        onSelect: ~StartContest
+    }
+
+    Entry saveContest {
+        y: 165
+
+        color: @kRed
+
+        upEntry: continueContest
+        downEntry: loadOldCompetition
+
+        text: saveFileTitle
+        onSelect: ~SaveContest
+    }
+
+    Entry loadOldCompetition {
+        y: 182
+
+        color: @kLightBrownWithOrangeFrame
+
+        upEntry: saveContest
+
+        text: aLoadOldCompeti
+        onSelect: ~LoadOldCompetitionMenu
+    }
+}

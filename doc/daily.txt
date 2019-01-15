@@ -946,7 +946,7 @@ earlier:
 - playing with mouse is a bit easier now, but it's still awful :D
 05.01.2019.
 - got some cool ideas for joystick config menu ;) (decided to combine everything into one menu)
-- things can't go on like this, I simply must refactor and divide monstrous controls.cpp refactor
+- things can't go on like this, I simply must refactor and divide monstrous controls.cpp file
 - pooh... refactored the damn thing, I'm dying
 06.01.2019.
 - working on joypad config menu, it turns out there will be quite a lot to do there
@@ -982,3 +982,12 @@ earlier:
 - stopped hiding mouse pointer in fake fullscreen mode if we're not in the game, and fixed entry selection
 - applied my beautiful number input routine to width/height fields in video options menu, and centered entries
   a bit better
+13.01.2019.
+- changed crash report to grab swos.ini instead of setup.dat (woops)
+- fixed crash at startup if joypads aren't selected for both players
+- forgot to save regs of GetTextSize, seems it caused crash at Playa's
+- fixed Int2Ascii not returning A1 as the end of the string (totally missed that one)
+- [mnu2h] fixed undefined fields in entry when there previous entry variables are used in first entry
+- [mnu2h] added proper support for changing meny x/y coordinates
+14.01.2019.
+/

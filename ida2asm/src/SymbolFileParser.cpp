@@ -61,6 +61,8 @@ void SymbolFileParser::outputHeaderFile(const char *path)
         "    template <typename T> operator T*() const { return reinterpret_cast<T *>(data); }\n"
         "    operator dword() const { return data; }\n"
         "    Register& operator+=(size_t n) { data += n; return *this; }\n"
+        "    Register& operator++() { data++; return *this; }\n"
+        "    Register operator++(int) { Register old(*this); data++; return old; }\n"
         "    dword data;\n"
         "};\n"
         "#pragma pack(pop)\n\n"

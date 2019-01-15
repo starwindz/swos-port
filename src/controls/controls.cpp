@@ -178,7 +178,8 @@ void setPl1Controls(Controls controls, int joypadIndex /* = -1 */)
 
         m_pl1Controls = controls;
         setPl1JoypadIndex(joypadIndex);
-        logInfo("Joypad name: %s", SDL_JoystickName(getPl1Joypad().handle));
+        if (controls == kJoypad && joypadIndex >= 0)
+            logInfo("Joypad name: %s", SDL_JoystickName(getPl1Joypad().handle));
 
         resetFireVariables();
 
@@ -200,7 +201,8 @@ void setPl2Controls(Controls controls, int joypadIndex /* = -1 */)
 
         m_pl2Controls = controls;
         setPl2JoypadIndex(joypadIndex);
-        logInfo("Joypad name: %s", SDL_JoystickName(getPl2Joypad().handle));
+        if (controls == kJoypad && joypadIndex >= 0)
+            logInfo("Joypad name: %s", SDL_JoystickName(getPl2Joypad().handle));
 
         resetFireVariables();
 
@@ -259,11 +261,8 @@ void normalizeInput()
         m_pl2Controls = kKeyboard2;
     }
 
-    if (m_pl1Controls == kMouse && m_pl2Controls == kMouse)
-        setPl1Controls(kNone);
-
-    if (m_pl1Controls == kNone)
-        setPl2Controls(kKeyboard1);
+    if (m_pl1Controls == kMouse && m_pl2Controls == kMouse || m_pl1Controls == kNone)
+        setPl1Controls(kKeyboard1);
 
     if (m_pl1Controls == kKeyboard2)
         m_pl1Controls = kKeyboard1;

@@ -33,6 +33,7 @@ Menu videoOptionsMenu
     onInit: videoOptionsMenuOnInit
     onDraw: videoOptionsMenuOnDraw
     initialEntry: windowed
+
     defaultHeight: kRowHeight
 
     Entry header {
@@ -76,7 +77,6 @@ Menu videoOptionsMenu
     }
 
     Entry customWidth {
-        x: @prevEndX
         y: @prevY + 1
         width: kCustomSizeWidth
         height: kBoxHeight
@@ -93,13 +93,13 @@ Menu videoOptionsMenu
     }
 
     Entry {
-        x: @prevEndX - 1
+        x: @prevEndX
         text: "X"
         width: 10
     }
 
     Entry customHeight {
-        x: @prevEndX - 2
+        x: @prevEndX - 1
         y: @prevY + 1
         width: kCustomSizeWidth
         height: kBoxHeight

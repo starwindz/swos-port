@@ -27,6 +27,8 @@ kNextEntryProperties = ('leftEntry', 'rightEntry', 'upEntry', 'downEntry', 'skip
 
 kEntryFunctions = ('onSelect', 'beforeDraw', 'afterDraw')
 
+kPreviousEntryFields = ('x', 'y', 'width', 'height', 'color', 'textFlags')
+
 kConstants = {
     # backgrounds
     'kNoBackground': 0, 'kNoFrame': 0, 'kGray': 7, 'kDarkBlue': 3, 'kLightBrownWithOrangeFrame': 4,
@@ -82,8 +84,8 @@ class Menu:
         self.afterDraw = 0
         self.onDraw = 0
 
-        self.previousX = 0
-        self.previousY = 0
+        for field in kPreviousEntryFields:
+            setattr(self, 'previous' + field.capitalize(), 0)
 
 class StringTable:
     def __init__(self, variable, values=(), initialValue=0):
@@ -110,6 +112,9 @@ class Entry:
         self.y = 0
         self.width = 0
         self.height = 0
+
+        self.menuX = 0
+        self.menuY = 0
 
         self.text = None
         self.number = None
@@ -328,7 +333,7 @@ class Parser:
         assert(isinstance(token, Token))
         assert(self.tokenized)
 
-        if not isIdentifier(token.string):
+        if not token.string.isidentifier():
             self.error(token, f"`{token.string}' is not a valid identifier")
 
         return self.getNextToken(expectedNext)
@@ -358,12 +363,10 @@ class Parser:
     #     context - optional context string, it is what this token represents (e.g. menu name, entry name...)
     #
     # Makes sure that the given token isn't a C++ keyword. If it is, displays an error and ends the program.
-    # Assumes the tokenization had already been done.
     #
     def verifyNonCppKeyword(self, token, context=None):
         assert(isinstance(token, Token))
         assert(context is None or isinstance(context, str) and len(context))
-        assert(self.tokenized)
 
         kCppKeywords = {
             'alignas', 'alignof', 'and', 'and_eq', 'asm', 'auto', 'bitand', 'bitor', 'bool', 'break', 'case',
@@ -620,7 +623,7 @@ class Parser:
             declareFunction = False
 
         function = token.string
-        if not isIdentifier(function):
+        if not function.isidentifier():
             self.error(token, f"expected function handler, got `{function}'")
 
         if declareFunction:
@@ -668,7 +671,7 @@ class Parser:
 
                 values.append(token.string)
 
-                if not isIdentifier(token.string) and token.string[0] != '"':
+                if not token.string.isidentifier() and token.string[0] != '"':
                     self.error(token, f"expecting string or identifier, got `{token.string}'")
 
                 token = self.getNextToken("`]' or `,'")
@@ -834,7 +837,7 @@ class Parser:
             token = self.getNextToken()
 
         if name:
-            if not isIdentifier(name):
+            if not name.isidentifier():
                 self.error(nameToken, f"`{name}' is not a valid entry name")
 
             if name in menu.entries:
@@ -853,7 +856,10 @@ class Parser:
         else:
             entry = copy.deepcopy(menu.templateEntry)
 
-            for property in ('x', 'y', 'width', 'height', 'color', 'textFlags'):
+            entry.menuX = menu.properties['x']
+            entry.menuY = menu.properties['y']
+
+            for property in kPreviousEntryFields:
                 if property != 'color' or not menu.gotTemplate:
                     value = str(menu.properties['default' + property[0].upper() + property[1:]])
                     tokens = tokenize(value) + ['']
@@ -1553,7 +1559,7 @@ class Parser:
                     result = formatToken(result, str(entry.ordinal - 1))
                     continue
 
-            if isIdentifier(token):
+            if token.isidentifier():
                 entry = menu.entries.get(token, None)
                 if entry is None:
                     self.error(refToken, f"undefined entry reference: `{token}'")
@@ -1692,8 +1698,12 @@ class Parser:
         templateIndex = 0
         resetTemplateIndex = 0
 
+        outputMenuXY = lambda x, y, ord: out(f'\n    MenuXY menuXY{ord:02}{{{x}, {y}}};')
         if menu.properties['x'] != 0 or menu.properties['y'] != 0:
-            out(f"\n    MenuXY menuXY{{{menu.properties['x']}, {menu.properties['y']}}};")
+            outputMenuXY(menu.properties['x'], menu.properties['y'], 0)
+
+        currentMenuX = menu.properties['x']
+        currentMenuY = menu.properties['y']
 
         for entry in menu.entries.values():
             if entry is ResetTemplateEntry:
@@ -1703,6 +1713,11 @@ class Parser:
             elif entry.template:
                 out(f'\n    TemplateEntry te{templateIndex:02}{{}};')
                 templateIndex += 1
+            else:
+                if entry.menuX != currentMenuX or entry.menuY != currentMenuY:
+                    outputMenuXY(entry.menuX, entry.menuY, entry.ordinal)
+                    currentMenuX = entry.menuX
+                    currentMenuY = entry.menuY
 
             out(f'\n    Entry eb{entry.ordinal:02}{{ {entry.x}, {entry.y}, {entry.width}, {entry.height} }};')
 
@@ -1804,19 +1819,6 @@ def tokenize(line, lineNo=0):
     tokens = re.findall(r'(?:@)?[\w]+|[{},():]|"[^"]+(?:"|$)|\'[^\']+(?:\'|$)|[-+]*\d+|[^\s\w]', line)
 
     return tokens
-
-
-# isIdentifier
-#
-# in:
-#     string - a string to check
-#
-# Returns true if the given string looks like a valid C++ identifier.
-#
-def isIdentifier(string):
-    assert(isinstance(string, str))
-
-    return re.match('[a-zA-Z_][\w]*', string)
 
 
 # isString
