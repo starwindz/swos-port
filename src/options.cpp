@@ -55,7 +55,6 @@ void loadOptions()
         loadAudioOptions(ini);
         loadVideoOptions(ini);
     } else {
-        beep();
         logWarn("Error loading options, error code: %d", errorCode);
     }
 }

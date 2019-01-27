@@ -327,6 +327,14 @@ enum SpriteIndices {
     SPR_REPLAY_FRAME_00 = 1209,
 };
 
+enum GameTypes {
+    kGameTypeNoGame = 0,
+    kGameTypeDiyCompetition = 1,
+    kGameTypePresetCompetition = 2,
+    kGameTypeCareer = 4,
+    kGameTypeSeason = 3,
+};
+
 enum TextColors {
     kWhiteText = 0,
     kDarkGrayText = 1,
@@ -392,6 +400,35 @@ enum PCKeys {
 };
 
 constexpr int kCursorChar = -1;
+
+enum Nationalities {
+    kAlb = 0,     kPol = 26,    kSal = 52,    kGuy = 78,    kZim = 104,    kMly = 130,
+    kAut = 1,     kPor = 27,    kGua = 53,    kPer = 79,    kEgy = 105,    kSau = 131,
+    kBel = 2,     kRom = 28,    kHon = 54,    kAlg = 80,    kTan = 106,    kYem = 132,
+    kBul = 3,     kRus = 29,    kBhm = 55,    kSaf = 81,    kNig = 107,    kKuw = 133,
+    kCro = 4,     kSmr = 30,    kMex = 56,    kBot = 82,    kEth = 108,    kLao = 134,
+    kCyp = 5,     kSco = 31,    kPan = 57,    kBfs = 83,    kGab = 109,    kNkr = 135,
+    kTch = 6,     kSlo = 32,    kUsa = 58,    kBur = 84,    kSie = 110,    kOma = 136,
+    kDen = 7,     kSwe = 33,    kBah = 59,    kLes = 85,    kBen = 111,    kPak = 137,
+    kEng = 8,     kTur = 34,    kNic = 60,    kZai = 86,    kCon = 112,    kPhi = 138,
+    kEst = 9,     kUkr = 35,    kBer = 61,    kZam = 87,    kGui = 113,    kChn = 139,
+    kFar = 10,    kWal = 36,    kJam = 62,    kGha = 88,    kSrl = 114,    kSgp = 140,
+    kFin = 11,    kYug = 37,    kTri = 63,    kSen = 89,    kMar = 115,    kMau = 141,
+    kFra = 12,    kBls = 38,    kCan = 64,    kCiv = 90,    kGam = 116,    kMya = 142,
+    kGer = 13,    kSvk = 39,    kBar = 65,    kTun = 91,    kMlw = 117,    kPap = 143,
+    kGre = 14,    kEsp = 40,    kEls = 66,    kMli = 92,    kJap = 118,    kTad = 144,
+    kHun = 15,    kArm = 41,    kSvc = 67,    kMdg = 93,    kTai = 119,    kUzb = 145,
+    kIsl = 16,    kBos = 42,    kArg = 68,    kCmr = 94,    kInd = 120,    kQat = 146,
+    kIsr = 17,    kAzb = 43,    kBol = 69,    kChd = 95,    kBan = 121,    kUae = 147,
+    kIta = 18,    kGeo = 44,    kBra = 70,    kUga = 96,    kBru = 122,    kAus = 148,
+    kLat = 19,    kSwi = 45,    kChl = 71,    kLib = 97,    kIra = 123,    kNzl = 149,
+    kLit = 20,    kIrl = 46,    kCol = 72,    kMoz = 98,    kJor = 124,    kFij = 150,
+    kLux = 21,    kMac = 47,    kEcu = 73,    kKen = 99,    kSri = 125,    kSol = 151,
+    kMlt = 22,    kTrk = 48,    kPar = 74,    kSud = 100,   kSyr = 126,    kCus = 152,
+    kHol = 23,    kLie = 49,    kSur = 75,    kSwa = 101,   kKor = 127,
+    kNir = 24,    kMol = 50,    kUru = 76,    kAng = 102,   kIrn = 128,
+    kNor = 25,    kCrc = 51,    kVen = 77,    kTog = 103,   kVie = 129,
+};
 
 constexpr int kMenuScreenWidth = 320;
 constexpr int kGameScreenWidth = 384;

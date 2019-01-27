@@ -13,8 +13,8 @@ constexpr int kNumColors = 256;
 constexpr int kPaletteSize = 3 * kNumColors;
 static uint8_t m_palette[kPaletteSize];
 
-static Uint32 m_lastRenderStartTime;
-static Uint32 m_lastRenderEndTime;
+static Uint64 m_lastRenderStartTime;
+static Uint64 m_lastRenderEndTime;
 
 static bool m_delay;
 static std::deque<int> m_lastFramesDelay;
@@ -22,10 +22,13 @@ static constexpr int kMaxLastFrames = 16;
 
 static auto m_windowMode = kModeWindow;
 
-static int m_windowWidth;
-static int m_windowHeight;
-static int m_displayWidth;
-static int m_displayHeight;
+constexpr int kDefaultFullScreenWidth = 640;
+constexpr int kDefaultFullScreenHeight = 480;
+
+static int m_windowWidth = kWindowWidth;
+static int m_windowHeight = kWindowHeight;
+static int m_displayWidth = kDefaultFullScreenWidth;
+static int m_displayHeight = kDefaultFullScreenHeight;
 static bool m_windowResizable = true;
 
 // video options
@@ -69,6 +72,7 @@ static void clampWindowSize(int& width, int& height)
         if (SDL_GetDisplayBounds(displayIndex, &rect) == 0) {
             width = std::min(width, rect.w);
             height = std::min(height, rect.h);
+            logInfo("Clamping window size to %dx%d", width, height);
         }
     }
 }
@@ -116,14 +120,21 @@ int getWindowDisplayIndex()
     return SDL_GetWindowDisplayIndex(m_window);
 }
 
-bool isInFullScreenMode(int width, int height)
+bool isInFullScreenMode()
 {
-    return m_windowMode == kModeFullScreen && m_displayWidth == width && m_displayHeight == height;
+    return m_windowMode == kModeFullScreen;
 }
+
+std::pair<int, int> getFullScreenDimensions()
+{
+    return { m_displayWidth, m_displayHeight };
+};
 
 static bool setDisplayMode(int width, int height)
 {
     assert(m_window);
+
+    logInfo("Trying to switch to %dx%d", width, height);
 
     SDL_DisplayMode mode;
     mode.w = width;
@@ -132,11 +143,33 @@ static bool setDisplayMode(int width, int height)
     mode.driverdata = nullptr;
     mode.format = SDL_PIXELFORMAT_RGB888;
 
-    return SDL_SetWindowDisplayMode(m_window, &mode) == 0 && SDL_SetWindowFullscreen(m_window, SDL_WINDOW_FULLSCREEN) == 0;
+    int err = SDL_SetWindowDisplayMode(m_window, &mode);
+    if (err) {
+        logWarn("SDL_SetWindowDisplayMode() failed with code: %d, reason: %s", err, SDL_GetError());
+        return false;
+    }
+
+    if (SDL_GetWindowFlags(m_window) & SDL_WINDOW_FULLSCREEN)
+        SDL_SetWindowFullscreen(m_window, 0);
+
+    err = SDL_SetWindowFullscreen(m_window, SDL_WINDOW_FULLSCREEN);
+
+    if (!err) {
+        if (SDL_GetWindowDisplayMode(m_window, &mode) == 0 && (mode.w != width || mode.h != height))
+            logWarn("Couldn't switch to %dx%d, switched to %dx%d instead", width, height, mode.w, mode.h);
+
+        m_displayWidth = mode.w;
+        m_displayHeight = mode.h;
+    } else {
+        logWarn("SDL_SetWindowFullscreen() failed with code: %d, reason: %s", err, SDL_GetError());
+    }
+
+    return err == 0;
 }
 
 static void setWindowMode(WindowMode newMode)
 {
+    int errorCode = 0;
     bool success = true;
     auto mode = "standard windowed";
 
@@ -162,10 +195,7 @@ static void setWindowMode(WindowMode newMode)
         break;
 
     case kModeFullScreen:
-        logInfo("Trying to switch to %d x %d", m_displayWidth, m_displayHeight);
-        success = SDL_SetWindowFullscreen(m_window, SDL_WINDOW_FULLSCREEN) == 0;
-        success &= setDisplayMode(m_displayWidth, m_displayHeight);
-        success ? logInfo("Full screen switch succeeded") : logWarn("Full screen switch failed");
+        success = setDisplayMode(m_displayWidth, m_displayHeight);
         mode = "full screen";
         break;
 
@@ -213,9 +243,6 @@ void setWindowResizable(bool resizable)
 
 bool setFullScreenResolution(int width, int height)
 {
-    m_displayWidth = width;
-    m_displayHeight = height;
-
     bool result = setDisplayMode(width, height);
     if (result)
         m_windowMode = kModeFullScreen;
@@ -240,7 +267,7 @@ static std::pair<int, int> getDesktopResolution()
             return { mode.w, mode.h };
     }
 
-    return { 640, 480 };
+    return { kDefaultFullScreenWidth, kDefaultFullScreenHeight };
 }
 
 void toggleFullScreenMode()
@@ -293,6 +320,11 @@ void loadVideoOptions(const CSimpleIniA& ini)
 
     m_displayWidth = ini.GetLongValue(kVideoSection, kFullScreenWidth);
     m_displayHeight = ini.GetLongValue(kVideoSection, kFullScreenHeight);
+
+    if (!m_displayWidth)
+        m_displayWidth = kDefaultFullScreenWidth;
+    if (!m_displayHeight)
+        m_displayHeight = kDefaultFullScreenHeight;
 
     m_windowResizable = ini.GetLongValue(kVideoSection, kWindowResizable, 1) != 0;
 }
@@ -381,7 +413,7 @@ void getPalette(char *palette)
 
 static void determineIfDelayNeeded()
 {
-    auto delay = m_lastRenderEndTime < m_lastRenderStartTime || m_lastRenderEndTime - m_lastRenderStartTime < 12;
+    auto delay = m_lastRenderEndTime > m_lastRenderStartTime && m_lastRenderEndTime - m_lastRenderStartTime >= 10;
 
     if (m_lastFramesDelay.size() >= kMaxLastFrames)
         m_lastFramesDelay.pop_front();
@@ -416,7 +448,7 @@ void clearScreen()
 
 void skipFrameUpdate()
 {
-    m_lastRenderStartTime = m_lastRenderEndTime = SDL_GetTicks();
+    m_lastRenderStartTime = m_lastRenderEndTime = SDL_GetPerformanceCounter();
 }
 
 void updateScreen(const char *inData /* = nullptr */, int offsetLine /* = 0 */, int numLines /* = kVgaHeight */)
@@ -425,7 +457,7 @@ void updateScreen(const char *inData /* = nullptr */, int offsetLine /* = 0 */, 
     assert(numLines >= 0 && numLines <= kVgaHeight);
     assert(offsetLine + numLines <= kVgaHeight);
 
-    m_lastRenderStartTime = SDL_GetTicks();
+    m_lastRenderStartTime = SDL_GetPerformanceCounter();
 
     Uint32 *pixels;
     int pitch;
@@ -453,12 +485,12 @@ void updateScreen(const char *inData /* = nullptr */, int offsetLine /* = 0 */, 
     SDL_RenderCopy(m_renderer, m_texture, nullptr, nullptr);
     SDL_RenderPresent(m_renderer);
 
-    m_lastRenderEndTime = SDL_GetTicks();
+    m_lastRenderEndTime = SDL_GetPerformanceCounter();
 
     determineIfDelayNeeded();
 }
 
-void frameDelay(float factor /* = 1.0 */)
+void frameDelay(double factor /* = 1.0 */)
 {
     timerProc();
 
@@ -467,34 +499,42 @@ void frameDelay(float factor /* = 1.0 */)
         return;
     }
 
-    constexpr int kNumFramesForSlackValue = 32;
-    static std::array<int, kNumFramesForSlackValue> slackValues;
-    static int slackValueIndex;
+    constexpr double kTargetFps = 70;
 
-    int slackValue = std::accumulate(std::begin(slackValues), std::end(slackValues), 0);
-    slackValue = (slackValue + kNumFramesForSlackValue / 2) / kNumFramesForSlackValue;
+    if (factor > 1.0) {
+        // don't use busy wait in menus
+        auto delay = std::lround(1'000 * factor / kTargetFps);
+        SDL_Delay(delay);
+        return;
+    }
 
-    constexpr Uint32 kFrameDelay = 15;
-    Uint32 delay = std::lround(kFrameDelay * factor);
+    static const Sint64 kFrequency = SDL_GetPerformanceFrequency();
 
-    auto startTicks = SDL_GetTicks();
+    Uint64 delay = std::llround(kFrequency * factor / kTargetFps);
+
+    auto startTicks = SDL_GetPerformanceCounter();
     auto diff = startTicks - m_lastRenderStartTime;
 
     if (diff < delay) {
-        if (static_cast<int>(delay - diff) > slackValue) {
-            auto intendedDelay = delay - diff - slackValue;
-            SDL_Delay(intendedDelay);
-            auto newTicks = SDL_GetTicks();
+        constexpr int kNumFramesForSlackValue = 64;
+        static std::array<Uint64, kNumFramesForSlackValue> slackValues;
+        static int slackValueIndex;
 
-            if (newTicks >= startTicks) {
-                auto actualDelay = newTicks - startTicks;
-                slackValues[slackValueIndex] = static_cast<int>(actualDelay - intendedDelay);
-                slackValueIndex = (slackValueIndex + 1) % kNumFramesForSlackValue;
-            }
+        auto slackValue = std::accumulate(std::begin(slackValues), std::end(slackValues), 0LL);
+        slackValue = (slackValue + (slackValue > 0 ? kNumFramesForSlackValue : -kNumFramesForSlackValue) / 2) / kNumFramesForSlackValue;
+
+        if (static_cast<Sint64>(delay - diff) > slackValue) {
+            auto intendedDelay = 1'000 * (delay - diff - slackValue) / kFrequency;
+            auto delayStart = SDL_GetPerformanceCounter();
+            SDL_Delay(static_cast<Uint32>(intendedDelay));
+
+            auto actualDelay = SDL_GetPerformanceCounter() - delayStart;
+            slackValues[slackValueIndex] = actualDelay - intendedDelay * kFrequency / 1'000;
+            slackValueIndex = (slackValueIndex + 1) % kNumFramesForSlackValue;
         }
 
         do {
-            startTicks = SDL_GetTicks();
+            startTicks = SDL_GetPerformanceCounter();
         } while (m_lastRenderStartTime + delay > startTicks);
     }
 }

@@ -32,7 +32,8 @@ kPreviousEntryFields = ('x', 'y', 'width', 'height', 'color', 'textFlags')
 kConstants = {
     # backgrounds
     'kNoBackground': 0, 'kNoFrame': 0, 'kGray': 7, 'kDarkBlue': 3, 'kLightBrownWithOrangeFrame': 4,
-    'kLightBrownWithYellowFrame': 6, 'kRed': 10, 'kPurple': 11, 'kLightBlue': 13, 'kGreen': 14,
+    'kLightBrownWithYellowFrame': 6, 'kRed': 10, 'kPurple': 11, 'kLightBrownWithRedFrame': 12,
+    'kLightBlue': 13, 'kGreen': 14,
 
     # inner frames
     'kDarkGrayFrame': 0x10, 'kWhiteFrame': 0x20, 'kBlackFrame': 0x30, 'kBrownFrame': 0x40,
@@ -616,14 +617,21 @@ class Parser:
         self.verifyNonCppKeyword(token, 'name of function handler')
 
         declareFunction = True
+        rawFunction = False
+        function = token.string
 
         # if it's prefixed with tilde don't declare it (presumably it is declared elsewhere)
         if token.string == '~':
             token = self.getNextToken('function handler')
+            function = token.string
             declareFunction = False
 
-        function = token.string
-        if not function.isidentifier():
+            # send a quoted function as is
+            if isString(function):
+                function = function[1:-1]
+                rawFunction = True
+
+        if not rawFunction and not function.isidentifier():
             self.error(token, f"expected function handler, got `{function}'")
 
         if declareFunction:
@@ -1378,7 +1386,7 @@ class Parser:
                         if len(string) and isString(string):
                             if len(string) < 2 or string[-1] != string[0]:
                                 self.error(tokens[-1], 'unterminated string')
-                            if prev != 'include' and string != string.upper():
+                            if prev != 'include' and prev != '~' and string != string.upper():
                                 self.warning('non upper case string detected', lineNo, inputFilename)
 
                         prev = string

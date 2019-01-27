@@ -291,17 +291,6 @@ static void joypadConfigMenuOnDraw()
     drawDeadZoneBox();
 }
 
-// NYANYA GAMEPAD ZX [elide at 300ish]
-// PRESS "FIRE"/"BENCH" BUTTON [good positioning]
-//
-// (ESCAPE/MOUSE CLICK CANCELS)
-//
-// BUTTON %d SELECTED (500ms)
-
-//if not canceled apply to options
-//update button menu entry
-//similar to select joypad
-
 static bool selectButton(int& button, int& otherButton, const char *buttonName)
 {
     assert(button != otherButton);

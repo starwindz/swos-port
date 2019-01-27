@@ -113,7 +113,7 @@ static void fillResolutionListUi()
         auto height = m_resolutions[i].second;
         snprintf(entry->u2.string, 30, "%d X %d", width, height);
 
-        if (isInFullScreenMode(width, height))
+        if (getFullScreenDimensions() == std::make_pair(width, height))
             entry->u1.entryColor = kPurple;
     }
 
@@ -160,13 +160,31 @@ static void changeResolutionSelected()
     int i = entry->ordinal - VideoOptionsMenu::resolutionField0 + m_resListOffset;
     assert(i >= 0 && i < static_cast<int>(m_resolutions.size()));
 
+    if (i < 0 || i >= static_cast<int>(m_resolutions.size()))
+        return;
+
+    auto currentResolution = getFullScreenDimensions();
+    if (currentResolution == m_resolutions[i])
+        return;
+
+    char buffer[64];
+
     if (!setFullScreenResolution(m_resolutions[i].first, m_resolutions[i].second)) {
         logWarn("Failed to switch to %s", entry->u2.string);
-        char buffer[64];
         snprintf(buffer, sizeof(buffer), "FAILED TO SWITCH TO %s", entry->u2.string);
         showError(buffer);
     } else {
-        logInfo("Successfully switched to %s", entry->u2.string);
+        strcpy_s(buffer, entry->u2.string);
+        if (auto space = strchr(buffer, ' ')) {
+            *space = 'x';
+
+            while (space++[3])
+                *space = space[2];
+
+            *space = '\0';
+        }
+
+        logInfo("Successfully switched to %s", buffer);
     }
 }
 

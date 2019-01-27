@@ -18,7 +18,8 @@ bool getWindowResizable();
 WindowMode getWindowMode();
 int getWindowDisplayIndex();
 bool setFullScreenResolution(int width, int height);
-bool isInFullScreenMode(int width, int height);
+bool isInFullScreenMode();
+std::pair<int, int> getFullScreenDimensions();
 
 void switchToWindow();
 void switchToBorderlessMaximized();
@@ -41,7 +42,7 @@ void getPalette(char *palette);
 void clearScreen();
 void skipFrameUpdate();
 void updateScreen(const char *data = nullptr, int offsetLine = 0, int numLines = kVgaHeight);
-void frameDelay(float factor = 1.0);
+void frameDelay(double factor = 1.0);
 void timerProc();
 
 void showVideoOptionsMenu();

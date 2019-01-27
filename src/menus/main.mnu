@@ -5,7 +5,7 @@
 Menu mainMenu {
     y: 1
     onInit: ~SWOSMainMenuInit
-    initialEntry: 5
+    initialEntry: friendly
 
     kButtonWidth = 150
     kButtonHeight = 16
@@ -57,7 +57,7 @@ Menu mainMenu {
         rightEntry: presetCompetition
 
         text: aHighlights
-        onSelect: ~HighligtsMenu
+        onSelect: ~HighlightsMenu
     }
 
     Entry options {
@@ -68,7 +68,7 @@ Menu mainMenu {
         rightEntry: season
 
         text: aOptions
-        onSelect: ~OptionsMenuSelected
+        onSelect: ~"SWOS::OptionsMenuSelected"
     }
 
     // invisible entry in place of "SAVE DISK FILING" to keep everything in place
@@ -81,7 +81,7 @@ Menu mainMenu {
     Entry friendly {
         y: kStartY
 
-        color: @kLightBrownWithOrangeFrame
+        color: @kLightBrownWithRedFrame
 
         downEntry: diyCompetition
         leftEntry: editTactics
@@ -124,6 +124,7 @@ Menu mainMenu {
     }
 
     Entry career {
+        x: 79
         color: @kLightBrownWithOrangeFrame
 
         upEntry: season

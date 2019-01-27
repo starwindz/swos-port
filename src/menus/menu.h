@@ -239,6 +239,12 @@ public:
 
 }
 
+static inline void prepareMenu(const SWOS_Menu::BaseMenu& menu)
+{
+    A6 = &menu;
+    SWOS::PrepareMenu();
+}
+
 static inline void showMenu(const SWOS_Menu::BaseMenu& menu)
 {
     A6 = &menu;

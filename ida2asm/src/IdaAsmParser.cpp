@@ -625,7 +625,7 @@ CToken *IdaAsmParser::parseProc(CToken *token, TokenList& comments)
             outputNullProc();
 
         if (!action.second.empty())
-            token = skipUntilSymbol(token, action.second);
+            token = skipUntilSymbol(token, action.second == "@end" ? nullptr : &action.second);
     } else if (action.first & SymbolFileParser::kSaveCppRegisters) {
         token = outputSaveCppRegistersInstructions(token);
         m_restoreRegsProc = m_currentProc;
@@ -710,7 +710,7 @@ CToken *IdaAsmParser::parseDataItem(CToken *token, TokenList& comments)
 
         if (removed) {
             auto untilSymbol = action.second;
-            token = !untilSymbol.empty() ? skipUntilSymbol(token, untilSymbol) : skipUntilNewLine(token);
+            token = !untilSymbol.empty() ? skipUntilSymbol(token, &untilSymbol) : skipUntilNewLine(token);
             comments.clear();
             return token;
         }
@@ -977,7 +977,7 @@ CToken *IdaAsmParser::skipUntilNewLine(CToken *token)
     return token;
 }
 
-CToken *IdaAsmParser::skipUntilSymbol(CToken *token, const String& sym)
+CToken *IdaAsmParser::skipUntilSymbol(CToken *token, const String *sym)
 {
     CToken *prevNewLine{};
 
@@ -987,7 +987,7 @@ CToken *IdaAsmParser::skipUntilSymbol(CToken *token, const String& sym)
             if (token->isNewLine()) {
                 m_lineNo++;
 
-                if (token->next()->isId() && token->next() == sym)
+                if (sym && token->next()->isId() && token->next() == *sym)
                     break;
 
                 prevNewLine = token;
@@ -999,8 +999,8 @@ CToken *IdaAsmParser::skipUntilSymbol(CToken *token, const String& sym)
         advance(token);
     }
 
-    if (token->isEof())
-        error(std::string("end range symbol `") + sym.string() + "' unmatched", token);
+    if (sym && token->isEof())
+        error(std::string("end range symbol `") + sym->string() + "' unmatched", token);
 
     return prevNewLine ? prevNewLine : token;
 }

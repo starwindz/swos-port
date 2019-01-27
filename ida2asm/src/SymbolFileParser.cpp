@@ -2,9 +2,9 @@
 #include "AmigaRegs.h"
 #include "Util.h"
 
-constexpr int kProcCapacity = 9000;
-constexpr int kImportsCapacity = 3000;
-constexpr int kExportsCapacity = 5000;
+constexpr int kProcCapacity = 9'000;
+constexpr int kImportsCapacity = 3'000;
+constexpr int kExportsCapacity = 7'500;
 constexpr int kReplacementsCapacity = 400;
 constexpr int kMaxExportEntries = 400;
 
@@ -556,21 +556,39 @@ void SymbolFileParser::ensureUniqueSymbol(const char *start, const char *end, Na
     const std::string& sym{ start, end };
 
     if (!sym.empty()) {
-        auto res = m_symbolLine.insert(std::make_pair(std::make_tuple(sym, symNamespace, action), m_lineNo));
+        auto res = m_symbolLine.insert(std::make_pair(std::make_pair(sym, symNamespace), std::make_pair(m_lineNo, action)));
 
         bool successfullyInserted = res.second;
         auto element = res.first;
-        auto oldAction = std::get<2>(element->first);
+        auto key = element->first;
+        auto value = element->second;
+        auto oldAction = value.second;
 
-        if (!successfullyInserted && (oldAction != kImport || action != kRemove) && (oldAction != kRemove || action != kImport)) {
-            auto line = element->second;
-            auto endOfRange = std::get<1>(element->first);
-            auto sym = std::get<0>(element->first);
+        if (!successfullyInserted) {
+            static const auto kAllowedCombos = {
+                std::make_pair(kExport, kInsertCall)
+            };
 
-            if (!endOfRange)
-                error("duplicate symbol found: `" + sym + "', first defined at line " + std::to_string(line));
-            else
-                error("duplicate end of range: `" + sym + '\'');
+            bool allowedCombo = false;
+
+            for (const auto& symCombo : kAllowedCombos) {
+                if (oldAction == symCombo.first && action == symCombo.second || oldAction == symCombo.second && action == symCombo.first) {
+                    allowedCombo = true;
+                    break;
+                }
+            }
+
+            if (!allowedCombo) {
+                auto symStr = key.first;
+                auto ns = key.second;
+                auto line = value.first;
+
+                auto symName = "symbol";
+                if (ns == kEndRange)
+                    symName = "end of range";
+
+                error(std::string("duplicate ") + symName + " found: `" + symStr + "', first defined at line " + std::to_string(line));
+            }
         }
     }
 }

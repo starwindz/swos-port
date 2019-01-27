@@ -991,3 +991,38 @@ earlier:
 - [mnu2h] added proper support for changing meny x/y coordinates
 14.01.2019.
 /
+15.01.2019.
+- started implementing main menu a little, laid out some basics
+16.01.2019.
+/
+17.01.2019.
+/
+18.01.2019.
+/
+19.01.2019.
+/
+20.01.2019.
+/
+21.01.2019.
+- [ida2asm] added special symbol "@end" which can be used in symbol removal range as an end of range marker, meaning
+  remove everything until the end of the file
+- worked a little on main menu reimplementation
+22.01.2019.
+- wrote a bit of Awk[ward] script to convert nationality codes to enum :)
+- finished converting main menu, just noticed that colors looks slightly different compared to DOSBox
+- [ida2asm] fixed not reporting duplicate symbols in symbols.txt
+- [mnu2h] if function name is prefixed with tilde AND in quotes, it will be sent to C++ as is (and without checking)
+- added handling of numeric keyboard digits
+- fixed invalid mouse behaviour in full screen (I hope! too tired to check...)
+23.01.2019.
+- and of course it's not fixed, it's not THAT easy
+- improved error handling in full screen switching logic
+24.01.2019.
+- but NOW I really fixed mouse in full screen, seems I had to clear full screen flag of the window and then set it
+  back in order for changes to occur and mouse coordinates to be correctly translated
+- request to switch to the same full screen resolution we're in will be refused
+25.01.2019.
+/
+26.01.2019.
+- rewrote delay routine and switched to high precision timer... wow, the game feels much better! downside is that
+  more CPU is used, but we'll see if something can be done there

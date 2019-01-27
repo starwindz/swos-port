@@ -4,6 +4,7 @@
 #include "render.h"
 #include "music.h"
 #include "controls.h"
+#include "main.mnu.h"
 
 using ReachabilityMap = std::array<bool, 256>;
 static ReachabilityMap m_reachableEntries;
@@ -64,6 +65,14 @@ static void checkMouseWheelAction(const MenuEntry& entry, int scrollValue)
 static bool mapCoordinatesToGameArea(int& x, int& y)
 {
     int windowWidth, windowHeight;
+
+    if (isInFullScreenMode()) {
+        std::tie(windowWidth, windowHeight) = getFullScreenDimensions();
+        x = x * kVgaWidth / windowWidth;
+        y = y * kVgaHeight / windowHeight;
+        return true;
+    }
+
     std::tie(windowWidth, windowHeight) = getWindowSize();
 
     SDL_Rect viewport;
@@ -314,7 +323,7 @@ void SWOS::ShowMenu()
     logInfo("Showing menu %#x [%s], previous menu is %#x", A6.data, entryText(savedEntry), savedMenu);
 
     g_exitMenu = 0;
-    SAFE_INVOKE(PrepareMenu);
+    PrepareMenu();
 
     while (!g_exitMenu)
         menuProcCycle();
@@ -393,8 +402,43 @@ void SWOS::PrepareMenu()
 void SWOS::InitMainMenu()
 {
     InitMenuMusic();
-    SAFE_INVOKE(InitMainMenuStuff);
+    InitMainMenuStuff();
     menuFade = 1;
+}
+
+void SWOS::InitMainMenuStuff()
+{
+    ZeroOutStars();
+    twoPlayers = -1;
+    player1ClearFlag = 0;
+    player2ClearFlag = 0;
+    flipOnOff = 1;
+    inFriendlyMenu = 0;
+    isNationalTeam = 0;
+    D0 = kGameTypeNoGame;
+    InitCareerVariables();
+    menuStatus = 0;
+    menuFade = 0;
+    g_exitMenu = 0;
+    fireResetFlag = 0;
+    dseg_10E848 = 0;
+    dseg_10E846 = 0;
+    dseg_11F41C = -1;
+    dseg_11F41E = 0;
+    coachOrPlayer = 1;
+    SetDefaultNameAndSurname();
+    plNationality = kEng;       // English is the default
+    diyFileBuffer[2] = 0;
+    diyFileBuffer[3] = 0;
+    g_numSelectedTeams = 0;
+    InitHighestScorersTable();
+    teamsLoaded = 0;
+    poolplyrLoaded = 0;
+    impTactFilename[0] = 0;
+    chooseTacticsTeamPtr = 0;
+    InitUserTactics();
+
+    prepareMenu(mainMenu);
 }
 
 static MenuEntry *findNextEntry(byte nextEntryIndex, int nextEntryDirection)
@@ -563,6 +607,11 @@ void SWOS::ExitPlayMatch()
     SetExitMenuFlag();
 
     resetMatchControls();
+}
+
+void SWOS::ExitEuropeanChampionshipMenu()
+{
+    prepareMenu(mainMenu);
 }
 
 // in:

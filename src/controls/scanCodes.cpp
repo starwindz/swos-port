@@ -158,16 +158,16 @@ uint8_t sdlScanCodeToPc(SDL_Scancode sdlScanCode)
     case SDL_SCANCODE_Y: return 21;
     case SDL_SCANCODE_Z: return 44;
 
-    case SDL_SCANCODE_1: return 2;
-    case SDL_SCANCODE_2: return 3;
-    case SDL_SCANCODE_3: return 4;
-    case SDL_SCANCODE_4: return 5;
-    case SDL_SCANCODE_5: return 6;
-    case SDL_SCANCODE_6: return 7;
-    case SDL_SCANCODE_7: return 8;
-    case SDL_SCANCODE_8: return 9;
-    case SDL_SCANCODE_9: return 10;
-    case SDL_SCANCODE_0: return 11;
+    case SDL_SCANCODE_1: case SDL_SCANCODE_KP_1: return 2;
+    case SDL_SCANCODE_2: case SDL_SCANCODE_KP_2: return 3;
+    case SDL_SCANCODE_3: case SDL_SCANCODE_KP_3: return 4;
+    case SDL_SCANCODE_4: case SDL_SCANCODE_KP_4: return 5;
+    case SDL_SCANCODE_5: case SDL_SCANCODE_KP_5: return 6;
+    case SDL_SCANCODE_6: case SDL_SCANCODE_KP_6: return 7;
+    case SDL_SCANCODE_7: case SDL_SCANCODE_KP_7: return 8;
+    case SDL_SCANCODE_8: case SDL_SCANCODE_KP_8: return 9;
+    case SDL_SCANCODE_9: case SDL_SCANCODE_KP_9: return 10;
+    case SDL_SCANCODE_0: case SDL_SCANCODE_KP_0: return 11;
 
     case SDL_SCANCODE_ESCAPE: return 1;
     case SDL_SCANCODE_MINUS: return 12;
@@ -213,7 +213,6 @@ uint8_t sdlScanCodeToPc(SDL_Scancode sdlScanCode)
     case SDL_SCANCODE_PAGEUP: return 73;
     case SDL_SCANCODE_KP_MINUS: return 74;
     case SDL_SCANCODE_LEFT: return 75;
-    case SDL_SCANCODE_KP_5: return 76;
     case SDL_SCANCODE_RIGHT: return 77;
     case SDL_SCANCODE_KP_PLUS: return 78;
     case SDL_SCANCODE_END: return 79;

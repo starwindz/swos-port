@@ -14,7 +14,7 @@ ReadFromSoccerBin
 IntroWaitNextFrameInterval
 EGAFlip
 ChangeMenuMusic
-ExitOptions
+ExitOptions - SaveOptions
 OptionsMenuBeforeDraw
 ValidateHilPointerAdd - InitHighlightsPointers
 ResetAnimatedPatterns
@@ -39,8 +39,8 @@ PlayGoodJumpHeaderComment
 # unfortunately, these ranges will have to be updated when file limits change
 cseg_98EFD
 cseg_9A9E1 - cseg_A3368
-cseg_A3368
-cseg_A3375 - __init_80x87
+cseg_A3368 - @end
+cseg_A34A8 - __init_80x87
 __init_80x87
 dataStart - aChairmanScenes
 goalSamples - aSfxPierceM158_
@@ -69,9 +69,8 @@ int9Seg
 dta - totalNumberOfFiles
 aBenc2_dat
 aDemo_dat
-aDemo_dat_0 - friendlyGameMenu
 # extend this range when removing options menu
-aDemo1_car - SWOS_MainMenu
+aDemo1_car - friendlyGameMenu
 optionsMenu - pitchTypeStrTable
 
 # CD ROM variables
@@ -85,7 +84,6 @@ aErrorCdromDriverError_ - aSensibleWorldOfSoccerV2_0
 DummyProc01
 ProgramPIT
 ReadGamePort
-SetDefaultOptions
 PlayChairmanScene
 
 #TODO: remove EGA crap
@@ -119,9 +117,6 @@ g_commentary, 1
 @save-regs
 DrawSprite
 DrawSpriteInColor
-DrawSpriteCentered
-DrawChar
-TextToGoalScorersSprites
 DrawMenu
 MainKeysCheck
 FindStartingDword
@@ -143,6 +138,10 @@ SetCurrentEntry
 SaveSprite
 FilterKeys
 GetTextSize
+ZeroOutStars
+SetDefaultNameAndSurname
+InitHighestScorersTable
+InitUserTactics
 
 
 # list of symbols to export to header so they can be accessible from C++
@@ -454,7 +453,6 @@ menuFade, word
 CheckControls, function
 finalControlsStatus, int16_t
 previousMenuItem, MenuEntry *
-InitMainMenuStuff, function
 
 fire, word
 shortFire, word
@@ -493,6 +491,57 @@ replaySelected, word
 
 inputingText, word
 FilterKeys, function
+
+ZeroOutStars, function
+
+# main menu
+
+SWOSMainMenuInit, function
+EditTacticsMenu, function
+HighlightsMenu, function
+FriendlyMenu, function
+DIYCompetitionMenu, function
+PresetCompetitionMenu, function
+SeasonMenu, function
+CareerMenu, function
+StartContest, function
+SaveContest, function
+LoadOldCompetitionMenu, function
+EditCustomTeamMenu, function
+
+aEditTactics, array const char
+aEditCustomTeam, array const char
+aHighlights, array const char
+aFriendly, array const char
+aDiyCompetition, array const char
+aPresetCompetit, array const char
+aSeason, array const char
+aCareer, array const char
+saveFileTitle, array const char
+aLoadOldCompeti, array const char
+
+twoPlayers, word
+flipOnOff, word
+inFriendlyMenu, word
+isNationalTeam, word
+fireResetFlag, word
+dseg_10E848, word
+dseg_10E846, word
+dseg_11F41C, word
+dseg_11F41E, word
+coachOrPlayer, word
+plNationality, word
+diyFileBuffer, array byte
+g_numSelectedTeams, word
+teamsLoaded, word
+poolplyrLoaded, word
+impTactFilename, array char[14]
+chooseTacticsTeamPtr, void *
+
+InitCareerVariables, function
+SetDefaultNameAndSurname, function
+InitHighestScorersTable, function
+InitUserTactics, function
 
 ### debug dump
 breakCameraMode, word
@@ -615,3 +664,5 @@ StartMainGameLoop
 ExitPlayMatch
 ReplayExitMenuAfterFriendly
 Int2Ascii
+InitMainMenuStuff
+ExitEuropeanChampionshipMenu
