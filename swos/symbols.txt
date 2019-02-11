@@ -519,6 +519,8 @@ aSeason, array const char
 aCareer, array const char
 saveFileTitle, array const char
 aLoadOldCompeti, array const char
+aQuitToDos, array const char
+aReturnToGame, array const char
 
 twoPlayers, word
 flipOnOff, word

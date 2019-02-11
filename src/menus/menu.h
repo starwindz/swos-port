@@ -132,7 +132,6 @@ public:
 };
 
 class EntryCustomForegroundFunction : EntryElement {
-    using Func = void (*)(word, word);
     Func func;
 public:
     EntryCustomForegroundFunction(Func func) : EntryElement(kCustomForegroundFunc), func(func) {}

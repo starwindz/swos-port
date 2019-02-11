@@ -1026,3 +1026,37 @@ earlier:
 26.01.2019.
 - rewrote delay routine and switched to high precision timer... wow, the game feels much better! downside is that
   more CPU is used, but we'll see if something can be done there
+27.01.2019.
+- PrepareMenu() was calling ConvertMenu() without saving the registers... yikes, no idea how it even worked so far
+28.01.2019.
+/
+29.01.2019.
+/
+30.01.2019.
+/
+31.01.2019.
+/
+01.02.2019.
+/
+02.02.2019.
+/
+03.02.2019.
+/
+04.02.2019.
+/
+05.02.2019.
+/
+06.02.2019.
+/
+07.02.2019.
+/
+08.02.2019.
+/
+09.02.2019.
+- made test exit icon
+10.02.2019.
+- [mnu2h] added support for custom draw entry functions
+- test exit icon improved, and is now in place.. doesn't look half bad ;)
+11.02.2019.
+- implemented quit game menu
+- learned that I have to call CommonExitMenu() after showing any menu from main menu

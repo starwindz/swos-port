@@ -2,7 +2,7 @@
 // Joypad configuration menu
 //
 
-#include "optionsCommon.mh"
+#include "common.mh"
 
 Menu joypadConfigMenu
 {

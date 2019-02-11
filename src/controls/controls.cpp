@@ -297,7 +297,7 @@ static void checkQuitEvent()
     SDL_Event event;
     while (SDL_PollEvent(&event))
         if (event.type == SDL_QUIT)
-            std::exit(0);
+            std::exit(EXIT_SUCCESS);
 }
 
 bool anyInputActive()
@@ -548,7 +548,7 @@ static void checkKeyboardShortcuts(SDL_Scancode scanCode, bool pressed)
         // preserve alt-F1, ultra fast exit from SWOS (actually meant for invoking the debugger ;))
         if (pressed && altDown) {
             logInfo("Shutting down via keyboard shortcut...");
-            std::exit(0);
+            std::exit(EXIT_SUCCESS);
         }
         break;
     case SDL_SCANCODE_RETURN:
@@ -563,7 +563,7 @@ static void processEvent(const SDL_Event& event)
 {
     switch (event.type) {
     case SDL_QUIT:
-        std::exit(0);
+        std::exit(EXIT_SUCCESS);
 
     case SDL_KEYDOWN:
     case SDL_KEYUP:

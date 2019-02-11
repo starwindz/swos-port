@@ -2,7 +2,7 @@
 // Controls menu
 //
 
-#include "optionsCommon.mh"
+#include "common.mh"
 
 Menu controlOptionsMenu
 {
@@ -230,7 +230,7 @@ Menu controlOptionsMenu
     Entry autoConnectJoypadsLabel {
         y: @prevEndY + kNextPartGap
         height: kOptionHeight
-        color: kColumn1Color
+        color: kOptionsColumn1Color
         text: "AUTO-DETECT JOYPADS"
     }
 
@@ -238,7 +238,7 @@ Menu controlOptionsMenu
         x: kColumn2X
         y: autoConnectJoypadsLabel.y
         height: kOptionHeight
-        color: kColumn2Color
+        color: kOptionsColumn2Color
 
         stringTable: [ m_autoConnectJoypads, "OFF", "ON" ]
 

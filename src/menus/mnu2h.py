@@ -25,7 +25,7 @@ kMenuDefaults = (   # expansion of these is delayed, so they can have different 
 
 kNextEntryProperties = ('leftEntry', 'rightEntry', 'upEntry', 'downEntry', 'skipLeft', 'skipRight', 'skipUp', 'skipDown')
 
-kEntryFunctions = ('onSelect', 'beforeDraw', 'afterDraw')
+kEntryFunctions = ('onSelect', 'beforeDraw', 'afterDraw', 'customDrawBackground', 'customDrawForeground')
 
 kPreviousEntryFields = ('x', 'y', 'width', 'height', 'color', 'textFlags')
 
@@ -121,6 +121,8 @@ class Entry:
         self.number = None
         self.sprite = None
         self.stringTable = None
+        self.customDrawBackground = None
+        self.customDrawForeground = None
 
         self.textFlags = 0
         self.template = False
@@ -596,7 +598,7 @@ class Parser:
         assert(isinstance(property, str))
         assert(isinstance(line, int))
 
-        conflictingProperties = ('text', 'stringTable', 'number', 'sprite')
+        conflictingProperties = ('text', 'stringTable', 'number', 'sprite', 'customDrawForeground')
         if property in conflictingProperties:
             for prop in conflictingProperties:
                 if prop != property and getattr(entry, prop) is not None:
@@ -1502,6 +1504,12 @@ class Parser:
 
         if entry.sprite is not None:
             result.append(f'EntryForegroundSprite efs{ord}{{ {entry.sprite} }};')
+
+        if entry.customDrawForeground is not None:
+            result.append(f'EntryCustomForegroundFunction ecff{ord} {{ { entry.customDrawForeground} }};')
+
+        if entry.customDrawBackground is not None:
+            result.append(f'EntryCustomBackgroundFunction ecbf{ord}{{ {entry.customDrawBackground} }};')
 
         if entry.color:
             result.append(f'EntryColor ec{ord}{{ {entry.color} }};')

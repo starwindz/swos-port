@@ -1,5 +1,5 @@
 //
-// Recreation of main menu
+// Recreation of the SWOS main menu
 //
 
 Menu mainMenu {
@@ -17,6 +17,9 @@ Menu mainMenu {
     kColumn2X = 154
     kBottomEntriesX = 27
     kStartY = 40
+
+    kExitWidth = 31
+    kExitHeight = 17
 
     defaultX: kColumn1X
     defaultY: @prevEndY + 4
@@ -172,8 +175,23 @@ Menu mainMenu {
         color: @kLightBrownWithOrangeFrame
 
         upEntry: saveContest
+        downEntry: exit
+        leftEntry: exit
 
         text: aLoadOldCompeti
         onSelect: ~LoadOldCompetitionMenu
+    }
+
+    Entry exit {
+        x: kColumn1X - 6
+        y: @kScreenHeight - kExitHeight - 2
+        width: kExitWidth
+        height: kExitHeight
+
+        upEntry: loadOldCompetition
+        rightEntry: loadOldCompetition
+
+        customDrawForeground: drawExitIcon
+        onSelect: showQuitMenu
     }
 }

@@ -2,7 +2,7 @@
 // Audio options menu
 //
 
-#include "optionsCommon.mh"
+#include "common.mh"
 
 Menu audioOptionsMenu
 {
@@ -20,20 +20,20 @@ Menu audioOptionsMenu
         color: kHeaderColor
     }
 
-    defaultX: kColumn1X
+    defaultX: kOptionsColumn1X
 
     TemplateEntry {
-        color: kColumn1Color
+        color: kOptionsColumn1Color
     }
 
     // column 1
 
     Entry {
-        y: kStartY
+        y: kOptionsStartY
         text: "SOUND"
     }
 
-    defaultY: @prevEndY + kRowDistance + 1
+    defaultY: @prevEndY + kOptionsRowDistance + 1
 
     Entry { text: aMenuMusic }
     Entry { text: aCommentary }
@@ -43,10 +43,10 @@ Menu audioOptionsMenu
 
     // column 2
 
-    defaultX: kColumn2X
+    defaultX: kOptionsColumn2X
 
     TemplateEntry {
-        color: kColumn2Color
+        color: kOptionsColumn2Color
     }
 
     kChangerWidth = 16
@@ -55,7 +55,7 @@ Menu audioOptionsMenu
     kChangerOptionWidth = kOptionWidth - 2 * kChangerWidth - 2
 
     Entry masterSound {
-        y: kStartY
+        y: kOptionsStartY
 
         stringTable: [ g_soundOff, aOn, aOff ]  // notice backward order
 

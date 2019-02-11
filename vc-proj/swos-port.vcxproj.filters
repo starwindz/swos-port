@@ -194,10 +194,13 @@
     <Natvis Include="Types.natvis" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\src\menus\optionsCommon.mh">
+    <None Include="..\src\menus\mnu2h.py">
       <Filter>Source Files\menu</Filter>
     </None>
-    <None Include="..\src\menus\mnu2h.py">
+    <None Include="..\src\menus\quit.mnu">
+      <Filter>Source Files\menu</Filter>
+    </None>
+    <None Include="..\src\menus\common.mh">
       <Filter>Source Files\menu</Filter>
     </None>
   </ItemGroup>

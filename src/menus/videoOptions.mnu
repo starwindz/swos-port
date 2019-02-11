@@ -2,7 +2,7 @@
 // Video options menu
 //
 
-#include "optionsCommon.mh"
+#include "common.mh"
 
 Menu videoOptionsMenu
 {

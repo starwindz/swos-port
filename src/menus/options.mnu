@@ -2,7 +2,7 @@
 // Options menu entered from the main menu, and its sub-menus
 //
 
-#include "optionsCommon.mh"
+#include "common.mh"
 
 Menu optionsMenu
 {
@@ -89,18 +89,18 @@ Menu gameplayOptionsMenu
         color: kHeaderColor
     }
 
-    defaultX: kColumn1X
+    defaultX: kOptionsColumn1X
 
     TemplateEntry {
-        color: kColumn1Color
+        color: kOptionsColumn1Color
     }
 
     Entry {
-        y: kStartY
+        y: kOptionsStartY
         text: aFriendlyDiyGam
     }
 
-    defaultY: @prevEndY + kRowDistance
+    defaultY: @prevEndY + kOptionsRowDistance
 
     Entry { text: aFixPitchType }
     Entry { text: aAutoReplays }
@@ -110,14 +110,14 @@ Menu gameplayOptionsMenu
     Entry { text: "GAME STYLE" }
 
     // start of column 2, where the actual controls are
-    defaultX: kColumn2X
+    defaultX: kOptionsColumn2X
 
     TemplateEntry {
-        color: kColumn2Color
+        color: kOptionsColumn2Color
     }
 
     Entry gameLength {
-        y: kStartY
+        y: kOptionsStartY
         stringTable: ~gameLengthStrTable
         onSelect: ~ChangeGameLength
         downEntry: >

@@ -1,0 +1,36 @@
+//
+// Quit to Windows/Return menu
+//
+
+#include "common.mh"
+
+Menu quitMenu {
+    defaultX: kPromptItemsX
+    defaultWidth: kPromptButtonWidth
+    defaultHeight: kPromptButtonHeight
+    defaultTextFlags: @kBigFont
+
+    onInit: quitMenuOnInit
+
+    Entry quit {
+        y: kPromptTopItemY
+
+        color: kPromptTopItemColor
+        text: aQuitToDos
+
+        downEntry: >
+
+        onSelect: quitGame
+    }
+
+    Entry returnToGame {
+        y: kPromptBottomItemY
+
+        color: kPromptBottomItemColor
+        text: aReturnToGame
+
+        upEntry: <
+
+        onSelect: returnToGame
+    }
+}

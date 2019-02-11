@@ -2,17 +2,19 @@
 // Replay/Exit menu after a friendly game
 //
 
+#include "common.mh"
+
 Menu replayExitMenu
 {
-    defaultWidth: 150
-    defaultHeight: 20
+    defaultX: kPromptItemsX
+    defaultWidth: kPromptButtonWidth
+    defaultHeight: kPromptButtonHeight
     defaultTextFlags: @kBigFont
 
     onInit: replayExitMenuOnInit
 
     Entry replay {
-        x: 85
-        y: 66
+        y: kPromptTopItemY
 
         color: @kGreen
         text: aReplay
@@ -23,8 +25,7 @@ Menu replayExitMenu
     }
 
     Entry exit {
-        x: 85
-        y: 116
+        y: kPromptBottomItemY
 
         color: @kLightBrownWithOrangeFrame
         text: aExit

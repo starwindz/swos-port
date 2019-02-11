@@ -508,7 +508,7 @@ __declspec(naked) void SWOS::DrawBenchAndSubsMenu_OnEnter()
 
 void SWOS::EndProgram()
 {
-    std::exit(1);
+    std::exit(EXIT_FAILURE);
 }
 
 void SWOS::StartMainGameLoop()
