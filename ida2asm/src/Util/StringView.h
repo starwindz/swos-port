@@ -42,7 +42,7 @@ public:
     bool operator!=(const String& rhs) const { return !operator==(rhs); }
     bool operator!=(char c) const { return !operator==(c); }
     char operator[](size_t index) const;
-    operator std::string() const { return { m_str,m_length }; }
+    operator std::string() const { return { m_str, m_length }; }
     std::string string() const;
     char *c_str() const;    // caller needs to delete
     const char *end() const;

@@ -21,7 +21,7 @@ month=${BASH_REMATCH[2]}
 year=${BASH_REMATCH[3]}
 hour=${BASH_REMATCH[4]}
 
-if (( $hour < 13 )); then
+if (( $hour < 14 )); then
     date="$(date -d yesterday +'%d.%m.%Y')"
 else
     date=$day.$month.$year
@@ -59,6 +59,11 @@ do
 done
 
 destPath=$(cygpath -w $destPath)
+
 echo "Creating archive: $destPath"
-"$rar" a -r -m5 -s -- "$destPath" 'doc/*' 'ida2asm/*' 'src/*' 'swos/*' 'vc-proj/*.sln' 'vc-proj/*.vcxproj' \
-    'vc-proj/*.user' 'vc-proj/*.filters' vc-proj/Types.natvis backup.sh
+"$rar" a -r -m5 -s -x"*__pycache__*" -- "$destPath" 'doc/*' 'ida2asm/*' 'mnu2h/*' 'src/*' 'swos/*' \
+    'tests/SdlAddressTableFetcher/src/*' 'tests/SdlAddressTableFetcher/vc-proj/*.sln' \
+    'tests/SdlAddressTableFetcher/vc-proj/*.vcxproj' 'tests/SdlAddressTableFetcher/vc-proj/*.filters' \
+    'tests/src/*' 'tests/vc-proj/*.sln' 'tests/vc-proj/*.vcxproj' 'tests/vc-proj/*.filters' \
+    'vc-proj/*.sln' 'vc-proj/*.vcxproj' 'vc-proj/*.user' 'vc-proj/*.filters' \
+    vc-proj/Types.natvis backup.sh README.md

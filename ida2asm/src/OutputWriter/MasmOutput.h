@@ -34,7 +34,7 @@ private:
     void outputPublics();
 
     void outputStructs();
-    void outputStruct(Struct *struc);
+    void outputStruct(Struct& struc);
 
     void outputCExternDefs();
 

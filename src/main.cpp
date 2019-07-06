@@ -6,12 +6,17 @@
 #include "crash.h"
 #include "joypads.h"
 
-int main(int argc, char **argv)
+static void turnOnDebugHeap()
 {
 #ifndef NDEBUG
     auto flags = _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG);
     _CrtSetDbgFlag(flags | _CRTDBG_ALLOC_MEM_DF | _CRTDBG_DELAY_FREE_MEM_DF | _CRTDBG_CHECK_ALWAYS_DF);
 #endif
+}
+
+int main(int argc, char **argv)
+{
+    turnOnDebugHeap();
 
     auto commandLineWarnings = parseCommandLine(argc, argv);
 

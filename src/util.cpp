@@ -1,5 +1,6 @@
 #include "util.h"
 #include "log.h"
+#include <dirent.h>
 #include <ctime>
 #include <chrono>
 #include <random>
@@ -76,20 +77,10 @@ std::string formatNumberWithCommas(int64_t num)
     return result;
 }
 
-char getDirSeparator()
-{
-    return '\\';
-}
-
-std::string joinPaths(const char *path1, const char *path2)
-{
-    return std::string(path1) + getDirSeparator() + path2;
-}
-
 void toUpper(char *str)
 {
-    while (*str)
-        *str++ = toupper(*str);
+    while (*str++)
+        str[-1] = toupper(str[-1]);
 }
 
 constexpr int kMaxRegStorageCapacity = 10;
@@ -134,6 +125,20 @@ int getRandomInRange(int min, int max)
     return dist(m_mt);
 }
 
+__declspec(naked) int setZeroFlagAndD0()
+{
+    __asm {
+        test eax, eax
+        mov  D0, eax
+        jz   done
+
+        or eax, eax
+
+done:
+        retn
+    }
+}
+
 bool isMatchRunning()
 {
     return screenWidth == kGameScreenWidth;
@@ -143,3 +148,21 @@ void beep()
 {
     ::PlaySound(TEXT("SystemExclamation"), nullptr, SND_ALIAS | SND_ASYNC);
 }
+
+#ifdef DEBUG
+bool isDebuggerPresent()
+{
+    return ::IsDebuggerPresent() != 0;
+}
+
+void debugBreak()
+{
+    __debugbreak();
+}
+
+void debugBreakIfDebugged()
+{
+    if (isDebuggerPresent())
+        debugBreak();
+}
+#endif

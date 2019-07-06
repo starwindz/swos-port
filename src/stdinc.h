@@ -7,9 +7,13 @@
 #include <numeric>
 #include <deque>
 #include <unordered_map>
+#include <unordered_set>
 #include <atomic>
 #include <thread>
 #include <array>
+#include <vector>
+#include <functional>
+#include <condition_variable>
 
 #ifdef _WIN32
 #include <Windows.h>

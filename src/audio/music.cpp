@@ -6,10 +6,6 @@
 #include "options.h"
 #include <adlmidi.h>
 
-#ifdef _WIN32
-#pragma comment(lib, "winmm.lib")
-#endif
-
 enum class State {
     kStart,
     kPlayingTitleSong,

@@ -18,10 +18,12 @@ ExitOptions - SaveOptions
 OptionsMenuBeforeDraw
 ValidateHilPointerAdd - InitHighlightsPointers
 ResetAnimatedPatterns
+FindFiles
 
 # CD ROM routines
 CDROM_GetInfo - Text2Sprite
-FindFirstFile - SelectFilesInit
+# remove select files menu functions as well
+FindFirstFile - SelectFileToSaveDialog
 
 # joypads
 Joy1SetStatus - TryRestartingMusic
@@ -40,8 +42,7 @@ PlayGoodJumpHeaderComment
 cseg_98EFD
 cseg_9A9E1 - cseg_A3368
 cseg_A3368 - @end
-cseg_A34A8 - __init_80x87
-__init_80x87
+Int8Handler - dseg
 dataStart - aChairmanScenes
 goalSamples - aSfxPierceM158_
 jumpHeadersSamples - PIT_countdown
@@ -66,7 +67,8 @@ aPressEscToReturnToDosOrSpaceToCont - convertKeysTable
 nextEntryDirectionOffsets
 int9Ofs
 int9Seg
-dta - totalNumberOfFiles
+# remove select files menu too
+dta - highlightsMenu
 aBenc2_dat
 aDemo_dat
 # extend this range when removing options menu
@@ -212,7 +214,6 @@ g_currentMenu, array char[6500]
 g_exitMenu, word
 g_currentMenuPtr, MenuBase *
 RestorePreviousMenu, function
-g_extension, array char
 g_pitchDatBuffer, array char[10032]
 skillsPerQuadrant, array char[245]
 ofsPitch1Dat, const char *
@@ -545,6 +546,10 @@ SetDefaultNameAndSurname, function
 InitHighestScorersTable, function
 InitUserTactics, function
 
+# select files menu
+aAbort, array const char
+aSave, array const char
+
 ### debug dump
 breakCameraMode, word
 
@@ -573,7 +578,7 @@ InputText, 23
 
 
 # list of symbols that will be replaced by code from C++
-# it is assumed to be a label in assembly, and void parameterless function in C++
+# it is assumed to be a label in assembly, and a parameterless function in C++, returning void or int
 # they'll go to SWOS namespace to avoid name clashes
 
 @import
@@ -588,8 +593,6 @@ FlipInMenu
 SetPalette
 ShowMenu
 SetPrevVideoModeEndProgram
-FindFiles
-FindFilesExtensionPresent
 ReadPitchFile
 WaitRetrace
 Flip
@@ -668,3 +671,5 @@ ReplayExitMenuAfterFriendly
 Int2Ascii
 InitMainMenuStuff
 ExitEuropeanChampionshipMenu
+GetFilenameAndExtension, int
+SelectFileToSaveDialog, int

@@ -17,7 +17,7 @@
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="token-lookup-tester\Debug\main.cpp">
+    <ClCompile Include="$(IntDir)\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

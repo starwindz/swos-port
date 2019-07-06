@@ -3,6 +3,7 @@
 #include "StringMap.h"
 #include "StringList.h"
 #include "Tokenizer.h"
+#include "BlockList.h"
 
 class SymbolFileParser
 {
@@ -32,7 +33,9 @@ private:
     void parseSymbolFile();
     SymbolAction getSectionName(const char *begin, const char *end);
     const char *addExportEntry(const char *start, const char *p);
+    const char *addImportEntry(const char *start, const char *p);
     std::pair<const char *, const char *> getNextToken(const char *p);
+    static void skipWhiteSpace(const char *& p);
     void error(const std::string& desc);
 
     void xfwrite(FILE *file, const char *buf, size_t len);
@@ -84,6 +87,7 @@ private:
     StringMap<SymbolRangeHolder> m_procs;
     StringMap<SymbolRangeHolder> m_replacements;
 
+#pragma pack(push, 1)
     struct ExportEntry {
         String symbol;
         String prefix;
@@ -95,6 +99,35 @@ private:
     };
 
     std::vector<ExportEntry> m_exportEntries;
+
+    enum ImportReturnType : uint8_t { kVoid, kInt, };
+
+    class ImportEntry {
+    public:
+        ImportEntry(const String& name, ImportReturnType returnType = kVoid) : m_returnType(returnType) {
+            assert(name.length());
+            Util::assignSize(m_nameLength, name.length());
+            memcpy((char *)this + sizeof(*this), name.str(), name.length());
+        }
+        static size_t requiredSize(const String& name, ImportReturnType = kVoid) {
+            return sizeof(ImportEntry) + name.length();
+        }
+        size_t size() const {
+            return sizeof(*this) + m_nameLength;
+        }
+        const String name() const {
+            return { reinterpret_cast<const char *>(this) + sizeof(*this), m_nameLength };
+        }
+        ImportReturnType returnType() const { return m_returnType; }
+        ImportEntry *next() const { return reinterpret_cast<ImportEntry *>((char *)this + size()); }
+
+    private:
+        ImportReturnType m_returnType;
+        uint8_t m_nameLength;
+    };
+#pragma pack(pop)
+
+    BlockList<ImportEntry> m_importEntries;
 
     enum KeywordType { kNotKeyword, kPrefix, kFunction, kFunctionPointer, kPointer, kPtr, kArray };
 

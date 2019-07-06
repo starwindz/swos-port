@@ -76,9 +76,9 @@ void logv(LogCategory category, const char *format, va_list args)
 
     auto len = snprintf(buf, sizeof(buf), "[%d-%02d-%02d %02d:%02d:%02d.%03d] %s ", tm.year, tm.month, tm.day, tm.hour, tm.min, tm.sec, tm.msec, catStr);
 
-    len += vsnprintf(buf + len, sizeof(buf) - len, format, args);
+    len += vsnprintf(buf + len, sizeof(buf) - len - 1, format, args);
 
-    if (buf[len - 1] != '\n' && len <= sizeof(buf) - 2) {
+    if (len >= 0 && buf[len - 1] != '\n' && len <= sizeof(buf) - 2) {
         buf[len++] = '\n';
         buf[len] = '\0';
     }

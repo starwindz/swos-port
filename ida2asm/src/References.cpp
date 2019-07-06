@@ -106,10 +106,10 @@ void References::resolve()
 
 void References::resolve(const References& rhs)
 {
-    for (auto ref : m_references) {
-        auto& type = ref->cargo->type;
+    for (const auto& ref : m_references) {
+        auto& type = ref.cargo->type;
         if (type == kNone) {
-            auto label = rhs.m_labels.get(ref->text, ref->hash);
+            auto label = rhs.m_labels.get(ref.text, ref.hash);
             if (label) {
                 if (&rhs == this) {
                     type = kIgnore;
@@ -119,7 +119,7 @@ void References::resolve(const References& rhs)
 
                     if (type == kUser) {
                         assert(!label->structPtr);
-                        ref->cargo->structPtr = label->structNameLength();
+                        ref.cargo->structPtr = label->structNameLength();
                     }
 
                     label->pub = 1;
@@ -131,9 +131,9 @@ void References::resolve(const References& rhs)
 
 void References::resolveSegments(const SegmentSet& segments)
 {
-    for (auto ref : m_references)
-        if (segments.isSegment(ref->text))
-            ref->cargo->type = kIgnore;
+    for (const auto& ref : m_references)
+        if (segments.isSegment(ref.text))
+            ref.cargo->type = kIgnore;
 }
 
 std::vector<String> References::publics() const
@@ -145,9 +145,9 @@ std::vector<String> References::publics() const
         if (m_amigaRegisters[i])
             result.emplace_back(indexToAmigaRegister(i));
 
-    for (auto ref : m_labels)
-        if (ref->cargo->pub)
-            result.emplace_back(ref->text);
+    for (const auto& ref : m_labels)
+        if (ref.cargo->pub)
+            result.emplace_back(ref.text);
 
     return result;
 }
@@ -162,9 +162,9 @@ auto References::externs() const -> std::vector<std::tuple<String, ReferenceType
         if (!m_amigaRegisters[i])
             result.emplace_back(std::make_tuple(indexToAmigaRegister(i), kDword, String()));
 
-    for (auto ext : m_references)
-        if (ext->cargo->type != kIgnore)
-            result.emplace_back(std::make_tuple(ext->text, ext->cargo->type, ext->cargo->structName()));
+    for (auto& ext : m_references)
+        if (ext.cargo->type != kIgnore)
+            result.emplace_back(std::make_tuple(ext.text, ext.cargo->type, ext.cargo->structName()));
 
     return result;
 }

@@ -65,8 +65,8 @@ Menu videoOptionsMenu
     defaultX: @prevEndX + 1
 
     Entry windowed {
-        x: @prevEndX + 4
-        width: @kTextWidth + 3
+        x: @prevEndX + 3
+        width: @kTextWidth + 4
 
         text: "WINDOWED"
 
@@ -93,13 +93,13 @@ Menu videoOptionsMenu
     }
 
     Entry {
-        x: @prevEndX
+        x: @prevEndX + 2
         text: "X"
         width: 10
     }
 
     Entry customHeight {
-        x: @prevEndX - 1
+        x: @prevEndX - 3
         y: @prevY + 1
         width: kCustomSizeWidth
         height: kBoxHeight
@@ -134,6 +134,7 @@ Menu videoOptionsMenu
         height: kRowHeight - 2
 
         textFlags: 0
+        // using direct constants instead of variables here in order to be able to measure width above
         stringTable: [ m_windowResizable, "OFF", "ON" ]
         color: @kLightBlue
 
@@ -177,7 +178,7 @@ Menu videoOptionsMenu
         width: kResolutionFieldWidth
 
         textFlags: 0
-        text: "FULL SCREEN:"
+        text: @kAlloc
 
         upEntry: borderlessMaximized
         downEntry: >

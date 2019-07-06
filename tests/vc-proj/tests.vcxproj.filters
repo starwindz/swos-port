@@ -1,0 +1,175 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Source Files\project-files">
+      <UniqueIdentifier>{63b2a21f-abc6-47f1-8d32-6c6acb5be7ce}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\project-files\menus">
+      <UniqueIdentifier>{72303bb2-ec78-4598-8030-b7d399205a37}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\project-files\controls">
+      <UniqueIdentifier>{fba6e15c-e16d-4914-bd89-19c7f5902c58}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\project-files\files">
+      <UniqueIdentifier>{0474d92f-58ba-400a-bb35-4275e81a871b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\mocks">
+      <UniqueIdentifier>{8d2585d8-e432-423f-a468-66090385c09c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\project-files\audio">
+      <UniqueIdentifier>{7b77a1ef-3035-4b55-bf69-130ad780e180}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\tests">
+      <UniqueIdentifier>{a9821bfe-9bcb-4096-b387-e3b54860c3cc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\lib">
+      <UniqueIdentifier>{3ebd6a1a-d5bd-4c33-b52a-084450159766}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\stdinc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\menus\menu.cpp">
+      <Filter>Source Files\project-files\menus</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\controls\controlOptionsMenu.cpp">
+      <Filter>Source Files\project-files\controls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\controls\controls.cpp">
+      <Filter>Source Files\project-files\controls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\controls\joypadConfigMenu.cpp">
+      <Filter>Source Files\project-files\controls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\controls\joypads.cpp">
+      <Filter>Source Files\project-files\controls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\controls\scanCodes.cpp">
+      <Filter>Source Files\project-files\controls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\files\file.cpp">
+      <Filter>Source Files\project-files\files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\files\selectFilesMenu.cpp">
+      <Filter>Source Files\project-files\files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\game.cpp">
+      <Filter>Source Files\project-files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\init.cpp">
+      <Filter>Source Files\project-files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\pitch.cpp">
+      <Filter>Source Files\project-files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\audio\comments.cpp">
+      <Filter>Source Files\project-files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\util.cpp">
+      <Filter>Source Files\project-files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\audio\SoundSample.cpp">
+      <Filter>Source Files\project-files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\tests\BaseTest.cpp">
+      <Filter>Source Files\tests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\tests\VideoOptionsMenuTest.cpp">
+      <Filter>Source Files\tests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\video\videoOptionsMenu.cpp">
+      <Filter>Source Files\project-files\menus</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\mocks\mockAudio.cpp">
+      <Filter>Source Files\mocks</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\mocks\mockChants.cpp">
+      <Filter>Source Files\mocks</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\mocks\mockLog.cpp">
+      <Filter>Source Files\mocks</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\mocks\mockMusic.cpp">
+      <Filter>Source Files\mocks</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\mocks\mockOptions.cpp">
+      <Filter>Source Files\mocks</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\mocks\mockRender.cpp">
+      <Filter>Source Files\mocks</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\mocks\mockSdlMixer.cpp">
+      <Filter>Source Files\mocks</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\mocks\mockSfx.cpp">
+      <Filter>Source Files\mocks</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\sdlProcs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib\unitTest.cpp">
+      <Filter>Source Files\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib\bmpWriter.cpp">
+      <Filter>Source Files\lib</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\stdinc.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\menus\menu.h">
+      <Filter>Source Files\project-files\menus</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\controls\controlOptionsMenu.h">
+      <Filter>Source Files\project-files\controls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\controls\controls.h">
+      <Filter>Source Files\project-files\controls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\controls\joypadConfigMenu.h">
+      <Filter>Source Files\project-files\controls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\controls\joypads.h">
+      <Filter>Source Files\project-files\controls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\controls\scanCodes.h">
+      <Filter>Source Files\project-files\controls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\files\file.h">
+      <Filter>Source Files\project-files\files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\files\selectFilesMenu.h">
+      <Filter>Source Files\project-files\files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\tests\BaseTest.h">
+      <Filter>Source Files\tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\tests\VideoOptionsMenuTest.h">
+      <Filter>Source Files\tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\unitTest.h">
+      <Filter>Source Files\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\mocks\mockRender.h">
+      <Filter>Source Files\mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\sdlProcs.h">
+      <Filter>Source Files\project-files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\exceptions.h">
+      <Filter>Source Files\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\bmpWriter.h">
+      <Filter>Source Files\lib</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

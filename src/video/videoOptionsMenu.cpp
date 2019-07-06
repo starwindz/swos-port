@@ -1,7 +1,11 @@
 #include "videoOptions.mnu.h"
 
+constexpr auto kSelectedColor = kSoftBlueText;
+
 static bool m_menuShown;
 static int16_t m_windowResizable = 1;
+
+using namespace VideoOptionsMenu;
 
 void showVideoOptionsMenu()
 {
@@ -11,8 +15,6 @@ void showVideoOptionsMenu()
 
 static void videoOptionsMenuOnInit()
 {
-    using namespace VideoOptionsMenu;
-
     MouseWheelEntryList entryList;
 
     for (int i = 0; i < kNumResolutionFields; i++)
@@ -24,17 +26,15 @@ static void videoOptionsMenuOnInit()
     setMouseWheelEntries(entryList);
 }
 
-static void updateWindowSize()
+static void updateDisplayedWindowSize()
 {
-    using namespace VideoOptionsMenu;
-
     int width, height;
     std::tie(width, height) = getWindowSize();
 
-    auto widthEntry = getMenuEntryAddress(Entries::customWidth);
+    auto widthEntry = getMenuEntryAddress(customWidth);
     widthEntry->u2.number = width;
 
-    auto heightEntry = getMenuEntryAddress(Entries::customHeight);
+    auto heightEntry = getMenuEntryAddress(customHeight);
     heightEntry->u2.number = height;
 
     m_windowResizable = getWindowResizable();
@@ -74,9 +74,7 @@ static DisplayModeList getDisplayModes(int displayIndex)
                 continue;
             default:
                 bool different = result.empty() ? true : result.back().first != mode.w || result.back().second != mode.h;
-                bool acceptable = mode.w >= 640 && 10 * mode.w == 16 * mode.h || mode.w % 1920 == 0 && mode.h % 1080 == 0;
-
-                if (different && acceptable)
+                if (different)
                     result.emplace_back(mode.w, mode.h);
             }
         } else {
@@ -88,7 +86,7 @@ static DisplayModeList getDisplayModes(int displayIndex)
     for (size_t i = 0; i < result.size(); i++)
         logInfo("  %2d %d x %d", i, result[i].first, result[i].second);
 
-    std::reverse(result.begin(), result.end());
+    std::sort(result.rbegin(), result.rend());
     return result;
 }
 
@@ -97,8 +95,6 @@ static int m_resListOffset;
 
 static void fillResolutionListUi()
 {
-    using namespace VideoOptionsMenu;
-
     int currentEntry = getCurrentEntry();
 
     for (int i = resolutionField0; i < resolutionField0 + kNumResolutionFields; i++)
@@ -113,7 +109,8 @@ static void fillResolutionListUi()
         auto height = m_resolutions[i].second;
         snprintf(entry->u2.string, 30, "%d X %d", width, height);
 
-        if (getFullScreenDimensions() == std::make_pair(width, height))
+        entry->u1.entryColor = kLightBlue;
+        if (isInFullScreenMode() && getFullScreenDimensions() == std::make_pair(width, height))
             entry->u1.entryColor = kPurple;
     }
 
@@ -122,10 +119,23 @@ static void fillResolutionListUi()
             setCurrentEntry(VideoOptionsMenu::exit);
 }
 
+static void updateFullScreenAvailability()
+{
+    auto fullScreenEntry = getMenuEntryAddress(fullScreen);
+    bool fullScreenUnavailable = m_resolutions.empty();
+
+    strcpy(fullScreenEntry->u2.string, "FULL SCREEN:");
+    if (fullScreenUnavailable)
+        strcpy(fullScreenEntry->u2.string + 11, " UNAVAILABLE");
+
+    fullScreenEntry->disabled = fullScreenUnavailable;
+
+    auto fullScreenArrowEntry = getMenuEntryAddress(fullScreenArrow);
+    fullScreenArrowEntry->invisible = getWindowMode() != kModeFullScreen || fullScreenUnavailable;
+}
+
 static void scrollResolutionsDownSelected()
 {
-    using namespace VideoOptionsMenu;
-
     if (m_resolutions.size() > kNumResolutionFields)
         m_resListOffset = std::min(m_resListOffset + 1, static_cast<int>(m_resolutions.size()) - kNumResolutionFields);
 }
@@ -138,8 +148,6 @@ static void scrollResolutionsUpSelected()
 
 static void updateScrollArrows()
 {
-    using namespace VideoOptionsMenu;
-
     int hide = m_resolutions.size() <= kNumResolutionFields;
 
     int selectedEntry = getCurrentEntry();
@@ -169,11 +177,7 @@ static void changeResolutionSelected()
 
     char buffer[64];
 
-    if (!setFullScreenResolution(m_resolutions[i].first, m_resolutions[i].second)) {
-        logWarn("Failed to switch to %s", entry->u2.string);
-        snprintf(buffer, sizeof(buffer), "FAILED TO SWITCH TO %s", entry->u2.string);
-        showError(buffer);
-    } else {
+    if (setFullScreenResolution(m_resolutions[i].first, m_resolutions[i].second)) {
         strcpy_s(buffer, entry->u2.string);
         if (auto space = strchr(buffer, ' ')) {
             *space = 'x';
@@ -185,83 +189,70 @@ static void changeResolutionSelected()
         }
 
         logInfo("Successfully switched to %s", buffer);
+    } else {
+        logWarn("Failed to switch to %s", entry->u2.string);
+        snprintf(buffer, sizeof(buffer), "FAILED TO SWITCH TO %s", entry->u2.string);
+        showError(buffer);
+    }
+}
+
+enum Dimension { kWidth, kHeight };
+
+static void inputWindowWidthOrHeight(Dimension dimension)
+{
+    if (getWindowMode() == kModeWindow) {
+        auto entry = A5.as<MenuEntry *>();
+        auto numberEntered = inputNumber(entry, 5, 0, 99999);
+
+        if (numberEntered) {
+            int widthOrHeight = entry->u2.number;
+
+            int windowWidth, windowHeight;
+            std::tie(windowWidth, windowHeight) = getWindowSize();
+
+            bool isInputWidth = dimension == kWidth;
+            int oldWidthOrHeight = isInputWidth ? windowWidth : windowHeight;
+            int minAllowedSize = isInputWidth ? kVgaWidth : kVgaHeight;
+
+            if (widthOrHeight != oldWidthOrHeight && widthOrHeight >= minAllowedSize) {
+                isInputWidth ? setWindowSize(widthOrHeight, windowHeight) : setWindowSize(windowWidth, widthOrHeight);
+                centerWindow();
+            }
+        }
     }
 }
 
 static void inputWindowWidth()
 {
-    if (getWindowMode() == kModeWindow) {
-        auto entry = A5.as<MenuEntry *>();
-        auto numberEntered = inputNumber(entry, 5, 0, 99999);
-
-        if (numberEntered) {
-            int width = entry->u2.number;
-
-            int windowWidth, windowHeight;
-            std::tie(windowWidth, windowHeight) = getWindowSize();
-
-            if (width != windowWidth && width >= kVgaWidth) {
-                setWindowSize(width, windowHeight);
-                centerWindow();
-            }
-        }
-    }
+    inputWindowWidthOrHeight(kWidth);
 }
 
 static void inputWindowHeight()
 {
-    if (getWindowMode() == kModeWindow) {
-        auto entry = A5.as<MenuEntry *>();
-        auto numberEntered = inputNumber(entry, 5, 0, 99999);
-
-        if (numberEntered) {
-            int height = entry->u2.number;
-
-            int windowWidth, windowHeight;
-            std::tie(windowWidth, windowHeight) = getWindowSize();
-
-            if (height != windowHeight && height >= kVgaHeight) {
-                setWindowSize(windowWidth, height);
-                centerWindow();
-            }
-        }
-    }
+    inputWindowWidthOrHeight(kHeight);
 }
 
-static void enableCustomSizeFields(bool enabled)
+static void setWindowedFieldsColor(bool selected)
 {
-    using namespace VideoOptionsMenu;
-
-    for (int i : { windowed, resizable, })
-        getMenuEntryAddress(i)->textColor = enabled ? kWhiteText : kGrayText;
-
-    for (int i : { customWidth, customHeight, resizableOnOff, })
-        getMenuEntryAddress(i)->u1.entryColor = enabled ? kLightBlue : kGray;
+    getMenuEntryAddress(windowed)->textColor = selected ? kSelectedColor : kWhiteText;
 }
 
-static void enableBorderlessFields(bool enabled)
+static void setBorderlessFieldsColor(bool selected)
 {
-    auto color = enabled ? kWhiteText : kGrayText;
-    getMenuEntryAddress(VideoOptionsMenu::borderlessMaximized)->textColor = color;
+    getMenuEntryAddress(VideoOptionsMenu::borderlessMaximized)->textColor = selected ? kSelectedColor : kWhiteText;;
 }
 
-static void enableFullScreenFields(bool enabled)
+static void setFullScreenFieldsColor(bool selected)
 {
-    using namespace VideoOptionsMenu;
-
-    int textColor = enabled ? kWhiteText : kGrayText;
-    int backColor = enabled ? kLightBlue : kGray;
+    int textColor = selected ? kSelectedColor : kWhiteText;
+    if (m_resolutions.empty())
+        textColor = kGrayText;
 
     getMenuEntryAddress(fullScreen)->textColor = textColor;
-
-    for (int i = resolutionField0; i < resolutionField0 + kNumResolutionFields; i++)
-        getMenuEntryAddress(i)->u1.entryColor = backColor;
 }
 
 static void highlightCurrentMode()
 {
-    using namespace VideoOptionsMenu;
-
     static const std::array<int, 3> kHighlightArrows = {
         customSizeArrow, borderlessMaximizedArrow, fullScreenArrow,
     };
@@ -269,34 +260,34 @@ static void highlightCurrentMode()
     for (int index : kHighlightArrows)
         getMenuEntryAddress(index)->invisible = 1;
 
-    int showIndex = customSizeArrow;
-    bool enableCustomSize = false, enableBorderless = false, enableFullScreen = false;
+    int showArrowIndex = customSizeArrow;
+    bool windowedSelected = false, borderlessSelected = false, fullScreenSelected = false;
 
     switch (getWindowMode()) {
     case kModeWindow:
-        showIndex = customSizeArrow;
-        enableCustomSize = true;
+        showArrowIndex = customSizeArrow;
+        windowedSelected = true;
         break;
 
     case kModeBorderlessMaximized:
-        showIndex = borderlessMaximizedArrow;
-        enableBorderless = true;
+        showArrowIndex = borderlessMaximizedArrow;
+        borderlessSelected = true;
         break;
 
     case kModeFullScreen:
-        showIndex = fullScreenArrow;
-        enableFullScreen = true;
+        showArrowIndex = fullScreenArrow;
+        fullScreenSelected = true;
         break;
 
     default:
         assert(false);
     }
 
-    getMenuEntryAddress(showIndex)->invisible = 0;
+    getMenuEntryAddress(showArrowIndex)->invisible = 0;
 
-    enableCustomSizeFields(enableCustomSize);
-    enableBorderlessFields(enableBorderless);
-    enableFullScreenFields(enableFullScreen);
+    setWindowedFieldsColor(windowedSelected);
+    setBorderlessFieldsColor(borderlessSelected);
+    setFullScreenFieldsColor(fullScreenSelected);
 }
 
 static void videoOptionsMenuOnDraw()
@@ -306,9 +297,6 @@ static void videoOptionsMenuOnDraw()
 
     static int lastDisplayIndex = -1;
 
-    updateWindowSize();
-    highlightCurrentMode();
-
     int displayIndex = getWindowDisplayIndex();
     if (displayIndex >= 0) {
         if (displayIndex != lastDisplayIndex) {
@@ -317,11 +305,13 @@ static void videoOptionsMenuOnDraw()
             m_resListOffset = 0;
         }
 
+        updateDisplayedWindowSize();
+        highlightCurrentMode();
         fillResolutionListUi();
+        updateFullScreenAvailability();
         updateScrollArrows();
-    } else {
-        if (!m_menuShown)
-            logWarn("Failed to get window display index, SDL reported: %s", SDL_GetError());
+    } else if (!m_menuShown) {
+        logWarn("Failed to get window display index, SDL reported: %s", SDL_GetError());
     }
 
     m_menuShown = true;

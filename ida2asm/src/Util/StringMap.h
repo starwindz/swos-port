@@ -25,8 +25,8 @@ public:
             assignNode(m_node->next());
             return *this;
         }
-        const Node *operator*() const {
-            return &result;
+        const Node operator*() const {
+            return result;
         }
         const Node *operator->() const {
             return &result;
@@ -50,6 +50,7 @@ public:
     StringMap(size_t initialCapacity) : m_data(initialCapacity) {}
     size_t size() const { return m_data.spaceUsed(); }
     size_t count() const { return m_count; }
+    bool empty() const { return size() != 0; }
     Iterator begin() const {
         auto node = reinterpret_cast<Node *>(m_data.begin());
 
@@ -66,7 +67,7 @@ public:
     template<typename... Args>
     void add(const String& str, Args... args)
     {
-        add(str.str(), str.length(), Util::hash(str, len), args...);
+        add(str.str(), str.length(), Util::hash(str.str(), str.length()), args...);
     }
 
     template<typename... Args>

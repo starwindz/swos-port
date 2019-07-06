@@ -903,6 +903,7 @@ def createTestbed(outputDir, tokens, tokenSet, testPerformance):
 
         out('// automatically generated, do not edit')
         out('// tester implementation for generated token lookup function\n')
+        outputSeed(out)
         out('#include <vector>')
         out('#include <string>')
         out('#include <memory>')
@@ -1111,6 +1112,13 @@ def createTestbed(outputDir, tokens, tokenSet, testPerformance):
         out('}')
 
 
+def outputSeed(out):
+    assert callable(out)
+    seed = random.randrange(sys.maxsize)
+    random.seed(seed)
+    out(f'// random seed: {seed}\n')
+
+
 def getInputFilePath():
     if len(sys.argv) < 2:
         sys.exit('Missing input keywords file path.')
@@ -1134,7 +1142,6 @@ def performanceTestRequested():
 
 
 # parameters: <tokens file> <output dir> [--test [--performance-test]]
-# output dir is necessary since Meson has hard-coded expectancies from custom build tool
 def main():
     inputFilePath = getInputFilePath()
     outputDir = getOutputDir()

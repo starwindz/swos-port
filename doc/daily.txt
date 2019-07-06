@@ -1,5 +1,5 @@
 earlier:
-- struggled to create fastest possible parser, which eventually turned out to be generated state machine
+- struggled to create fastest possible parser, which eventually turned out to be a generated state machine
 18.03.2018.
 - finished custom step of Meson build
 - refactored script a little
@@ -1060,3 +1060,399 @@ earlier:
 11.02.2019.
 - implemented quit game menu
 - learned that I have to call CommonExitMenu() after showing any menu from main menu
+12.02.2019.
+/
+13.02.2019.
+/
+14.02.2019.
+/
+15.02.2019.
+/
+16.02.2019.
+- did some planning on how to implement replays; will need to reimplement selectFilesMenu, that will be a bitch
+- reversed select files menu, another tiny corner of SWOS is charted, woopteedoo
+- [ida2asm] fixed reporting `@end' as a duplicate symbol
+- [ida2asm] segments are now properly terminated if they are split in different files
+17.02.2019.
+- fixed invalid constants for gray frame... all options menu header items had invalid colored frame (dark gray
+  instead of light gray), funny how nobody noticed :P
+- [mnu2h] fixed outputting initial menu x/y coordinates (last ones listed in file were outputted as initial)
+- [mnu2h] decided to implement compile-time mini-language inside menu converter ;)
+  (in order to address the needs of new increasingly complex menus)
+  so it was programmed but not tested at all, this will be fun to debug :P
+18.02.2019.
+- [mnu2h] been debugging preproc parser, will need to add some changes to the scanner in order for everything to work
+19.02.2019.
+- [mnu2h] changes in effect, parser debugged and working beautifully, C expressions are now available :)
+- [mnu2h] implemented quoting in strings ("thi\"s\"" and 'this\'s\'')
+- [mnu2h] extended preprocessor expressions to use all kinds of variables, and fixed bunch of small bugs
+  (now just gotta implement repeat loops properly, with expression re-evaluation)
+20.02.2019.
+- worked on evaluation tree generation as a result of parsing so true loops can be implemented (and conditional
+  statements later if/when required)
+21.02.2019.
+- separated evaluation from parsing, so now the field is ready for proper repeat loop implementation (still have to
+  figure out constant expression folding, although it's not too difficult)
+22.02.2019.
+- almost debugged repeat loop implementation (nested loops still not working properly)
+23.02.2019.
+- debugging loops, seems the problem is more involved
+24.02.2019.
+- some invalid tokens are in the stream, seems tokens weren't copied by value (by reference) and got modified, but
+  didn't manage to fix it
+25.02.2019.
+- finally fixed nested loops :)
+- linted mnu2h Python code, that didn't go too bad
+26.02.2019.
+/
+27.02.2019.
+/
+28.02.2019.
+/
+01.03.2019.
+/
+02.03.2019.
+/
+03.03.2019.
+/
+04.03.2019.
+/
+05.03.2019.
+/
+06.03.2019.
+- looked around re-establishing select files menu
+07.03.2019.
+- some small advancement, wrote machine-independent findFiles()
+08.03.2019.
+- dabbling a bit with replacements for GetFilenameAndExtension() and SelectFileToSaveDialog(), will need a way to
+  return int from imported function (since just setting eax doesn't work with void function, compiler is adding
+  some destructor and what not)
+09.03.2019.
+- had to modify import function specification so that I could specify that function returns an int, writing a
+  linear memory storage vector-like template to hold imports
+10.03.2019.
+- trying to fix a problem with custom iterator dereference operator
+11.03.2019.
+- silly me, it was simple, I was returning value instead of reference, now everything is all right
+- implemented function that returns zero flag clear/set (had to use declspec naked), so the temporary problem is
+  solved, we're back in the saddle ;)
+12.03.2019.
+/
+13.03.2019.
+- removed all of the old select files menu code and data, and started the re-implementation
+14.03.2019.
+/
+15.03.2019.
+/
+16.03.2019.
+- wrote sorting routine for filenames
+17.03.2019.
+- managed to work on it a little bit
+18.03.2019.
+/
+19.03.2019.
+/
+20.03.2019.
+/
+21.03.2019.
+/
+22.03.2019.
+- progressed a bit in initializing select files menu
+23.03.2019.
+- refactoring mnu2h into submodules, it was already at over 2k LOC single file
+24.03.2019.
+/
+25.03.2019.
+/
+26.03.2019.
+- finally got a little done
+27.03.2109.
+/
+28.03.2109.
+/
+29.03.2109.
+/
+30.03.2109.
+- did a little bit
+31.03.2019.
+/
+01.04.2019.
+/
+02.04.2019.
+- worked a bit
+03.04.2019.
+/
+04.04.2019.
+/
+05.04.2019.
+/
+06.04.2019.
+/
+07.04.2019.
+/
+08.04.2019.
+/
+09.04.2019.
+/
+10.04.2019.
+/
+11.04.2019.
+/
+12.04.2019.
+/
+13.04.2019.
+/
+14.04.2019.
+/
+15.04.2019.
+/
+16.04.2019.
+/
+17.04.2019.
+/
+18.04.2019.
+- finally managed to do some significant work, continued with mnu2h refactoring, extracted tokenizer from parser,
+  and currently breaking up those awful long parser methods, making them much shorter and sweeter
+19.04.2019.
+- continued working on refactoring, had solid progress
+20.04.2019.
+- menu and entry parsing is refactored (Uncle Bob would be proud ;)), now working on code generator
+- code generation has been extracted from parser
+- it turned out that due to a bug the refactored code didn't run at all, and there were plenty more bugs :)
+  nevertheless, a lot has been done and it seems I will be able to extract preprocessor after all, so that's some
+  good news, but too tired to do it now :)
+21.04.2019.
+- set up Python tests with coverage reporting
+- covered Tokenizer completely! (except for __repr__ and one line I think can never be reached :))
+22.04.2019.
+- upgraded mnu2h into its own project with separate dir (it earned it well ;))
+- started covering parser (it's gonna be a rough ride ;)) and fixed some minor bugs in tokenizer
+- got parser coverage up to 46%
+23.04.2019.
+- got parser coverage up to 72%
+- extraction of preprocessor and test coverage in progress, it is currently at 27%
+24.04.2019.
+- doing a big redesign of the way tokens are handled through the parser (I think this implicit structure that kind
+  of grew on its own is invalid, as each function returning the token that follows it doesn't allow for entities at
+  the end of the file, + I have much better error handling as it is known in advance which tokens are searched for
+  (since we do it now from the handling function, and not the previous one which has no clue about what's coming))
+25.04.2019.
+- big redesign done! finished with negative test and that's a huge milestone, coverage is up at 83% for parser and
+  71% for preprocessor, which is about the max before positive tests
+- fixed many smaller bugs
+- started implementing positive tests, added tests for parser warnings and preprocessor expressions;
+  raised coverage to 87% parser, 82% preprocessor (winning these high percentages is harder than it seems!)
+- I better go to sleep soon or I feel I might faint :P
+26.04.2019.
+- fixing and refactoring repeat directive
+- extracting preproc expressions into a class of its own
+- extracting variable handling into a class of its own
+27.04.2019.
+- fixed all tests except #repeat
+- all the tests are passing after the refactor!
+- added text measurement test
+- coverage: Parser 89%, PreprocExpression 97%, Preprocessor 99% (!), Tokenizer 95%, Util 86%, VariableStorage 92%
+- this is getting near the end, gotta add some additional tests here and there and to write code generator tests
+28.04.2019.
+- added line number checks to error message tests
+- fixed bug handling raw (~) functions
+- fixed bug handling single quoted string in string tables
+- added tests for all kinds of variables
+- fixed a few bugs
+- added two new directives: #warningsOn and #warningsOff, mainly for tests ;) but it could prove useful on its own
+- learned I can access static method through self reference, oops :)
+- added tests for entry properties
+- did a pylint run, looking good
+- added crazy hybrid evaluation of preprocessor and standard variables (whatever can be parsed by the preprocessor
+  expression parser will be evaluated as integer)
+29.04.2019.
+- fixed a little bug with tokenizer warnings off directive
+- implementing many of code generator tests
+- #join() can now be used within expressions
+- forgot to test string escapes, fixed
+- woops, seems a preprocessor expression inside a loop containing a mix of constants and variables is broken
+30.04.2019.
+- doh, preprocessor is PURRfect, I put the wrong variable in the test (idiot!)
+- allowed #join to join itself recursively, pretty cool huh :)
+- added integer format specification as in Python (actually just forwarding it to Python :))
+- improved tests a bit
+01.05.2019.
+- added verify C++ keyword test
+- covered dynamic menu variables (prev. x/y etc.)
+- fixed some problems with internal variables expansion
+- added some awesomeness in the form of string indexing operator as well as ability to invoke basic string editing
+  functions on constant string (and the parameters can be preproc expressions!)
+02.05.2019.
+- added tests for included files (and fixed a bug there)
+- added tests for string tables
+03.05.2019.
+- improved parsing of delayed expansion properties
+- fixed negative number parsing
+- fixed error in rotation routines
+- added Util tests
+- coverage: Parser 99%, Preprocessor 100% (!), Util 100%, only CodeGenerator left (81%)
+04.05.2019.
+- fixed error in function parameters
+- added test for preprocessor in all contexts
+05.05.2019.
+- added tests for menu index assignment and exported variables to code generator tests
+06.05.2019.
+- adding final code generator tests
+- fixed a bug in the parser (when assigning default entry values)
+- fixed a bug in the code generator, it was needlessly outputting entry for default color
+- fixed a bug where ResetTemplateEntry wasn't outputted
+- fixed a minor bug with settings entry directions
+- overall coverage is at 99%! my job here is done :)
+07.05.2019.
+- fixed a small bug when assigning entry property values from other entry properties
+08.05.2019.
+- and the build is running again! (although I'm not satisfied with it -- VS build system just sucks big time)
+- started extraction of comments.cpp from audio.cpp
+09.05.2019.
+/
+10.05.2019.
+- refactoring comments but it seems to be much more complicated than I thought...
+11.05.2019.
+- refactoring audio stuff is nasty, but at least it's coming along
+12.05.2019.
+- finished audio refactoring, took longer than expected, but it looks good, and seems I didn't break anything :)
+  (but who knows :)); also found and removed an unused variable (it seemed to have been there for quite a while)
+13.05.2019.
+- [mnu2h] report an error when an entry has zero width/height (so we can catch it before compiling C++ code)
+14.05.2019.
+/
+15.05.2019.
+/
+16.05.2019.
+/
+17.05.2019.
+- fixed a small bug in findFiles()
+18.05.2019.
+/
+19.05.2019.
+/
+20.05.2019.
+- I've been contemplating the idea of creating tests for SWOS menus for a while now; it's gonna be really difficult
+  getting it all to work, but the benefits will be immense
+21.05.2019.
+/
+22.05.2019.
+/
+23.05.2019.
+/
+24.05.2019.
+/
+25.05.2019.
+/
+26.05.2019.
+/
+27.05.2019.
+/
+28.05.2019.
+/
+29.05.2019.
+/
+30.05.2019.
+/
+31.05.2019.
+/
+01.06.2019.
+/
+02.06.2019.
+/
+03.06.2019.
+/
+04.06.2019.
+/
+05.06.2019.
+/
+06.06.2019.
+/
+07.06.2019.
+- created DLL that will be fetching SDL function address table (so we can mock them)
+08.06.2019.
+- SDL hooking test passed with flying colors!! :)
+09.06.2019.
+/
+10.06.2019.
+/
+11.06.2019.
+- integrated tests into main project (will need to use asm files)
+12.06.2019.
+- trying to compile tests which use basically all stuff as the main project, but currently failing
+13.06.2019.
+- fixing all the link errors since some files are missing from the main project
+14.06.2019.
+- tests finally compile and link!
+15.06.2019.
+- realized I didn't need render.cpp (it's all SDL interface to "VGA" buffer)
+16.06.2019.
+- setting up base test structure... still struggling :)
+- need to include generated menu header in order to access menu constants... but there are also static functions in
+  there that get declared, so added them as stubs in header, under conditional SWOS_TEST but now it fails since I got
+  menus in tests that are supposed to be compiled normally... ugh
+17.06.2019.
+/
+18.06.2019.
+- [mnu2h] updated tests with #ifdef for testing stubs
+19.06.2019.
+- worked a bit on it, fixed creating a library when compiling tests
+20.06.2019.
+- dabbled a bit
+21.06.2019.
+/
+22.06.2019.
+- executed first hello world unit test, very primitive, but it ran :)
+23.06.2019.
+- finally set up SWOS environment in tests :)
+- [mnu2h] declared string tables as static (that was discovered when including the file twice for the tests)
+24.06.2019.
+- fixed commentary loading that I completely broke :/ I really have to get these things covered with unit tests...
+- tried to compile with C++17 since I upgraded to Visual Studio 2019, but if I do that I lose capability to compile
+  for Windows XP.. @#$&$!^ (plus SimpleIni breaks... sheesh)
+- [mnu2h] fixed nasty bug with string tables: I forgot to #pragma pack them! added test for this as well
+- finally managed to render a single menu frame for tests... I think :D
+25.06.2019.
+- had nice progress with unit tests, now actually writing one for video options menu, will see how it goes ;)
+- [mnu2h] fixed minor formatting issues, extraneous new lines
+26.06.2019.
+- finally got the error reporting the way I like it, and failed assertion exception hierarchy took shape
+- civilized SDL faker a bit, now need to fill in more stuff and create a good test for video options
+27.06.2019.
+- fixed a bug in loadFile when using offset parameter
+- refactored duplicated code in video options menu
+- implemented screenshot grabbing in tests (damn useful it is!)
+- writing tests, but it's not going the way I planned
+28.06.2019.
+- writing video options resolutions test
+- removed resolution limiting from video options (any resolution will be now displayed in the menu, not sure if
+  that's smart, remains to be seen)
+29.06.2019.
+- fixed few bugs in tests and finally incomplete tests are passing
+- lookie, lookie, VS static analysis actually caught a bug in menus, whaddya know...
+- updated SimpleIni, and I can compile with C++17 now MUAHAHAHA (at least the tests, they don't need Windows XP ;))
+- implemented tester command line parameters
+- started implementing window mode tests
+30.06.2019.
+- implemented video options menu mode switching test
+- fixed slight mis-positions of the items (by a pixel or two)
+01.07.2019.
+- added timeout detection to tests, if any case gets into infinite loop tester will detect it, report it and exit
+02.07.2019.
+- fixed nasty bug with tester error reporting, took a reference to a non-const object returned from a function
+- implemented custom width/height input test
+03.07.2019.
+- sorted video resolution list by highest first, makes more sense to prefer the best resolutions system can handle
+- handled the case when we can't go full-screen (resolution list empty) (UT's already showing their value)
+- recolored items in video options menu (didn't like the gray on inactive items, it looked like they can't be
+  selected anymore)
+04.07.2019.
+/
+05.07.2019.
+- implemented list scrolling test
+- added exit button test
+- implemented test for resolution change failure
+06.07.2019.
+- fixed a small bug with resolution list where the current resolution would stay marked even in windowed mode
+- video options menu tests are DONE!!! hellz yeah!!!
+- [mnu2] added tests for string manipulation routines

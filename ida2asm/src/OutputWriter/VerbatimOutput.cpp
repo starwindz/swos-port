@@ -69,45 +69,43 @@ std::string VerbatimOutput::endSegmentDirective(const TokenRange& range) const
 
 void VerbatimOutput::outputStructs()
 {
-    for (auto struc : m_structs)
+    for (auto& struc : m_structs)
         outputStruct(struc);
 }
 
-void VerbatimOutput::outputStruct(const Struct *struc)
+void VerbatimOutput::outputStruct(const Struct& struc)
 {
-    assert(struc);
+    int column = outputComment(struc.leadingComments());
+    column += out(struc.name(), struc.isUnion() ? " union" : " struc");
+    outputComment(struc.lineComment(), column);
 
-    int column = outputComment(struc->leadingComments());
-    column += out(struc->name(), struc->isUnion() ? " union" : " struc");
-    outputComment(struc->lineComment(), column);
-
-    for (auto field : *struc) {
-        column = out(kIndent, field->name());
-        if (!field->name().empty())
+    for (auto& field : struc) {
+        column = out(kIndent, field.name());
+        if (!field.name().empty())
             column += out(' ');
 
-        if (!field->type().empty()) {
-            column += out(field->type(), ' ');
+        if (!field.type().empty()) {
+            column += out(field.type(), ' ');
         } else {
-            auto fieldSize = dataSizeSpecifier(field->fieldLength());
+            auto fieldSize = dataSizeSpecifier(field.fieldLength());
             column += out(fieldSize, ' ');
         }
 
-        if (!field->dup().empty())
-            column += out(field->dup(), " dup(?)");
+        if (!field.dup().empty())
+            column += out(field.dup(), " dup(?)");
         else
             column += out('?');
 
-        outputComment(field->comment(), column);
+        outputComment(field.comment(), column);
     }
 
-    out(struc->name(), " ends", Util::kNewLine);
+    out(struc.name(), " ends", Util::kNewLine);
 }
 
 void VerbatimOutput::outputDefines()
 {
     for (const auto& it : m_defines) {
-        auto def = it->cargo;
+        auto def = it.cargo;
 
         int column = outputComment(def->leadingComments());
         column += out(def->name(), " = ");
@@ -122,38 +120,38 @@ void VerbatimOutput::outputDefines()
 
 void VerbatimOutput::outputDisassembly()
 {
-    for (auto item : m_outputItems) {
-        int column = outputComment(item->leadingComments());
-        switch (item->type()) {
+    for (const auto& item : m_outputItems) {
+        int column = outputComment(item.leadingComments());
+        switch (item.type()) {
         case OutputItem::kInstruction:
-            column = outputInstruction(item->getItem<Instruction>());
+            column = outputInstruction(item.getItem<Instruction>());
             break;
         case OutputItem::kDataItem:
-            column = outputDataItem(item->getItem<DataItem>());
+            column = outputDataItem(item.getItem<DataItem>());
             break;
         case OutputItem::kProc:
-            column = outputProc(item->getItem<Proc>());
+            column = outputProc(item.getItem<Proc>());
             break;
         case OutputItem::kEndProc:
-            column = outputEndProc(item->getItem<EndProc>());
+            column = outputEndProc(item.getItem<EndProc>());
             break;
         case OutputItem::kLabel:
-            column = outputLabel(item->getItem<Label>());
+            column = outputLabel(item.getItem<Label>());
             break;
         case OutputItem::kStackVariable:
-            column = outputStackVariable(item->getItem<StackVariable>());
+            column = outputStackVariable(item.getItem<StackVariable>());
             break;
         case OutputItem::kDirective:
-            column = outputDirective(item->getItem<Directive>());
+            column = outputDirective(item.getItem<Directive>());
             break;
         case OutputItem::kSegment:
-            column = outputSegment(item->getItem<Segment>());
+            column = outputSegment(item.getItem<Segment>());
             break;
         default:
             assert(false && "Unhandled output item type");
             break;
         }
-        outputComment(item->comment(), column);
+        outputComment(item.comment(), column);
     }
 }
 

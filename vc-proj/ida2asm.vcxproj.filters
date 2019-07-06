@@ -192,6 +192,9 @@
     <ClInclude Include="..\ida2asm\src\Util\StringList.h">
       <Filter>Source Files\Util</Filter>
     </ClInclude>
+    <ClInclude Include="..\ida2asm\src\Util\BlockList.h">
+      <Filter>Source Files\Util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="..\ida2asm\gen-lookup\gen-lookup.py">

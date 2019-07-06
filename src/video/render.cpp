@@ -301,16 +301,19 @@ bool hasMouseFocus()
     return SDL_GetMouseFocus() == m_window;
 }
 
-void getViewport(SDL_Rect& rect)
+SDL_Rect getViewport()
 {
-    return SDL_RenderGetViewport(m_renderer, &rect);
+    SDL_Rect rect;
+    SDL_RenderGetViewport(m_renderer, &rect);
+
+    return rect;
 }
 
 void loadVideoOptions(const CSimpleIniA& ini)
 {
     m_windowMode = static_cast<WindowMode>(ini.GetLongValue(kVideoSection, kWindowMode, -1));
 
-    if (m_windowMode < 0 || m_windowMode >= kMaxWindowMode)
+    if (m_windowMode < 0 || m_windowMode >= kNumWindowModes)
         m_windowMode = kModeWindow;
 
     m_windowWidth = ini.GetLongValue(kVideoSection, kWindowWidthKey, kWindowWidth);
@@ -464,7 +467,7 @@ void updateScreen(const char *inData /* = nullptr */, int offsetLine /* = 0 */, 
 
     auto data = reinterpret_cast<const uint8_t *>(inData ? inData : (vsPtr ? vsPtr : linAdr384k));
 
-#ifndef NDEBUG
+#ifdef DEBUG
     if (screenWidth == kGameScreenWidth)
         dumpVariables();
 #endif

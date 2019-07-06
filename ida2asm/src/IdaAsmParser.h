@@ -88,7 +88,7 @@ private:
     CToken *m_restoreRegsProc = nullptr;
     std::vector<String> m_localVars;
     int m_currentLineHook = -1;
-    int m_currentProcHookLine;
+    int m_currentProcHookLine = -1;
 
     SegmentSet m_segments;
     CToken *m_currentSegment = nullptr;

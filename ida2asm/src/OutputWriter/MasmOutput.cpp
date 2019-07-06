@@ -71,6 +71,8 @@ bool MasmOutput::output(OutputFlags flags, CToken *openingSegment /* = nullptr *
 
     if (flags & kDisassembly) {
         outputDisassembly();
+        if (!m_currentSegment.empty())
+            out(m_currentSegment, " ends", Util::kNewLine);
         out("end", Util::kNewLine);
     }
 
@@ -131,7 +133,6 @@ bool MasmOutput::outputExterns()
         case References::kProc: out("proc"); break;
         case References::kUser: out(std::get<2>(ext)); break;
         default:
-//            assert(false);
             if (!m_error.empty())
                 m_error += '\n';
             m_error += std::string("undefined reference found: ") + std::get<0>(ext).string();
@@ -157,18 +158,18 @@ void MasmOutput::outputPublics()
 
 void MasmOutput::outputStructs()
 {
-    for (const auto struc : m_structs) {
-        if (struc->resolved())
+    for (auto& struc : m_structs) {
+        if (struc.resolved())
             continue;
 
-        for (auto field : *struc) {
-            if (!field->fieldLength()) {
-                auto structName = field->type();
+        for (const auto& field : struc) {
+            if (!field.fieldLength()) {
+                auto structName = field.type();
                 auto nestedStruct = m_structs.findStruct(structName);
 
                 assert(nestedStruct);
                 if (nestedStruct && !nestedStruct->resolved())
-                    outputStruct(nestedStruct);
+                    outputStruct(*nestedStruct);
             }
         }
 
@@ -176,38 +177,38 @@ void MasmOutput::outputStructs()
     }
 }
 
-void MasmOutput::outputStruct(Struct *struc)
+void MasmOutput::outputStruct(Struct& struc)
 {
-    int column = outputComment(struc->leadingComments());
-    column += out(struc->name(), struc->isUnion() ? " union" : " struc");
-    outputComment(struc->lineComment(), column);
+    int column = outputComment(struc.leadingComments());
+    column += out(struc.name(), struc.isUnion() ? " union" : " struc");
+    outputComment(struc.lineComment(), column);
 
-    for (auto field : *struc) {
-        column = out(kIndent, field->name());
-        if (!field->name().empty())
+    for (const auto& field : struc) {
+        column = out(kIndent, field.name());
+        if (!field.name().empty())
             column += out(' ');
 
         bool structField = false;
-        if (!field->type().empty()) {
+        if (!field.type().empty()) {
             structField = true;
-            column += out(field->type(), ' ');
+            column += out(field.type(), ' ');
         } else {
-            auto fieldSize = dataSizeSpecifier(field->fieldLength());
+            auto fieldSize = dataSizeSpecifier(field.fieldLength());
             column += out(fieldSize, ' ');
         }
 
-        if (!field->dup().empty())
-            column += out(field->dup(), structField ? " dup(<>)" : " dup(?)");
+        if (!field.dup().empty())
+            column += out(field.dup(), structField ? " dup(<>)" : " dup(?)");
         else if (structField)
             column += out("<>");
         else
             column += out('?');
 
-        outputComment(field->comment(), column);
+        outputComment(field.comment(), column);
     }
 
-    out(struc->name(), " ends", Util::kNewLine);
-    struc->resolve();
+    out(struc.name(), " ends", Util::kNewLine);
+    struc.resolve();
 }
 
 void MasmOutput::outputCExternDefs()
@@ -232,7 +233,7 @@ void MasmOutput::outputCExternDefs()
 void MasmOutput::outputDefines()
 {
     for (auto it : m_defines) {
-        auto def = it->cargo;
+        auto def = it.cargo;
 
         int column = outputComment(def->leadingComments());
         column += out(def->name(), " = ");
@@ -247,45 +248,45 @@ void MasmOutput::outputDefines()
 
 void MasmOutput::outputDisassembly()
 {
-    for (auto item : m_outputItems) {
+    for (const auto& item : m_outputItems) {
         int column;
 
-        if (item->type() == OutputItem::kDirective) {
-            auto directive = item->getItem<Directive>();
+        if (item.type() == OutputItem::kDirective) {
+            auto directive = item.getItem<Directive>();
 
             // useless in flat mode, and makes MASM go wild tacking "cs:" prefix to everything
             if (directive->type() == Directive::kAssume)
                 continue;
 
-            column = outputComment(item->leadingComments());
-            column += outputDirective(item->getItem<Directive>());
+            column = outputComment(item.leadingComments());
+            column += outputDirective(item.getItem<Directive>());
         } else {
-            column = outputComment(item->leadingComments());
+            column = outputComment(item.leadingComments());
         }
 
-        switch (item->type()) {
+        switch (item.type()) {
         case OutputItem::kInstruction:
-            column += outputInstruction(item->getItem<Instruction>());
+            column += outputInstruction(item.getItem<Instruction>());
             break;
         case OutputItem::kDataItem:
-            column += outputDataItem(item->getItem<DataItem>());
+            column += outputDataItem(item.getItem<DataItem>());
             break;
         case OutputItem::kProc:
-            column += outputProc(item->getItem<Proc>());
+            column += outputProc(item.getItem<Proc>());
             break;
         case OutputItem::kEndProc:
-            column += outputEndProc(item->getItem<EndProc>(), item->comment(), item->next());
+            column += outputEndProc(item.getItem<EndProc>(), item.comment(), item.next());
             break;
         case OutputItem::kLabel:
-            column += outputLabel(item->getItem<Label>());
+            column += outputLabel(item.getItem<Label>());
             break;
         case OutputItem::kStackVariable:
-            column += outputStackVariable(item->getItem<StackVariable>());
+            column += outputStackVariable(item.getItem<StackVariable>());
             break;
         case OutputItem::kDirective:
             break;
         case OutputItem::kSegment:
-            column += outputSegment(item->getItem<Segment>());
+            column += outputSegment(item.getItem<Segment>());
             break;
         case OutputItem::kComment:
             // already handled
@@ -295,8 +296,8 @@ void MasmOutput::outputDisassembly()
             break;
         }
 
-        if (item->type() != OutputItem::kEndProc)
-            outputComment(item->comment(), column);
+        if (item.type() != OutputItem::kEndProc)
+            outputComment(item.comment(), column);
     }
 }
 
@@ -336,7 +337,7 @@ int MasmOutput::outputInstruction(const Instruction *instruction)
     for (int i = 0; ; i++) {
         const auto& operand = operands[i];
 
-        for (auto it : operand) {
+        for (auto it = operand.begin(); it != operand.end(); it = it->next()) {
             if (it->type() == Token::T_LARGE)
                 continue;
 
@@ -552,7 +553,12 @@ int MasmOutput::outputSegment(const Segment *segment)
         param = param->next();
     }
 
-    m_currentSegment = segment->begin()->text();
+    if (segment->begin()->next()->text() == "ends") {
+        m_previousSegment = m_currentSegment;
+        m_currentSegment.clear();
+    } else {
+        m_currentSegment = segment->begin()->text();
+    }
 
     return column;
 }

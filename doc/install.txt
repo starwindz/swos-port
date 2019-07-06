@@ -1,6 +1,9 @@
 Required software to build:
  Visual Studio 2015 (maybe older would work)
  Python 3.6
+    ddt (for mnu2h tests)
+ MASM at least version 8
+ gperf (optional, for tokenizer performance test)
  Cygwin (for backup script)
  Inno Setup (for the installer) [later]
 
@@ -12,4 +15,4 @@ Required libraries (as *.lib files in lib dir):
  libADLMIDI (to play menu.xmi)
  CrashRpt (crash reporter)
 
-Also dll's required.
+Also corresponding dll's required.

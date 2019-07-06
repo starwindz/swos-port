@@ -5,15 +5,22 @@ namespace Util {
     class Iterator
     {
     public:
-        Iterator(T *struc) : m_payload(struc) {}
-        T *operator*() { return m_payload; }
-        const T *operator*() const { return m_payload; }
-        T *operator->() { return m_payload; }
-        const T *operator->() const { return m_payload; }
-        bool operator!=(const Iterator& rhs) const { return m_payload != rhs.m_payload; }
-        Iterator operator++() { m_payload = m_payload->next(); return *this; }
-        operator const T *() const { return m_payload; }
+        Iterator(T *t) : m_item(t) {}
+
+        T& operator*() { return *m_item; }
+        const T& operator*() const { return *m_item; }
+
+        T *operator->() { return m_item; }
+        const T *operator->() const { return m_item; }
+
+        T *operator&() { return m_item; }
+        const T *operator&() const { return m_item; }
+
+        bool operator!=(const Iterator& rhs) const { return m_item != rhs.m_item; }
+        Iterator operator++() { m_item = m_item->next(); return *this; }
+        operator const T *() const { return m_item; }
+
     private:
-        T *m_payload;
+        T *m_item;
     };
 }

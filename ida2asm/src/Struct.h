@@ -127,7 +127,7 @@ public:
     void addComment(CToken *token);
     void disallowDup();
     String lastStructName() const;
-    Struct *findStruct(const String &name) const;
+    Struct *findStruct(const String& name) const;
     Util::Iterator<Struct> begin() const;
     Util::Iterator<Struct> end() const;
 

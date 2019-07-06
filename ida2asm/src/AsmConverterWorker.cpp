@@ -125,11 +125,11 @@ void AsmConverterWorker::resolveImports()
 
 void AsmConverterWorker::resolveStructsAndDefines(const StructStream& structs, const DefinesMap& defines)
 {
-    for (auto struc : structs)
-        m_parser.references().setIgnored(struc->name(), struc->hash());
+    for (const auto& struc : structs)
+        m_parser.references().setIgnored(struc.name(), struc.hash());
 
-    for (auto def : defines)
-        m_parser.references().setIgnored(def->text, def->hash);
+    for (const auto& def : defines)
+        m_parser.references().setIgnored(def.text, def.hash);
 }
 
 std::string AsmConverterWorker::segmentsOutput(CToken *openSegment)

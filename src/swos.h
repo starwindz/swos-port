@@ -9,7 +9,7 @@ struct MenuEntry;
 
 struct Menu {
     void(*onInit)();
-    void(*afterDraw)();
+    void(*onReturn)();
     void(*onDraw)();
     MenuEntry *selectedEntry;
     word numEntries;
@@ -32,6 +32,22 @@ enum MenuEntryContentType : word {
     kEntryMultiLineText = 5,
     kEntryNumber = 6,
     kEntrySpriteCopy = 7,
+};
+
+struct StringTable {
+    int16_t *index;
+    int16_t initialValue;
+    // followed by string pointers
+    StringTable(int16_t *index, int16_t initialValue) : index(index), initialValue(initialValue) {}
+    char **getStringTable() const {
+        return (char **)((char *)this + sizeof(*this));
+    }
+    char *currentString() const {
+        if (!index || *index < 0)
+            return nullptr;
+        else
+            return getStringTable()[*index];
+    }
 };
 
 struct MenuEntry {
@@ -67,7 +83,7 @@ struct MenuEntry {
         void (*entryFunc2)(word, word);
         char *string;
         word spriteIndex;
-        void *stringTable;
+        StringTable *stringTable;
         void *multiLineText;
         word number;
         void *spriteCopy;
@@ -76,6 +92,21 @@ struct MenuEntry {
     int16_t controlMask;
     void (*beforeDraw)();
     void (*afterDraw)();
+
+    const char *typeToString() const
+    {
+        switch (type2) {
+        case kEntryNoForeground: return "empty";
+        case kEntryFunc2: return "function";
+        case kEntryString: return "string";
+        case kEntrySprite2: return "sprite";
+        case kEntryStringTable: return "string table";
+        case kEntryMultiLineText: return "multi-line string";
+        case kEntryNumber: return "number";
+        case kEntrySpriteCopy: "sprite copy";
+        default: assert(false); return "";
+        }
+    }
 };
 
 constexpr int kStdMenuTextSize = 70;

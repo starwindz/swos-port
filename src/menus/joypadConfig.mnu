@@ -7,13 +7,13 @@
 Menu joypadConfigMenu
 {
     kInfoLabelsColumnX = 20
-    kLabelWidth = 50;
+    kLabelWidth = 50
     kButtonLabelWidth = 60
     kInfoValuesColumnX = kInfoLabelsColumnX + kLabelWidth
     kButtonsColumnX = kInfoLabelsColumnX + kButtonLabelWidth + 2
     kStartY = 25
-    export kInfoFieldWidth = 260;
-    kButtonWidth = 48;
+    export kInfoFieldWidth = 260
+    kButtonWidth = 48
     kInfoFieldHeight = 10
 
     x: -8

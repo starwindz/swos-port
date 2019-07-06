@@ -1,9 +1,11 @@
 #pragma once
 
-#include "swossym.h"
 #include "swos.h"
+#include "swossym.h"
 #include "util.h"
 #include "render.h"
+
+constexpr int kMenuStringLength = 70;
 
 namespace SWOS_Menu {
 
@@ -24,7 +26,7 @@ enum EntryElementCode : word {
     kOnSelect,
     kOnSelectWithMask,
     kBeforeDraw,
-    kAfterDraw,
+    kOnReturn,
     kLeftSkip,
     kRightSkip,
     kUpSkip,
@@ -37,13 +39,6 @@ static_assert(kColorConvertedSprite == 21, "Element code enum is broken");
 #pragma pack(push, 1)
 struct BaseMenu {};
 
-struct StringTable {
-    int16_t *index;
-    int16_t initialValue;
-    // followed by string pointers
-    StringTable(int16_t *index, int16_t initialValue) : index(index), initialValue(initialValue) {}
-};
-
 struct SpriteConversionTable {
     word sourceIndex;
     word destinationIndex;
@@ -53,28 +48,28 @@ struct SpriteConversionTable {
 struct MenuHeader
 {
     void (*onInit)();
-    void (*afterDraw)();
+    void (*onReturn)();
     void (*onDraw)();
     int32_t selectedEntry;
 };
 
 struct MenuEnd {
-    word code = -999;
+    word code = static_cast<word>(-999);
 };
 
 struct MenuXY {
-    word code = -998;
+    word code = static_cast<word>(-998);
     word x;
     word y;
     MenuXY(word x, word y) : x(x), y(y) {}
 };
 
 struct TemplateEntry {
-    word code = -997;
+    word code = static_cast<word>(-997);
 };
 
 struct ResetTemplateEntry {
-    word code = -996;
+    word code = static_cast<word>(-996);
 };
 
 struct Entry
@@ -190,10 +185,10 @@ public:
     EntryBeforeDrawFunction(Func func) : EntryElement(kBeforeDraw), func(func) {}
 };
 
-class EntryAfterDrawFunction : EntryElement {
+class EntryOnReturnFunction : EntryElement {
     Func func;
 public:
-    EntryAfterDrawFunction(Func func) : EntryElement(kAfterDraw), func(func) {}
+    EntryOnReturnFunction(Func func) : EntryElement(kOnReturn), func(func) {}
 };
 
 class EntryLeftSkip : EntryElement {

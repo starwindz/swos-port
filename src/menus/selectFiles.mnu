@@ -1,0 +1,91 @@
+//
+// Menu for selecting files from root directory, used in many places
+//
+
+#include "common.mh"
+
+Menu selectFilesMenu
+{
+    export kMaxColumns = 3
+    export kMaxEntriesPerColumn = 15
+    kNumFilenameItems = kMaxColumns * kMaxEntriesPerColumn
+    export kFilenameHeight = 8
+
+    onInit: selectFilesOnInit
+    onReturn: selectFilesOnReturn
+
+//defaultEntry:
+//fix width
+    defaultWidth: 21
+
+    Entry title {
+        x: 2
+        y: 0
+        width: 300
+        height: kBigButtonHeight
+
+        color: kHeaderColor
+        text: @kNull
+    }
+
+    y: -1
+
+    TemplateEntry {
+        color: @kLightBrownWithYellowFrame
+        text: @kAlloc
+
+        onSelect: selectFile
+        beforeDraw: drawDescription
+    }
+
+#repeat kNumFilenameItems
+    Entry #join(fileEntry_, #{i}:02) {
+        x: #{i < 15 ? 20 : 300}
+        y: #{i * 9 + 20}
+        height: kFilenameHeight
+    }
+#endRepeat
+
+    Entry inputSaveFilename {
+        x: 112
+        y: 152
+        width: 80
+        height: 8
+        invisible: true
+        color: @kLightBlue
+        text: @kAlloc
+        onSelect: inputFilenameToSave
+    }
+
+    Entry saveLabel {
+        x: 121
+        y: 165
+        width: 62
+        height: 15
+        invisible: true
+        color: @kGreen
+        text: aSave
+        onSelect: saveFileSelected
+    }
+
+    Entry abort {
+        x: 121
+        y: 185
+        width: 62
+        height: 15
+        color: @kRed
+        text: aAbort
+        onSelect: abortSaveFile
+    }
+
+    defaultWidth: kScrollArrowWidth
+    defaultHeight: kScrollArrowHeight
+
+    Entry arrowUp {
+        sprite: kUpArrowSpriteIndex
+    }
+
+    Entry arrowDown {
+        sprite: kDownArrowSpriteIndex
+    }
+}

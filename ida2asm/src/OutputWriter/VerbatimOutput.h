@@ -25,7 +25,7 @@ public:
 
 private:
     void outputStructs();
-    void outputStruct(const Struct *struc);
+    void outputStruct(const Struct& struc);
 
     void outputDefines();
     void outputDisassembly();

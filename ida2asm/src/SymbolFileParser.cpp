@@ -10,7 +10,7 @@ constexpr int kMaxExportEntries = 400;
 
 SymbolFileParser::SymbolFileParser(const char *symbolFilePath, const char *headerFilePath)
     : m_path(symbolFilePath), m_headerPath(headerFilePath), m_procs(kProcCapacity), m_replacements(kReplacementsCapacity),
-    m_imports(kImportsCapacity), m_exports(kExportsCapacity)
+    m_imports(kImportsCapacity), m_exports(kExportsCapacity), m_importEntries(kImportsCapacity * 3 / 2)
 {
     auto result = Util::loadFile(symbolFilePath, true);
     m_data.reset(result.first);
@@ -32,6 +32,7 @@ void SymbolFileParser::outputHeaderFile(const char *path)
         "#include \"swos.h\"\n\n"
 
         "#pragma pack(push, 1)\n"
+        "// 68k register, 32-bit value, support for accessing as byte/word/dword and various casts\n"
         "struct Register\n{\n"
         "    Register(byte b) : data(b) {}\n"
         "    Register(word w) : data(w) {}\n"
@@ -127,9 +128,17 @@ void SymbolFileParser::outputHeaderFile(const char *path)
     if (!m_imports.empty())
         xfwrite(file, "\n    namespace SWOS {\n");
 
-    for (const auto& imp : m_imports) {
-        xfwrite(file, "        extern void ");
-        xfwrite(file, imp);
+    for (const auto& imp : m_importEntries) {
+        assert(imp.returnType() == kVoid || imp.returnType() == kInt);
+
+        xfwrite(file, "        extern ");
+
+        if (imp.returnType() == kVoid)
+            xfwrite(file, "void ");
+        else
+            xfwrite(file, "int ");
+
+        xfwrite(file, imp.name());
         xfwrite(file, "();\n");
     }
 
@@ -184,8 +193,8 @@ const std::vector<String> SymbolFileParser::unusedSymbolsForRemoval() const
     std::vector<String> result;
 
     for (const auto& it : m_procs)
-        if (it->cargo->action() != kNone)
-            result.push_back(it->text);
+        if (it.cargo->action() != kNone)
+            result.push_back(it.text);
 
     return result;
 }
@@ -305,8 +314,10 @@ void SymbolFileParser::parseSymbolFile()
                     memcpy(buf + len + 1, lineString.c_str(), lineString.length());
 
                     m_imports.add(buf, buf + len + 1 + lineString.length());
+                    m_importEntries.emplace(String(buf, buf + len + 1 + lineString.length()));
                 } else {
-                    ensureUniqueSymbol(start, p, kEndRange, action);
+                    if (p - start != 4 || strncmp(start, "@end", 4))
+                        ensureUniqueSymbol(start, p, kEndRange, action);
                     m_procs.add(symStart, symEnd - symStart, action, start, p - start);
                 }
             } else {
@@ -328,6 +339,7 @@ void SymbolFileParser::parseSymbolFile()
                         p = addExportEntry(symStart, symEnd);
                         m_exports.add(symStart, symEnd);
                     } else {
+                        p = addImportEntry(symStart, symEnd);
                         m_imports.add(symStart, symEnd);
                         m_procs.add(symStart, symEnd - symStart, kRemove, nullptr, 0);
                     }
@@ -341,6 +353,7 @@ void SymbolFileParser::parseSymbolFile()
                         strcpy(buf + len, Util::kOnEnterSuffix);
 
                         m_imports.add(buf, buf + len + sizeof(Util::kOnEnterSuffix) - 1);
+                        m_importEntries.emplace(String(buf, buf + len + sizeof(Util::kOnEnterSuffix) - 1));
                     }
                 } else if (action == kReplace) {
                     if (p == start)
@@ -407,11 +420,6 @@ const char *SymbolFileParser::addExportEntry(const char *start, const char *p)
     auto& e = m_exportEntries.back();
     e.symbol = { start, p };
 
-    auto skipWhiteSpace = [&p]() {
-        while (*p != '\n' && Util::isSpace(*p))
-            p++;
-    };
-
     if (*p == ',') {
         std::tie(start, p) = getNextToken(p + 1);
         auto len = p - start;
@@ -419,7 +427,7 @@ const char *SymbolFileParser::addExportEntry(const char *start, const char *p)
         if (len >= 6 && (Util::isSpace(start[6]) || start[6] == ',') && !memcmp(start, "prefix", 6)) {
             std::tie(start, p) = getNextToken(start + 6);
             e.prefix = { start, p };
-            skipWhiteSpace();
+            skipWhiteSpace(p);
 
             if (e.prefix == ',')
                 error("missing prefix");
@@ -444,7 +452,7 @@ const char *SymbolFileParser::addExportEntry(const char *start, const char *p)
             else
                 e.functionPointer = true;
 
-            skipWhiteSpace();
+            skipWhiteSpace(p);
             if (*p != '\n')
                 error(std::string("unexpected input after keyword `function") + (keyword == kFunction ? "" : "Pointer") + "'");
             break;
@@ -455,7 +463,7 @@ const char *SymbolFileParser::addExportEntry(const char *start, const char *p)
             std::tie(start, p) = getNextToken(p);
             e.type = { start, p };
             e.array = true;
-            skipWhiteSpace();
+            skipWhiteSpace(p);
 
             if (*p == '[') {
                 std::tie(start, p) = getNextToken(p + 1);
@@ -476,7 +484,7 @@ const char *SymbolFileParser::addExportEntry(const char *start, const char *p)
                 if (!size)
                     error("array dimension can't be zero");
 
-                skipWhiteSpace();
+                skipWhiteSpace(p);
 
                 if (*p++ != ']')
                     error("missing ending `]'");
@@ -488,9 +496,36 @@ const char *SymbolFileParser::addExportEntry(const char *start, const char *p)
         }
     }
 
-    skipWhiteSpace();
+    skipWhiteSpace(p);
     if (*p != '\n')
         error("unexpected input after end of export declaration");
+
+    return p;
+}
+const char *SymbolFileParser::addImportEntry(const char *start, const char *p)
+{
+    assert(p > start);
+
+    String functionName{ start, p };
+    auto returnType = kVoid;
+
+    skipWhiteSpace(p);
+
+    if (*p == ',') {
+        std::tie(start, p) = getNextToken(p + 1);
+        auto len = p - start;
+
+        if (len == 3 && !memcmp(start, "int", 3))
+            returnType = kInt;
+        else if (len != 4 || memcmp(start, "void", 4))
+            error("only `int' and `void' supported as return types");
+    }
+
+    skipWhiteSpace(p);
+    if (*p != '\n')
+        error("unexpected input after end of import declaration");
+
+    m_importEntries.emplace(functionName, returnType);
 
     return p;
 }
@@ -592,6 +627,12 @@ void SymbolFileParser::ensureUniqueSymbol(const char *start, const char *end, Na
         }
     }
 }
+
+void SymbolFileParser::skipWhiteSpace(const char *& p)
+{
+    while (*p != '\n' && Util::isSpace(*p))
+        p++;
+};
 
 void SymbolFileParser::error(const std::string& desc)
 {

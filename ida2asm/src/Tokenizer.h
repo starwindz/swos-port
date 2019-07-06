@@ -178,7 +178,7 @@ private:
 
     std::unique_ptr<char[]> m_tokenData;
     Token *m_beginToken = nullptr;
-    size_t m_tokenDataSize;
+    size_t m_tokenDataSize = 0;
 
     CToken *m_start = nullptr;
     CToken *m_end = nullptr;

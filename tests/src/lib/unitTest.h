@@ -1,0 +1,46 @@
+#pragma once
+
+#include "exceptions.h"
+
+namespace SWOS_UnitTest
+{
+    template<typename T1, typename T2>
+    void assertEqual(const T1& t1, const T2& t2, const char *t1Str, const char *t2Str, const char *file, int line)
+    {
+        if (t1 != t2)
+            throw FailedEqualAssertException(t1, t2, t1Str, t2Str, file, line);
+    }
+
+    void assertItemIsNumberImp(int index, const char *indexStr, int value, const char *file, int line);
+    void assertItemIsVisibleImp(int index, const char *indexStr, bool visible, const char *file, int line);
+    void assertItemEnabledImp(int index, const char *indexStr, bool enabled, const char *file, int line);
+    void assertItemIsStringImp(int index, const char *indexStr, const char *value, const char *file, int line);
+    void assertItemIsStringTableImp(int index, const char *indexStr, const char *value, const char *file, int line);
+    void assertItemIsSpriteImp(int index, const char *indexStr, int spriteIndex, const char *spriteIndexStr, const char *file, int line);
+    void assertItemHasColorImp(int index, const char *indexStr, int color, const char *colorStr, const char *file, int line);
+    void assertItemHasTextColorImp(int index, const char *indexStr, int color, const char *colorStr, const char *file, int line);
+    void selectItemImp(int index, const char *indexStr, const char *file, int line);
+    void clickItemImp(int index, const char *indexStr, const char *file, int line);
+    void setNumericItemValueImp(int index, const char *indexStr, int value, const char *file, int line);
+    void sendMouseWheelEventImp(int index, const char *indexStr, int direction, const char *file, int line);
+
+    int numItems();
+    bool isItemVisible(int index);
+    bool queueKeys(const std::vector<SDL_Scancode>& keys);
+}
+
+#define assertEqual(v1, v2) SWOS_UnitTest::assertEqual(v1, v2, #v1, #v2, __FILE__, __LINE__)
+#define assertItemIsNumber(i, v) SWOS_UnitTest::assertItemIsNumberImp(i, #i, v, __FILE__, __LINE__)
+#define assertItemIsVisible(i) SWOS_UnitTest::assertItemIsVisibleImp(i, #i, true, __FILE__, __LINE__)
+#define assertItemIsInvisible(i) SWOS_UnitTest::assertItemIsVisibleImp(i, #i, false, __FILE__, __LINE__)
+#define assertItemVisibility(i, v) SWOS_UnitTest::assertItemIsVisibleImp(i, #i, v, __FILE__, __LINE__)
+#define assertItemIsString(i, s) SWOS_UnitTest::assertItemIsStringImp(i, #i, s, __FILE__, __LINE__)
+#define assertItemIsStringTable(i, s) SWOS_UnitTest::assertItemIsStringTableImp(i, #i, s, __FILE__, __LINE__)
+#define assertItemIsSprite(i, s) SWOS_UnitTest::assertItemIsSpriteImp(i, #i, s, #s, __FILE__, __LINE__)
+#define assertItemHasColor(i, c) SWOS_UnitTest::assertItemHasColorImp(i, #i, c, #c, __FILE__, __LINE__)
+#define assertItemHasTextColor(i, c) SWOS_UnitTest::assertItemHasTextColorImp(i, #i, c, #c, __FILE__, __LINE__)
+#define selectItem(i) SWOS_UnitTest::selectItemImp(i, #i, __FILE__, __LINE__)
+#define clickItem(i) SWOS_UnitTest::clickItemImp(i, #i, __FILE__, __LINE__)
+#define setNumericItemValue(i, v) SWOS_UnitTest::setNumericItemValueImp(i, #i, v, __FILE__, __LINE__)
+#define assertItemEnabled(i, e) SWOS_UnitTest::assertItemEnabledImp(i, #i, e, __FILE__, __LINE__)
+#define sendMouseWheelEvent(i, d) SWOS_UnitTest::sendMouseWheelEventImp(i, #i, d, __FILE__, __LINE__)

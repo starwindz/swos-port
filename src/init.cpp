@@ -23,7 +23,7 @@ static char pitchPatternsBuffer[(42 * 53 + 42) * 256 + kSentinelSize];
 // extended memory buffers
 static char linBuf384k[393'216 + kSentinelSize];
 
-#ifndef NDEBUG
+#ifdef DEBUG
 template <size_t N>
 void verifyBlock(char (&array)[N])
 {
@@ -56,7 +56,7 @@ static void setupDosBaseMemory()
     dosMemOfs4fc00h = dosMemBuffer + 0x3d400;   // names don't match offsets anymore, but oh well ;)
     dosMemOfs60c00h = dosMemBuffer + 0x4e400;
 
-#ifndef NDEBUG
+#ifdef DEBUG
     memcpy(dosMemBuffer + sizeof(dosMemBuffer) - kSentinelSize, kSentinelMagic, kSentinelSize);
     memcpy(pitchPatternsBuffer + sizeof(pitchPatternsBuffer) - kSentinelSize, kSentinelMagic, kSentinelSize);
 #endif
@@ -69,7 +69,7 @@ static void setupExtendedMemory()
     g_memAllOk = 1;
     g_gotExtraMemoryForSamples = 1;
 
-#ifndef NDEBUG
+#ifdef DEBUG
     memcpy(linBuf384k + sizeof(linBuf384k) - kSentinelSize, kSentinelMagic, kSentinelSize);
 #endif
 }
@@ -359,12 +359,8 @@ __declspec(naked) void SWOS::IntroDrawFrame()
     }
 }
 
-// called from SWOS at the start
-void SWOS::SWOS()
+static void showImageReelsAndIntro()
 {
-    init();
-
-#ifdef NDEBUG
     bool aborted = false;
     if (!disableImageReels()) {
         logInfo("Showing image reels");
@@ -380,7 +376,15 @@ void SWOS::SWOS()
         getPalette(g_fadePalette);
         SAFE_INVOKE(FadeOutToBlack);
     }
+}
 
+// called from SWOS at the start
+void SWOS::SWOS()
+{
+    init();
+
+#if !defined(SWOS_TEST) && defined(NDEBUG)
+    showImageReelsAndIntro();
 #endif
 //initIntroAnimation();
 //PlayIntroAnimation();
@@ -427,6 +431,8 @@ void SWOS::SWOS()
     assert(!memcmp(aChairmanScenes + 0x3d1c, "DISK FULL", 9));
 #endif
 
+#ifndef SWOS_TEST
     logInfo("Going to main menu");
     SAFE_INVOKE(MainMenu);
+#endif
 }

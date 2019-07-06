@@ -21,6 +21,13 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "token-lookup-tester", "toke
 		{FAB9021D-E0DB-4023-B0F4-FC6881742D10} = {FAB9021D-E0DB-4023-B0F4-FC6881742D10}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tests", "..\tests\vc-proj\tests.vcxproj", "{D2A66351-08F8-4356-8373-E45E792663B3}"
+	ProjectSection(ProjectDependencies) = postProject
+		{D4D7FBF9-503F-4213-8557-9A7EA57658A4} = {D4D7FBF9-503F-4213-8557-9A7EA57658A4}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sdl-address-table-fetcher", "..\tests\sdl-address-table-fetcher\vc-proj\sdl-address-table-fetcher.vcxproj", "{EABE2029-C1E5-4E1B-95C7-07812E6724CF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -43,6 +50,14 @@ Global
 		{BD161D45-F7F2-400C-9797-DC8A902C905E}.Debug|x86.Build.0 = Debug|Win32
 		{BD161D45-F7F2-400C-9797-DC8A902C905E}.Release|x86.ActiveCfg = Release|Win32
 		{BD161D45-F7F2-400C-9797-DC8A902C905E}.Release|x86.Build.0 = Release|Win32
+		{D2A66351-08F8-4356-8373-E45E792663B3}.Debug|x86.ActiveCfg = Debug|Win32
+		{D2A66351-08F8-4356-8373-E45E792663B3}.Debug|x86.Build.0 = Debug|Win32
+		{D2A66351-08F8-4356-8373-E45E792663B3}.Release|x86.ActiveCfg = Release|Win32
+		{D2A66351-08F8-4356-8373-E45E792663B3}.Release|x86.Build.0 = Release|Win32
+		{EABE2029-C1E5-4E1B-95C7-07812E6724CF}.Debug|x86.ActiveCfg = Debug|Win32
+		{EABE2029-C1E5-4E1B-95C7-07812E6724CF}.Debug|x86.Build.0 = Debug|Win32
+		{EABE2029-C1E5-4E1B-95C7-07812E6724CF}.Release|x86.ActiveCfg = Release|Win32
+		{EABE2029-C1E5-4E1B-95C7-07812E6724CF}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

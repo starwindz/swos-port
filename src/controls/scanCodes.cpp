@@ -177,7 +177,8 @@ uint8_t sdlScanCodeToPc(SDL_Scancode sdlScanCode)
     case SDL_SCANCODE_LEFTBRACKET: return 26;
     case SDL_SCANCODE_RIGHTBRACKET: return 27;
     case SDL_SCANCODE_KP_ENTER:
-    case SDL_SCANCODE_RETURN: return 28;
+    case SDL_SCANCODE_RETURN:
+    case SDL_SCANCODE_RETURN2: return 28;
     case SDL_SCANCODE_LCTRL:
     case SDL_SCANCODE_RCTRL: return 29;
     case SDL_SCANCODE_SEMICOLON: return 39;

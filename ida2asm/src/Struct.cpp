@@ -248,9 +248,9 @@ Util::Iterator<Struct> StructStream::end() const
 
 Struct *StructStream::findStruct(const String& name) const
 {
-    for (auto struc : *this)
-        if (struc->name() == name)
-            return struc;
+    for (auto& struc : *this)
+        if (struc.name() == name)
+            return &struc;
 
     return nullptr;
 }

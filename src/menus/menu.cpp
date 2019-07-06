@@ -40,7 +40,7 @@ static void menuDelay()
     }
 }
 
-static void checkMouseWheelAction(const MenuEntry& entry, int scrollValue)
+static void performMouseWheelAction(const MenuEntry& entry, int scrollValue)
 {
     for (const auto& mouseWheelEntry : m_mouseWheelEntries) {
         int ord = std::get<0>(mouseWheelEntry);
@@ -59,6 +59,8 @@ static void checkMouseWheelAction(const MenuEntry& entry, int scrollValue)
                 assert(getMenuEntryAddress(scrollDownEntry)->onSelect);
                 getMenuEntryAddress(scrollDownEntry)->onSelect();
             }
+
+            break;
         }
     }
 }
@@ -76,8 +78,7 @@ static bool mapCoordinatesToGameArea(int& x, int& y)
 
     std::tie(windowWidth, windowHeight) = getWindowSize();
 
-    SDL_Rect viewport;
-    getViewport(viewport);
+    SDL_Rect viewport = getViewport();
 
     int slackWidth = 0;
     int slackHeight = 0;
@@ -168,7 +169,7 @@ static void checkMousePosition()
 
                     break;
                 } else if (auto scrollValue = mouseWheelAmount()) {
-                    checkMouseWheelAction(entry, scrollValue);
+                    performMouseWheelAction(entry, scrollValue);
                 }
             }
         }
@@ -308,7 +309,8 @@ static void determineReachableEntries(const MenuBase *menu)
 // in:
 //     A6 -> menu to show on screen (packed form)
 //
-// After showing this menu, returns to previous menu.
+// Shows this menu and blocks, returns only when it's exited.
+// And then returns to the previous menu and it becomes the active menu.
 //
 void SWOS::ShowMenu()
 {
@@ -326,8 +328,13 @@ void SWOS::ShowMenu()
     g_exitMenu = 0;
     PrepareMenu();
 
-    while (!g_exitMenu)
+    while (!g_exitMenu) {
         menuProcCycle();
+#ifdef SWOS_TEST
+        // unit tests want to run only one menu frame
+        return;
+#endif
+    }
 
     menuStatus = 1;
     g_exitMenu = 0;
@@ -416,8 +423,10 @@ void SWOS::InitMainMenuStuff()
     flipOnOff = 1;
     inFriendlyMenu = 0;
     isNationalTeam = 0;
+
     D0 = kGameTypeNoGame;
     InitCareerVariables();
+
     menuStatus = 0;
     menuFade = 0;
     g_exitMenu = 0;
@@ -456,7 +465,7 @@ static MenuEntry *findNextEntry(byte nextEntryIndex, int nextEntryDirection)
         if (newDirection != 255) {
             nextEntryIndex = (&nextEntry->leftEntryDis)[nextEntryDirection];
             nextEntryDirection = newDirection;
-            assert(newDirection >= 0 && newDirection <= 3);
+            assert(newDirection <= 3);
             assert(nextEntryIndex != 255);
         } else {
             nextEntryIndex = (&nextEntry->leftEntry)[nextEntryDirection];
@@ -468,6 +477,8 @@ static MenuEntry *findNextEntry(byte nextEntryIndex, int nextEntryDirection)
 
 static void invokeOnSelect(MenuEntry *entry)
 {
+    assert(entry->onSelect);
+
     stopTitleSong();
 
     save68kRegisters();
@@ -518,7 +529,12 @@ void SWOS::MenuProc()
     auto activeEntry = currentMenu->selectedEntry;
     MenuEntry *nextEntry = nullptr;
 
-    if (activeEntry || finalControlsStatus >= 0 && !previousMenuItem) {
+    // we deviate a bit from SWOS behavior here, as it seems like a bug to me: only the field in
+    // the current menu is assigned but not the activeEntry variable, leading to a potential nullptr access
+    if (!activeEntry && finalControlsStatus >= 0 && previousMenuItem)
+        activeEntry = currentMenu->selectedEntry = previousMenuItem;
+
+    if (activeEntry) {
         if (isPlayMatchEntry(activeEntry)) {
             int playerNo = matchControlsSelected(activeEntry);
             updateMatchControls();
@@ -669,6 +685,7 @@ bool inputNumber(MenuEntry *entry, int maxDigits, int minNum, int maxNum)
 
     char buf[32];
     _itoa_s(num, buf, 10);
+    buf[sizeof(buf) - 1] = '\0';
     assert(static_cast<int>(strlen(buf)) <= maxDigits);
 
     auto end = buf + strlen(buf);

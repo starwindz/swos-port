@@ -10,7 +10,7 @@ constexpr int kVgaPaletteSize = kVgaPaletteNumColors * 3;
 constexpr int kWindowWidth = 4 * kVgaWidth;
 constexpr int kWindowHeight = 4 * kVgaHeight;
 
-enum WindowMode { kModeFullScreen, kModeWindow, kModeBorderlessMaximized, kMaxWindowMode, };
+enum WindowMode { kModeFullScreen, kModeWindow, kModeBorderlessMaximized, kNumWindowModes, };
 
 std::pair<int, int> getWindowSize();
 void setWindowSize(int width, int height);
@@ -30,7 +30,7 @@ void toggleWindowResizable();
 void centerWindow();
 
 bool hasMouseFocus();
-void getViewport(SDL_Rect& rect);
+SDL_Rect getViewport();
 
 void loadVideoOptions(const CSimpleIni& ini);
 void saveVideoOptions(CSimpleIni& ini);
