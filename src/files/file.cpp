@@ -1,4 +1,5 @@
 #include "file.h"
+#include "file.h"
 #include "log.h"
 #include "util.h"
 #include "selectFilesMenu.h"
@@ -135,20 +136,31 @@ int loadFile(const char *path, void *buffer, bool required /* = true */)
     return loadFile(path, buffer, size, required);
 }
 
-// Load entire file into allocated buffer that caller needs to free
-std::pair<char *, size_t> loadFile(const char *path, size_t offset /* = 0 */)
+// loadFile
+//
+// in:
+//      path         - path of the file to load
+//      bufferOffset - number of additional bytes at the start of the buffer that will remain uninitialized
+// out:
+//      pair of allocated buffer (which caller must free) and its size; nullptr/0 in case of error
+//
+// Loads file with given path into memory. Returns file contents in a buffer allocated from the heap together with
+// its size. Can optionally extend the buffer by a given size, leaving that much initial bytes uninitialized,
+// convenient for writing custom data at the start of the buffer (such as header).
+//
+std::pair<char *, size_t> loadFile(const char *path, size_t bufferOffset /* = 0 */)
 {
     auto size = getFileSize(path, false);
     if (size < 0)
         return {};
 
-    size -= offset;
-    auto buffer = new char[size];
+    auto buffer = new char[size + bufferOffset];
+    auto dest = buffer + bufferOffset;
 
-    if (loadFile(path, buffer, size, false) != size)
+    if (loadFile(path, dest, size, false) != size)
         delete[] buffer;
 
-    return { buffer, size };
+    return { buffer, size + bufferOffset };
 }
 
 static bool getFilenameAndExtension()
@@ -282,9 +294,9 @@ void SWOS::WriteFile()
 
     auto f = openFile(filename, "wb");
     bool ok = f && fwrite(buffer, 1, bufferSize, f) == bufferSize;
-    fclose(f);
 
     if (ok) {
+        fclose(f);
         __asm {
             xor eax, eax
             mov D0, eax
@@ -321,6 +333,11 @@ char getDirSeparator()
     return '\\';
 }
 
+bool isFileSystemCaseInsensitive()
+{
+    return true;
+}
+
 std::string joinPaths(const char *path1, const char *path2)
 {
     return std::string(path1) + getDirSeparator() + path2;
@@ -332,7 +349,7 @@ bool dirExists(const char *path)
     auto fileAttributes = ::GetFileAttributes(path);
     return fileAttributes != INVALID_FILE_ATTRIBUTES && (fileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
 #else
-# error Implement platform specific dirExists()
+# error Please implement platform specific dirExists()
 #endif
 }
 

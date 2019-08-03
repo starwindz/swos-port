@@ -1,0 +1,21 @@
+#pragma once
+
+#undef assert
+
+#ifdef _MSC_VER
+# define debugBreak() __debugbreak()
+#else
+# error Define debug break directive for your compiler
+#endif
+
+#ifdef SWOS_TEST
+# define assert(e) SWOS_UnitTest::assertImp(e, #e, __FILE__, __LINE__)
+namespace SWOS_UnitTest {
+    void assertImp(bool expr, const char *exprStr, const char *file, int line);
+}
+#elif defined(NDEBUG)
+# define assert(e) ((void)0)
+#else
+# define assert(e) \
+    { if (!(e)) { debugBreak(); } }
+#endif

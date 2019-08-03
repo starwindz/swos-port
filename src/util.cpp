@@ -29,8 +29,8 @@ void errorExit(const char *format, ...)
     logv(kError, format, args);
     va_end(args);
 
-#ifndef NDEBUG
-    __debugbreak();
+#ifdef DEBUG
+    debugBreak();
 #endif
 
     std::exit(EXIT_FAILURE);
@@ -153,11 +153,6 @@ void beep()
 bool isDebuggerPresent()
 {
     return ::IsDebuggerPresent() != 0;
-}
-
-void debugBreak()
-{
-    __debugbreak();
 }
 
 void debugBreakIfDebugged()

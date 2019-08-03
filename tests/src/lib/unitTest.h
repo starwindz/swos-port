@@ -23,12 +23,14 @@ namespace SWOS_UnitTest
         }
     };
     template<typename T1, typename T2>
-    void assertEqual(const T1& t1, const T2& t2, const char *t1Str, const char *t2Str, const char *file, int line)
+    void assertEqualImp(bool mustBeEqual, const T1& t1, const T2& t2, const char *t1Str, const char *t2Str, const char *file, int line)
     {
-        if (Detail::different(t1, t2))
-            throw FailedEqualAssertException(t1, t2, t1Str, t2Str, file, line);
+        if (Detail::different(t1, t2) == mustBeEqual)
+            throw FailedEqualAssertException(mustBeEqual, t1, t2, t1Str, t2Str, file, line);
     }
 
+    void assertTrueImp(bool expression, const char *exprStr, const char *file, int line);
+    void assertStringEqualImp(const char *s1, const char *s2, const char *s1Str, const char *s2Str, const char *file, int line);
     void assertNumItemsImp(int num, const char *numStr, const char *file, int line);
     void assertItemIsNumberImp(int index, const char *indexStr, int value, const char *file, int line);
     void assertItemIsVisibleImp(int index, const char *indexStr, bool visible, const char *file, int line);
@@ -48,7 +50,10 @@ namespace SWOS_UnitTest
     bool queueKeys(const std::vector<SDL_Scancode>& keys);
 }
 
-#define assertEqual(v1, v2) SWOS_UnitTest::assertEqual(v1, v2, #v1, #v2, __FILE__, __LINE__)
+#define assertTrue(e) SWOS_UnitTest::assertTrueImp(e, #e, __FILE__, __LINE__)
+#define assertEqual(v1, v2) SWOS_UnitTest::assertEqualImp(true, v1, v2, #v1, #v2, __FILE__, __LINE__)
+#define assertNotEqual(v1, v2) SWOS_UnitTest::assertEqualImp(false, v1, v2, #v1, #v2, __FILE__, __LINE__)
+#define assertStringEqualCaseInsensitive(s1, s2) SWOS_UnitTest::assertStringEqualImp(s1, s2, #s1, #s2, __FILE__, __LINE__)
 #define assertItemIsNumber(i, v) SWOS_UnitTest::assertItemIsNumberImp(i, #i, v, __FILE__, __LINE__)
 #define assertItemIsVisible(i) SWOS_UnitTest::assertItemIsVisibleImp(i, #i, true, __FILE__, __LINE__)
 #define assertItemIsInvisible(i) SWOS_UnitTest::assertItemIsVisibleImp(i, #i, false, __FILE__, __LINE__)

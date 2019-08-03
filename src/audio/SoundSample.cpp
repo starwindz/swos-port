@@ -4,13 +4,46 @@
 #include "file.h"
 
 const std::array<const char *, 5> SoundSample::kSupportedAudioExtensions = {
-    "raw", "mp3", "wav", "ogg", "flac"
+    "raw", "mp3", "wav", "ogg", "flac",
 };
 
 SoundSample::SoundSample(const char *path, int chance /* = 1 */)
 {
     loadFromFile(path);
     m_chanceModifier = chance;
+}
+
+SoundSample::SoundSample(const SoundSample& other)
+{
+    assign(other);
+    m_buffer = new char[m_size];
+    memcpy(m_buffer, other.m_buffer, m_size);
+}
+
+SoundSample::SoundSample(SoundSample&& other)
+{
+    *this = std::move(other);
+}
+
+SoundSample& SoundSample::operator=(SoundSample&& other)
+{
+    if (this != &other) {
+        free();
+        assign(other);
+        other.m_buffer = nullptr;
+        other.m_chunk = nullptr;
+    }
+
+    return *this;
+}
+
+SoundSample SoundSample::createNullSample()
+{
+    auto sample = SoundSample();
+    sample.m_buffer = new char[kSizeofWaveHeader];
+    sample.m_size = kSizeofWaveHeader;
+    sample.convertRawToWav();
+    return sample;
 }
 
 void SoundSample::free()
@@ -39,11 +72,12 @@ bool SoundSample::loadFromFile(const char *path)
 
     auto ext = getFileExtension(path);
     bool isRaw = isRawExtension(ext + 1);
-    auto offset = getAudioFileOffset(ext, isRaw);
+    auto bufferOffset = getAudioFileOffset(ext, isRaw);
 
-    auto data = loadFile(path, offset);
+    auto data = loadFile(path, bufferOffset);
 
     if (!data.first) {
+        // we will try to load the initial given extension twice, but it's fine, with retry maybe it will succeed
         auto baseNameLength = ext - path;
         std::tie(data.first, data.second, isRaw) = loadWithAnyAudioExtension(path, baseNameLength, ext);
 
@@ -97,33 +131,41 @@ size_t SoundSample::hash() const
 
 bool SoundSample::operator==(const SoundSample& other) const
 {
-    return m_chunk == other.m_chunk;
+    if (!m_buffer || !other.m_buffer)
+        return false;
+
+    return m_hash == other.m_hash && m_size == other.m_size && !memcmp(m_buffer, other.m_buffer, m_size);
 }
 
-void SoundSample::loadRaw()
+void SoundSample::assign(const SoundSample& other)
 {
-    static const char kWaveHeader[] = {
-        'R', 'I', 'F', 'F', 0, 0, 0, 0, 'W', 'A', 'V', 'E',                                 // file header
-        'f', 'm', 't', ' ', 16, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 8, 0,    // format header
-        'd', 'a', 't', 'a', 0, 0, 0, 0,                                                     // data header
-    };
-    static_assert(sizeof(kWaveHeader) == kSizeofWaveHeader, "Wave header format invalid");
+    m_buffer = other.m_buffer;
+    m_size = other.m_size;
+    m_isRaw = other.m_isRaw;
+    m_is11Khz = other.m_is11Khz;
+    m_hash = other.m_hash;
+    m_chanceModifier = other.m_chanceModifier;
+}
+
+// "Dress up" raw into wave format since SDL Mix doesn't understand raw files.
+// Internal buffer was allocated with extra space at the beginning for the wave header.
+void SoundSample::convertRawToWav()
+{
+    assert(m_size >= kSizeofWaveHeader);
 
     memcpy(m_buffer, kWaveHeader, kSizeofWaveHeader);
-    m_size -= kSizeofWaveHeader;
 
     auto waveHeader = reinterpret_cast<WaveFileHeader *>(m_buffer);
-    waveHeader->size = sizeof(kWaveHeader) + m_size - 8;
+    waveHeader->size = sizeof(kWaveHeader) + m_size - kSizeofWaveHeader - 8;
 
     auto waveFormatHeader = reinterpret_cast<WaveFormatHeader *>(reinterpret_cast<char *>(waveHeader) + sizeof(*waveHeader));
-    waveFormatHeader->frequency = m_is11Khz ? 11025 : 22050;
+    waveFormatHeader->frequency = m_is11Khz ? 11'025 : 22'050;
     waveFormatHeader->byteRate = waveFormatHeader->frequency;
 
     auto waveDataHeader = reinterpret_cast<WaveDataHeader *>(reinterpret_cast<char *>(waveFormatHeader) + sizeof(*waveFormatHeader));
-    waveDataHeader->length = m_size;
+    waveDataHeader->length = m_size - kSizeofWaveHeader;
 
-    auto rwOps = SDL_RWFromMem(m_buffer, m_size + sizeof(kWaveHeader));
-
+    auto rwOps = SDL_RWFromMem(m_buffer, m_size);
     m_chunk = rwOps ? Mix_LoadWAV_RW(rwOps, 1) : nullptr;
 }
 
@@ -132,13 +174,10 @@ void SoundSample::loadChunk()
     assert(m_buffer);
 
     if (m_buffer && !m_chunk) {
-        if (m_isRaw) {
-            loadRaw();
-        } else {
-            auto rwOps = SDL_RWFromMem(m_buffer, m_size);
-            if (rwOps)
-                m_chunk = Mix_LoadWAV_RW(rwOps, 0);
-        }
+        if (m_isRaw)
+            convertRawToWav();
+        else if (auto rwOps = SDL_RWFromMem(m_buffer, m_size))
+            m_chunk = Mix_LoadWAV_RW(rwOps, 0);
 
         if (m_chunk)
             m_hash = ::hash(m_chunk->abuf, m_chunk->alen);
@@ -180,7 +219,7 @@ size_t SoundSample::getAudioFileOffset(const char *ext, bool isRaw)
 
 bool SoundSample::isRawExtension(const char *ext)
 {
-    return tolower(ext[0]) == 'r' && tolower(ext[1]) && tolower(ext[2]) && ext[3] == '\0';
+    return tolower(ext[0]) == 'r' && tolower(ext[1]) == 'a' && tolower(ext[2]) == 'w' && ext[3] == '\0';
 }
 
 bool SoundSample::is11KhzSample(const char *name)

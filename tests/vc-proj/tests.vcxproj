@@ -83,7 +83,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>SWOS_TEST;DEBUG;SDL_ADDRESS_FETCHER_DLL="SdlAddressTableFetcher.dll";NOMINMAX;_CRT_SECURE_NO_WARNINGS;DECLSPEC=;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>SWOS_TEST;DIRENT_H;DEBUG;SDL_ADDRESS_FETCHER_DLL="SdlAddressTableFetcher.dll";NOMINMAX;_CRT_SECURE_NO_WARNINGS;DECLSPEC=;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>$(SolutionDir)..\src\stdinc.h</PrecompiledHeaderFile>
       <ForcedIncludeFiles>$(SolutionDir)..\src\stdinc.h</ForcedIncludeFiles>
@@ -91,6 +91,8 @@
       <AdditionalIncludeDirectories>$(ProjectDir)..\src\mocks;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <UndefinePreprocessorDefinitions>NDEBUG</UndefinePreprocessorDefinitions>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <PreprocessToFile>false</PreprocessToFile>
+      <AssemblerOutput>NoListing</AssemblerOutput>
     </ClCompile>
     <Link>
       <AdditionalDependencies>SdlAddressTableFetcher.lib;SDL2d.lib;SDL2maind.lib;swos-01.obj;swos-02.obj;swos-03.obj;swos-04.obj;swos-05.obj;swos-06.obj;swos-07.obj;swos-08.obj;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -112,12 +114,15 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>SWOS_TEST;NDEBUG;SDL_ADDRESS_FETCHER_DLL="SdlAddressTableFetcher.dll";NOMINMAX;_CRT_SECURE_NO_WARNINGS;DECLSPEC=;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>SWOS_TEST;DIRENT_H;NDEBUG;SDL_ADDRESS_FETCHER_DLL="SdlAddressTableFetcher.dll";NOMINMAX;_CRT_SECURE_NO_WARNINGS;DECLSPEC=;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>$(SolutionDir)..\src\stdinc.h</PrecompiledHeaderFile>
       <ForcedIncludeFiles>$(SolutionDir)..\src\stdinc.h</ForcedIncludeFiles>
       <DisableSpecificWarnings>4731</DisableSpecificWarnings>
       <AdditionalIncludeDirectories>$(ProjectDir)..\src\mocks;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <PreprocessToFile>false</PreprocessToFile>
+      <AssemblerOutput>NoListing</AssemblerOutput>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -141,14 +146,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\audio\chants.cpp" />
     <ClCompile Include="..\..\src\audio\comments.cpp" />
+    <ClCompile Include="..\..\src\audio\sfx.cpp" />
     <ClCompile Include="..\..\src\audio\SoundSample.cpp" />
     <ClCompile Include="..\..\src\controls\controlOptionsMenu.cpp" />
     <ClCompile Include="..\..\src\controls\controls.cpp" />
     <ClCompile Include="..\..\src\controls\joypadConfigMenu.cpp" />
     <ClCompile Include="..\..\src\controls\joypads.cpp" />
     <ClCompile Include="..\..\src\controls\scanCodes.cpp" />
-    <ClCompile Include="..\..\src\files\file.cpp" />
     <ClCompile Include="..\..\src\files\selectFilesMenu.cpp" />
     <ClCompile Include="..\..\src\game.cpp" />
     <ClCompile Include="..\..\src\init.cpp" />
@@ -158,22 +164,24 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\..\src\util.cpp" />
     <ClCompile Include="..\..\src\video\videoOptionsMenu.cpp" />
     <ClCompile Include="..\src\lib\bmpWriter.cpp" />
+    <ClCompile Include="..\src\lib\exceptions.cpp" />
     <ClCompile Include="..\src\lib\unitTest.cpp" />
     <ClCompile Include="..\src\main.cpp" />
     <ClCompile Include="..\src\mocks\mockAudio.cpp" />
-    <ClCompile Include="..\src\mocks\mockChants.cpp" />
+    <ClCompile Include="..\src\mocks\mockFile.cpp" />
     <ClCompile Include="..\src\mocks\mockLog.cpp" />
     <ClCompile Include="..\src\mocks\mockMusic.cpp" />
     <ClCompile Include="..\src\mocks\mockOptions.cpp" />
     <ClCompile Include="..\src\mocks\mockRender.cpp" />
     <ClCompile Include="..\src\mocks\mockSdlMixer.cpp" />
-    <ClCompile Include="..\src\mocks\mockSfx.cpp" />
+    <ClCompile Include="..\src\mocks\mockUtil.cpp" />
     <ClCompile Include="..\src\sdlProcs.cpp" />
     <ClCompile Include="..\src\tests\BaseTest.cpp" />
+    <ClCompile Include="..\src\tests\CommentaryTest.cpp" />
     <ClCompile Include="..\src\tests\EditTacticsMenuTest.cpp" />
+    <ClCompile Include="..\src\tests\SelectFilesMenuTest.cpp" />
     <ClCompile Include="..\src\tests\VideoOptionsMenuTest.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -189,10 +197,16 @@
     <ClInclude Include="..\src\lib\bmpWriter.h" />
     <ClInclude Include="..\src\lib\exceptions.h" />
     <ClInclude Include="..\src\lib\unitTest.h" />
+    <ClInclude Include="..\src\mocks\dirent.h" />
+    <ClInclude Include="..\src\mocks\mockFile.h" />
     <ClInclude Include="..\src\mocks\mockRender.h" />
+    <ClInclude Include="..\src\mocks\mockSdlMixer.h" />
+    <ClInclude Include="..\src\mocks\mockUtil.h" />
     <ClInclude Include="..\src\sdlProcs.h" />
     <ClInclude Include="..\src\tests\BaseTest.h" />
+    <ClInclude Include="..\src\tests\CommentaryTest.h" />
     <ClInclude Include="..\src\tests\EditTacticsMenuTest.h" />
+    <ClInclude Include="..\src\tests\SelectFilesMenuTest.h" />
     <ClInclude Include="..\src\tests\VideoOptionsMenuTest.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

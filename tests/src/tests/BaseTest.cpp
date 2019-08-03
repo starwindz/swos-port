@@ -163,8 +163,10 @@ auto BaseTest::includeAllTests() -> TestNamesSet
 void BaseTest::includeTest(BaseTest *test, TestNamesSet& includedTests)
 {
     includedTests.insert(test->name());
-    for (auto const testCase : test->getCases())
+    for (auto const testCase : test->getCases()) {
+        assert(testCase.id);
         includedTests.insert(testCase.id);
+    }
 }
 
 bool BaseTest::tryToIncludeTest(const std::string& potentialTestName, TestNamesSet& includedTests)

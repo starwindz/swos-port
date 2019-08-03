@@ -1,7 +1,6 @@
 #include <cstdint>
 #include <iostream>
 #include <cstdarg>
-#include <cassert>
 #include <algorithm>
 #include <string>
 #include <numeric>
@@ -23,5 +22,6 @@
 #include <SDL2/SDL.h>
 #include <SDL_mixer.h>
 
+#include "assert.h"
 #include "swossym.h"
 #include "log.h"

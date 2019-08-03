@@ -116,11 +116,11 @@ void getStringLength(char *str, int *w, int *h, bool align, bool big)
 
 /** printString
 
-    str   - pointer to string to write
+    str   - pointer to string to print
     x     - string x coordinate (may be ignored)
     y     - string y coordinate       -||-
-    big   - write with big font?
-    color - color for letters, 0 = original color
+    big   - print using big font?
+    color - color of letters, 0 = original color
     align - alignment flags, can be:
             NO_ALIGNMENT  - string is written to x and y coordinates
             ALIGN_LEFT    - horizontal starting point is x coordinate
@@ -212,7 +212,7 @@ void printString(char *str, int x, int y, int color, bool big /* = false */, int
             D0 = vsPtr + y * kGameScreenWidth + x;
             D4 = spritesIndex[c]->wquads * 16;
             D5 = dy;
-            SaveSprite();
+            SavePixelsBehindSprite();
 
             D0 = c;
             D1 = x;

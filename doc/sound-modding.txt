@@ -32,10 +32,12 @@ following directories are scanned for audio files:
 
 Each directory should contain audio files for its category. All the audio files
 under directory category are loaded, and when the event in the game happens one
-of them is played randomly.
+of them is played randomly. If a directory is empty or missing, no comments
+will be played in that category.
 
 Supported audio extensions are: "raw", "mp3", "wav", "ogg", "flac". Raw files
-are assumed to be 22kHz, mono.
+are assumed to be 22kHz, mono (with the exception of "endgame.raw" and
+"foul.raw", which are assumed to be 11kHz, mono).
 
 Chances of playing individual files can be affected with special naming
 convention:
@@ -54,6 +56,6 @@ Sound effects are searched for in directory "audio/fx", and should have
 original SWOS filenames, although all supported file extensions may be used.
 (e.g. "missgoal.mp3" will be used if "missgoal.raw" is missing)
 
-If "audio" directory is not present, an attempt to load audio files from SWOS
-CD will be made from local game directory (it's assumed they're copied there).
-If that fails, game will run without sound.
+If "audio" directory is not present, an attempt to load audio files having
+structure as on SWOS CD will be made from the local game directory (assumption
+is they're copied there). If that fails, game will run without sound.

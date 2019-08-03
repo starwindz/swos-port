@@ -179,6 +179,7 @@
     <ClCompile Include="..\src\video\videoOptionsMenu.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\assert.h" />
     <ClInclude Include="..\src\audio\audio.h" />
     <ClInclude Include="..\src\audio\chants.h" />
     <ClInclude Include="..\src\audio\comments.h" />

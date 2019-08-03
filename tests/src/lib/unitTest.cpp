@@ -21,6 +21,18 @@ static void verifyNumericItem(const MenuEntry *entry, const char *file, int line
         throw SWOS_UnitTest::InvalidEntryTypeException(entry, "number", file, line);
 }
 
+void SWOS_UnitTest::assertTrueImp(bool expression, const char *exprStr, const char *file, int line)
+{
+    if (!expression)
+        throw FailedAssertTrueException(exprStr, file, line);
+}
+
+void SWOS_UnitTest::assertStringEqualImp(const char *s1, const char *s2, const char *s1Str, const char *s2Str, const char * file, int line)
+{
+    if (_stricmp(s1, s2) != 0)
+        throw FailedEqualAssertException(true, s1, s2, s1Str, s2Str, file, line);
+}
+
 void SWOS_UnitTest::assertNumItemsImp(int expectedNumItems, const char *expectedStr, const char *file, int line)
 {
     int actualNumItems = getCurrentMenu()->numEntries;
@@ -75,7 +87,7 @@ void SWOS_UnitTest::assertItemIsSpriteImp(int index, const char *indexStr, int s
     if (entry->type2 != kEntrySprite2)
         throw InvalidEntryTypeException(entry, "sprite", file, line);
     if (spriteIndex >= 0)
-        assertEqual(static_cast<int>(entry->u2.spriteIndex), spriteIndex, "sprite index", spriteIndexStr, file, line);
+        assertEqualImp(true, static_cast<int>(entry->u2.spriteIndex), spriteIndex, "sprite index", spriteIndexStr, file, line);
 }
 
 void SWOS_UnitTest::assertItemHasColorImp(int index, const char *indexStr, int color, const char *colorStr, const char *file, int line)

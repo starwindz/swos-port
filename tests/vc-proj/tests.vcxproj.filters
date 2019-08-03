@@ -55,9 +55,6 @@
     <ClCompile Include="..\..\src\controls\scanCodes.cpp">
       <Filter>Source Files\project-files\controls</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\files\file.cpp">
-      <Filter>Source Files\project-files\files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\files\selectFilesMenu.cpp">
       <Filter>Source Files\project-files\files</Filter>
     </ClCompile>
@@ -73,9 +70,6 @@
     <ClCompile Include="..\..\src\audio\comments.cpp">
       <Filter>Source Files\project-files\audio</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\util.cpp">
-      <Filter>Source Files\project-files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\audio\SoundSample.cpp">
       <Filter>Source Files\project-files\audio</Filter>
     </ClCompile>
@@ -89,9 +83,6 @@
       <Filter>Source Files\project-files\menus</Filter>
     </ClCompile>
     <ClCompile Include="..\src\mocks\mockAudio.cpp">
-      <Filter>Source Files\mocks</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\mocks\mockChants.cpp">
       <Filter>Source Files\mocks</Filter>
     </ClCompile>
     <ClCompile Include="..\src\mocks\mockLog.cpp">
@@ -109,9 +100,6 @@
     <ClCompile Include="..\src\mocks\mockSdlMixer.cpp">
       <Filter>Source Files\mocks</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\mocks\mockSfx.cpp">
-      <Filter>Source Files\mocks</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\sdlProcs.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -123,6 +111,27 @@
     </ClCompile>
     <ClCompile Include="..\src\tests\EditTacticsMenuTest.cpp">
       <Filter>Source Files\tests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\mocks\mockFile.cpp">
+      <Filter>Source Files\mocks</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\mocks\mockUtil.cpp">
+      <Filter>Source Files\mocks</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\tests\CommentaryTest.cpp">
+      <Filter>Source Files\tests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\tests\SelectFilesMenuTest.cpp">
+      <Filter>Source Files\tests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\audio\chants.cpp">
+      <Filter>Source Files\project-files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\audio\sfx.cpp">
+      <Filter>Source Files\project-files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib\exceptions.cpp">
+      <Filter>Source Files\lib</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -165,9 +174,6 @@
     <ClInclude Include="..\src\mocks\mockRender.h">
       <Filter>Source Files\mocks</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\sdlProcs.h">
-      <Filter>Source Files\project-files</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\lib\exceptions.h">
       <Filter>Source Files\lib</Filter>
     </ClInclude>
@@ -176,6 +182,25 @@
     </ClInclude>
     <ClInclude Include="..\src\tests\EditTacticsMenuTest.h">
       <Filter>Source Files\tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\sdlProcs.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\tests\CommentaryTest.h">
+      <Filter>Source Files\tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\tests\SelectFilesMenuTest.h">
+      <Filter>Source Files\tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\mocks\mockFile.h">
+      <Filter>Source Files\mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\mocks\mockSdlMixer.h" />
+    <ClInclude Include="..\src\mocks\mockUtil.h">
+      <Filter>Source Files\mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\mocks\dirent.h">
+      <Filter>Source Files\mocks</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

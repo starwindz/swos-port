@@ -37,6 +37,8 @@ void beep();
 
 #ifdef DEBUG
 void debugBreakIfDebugged();
+#else
+#define debugBreakIfDebugged() ((void)0)
 #endif
 
 inline bool hiBitSet(dword d) {
@@ -65,3 +67,9 @@ inline word hiWord(dword d) {
     __asm pop  esi  \
     __asm pop  ebx  \
 }
+
+#ifdef _MSC_VER
+#define suppressConstQualifierOnFunctionWarning() __pragma(warning(suppress:4180))
+#else
+#error Define pragma to suppress warning when using const with function pointer for your compiler, if needed
+#endif

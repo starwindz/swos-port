@@ -411,7 +411,13 @@ void SWOS::InitMainMenu()
 {
     InitMenuMusic();
     InitMainMenuStuff();
+    // speed up starting up in debug mode
+#ifdef DEBUG
+    menuFade = 0;
+    setPalette(g_workingPalette);
+#else
     menuFade = 1;
+#endif
 }
 
 void SWOS::InitMainMenuStuff()

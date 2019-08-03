@@ -98,7 +98,10 @@ void SWOS::LoadIntroChant()
         return;
 
     auto color = leftTeamIngame.prShirtCol;
+    assert(color < 16);
+
     auto chantIndex = introTeamChantIndices[color];
+    assert(chantIndex < 6);
 
     std::string prefix;
     bool hasAudioDir = dirExists(kAudioDir);
@@ -233,7 +236,7 @@ void SWOS::LoadCrowdChantSample()
     int sampleIndex = getChantSampleIndex();
     loadChantSample(sampleIndex);
 
-    // a change from original SWOS: we will reset chant function after each goal (SWOS would only reset if "interesting" game)
+    // a change from the original SWOS: we will reset chant function after each goal (SWOS would only reset if "interesting" game)
     // this is to prevent fans chanting "three nil" after the result has changed to 3-1
     m_playCrowdChantsFunction = nullptr;
 

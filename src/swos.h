@@ -485,3 +485,11 @@ enum Tactics {
 
 constexpr int kMenuScreenWidth = 320;
 constexpr int kGameScreenWidth = 384;
+
+// can't keep this a constexpr in C++17 anymore, sigh...
+#if _HAS_CXX17
+static
+#else
+constexpr
+#endif
+char *kSentinel = reinterpret_cast<char *>(-1);

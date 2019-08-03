@@ -245,7 +245,7 @@ void AsmConverter::checkForUnusedSymbols()
                 unusedSymbols.push_back(sym);
         }
 
-        exitIfUndefinedSymbols("Unknown symbols found: ", unusedSymbols);
+        exitIfUndefinedSymbols("Unknown symbol(s) found: ", unusedSymbols);
     }
 }
 

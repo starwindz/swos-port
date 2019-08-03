@@ -45,7 +45,7 @@ cseg_A3368 - @end
 Int8Handler - dseg
 dataStart - aChairmanScenes
 goalSamples - aSfxPierceM158_
-jumpHeadersSamples - PIT_countdown
+headerSamples - PIT_countdown
 aSwos_xmi - timerBoolean
 aAsave_256 - dosMemSegment
 PlaySwosXmi - SelectDefaultDrive
@@ -82,6 +82,7 @@ aErrorCdromDriverError_ - aSensibleWorldOfSoccerV2_0
 
 
 # turn these into null procs, consisting of retn only
+
 @null
 DummyProc01
 ProgramPIT
@@ -101,6 +102,7 @@ SelectDefaultDrive
 
 
 # replace variable's content with what's given here
+
 @replace
 # careful when changing strings, as offsets must not change
 aCommentary, 'COMMENTARY****', 0
@@ -141,7 +143,7 @@ DrawMenuItem
 CalcMenuEntryAddress
 DrawMenuText
 SetCurrentEntry
-SaveSprite
+SavePixelsBehindSprite
 FilterKeys
 GetTextSize
 ZeroOutStars
@@ -151,7 +153,7 @@ InitUserTactics
 
 
 # list of symbols to export to header so they can be accessible from C++
-# inside asm files they will be prefixed with underscore, and made public
+# inside ASM files they will be prefixed with underscore, and made public
 # syntax for generating SWOS C++ header files is:
 # <symbol> [, prefix <prefix>][, function |, (array | pointer | ptr | functionPointer) <type>['['<size>']'] |, <type>]
 
@@ -360,7 +362,7 @@ player2ClearFlag, word
 smallCharsTable, array const char
 
 spritesIndex, array SpriteGraphics *
-SaveSprite, function
+SavePixelsBehindSprite, function
 DrawSpriteInColor, function
 numSpritesSaved, word
 
@@ -574,7 +576,8 @@ GameOver
 
 
 # insert a call into a proc at a given line, in the form of call <proc name>_<line number>
-# it's effectively and import entry
+# it's effectively an import entry
+# current limitation is one hook per proc, but it should be lifted if there's ever need for more
 
 @insert-hook
 RunStoppageEventsAndSetAnimationTables, 320

@@ -7,7 +7,6 @@ namespace SWOS_UnitTest
 {
     struct BaseException
     {
-    public:
         BaseException(const char *file, int line) {
             m_error = std::string(getBaseName(file)) + '(' + std::to_string(line) + "): ";
             debugBreakIfDebugged();
@@ -23,6 +22,13 @@ namespace SWOS_UnitTest
 
     protected:
         std::string m_error;
+    };
+
+    struct AssertionException : public BaseException
+    {
+        AssertionException(const char *assertExpStr, const char *file, int line) : BaseException(file, line) {
+            m_error += std::string("assertion failed: ") + assertExpStr;
+        }
     };
 
     struct InvalidNumberOfEntriesInMenu : public BaseException
@@ -117,6 +123,12 @@ namespace SWOS_UnitTest
         std::string stringify(const std::pair<T, T>& t) {
             return "(" + std::to_string(t.first) + ", " + std::to_string(t.second) + ")";
         }
+        template<typename T>
+        std::string stringify(T *t) {
+            char buf[32];
+            _itoa(reinterpret_cast<int>(t), buf, 16);
+            return std::string("0x") + buf;
+        }
         static inline std::string stringify(char *str) {
             return std::string("\"") + str + '"';
         }
@@ -125,13 +137,33 @@ namespace SWOS_UnitTest
         }
     };
 
+    struct FailedAssertTrueException : public BaseException
+    {
+        FailedAssertTrueException(const char *exprStr, const char *file, int line)
+            : BaseException(file, line) {
+            m_error += std::string("assert failed, expression ") + exprStr + " is false";
+        }
+    };
+
     template<typename T1, typename T2>
     struct FailedEqualAssertException : public BaseException
     {
-        FailedEqualAssertException(const T1& t1, const T2& t2, const char *t1Str, const char *t2Str, const char *file, int line)
+        suppressConstQualifierOnFunctionWarning();
+        FailedEqualAssertException(bool mustBeEqual, const T1& t1, const T2& t2, const char *t1Str,
+            const char *t2Str, const char *file, int line)
             : BaseException(file, line) {
             using namespace Detail;
-            m_error += std::string(t1Str) + " != " + t2Str + " (" + stringify(t1) + " != " + stringify(t2) + ')';
+            auto equalityOperator = mustBeEqual ? " != " : " == ";
+            m_error += std::string(t1Str) + equalityOperator + t2Str + " (" + stringify(t1) + " != " + stringify(t2) + ')';
         }
+    };
+
+    bool ignoreAsserts(bool ignored);
+
+    class AssertSilencer {
+        bool m_oldState;
+    public:
+        AssertSilencer() { m_oldState = ignoreAsserts(true); }
+        ~AssertSilencer() { ignoreAsserts(m_oldState); }
     };
 }

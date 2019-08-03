@@ -236,6 +236,9 @@
     <ClInclude Include="..\src\stdinc.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\assert.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="Types.natvis" />
