@@ -126,9 +126,9 @@ dword *validateHilPointerSub(dword *ptr)
     return ptr;
 }
 
-void drawSprite16Pixels(int spriteIndex, int x, int y, bool saveSpriteFlag = true)
+void drawSprite16Pixels(int spriteIndex, int x, int y, bool saveSpritePixelsFlag = true)
 {
-    int skipSavingSprite = saveSpriteFlag ? 0 : -1;
+    int skipSavingSpritePixels = saveSpritePixelsFlag ? 0 : -1;
 
     D0 = spriteIndex;
     D1 = x;
@@ -140,7 +140,7 @@ void drawSprite16Pixels(int spriteIndex, int x, int y, bool saveSpriteFlag = tru
         push edi
         push ebp
 
-        mov  ebp, skipSavingSprite
+        mov  ebp, skipSavingSpritePixels
         call DrawSprite16Pixels
 
         pop  ebp
@@ -525,6 +525,16 @@ void SWOS::StartMainGameLoop()
     vsPtr = linAdr384k;
 
     finishGameControls();
+}
+
+// Fix crash when watching 2 CPU players with at least one top-class goalkeeper in the game.
+// Goalkeeper skill is scaled to range 0..7 (in D0) but value clamping is skipped in CPU vs CPU mode.
+void SWOS::AdjustPlayerSkills_246()
+{
+    if (D0.asInt16() < 0)
+        D0 = 0;
+    if (D0.asInt16() > 7)
+        D0 = 7;
 }
 
 //

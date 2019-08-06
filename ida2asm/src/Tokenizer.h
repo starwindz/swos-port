@@ -171,10 +171,16 @@ public:
     CToken *end() const;
 
 private:
+    enum BlockProperties { kInProc, kInNoBreakBlock, kSeenLimitCheckpoint, kTrailingDebris, kNumProperties, kNone };
+    using BlockState = std::array<int, kNumProperties>;
+
+    std::tuple<BlockState, bool, CToken *> determineBlockStart(const TokenRange& limits);
+    std::pair<BlockState, bool> determineBlockEnd(const TokenRange& limits, BlockState state, CToken *comment);
+
     static std::pair<bool, CToken *> isDataItemLine(CToken *token);
     static bool isNoBreakMarker(CToken *token, bool& starting);
     static CToken *skipUntilNewLine(CToken *token);
-    static Token *makeEofToken(Token *token);
+    static Token *makeToken(Token *token, Token::Type type);
 
     std::unique_ptr<char[]> m_tokenData;
     Token *m_beginToken = nullptr;

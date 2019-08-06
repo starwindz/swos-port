@@ -269,26 +269,7 @@ CToken *IdaAsmParser::parseInstruction(CToken *token, TokenList& comments)
 {
     assert(token->category == Token::Instruction);
 
-    if (m_currentLineHook < static_cast<int>(m_lineNo))
-        verifyHookLine(token);
-
-    if (m_currentProc && m_currentLineHook == m_lineNo) {
-        auto hookProc = outputCallInstruction(token, [this](auto nameToken) {
-            auto buffer = const_cast<char *>(nameToken->text());
-
-            memcpy(buffer, m_currentProc->text(), m_currentProc->textLength);
-
-            auto lineNumber = std::to_string(m_currentProcHookLine);
-
-            buffer[m_currentProc->textLength] = '_';
-            memcpy(buffer + m_currentProc->textLength + 1, lineNumber.c_str(), lineNumber.length());
-
-            nameToken->textLength = m_currentProc->textLength + 1 + lineNumber.length();
-        });
-
-        m_references.addReference(hookProc.first);
-        m_currentLineHook = -1;
-    }
+    checkProcHookInsertion(token);
 
     CToken *prefix{};
 
@@ -541,7 +522,9 @@ CToken *IdaAsmParser::parseLabel(CToken *token, TokenList& comments)
 {
     assert(token && token->isId());
 
-    if (!token->isLocalLabel())
+    if (token->isLocalLabel())
+        checkProcHookInsertion(token);
+    else
         m_references.addLabel(token);
 
     auto name = token;
@@ -842,6 +825,30 @@ CToken *IdaAsmParser::ignoreLine(CToken *token)
     return token;
 }
 
+void IdaAsmParser::checkProcHookInsertion(CToken *token)
+{
+    if (m_currentLineHook < static_cast<int>(m_lineNo))
+        verifyHookLine(token);
+
+    if (m_currentProc && m_currentLineHook == m_lineNo) {
+        auto hookProc = outputCallInstruction(token, [this](auto nameToken) {
+            auto buffer = const_cast<char *>(nameToken->text());
+
+            memcpy(buffer, m_currentProc->text(), m_currentProc->textLength);
+
+            auto lineNumber = std::to_string(m_currentProcHookLine);
+
+            buffer[m_currentProc->textLength] = '_';
+            memcpy(buffer + m_currentProc->textLength + 1, lineNumber.c_str(), lineNumber.length());
+
+            nameToken->textLength = m_currentProc->textLength + 1 + lineNumber.length();
+        });
+
+        m_references.addReference(hookProc.first);
+        m_currentLineHook = -1;
+    }
+}
+
 bool IdaAsmParser::isLocalVariable(const char *str, size_t len)
 {
     for (const auto& localVar : m_localVars)
@@ -979,30 +986,45 @@ CToken *IdaAsmParser::skipUntilNewLine(CToken *token)
 
 CToken *IdaAsmParser::skipUntilSymbol(CToken *token, const String *sym)
 {
-    CToken *prevNewLine{};
+    CToken *prevLeadingNewLine{}, *prevNewLine{};
+    int prevLineNo;
 
     // don't skip leading comments of the terminating symbol
     while (!token->isEof()) {
-        if (token->category == Token::Whitespace) {
-            if (token->isNewLine()) {
-                m_lineNo++;
+        if (token->isNewLine()) {
+            prevNewLine = token;
+            auto next = token->next();
 
-                if (sym && token->next()->isId() && token->next() == *sym)
-                    break;
-
-                prevNewLine = token;
+            if (next->isComment() && !prevLeadingNewLine) {
+                prevLeadingNewLine = token;
+                prevLineNo = m_lineNo;
             }
-        } else {
-            prevNewLine = nullptr;
+
+            if (sym && next->isId() && next == *sym)
+                break;
+
+            m_lineNo++;
+        } else if (!token->isComment()) {
+            prevLeadingNewLine = nullptr;
         }
 
         advance(token);
     }
 
-    if (sym && token->isEof())
-        error(std::string("end range symbol `") + sym->string() + "' unmatched", token);
+    if (token->isEof()) {
+        if (sym) {
+            error(std::string("end range symbol `") + sym->string() + "' unmatched", token);
+        } else {
+            assert(prevNewLine);
+            token = prevNewLine;
+            m_lineNo--;
+        }
+    } else if (prevLeadingNewLine) {
+        m_lineNo = prevLineNo;
+        token = prevLeadingNewLine;
+    }
 
-    return prevNewLine ? prevNewLine : token;
+    return token;
 }
 
 std::pair<CToken *, size_t> IdaAsmParser::getNextSignificantToken(CToken *token)

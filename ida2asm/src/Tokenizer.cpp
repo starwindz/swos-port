@@ -86,8 +86,8 @@ auto Tokenizer::tokenize(const char *data, long size, long hardSize) -> TokenRan
 
     assert(!m_tokenData && data && size);
 
-    // +1 token for EOF
-    m_tokenDataSize = (size / 2) * (sizeof(Token) + 1) + sizeof(Token);
+    // +1 token for EOF, +1 token for (potential) new line
+    m_tokenDataSize = (size / 2) * (sizeof(Token) + 2) + sizeof(Token);
     m_tokenData.reset(new char[m_tokenDataSize]);
 
     auto tokenSentinel = m_tokenData.get() + m_tokenDataSize;
@@ -101,7 +101,7 @@ auto Tokenizer::tokenize(const char *data, long size, long hardSize) -> TokenRan
     }
 
     if (hardSize < 0)
-        token = makeEofToken(token);
+        token = makeToken(token, Token::T_EOF);
 
     assert(p == softSentinel && p[-1] == '\n');
     auto softLimit = token;
@@ -114,12 +114,17 @@ auto Tokenizer::tokenize(const char *data, long size, long hardSize) -> TokenRan
 
     auto hardSentinel = data + hardSize;
 
+    auto lastToken = m_start;
     while (p < hardSentinel) {
         p = lookupToken(*token, p);
+        lastToken = token;
         advance(token);
     }
 
-    token = makeEofToken(token);
+    if (!lastToken->isNewLine())
+        token = makeToken(token, Token::T_NL);
+
+    token = makeToken(token, Token::T_EOF);
 
     auto hardLimit = token;
     assert(reinterpret_cast<char *>(hardLimit) < tokenSentinel && p == hardSentinel && p[-1] == '\n');
@@ -129,9 +134,43 @@ auto Tokenizer::tokenize(const char *data, long size, long hardSize) -> TokenRan
 
 std::tuple<std::string, bool, bool> Tokenizer::determineBlockLimits(const TokenRange& limits)
 {
-    enum State { kInProc, kInNoBreakBlock, kSeenLimitCheckpoint, kTrailingDebris, kNumStates, kNone };
-    std::array<int, kNumStates> states{};
+    BlockState state;
+    bool noBreakContinued, noBreakOverflow;
+    CToken *comment;
 
+    std::tie(state, noBreakContinued, comment) = determineBlockStart(limits);
+    std::tie(state, noBreakOverflow) = determineBlockEnd(limits, state, comment);
+
+    assert(m_start && m_start < limits.first);
+    assert(m_end && m_end <= limits.second);
+    assert(m_start->type == Token::T_PROC || m_start->isComment() || m_start->isNewLine() || m_start->isId());
+    assert(m_end == end() || m_end->type == Token::T_ENDP || m_end->isComment() || m_end->isNewLine() || m_end->isId());
+
+    std::string error;
+
+    if (state[kInProc])
+        error = "unterminated procedure encountered";
+    else if (state[kInNoBreakBlock])
+        error = "unterminated no-break tag encountered";
+
+    return { error, noBreakContinued, noBreakOverflow };
+}
+
+CToken *Tokenizer::begin() const
+{
+    assert(m_start);
+    return m_start;
+}
+
+CToken *Tokenizer::end() const
+{
+    assert(m_end);
+    return m_end;
+}
+
+auto Tokenizer::determineBlockStart(const TokenRange& limits) -> std::tuple<BlockState, bool, CToken *>
+{
+    BlockState state{};
     bool noBreakContinued = false;
 
     CToken *comment{};
@@ -143,25 +182,25 @@ std::tuple<std::string, bool, bool> Tokenizer::determineBlockLimits(const TokenR
             auto next = token->next();
 
             if (next->type == Token::T_SEGMENT) {
-                states[kSeenLimitCheckpoint] = 1;
-                states[kTrailingDebris] = 0;
+                state[kSeenLimitCheckpoint] = 1;
+                state[kTrailingDebris] = 0;
             } else if (next->type == Token::T_PROC) {
-                states[kInProc]++;
-                states[kSeenLimitCheckpoint] = 1;
+                state[kInProc]++;
+                state[kSeenLimitCheckpoint] = 1;
             } else if (next->type == Token::T_ENDP) {
-                if (!states[kInProc])
+                if (!state[kInProc])
                     m_start = comment ? comment : skipUntilNewLine(next->next())->next();
                 else
-                    states[kInProc]--;
-                states[kSeenLimitCheckpoint] = 1;
-                states[kTrailingDebris] = 0;
+                    state[kInProc]--;
+                state[kSeenLimitCheckpoint] = 1;
+                state[kTrailingDebris] = 0;
             } else {
                 bool isDataItem;
                 std::tie(isDataItem, token) = isDataItemLine(token);
 
                 if (isDataItem) {
-                    states[kSeenLimitCheckpoint] = 1;
-                    states[kTrailingDebris] = 0;
+                    state[kSeenLimitCheckpoint] = 1;
+                    state[kTrailingDebris] = 0;
                 }
             }
             token = skipUntilNewLine(token);
@@ -169,13 +208,13 @@ std::tuple<std::string, bool, bool> Tokenizer::determineBlockLimits(const TokenR
             bool starting;
             if (isNoBreakMarker(token, starting)) {
                 if (starting) {
-                    states[kInNoBreakBlock]++;
+                    state[kInNoBreakBlock]++;
                 } else {
-                    if (!states[kInNoBreakBlock]) {
+                    if (!state[kInNoBreakBlock]) {
                         m_start = skipUntilNewLine(token->next())->next();
                         noBreakContinued = true;
                     } else {
-                        states[kInNoBreakBlock]--;
+                        state[kInNoBreakBlock]--;
                     }
                 }
             } else {
@@ -187,9 +226,9 @@ std::tuple<std::string, bool, bool> Tokenizer::determineBlockLimits(const TokenR
         } else {
             comment = nullptr;
             if (token->type != Token::T_ALIGN)
-                states[kTrailingDebris] = 1;
+                state[kTrailingDebris] = 1;
 
-            if (!states[kSeenLimitCheckpoint]) {
+            if (!state[kSeenLimitCheckpoint]) {
                 bool isInstruction = token->category == Token::Instruction;
                 bool isDataItem = false;
 
@@ -206,32 +245,37 @@ std::tuple<std::string, bool, bool> Tokenizer::determineBlockLimits(const TokenR
         }
     }
 
+    return { state, noBreakContinued, comment };
+}
+
+auto Tokenizer::determineBlockEnd(const TokenRange& limits, BlockState state, CToken *comment) -> std::pair<BlockState, bool>
+{
     m_end = limits.first;
 
-    states[kSeenLimitCheckpoint] = 0;
-    bool noBreakOverflow = states[kInNoBreakBlock] != 0;
+    state[kSeenLimitCheckpoint] = 0;
+    bool noBreakOverflow = state[kInNoBreakBlock] != 0;
 
-    if (states[kInProc] || states[kInNoBreakBlock] || states[kTrailingDebris]) {
+    if (state[kInProc] || state[kInNoBreakBlock] || state[kTrailingDebris]) {
         for (auto token = limits.first; token < limits.second; advance(token)) {
-            if (!states[kInProc] && !states[kInNoBreakBlock] && states[kSeenLimitCheckpoint])
+            if (!state[kInProc] && !state[kInNoBreakBlock] && state[kSeenLimitCheckpoint])
                 break;
 
             if (token->isId()) {
                 auto next = token->next();
 
                 if (next->type == Token::T_PROC) {
-                    states[kInProc]++;
-                    states[kSeenLimitCheckpoint] = 1;
+                    state[kInProc]++;
+                    state[kSeenLimitCheckpoint] = 1;
                 } else if (next->type == Token::T_ENDP) {
-                    if (!--states[kInProc])
+                    if (!--state[kInProc])
                         m_end = skipUntilNewLine(next->next())->next();
-                    states[kSeenLimitCheckpoint] = 1;
+                    state[kSeenLimitCheckpoint] = 1;
                 } else {
                     bool isDataItem;
                     std::tie(isDataItem, token) = isDataItemLine(token);
 
                     if (isDataItem)
-                        states[kSeenLimitCheckpoint] = 1;
+                        state[kSeenLimitCheckpoint] = 1;
                 }
                 token = skipUntilNewLine(token);
             } else if (token->category == Token::Whitespace) {
@@ -241,8 +285,8 @@ std::tuple<std::string, bool, bool> Tokenizer::determineBlockLimits(const TokenR
                 bool starting;
                 if (isNoBreakMarker(token, starting)) {
                     if (starting)
-                        states[kInNoBreakBlock]++;
-                    else if (!--states[kInNoBreakBlock])
+                        state[kInNoBreakBlock]++;
+                    else if (!--state[kInNoBreakBlock])
                         m_end = skipUntilNewLine(token->next())->next();
                 }
             } else if (token->isEof()) {
@@ -250,7 +294,7 @@ std::tuple<std::string, bool, bool> Tokenizer::determineBlockLimits(const TokenR
             } else {
                 comment = nullptr;
 
-                if (!states[kSeenLimitCheckpoint]) {
+                if (!state[kSeenLimitCheckpoint]) {
                     bool isInstruction = token->category == Token::Instruction;
                     bool isDataItem = false;
 
@@ -268,31 +312,7 @@ std::tuple<std::string, bool, bool> Tokenizer::determineBlockLimits(const TokenR
         }
     }
 
-    assert(m_start && m_start < limits.first);
-    assert(m_end && m_end <= limits.second);
-    assert(m_start->type == Token::T_PROC || m_start->isComment() || m_start->isNewLine() || m_start->isId());
-    assert(m_end == end() || m_end->type == Token::T_ENDP || m_end->isComment() || m_end->isNewLine() || m_end->isId());
-
-    std::string error;
-
-    if (states[kInProc])
-        error = "unterminated procedure encountered";
-    else if (states[kInNoBreakBlock])
-        error = "unterminated no-break tag encountered";
-
-    return { error, noBreakContinued, noBreakOverflow };
-}
-
-CToken *Tokenizer::begin() const
-{
-    assert(m_start);
-    return m_start;
-}
-
-CToken *Tokenizer::end() const
-{
-    assert(m_end);
-    return m_end;
+    return { state, noBreakOverflow };
 }
 
 std::pair<bool, CToken *> Tokenizer::isDataItemLine(CToken *token)
@@ -339,10 +359,10 @@ CToken *Tokenizer::skipUntilNewLine(CToken *token)
     return token;
 }
 
-Token *Tokenizer::makeEofToken(Token *token)
+Token *Tokenizer::makeToken(Token *token, Token::Type type)
 {
     memset(token, 0, sizeof(Token));
-    token->type = Token::T_EOF;
+    token->type = type;
     return token->next();
 }
 

@@ -254,6 +254,34 @@ struct TeamFile {
     byte playerNumbers[16];
 };
 
+static_assert(sizeof(TeamFile) == 76, "TeamFile is invalid");
+
+struct PlayerFile {
+    byte nationality;
+    byte unk_1;
+    byte shirtNumber;
+    char playerName[23];
+    byte positionAndFace;
+    byte cardsInjuries;
+    byte passing;
+    byte shootingHeading;
+    byte tacklingBallControl;
+    byte speedFinishing;
+    byte price;
+    byte unk_2;
+    byte unk_3;
+    byte unk_4;
+    byte unk_5;
+    byte someFlag;
+};
+
+static_assert(sizeof(PlayerFile) == 38, "PlayerFile is invalid");
+
+struct PlayerFileHeader : private TeamFile, public PlayerFile {
+};
+
+static_assert(sizeof(PlayerFileHeader) == sizeof(TeamFile) + sizeof(PlayerFile), "PlayerFileHeader invalid");
+
 struct TeamGame {
     word prShirtType;
     word prShirtCol;
@@ -273,6 +301,11 @@ struct TeamGame {
     PlayerGame players[16];
     byte unknownTail[686];
 };
+
+struct PlayerGameHeader : private TeamGame, public PlayerGame {
+};
+
+static_assert(sizeof(PlayerGameHeader) == sizeof(TeamGame) + sizeof(PlayerGame), "PlayerGameHeader invalid");
 
 struct TeamGeneralInfo {
     TeamGeneralInfo *opponentsTeam;

@@ -587,6 +587,7 @@ PlayerTackled, 59
 CheckIfBallOutOfPlay, 251
 SetupPlayers, 160
 InputText, 23
+AdjustPlayerSkills, 246
 
 
 # list of symbols that will be replaced by the C++ code

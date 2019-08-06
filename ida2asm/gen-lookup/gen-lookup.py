@@ -6,17 +6,14 @@ import inspect
 import operator
 import subprocess
 
-
 kTabSize = 4
 kTokenLookupFilename = 'TokenLookup.h'
 kTokenTypeEnumFilename = 'TokenTypeEnum.h'
 kLineBreakLimit = 120
 kNumTestLoops = 1500
 
-
 def makePath(*args, **kwargs):
     return os.path.abspath(os.path.join(*args, **kwargs))
-
 
 def getMutualPrefixLength(str1, str2):
     prefix = ''
@@ -28,13 +25,11 @@ def getMutualPrefixLength(str1, str2):
 
     return maxLen
 
-
 # token types that are not coming from the input file
 def specialTokens():
     # keep T_ID first
     return ('T_ID', 'T_STRING', 'T_DUP_QMARK', 'T_DUP_STRUCT_INIT', 'T_COMMENT', 'T_NL', 'T_COMMA',
         'T_LBRACKET', 'T_RBRACKET', 'T_PLUS', 'T_MINUS', 'T_MULT', 'T_HEX', 'T_NUM', 'T_BIN', 'T_EOF')
-
 
 def outputEnum(tokens):
     for token in tokens:
@@ -42,7 +37,6 @@ def outputEnum(tokens):
 
     for token in specialTokens():
         out(f'    {token},')
-
 
 def outputCharTypeFunctions():
     out(r'''
@@ -61,7 +55,6 @@ static inline bool isDelimiter(char c)
     return Util::isSpace(c) || c == ',' || c == '[' || c == '+' || c == '-' || c == '*' || c == ']' || c == '\'';
 }''')
 
-
 # keep this synced with Util::hash()
 def simpleHash(str):
     h = 1021
@@ -74,7 +67,6 @@ def simpleHash(str):
         h ^= c + i
 
     return h
-
 
 def outputTypeToString(tokens):
     out(r'''
@@ -105,7 +97,6 @@ const char *Token::typeToString(Token::Type type)
     }
 }''')
 
-
 def outputFilterComment():
     out(r'''
 static const char *filterComment(const char *src, Token& token)
@@ -128,7 +119,6 @@ static const char *filterComment(const char *src, Token& token)
     return src;
 }
 ''')
-
 
 def outputParsingRoutines():
     out(r'''
@@ -332,7 +322,6 @@ static const char *parseId(const char *start, const char *src, char *dst, Token&
 }
 ''')
 
-
 def lookupTokenPrologue():
     op = lambda ch, type: f'''
     }} else if (*p == '{ch}') {{
@@ -400,7 +389,6 @@ def lookupTokenPrologue():
     }
 '''
 
-
 def outputLookupToken(tokens, useIfs):
     global out
 
@@ -465,7 +453,6 @@ def outputLookupToken(tokens, useIfs):
     return parseId(start, p - 1, id - 1, token);
 }''')
 
-
 # the main output routine
 def outputTokensCppFile(outputDir, tokens):
     # verify that each enum member is included in print function; crude but it works :)
@@ -497,7 +484,6 @@ def outputTokensCppFile(outputDir, tokens):
         outputFilterComment()
         outputParsingRoutines()
         outputLookupToken(tokens, False)
-
 
 def processInputFile(file):
     tokens = []
@@ -532,7 +518,6 @@ def processInputFile(file):
     tokens.sort(key=lambda token: token['id'])
     return tokens, tokenSet
 
-
 def outputTestString(testString):
     indent = ' ' * 4
 
@@ -556,7 +541,6 @@ def outputTestString(testString):
         out(f'{indent}"{testString[left:right]}"')
 
     out('" ";\n')   # make sure it ends with a new line
-
 
 def outputTestTokens(testTokens):
     out('struct TestToken {')
@@ -607,7 +591,6 @@ def outputTestTokens(testTokens):
 
     out('\n};\n')
 
-
 def outputTestFunction(lookupFunction):
     out(f'static bool testTokens_{lookupFunction}()')
     out(r'''{
@@ -641,7 +624,6 @@ def outputTestFunction(lookupFunction):
 
     return true;
 }''')
-
 
 def testLookupEpilogue(specificPart):
     return r'''    if (p == start && (*p == '+' || *p == '-'))
@@ -696,7 +678,6 @@ def testLookupEpilogue(specificPart):
 }
 '''
 
-
 def outputStdlibTestFunction(tokens):
     out(r'''
 #include <unordered_map>
@@ -728,7 +709,6 @@ static const char *lookupTokenStdLib(Token& token, const char *p)
         token.type = std::get<0>(it->second);
         token.category = std::get<1>(it->second);
         token.instructionType = (Token::InstructionType)std::get<2>(it->second);'''))
-
 
 def outputCustomHashTestFunction(tokens):
     out(r'''
@@ -801,13 +781,11 @@ static const char *lookupTokenCustomHash(Token& token, const char *p)
         token.category = keyword->category;
         token.instructionType = (Token::InstructionType)keyword->instructionType;'''))
 
-
 def gotGperf():
     try:
         return subprocess.call('gperf -v', stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0
     except FileNotFoundError:
         return False
-
 
 def outputGperfTestFunction(tokens):
 # %switch=1 seems to be negligibly slower
@@ -843,7 +821,6 @@ struct GperfToken { const char *name; Token::Type type; Token::Category category
         token.category = gperfToken->category;
         token.instructionType = (Token::InstructionType)gperfToken->instructionType;'''))
 
-
 def outputMeasureFunction():
     out('''
 #include <chrono>
@@ -859,7 +836,6 @@ static int64_t measure(F func, Args&&... args)
     return duration_cast<milliseconds>(t2 - t1).count();
 }
 ''')
-
 
 def outputPerformanceTest():
     out(r'''
@@ -894,7 +870,6 @@ def outputPerformanceTest():
         std::cout << "Time for " << f.second << ": " << time << "ms\n";
     }
 ''')
-
 
 def createTestbed(outputDir, tokens, tokenSet, testPerformance):
     with open(makePath(outputDir, 'main.cpp'), 'w') as file:
@@ -1111,13 +1086,11 @@ def createTestbed(outputDir, tokens, tokenSet, testPerformance):
         out('    return 0;')
         out('}')
 
-
 def outputSeed(out):
     assert callable(out)
     seed = random.randrange(sys.maxsize)
     random.seed(seed)
     out(f'// random seed: {seed}\n')
-
 
 def getInputFilePath():
     if len(sys.argv) < 2:
@@ -1125,21 +1098,17 @@ def getInputFilePath():
 
     return sys.argv[1]
 
-
 def getOutputDir():
     if len(sys.argv) < 3:
         sys.exit('Missing output directory.')
 
     return sys.argv[2]
 
-
 def testRequested():
     return len(sys.argv) >= 4 and 'test' in sys.argv[3].lower()
 
-
 def performanceTestRequested():
     return len(sys.argv) >= 5 and 'performance' in sys.argv[4].lower()
-
 
 # parameters: <tokens file> <output dir> [--test [--performance-test]]
 def main():
@@ -1156,7 +1125,6 @@ def main():
         outputTokensCppFile(outputDir, tokens)
 
     sys.exit(0)
-
 
 if __name__ == '__main__':
     main()

@@ -38,6 +38,7 @@ private:
     CToken *parseDataItem(CToken *token, TokenList& comments);
     CToken *parseStackVariable(CToken *token, TokenList& comments);
     CToken *ignoreLine(CToken *token);
+    void checkProcHookInsertion(CToken *token);
     bool isLocalVariable(const char *str, size_t len);
     void addReference(CToken *token, bool sizeOperator = false);
     void outputNullProc();
