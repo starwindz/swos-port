@@ -41,8 +41,9 @@ PlayGoodJumpHeaderComment
 # unfortunately, these ranges will have to be updated when file limits change
 cseg_98EFD
 cseg_9A9E1 - cseg_A3368
-cseg_A3368 - @end
+cseg_A3368 - Int8Handler
 Int8Handler - dseg
+nullsub_23
 dataStart - aChairmanScenes
 goalSamples - aSfxPierceM158_
 headerSamples - PIT_countdown
@@ -87,7 +88,6 @@ aErrorCdromDriverError_ - aSensibleWorldOfSoccerV2_0
 DummyProc01
 ProgramPIT
 ReadGamePort
-PlayChairmanScene
 
 #TODO: remove EGA crap
 SetEGAPalette
@@ -99,6 +99,15 @@ EGA_DrawSpriteInGame
 # CD-ROM (kill these as soon as you can)
 CDChangeToRootDir
 SelectDefaultDrive
+
+# chairman and win/lose animations
+FadeAndPlayWinCupAnimation
+FadeAndPlayWinMatchAnimation
+FadeAndPlayLoseMatchAnimation
+FadeAndPlayLoseCupAnimation
+FadeAndPlayRelegatedAnimation
+FadeAndPlayPromotedAnimation
+PlayChairmanScene
 
 
 # replace variable's content with what's given here
@@ -627,7 +636,7 @@ IntroEnsureFrameDataLoaded
 IntroDrawFrame
 JoyKeyOrCtrlPressed
 CloseSoccerBin
-PlayIntroSample
+PlaySoundSample
 PlayHighlightsLoop
 GetKey
 ReplaySegment

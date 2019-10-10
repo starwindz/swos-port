@@ -456,7 +456,7 @@ static void selectEntryWithControlMask(MenuEntry *entry)
     }
 }
 
-static MenuEntry *handleSwitchingToNextEntry(MenuEntry *entry)
+static MenuEntry *handleSwitchingToNextEntry(const MenuEntry *activeEntry, MenuEntry *nextEntry)
 {
     // if no fire but there's a movement, try moving to the next entry
     if (!fire && finalControlsStatus >= 0) {
@@ -465,12 +465,12 @@ static MenuEntry *handleSwitchingToNextEntry(MenuEntry *entry)
 
         // this will hold the offset of the next entry to move to (direction)
         int nextEntryDirection = nextDirectionOffsets[(finalControlsStatus >> 1) & 3];
-        auto nextEntryIndex = (&entry->leftEntry)[nextEntryDirection];
+        auto nextEntryIndex = (&activeEntry->leftEntry)[nextEntryDirection];
 
-        entry = findNextEntry(nextEntryIndex, nextEntryDirection);
+        nextEntry = findNextEntry(nextEntryIndex, nextEntryDirection);
     }
 
-    return entry;
+    return nextEntry;
 }
 
 static void highlightEntry(Menu *currentMenu, MenuEntry *entry)
@@ -515,7 +515,7 @@ void SWOS::MenuProc()
         if (checkForPlayMatchEntry(activeEntry))
             return;
         selectEntryWithControlMask(activeEntry);
-        nextEntry = handleSwitchingToNextEntry(activeEntry);
+        nextEntry = handleSwitchingToNextEntry(activeEntry, nextEntry);
     } else if (finalControlsStatus < 0) {
         return;
     } else if (previousMenuItem) {

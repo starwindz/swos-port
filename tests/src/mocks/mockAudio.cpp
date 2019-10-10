@@ -22,4 +22,4 @@ int playIntroSample(void *buffer, int size, int volume, int loopCount)
 void showAudioOptionsMenu() {}
 
 void SWOS::StopAudio() {}
-void SWOS::PlayIntroSample() {}
+void SWOS::PlaySoundSample() {}

@@ -121,7 +121,7 @@ int playIntroSample(void *buffer, int size, int volume, int loopCount)
     return -1;
 }
 
-__declspec(naked) void SWOS::PlayIntroSample()
+__declspec(naked) void SWOS::PlaySoundSample()
 {
     __asm {
     //    push ecx
