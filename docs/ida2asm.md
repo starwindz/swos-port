@@ -155,21 +155,23 @@ On the C++ side parameterless `void` function inside a SWOS namespace will be de
 
 Lines in this section have the following form:
 ```
-<proc name>, <line number>
+<proc name>, <line number>[, <hook name>]
 ```
 
-Inside each procedure at a specified line number a call will be inserted to the function in the form of
-`<proc name>_<line number>`. For example:
+Inside each procedure at a specified line number a call will be inserted to `<hook name>`, or to the
+function in the form of `<proc name>_<line number>` if hook name wasn't given. For example:
 
 ```
 GameLoop, 224
+PlayerDoingHeader, 157, PlayHeaderComment
 ```
 
-will cause a `call GameLoop_224` to be inserted at line 224 of `GameLoop` procedure. On the C++ side,
-`SWOS::GameLoop_224()` will be declared in the output header file.
+will cause a `call GameLoop_224` to be inserted at line 224 of `GameLoop` and
+`call PlayHeaderComment` at line 157 of `PlayerDoingHeader` procedure. On the C++ side,
+`SWOS::GameLoop_224()` and `SWOS::PlayHeaderComment()` will be declared in the output header file.
 
-Current limitation is one hook per procedure, but there are plans to lift it when a need for more arises, with
-possible customization of the hook procedure name.
+There are no limitations in number of hooks per procedure, as long as each line corresponds to exactly
+one hook.
 
 ## `no-break` markers
 
@@ -213,8 +215,8 @@ extremely harmful for productivity as assembly files generation needed to be run
 the beginning of the project.
 
 That's how second parser version came to be, written in C\++ with ultimate performance in mind. This approach
-is reflected in a specially constructed tokenizer (see next section), cache-friendly structures and
-multi-threaded parser.
+is reflected in a specially constructed tokenizer (see next section), minimization of heap allocations,
+cache-friendly structures and multi-threaded parser.
 
 The end result was stunning: ~30ms on average to process `swos.asm` on an i7-7700K :)
 

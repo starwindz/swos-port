@@ -30,6 +30,7 @@ public:
 
     void setIgnored(const String& str, Util::hash_t hash);
 
+    void clear();
     void seal();
     void resolve();
     void resolve(const References& rhs);
@@ -44,15 +45,13 @@ private:
     // optimize for the special case, they're extremely heavily used
     bool addAmigaRegister(CToken *reference);
 
-    std::array<bool, kNumAmigaRegisters> m_amigaRegisters = { false };
-
 #pragma pack(push, 1)
     struct RefHolder {
         RefHolder(ReferenceType type = kNone, CToken *structName = nullptr) : type(type) {
             if (type == kUser) {
                 assert(structName);
                 Util::assignSize(*structNameLength(), structName->textLength);
-                memcpy(structNamePtr(), structName->text(), structName->textLength);
+                structName->copyText(structNamePtr());
             }
         }
         using LengthType = uint8_t;
@@ -77,6 +76,7 @@ private:
     };
 #pragma pack(pop)
 
+    std::array<bool, kNumAmigaRegisters> m_amigaRegisters = {};
     StringMap<RefHolder> m_labels;
     StringMap<RefHolder> m_references;
 };

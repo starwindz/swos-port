@@ -18,7 +18,7 @@
 class MasmOutput : public OutputWriter
 {
 public:
-    MasmOutput(const char *path, const SymbolFileParser& symFilePareser, const StructStream& structs, const DefinesMap& defines,
+    MasmOutput(const char *path, const SymbolFileParser& symFileParser, const StructStream& structs, const DefinesMap& defines,
         const References& references, const OutputItemStream& outputItems);
     void setOutputPrefix(const std::string& prefix) override;
     void setCImportSymbols(const StringList *syms) override;

@@ -212,7 +212,7 @@ struct SampleGroupTestData {
             "m33_8_.raw",
             "m33_a_.raw",
             "m33_b_.raw",
-        }, PlayerDoingHeader_157, setupHeaderComment
+        }, PlayHeaderComment, setupHeaderComment
     },
     {
         {
@@ -673,7 +673,7 @@ static void testEmptyCategories()
         { "good_tackle", PlayGoodTackleComment },
         { "hit_bar", PlayBarHitComment },
         { "hit_post", PlayPostHitComment },
-        { "injury", PlayerTackled_59, setupHeaderComment },
+        { "injury", PlayInjuryComment, setupHeaderComment },
         { "keeper_claimed", PlayKeeperClaimedComment, disablePenalties },
         { "keeper_saved", PlayGoalkeeperSavedComment, disablePenalties },
         { "near_miss", PlayNearMissComment, disablePenalties },
@@ -704,7 +704,7 @@ static void testEmptyCategories()
 
 static void testCustomCommentary()
 {
-    testCustomIdenticalSamplesCategory(PlayerDoingHeader_157, "header", setupHeaderComment);
+    testCustomIdenticalSamplesCategory(PlayHeaderComment, "header", setupHeaderComment);
     testCustomIdenticalSamplesCategory(PlayPenaltyComment, "penalty");
     testCustomCornerSamples();
     testCustomFreeKickSamples();

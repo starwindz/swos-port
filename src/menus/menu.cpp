@@ -322,8 +322,8 @@ void SWOS::InitMainMenuStuff()
     coachOrPlayer = 1;
     SetDefaultNameAndSurname();
     plNationality = kEng;       // English is the default
-    diyFileBuffer[2] = 0;
-    diyFileBuffer[3] = 0;
+    competitionFileBuffer[2] = 0;
+    competitionFileBuffer[3] = 0;
     g_numSelectedTeams = 0;
     InitHighestScorersTable();
     teamsLoaded = 0;
@@ -582,7 +582,7 @@ void SWOS::Int2Ascii()
         std::swap(*dest, *end);
 }
 
-void SWOS::InputText_23()
+void SWOS::AbortTextInputOnEscapeAndRightMouseClick()
 {
     if (lastKey == kKeyEscape || SDL_GetMouseState(nullptr, nullptr) & SDL_BUTTON_RMASK) {
         convertedKey = kKeyEscape;

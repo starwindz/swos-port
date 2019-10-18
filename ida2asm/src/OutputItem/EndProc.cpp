@@ -6,7 +6,7 @@ EndProc::EndProc(CToken *name)
     assert(name && name->textLength);
 
     Util::assignSize(m_nameLength, name->textLength);
-    memcpy(namePtr(), name->text(), name->textLength);
+    name->copyText(namePtr());
 }
 
 String EndProc::name() const

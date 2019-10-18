@@ -61,12 +61,12 @@ void StringSet::seal()
     std::sort(m_nodes, m_nodes + m_count);
 }
 
-auto StringSet::begin() const -> Util::Iterator<Node>
+auto StringSet::begin() const -> Iterator::Iterator<Node>
 {
     return reinterpret_cast<Node *>(m_data.begin());
 }
 
-auto StringSet::end() const -> Util::Iterator<Node>
+auto StringSet::end() const -> Iterator::Iterator<Node>
 {
     return m_nodes ? reinterpret_cast<Node *>(m_nodes) : reinterpret_cast<Node *>(m_data.end());
 }

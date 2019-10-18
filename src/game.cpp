@@ -529,7 +529,7 @@ void SWOS::StartMainGameLoop()
 
 // Fix crash when watching 2 CPU players with at least one top-class goalkeeper in the game.
 // Goalkeeper skill is scaled to range 0..7 (in D0) but value clamping is skipped in CPU vs CPU mode.
-void SWOS::AdjustPlayerSkills_246()
+void SWOS::FixTwoCPUsGameCrash()
 {
     if (D0.asInt16() < 0)
         D0 = 0;

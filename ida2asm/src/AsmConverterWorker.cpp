@@ -2,11 +2,12 @@
 #include "Struct.h"
 #include "DefinesMap.h"
 
-AsmConverterWorker::AsmConverterWorker(int index, const char *data, int dataLength, int chunkOffset, int chunkLength,
-    const SymbolFileParser& symFileParser)
+AsmConverterWorker::AsmConverterWorker(int index, const char *data, int dataLength,
+    int chunkOffset, int chunkLength, const SymbolFileParser& symFileParser, SymbolTable& symbolTable)
 :
     m_index(index), m_data(data), m_dataLength(dataLength), m_offset(chunkOffset), m_chunkLength(chunkLength),
-    m_symFileParser(symFileParser), m_defines(0), m_tokenizer(), m_parser(symFileParser, m_tokenizer, m_structs, m_defines)
+    m_symFileParser(symFileParser), m_defines(0), m_tokenizer(),
+    m_parser(symFileParser, symbolTable, m_tokenizer, m_structs, m_defines)
 {
 }
 

@@ -14,7 +14,9 @@
     <ClCompile Include="..\ida2asm\src\AsmConverter.cpp" />
     <ClCompile Include="..\ida2asm\src\AsmConverterWorker.cpp" />
     <ClCompile Include="..\ida2asm\src\DefinesMap.cpp" />
-    <ClCompile Include="..\ida2asm\src\IdaAsmParser.cpp" />
+    <ClCompile Include="..\ida2asm\src\InputSymbols\ProcHookList.cpp" />
+    <ClCompile Include="..\ida2asm\src\InputSymbols\SymbolFileParser.cpp" />
+    <ClCompile Include="..\ida2asm\src\InputSymbols\SymbolTable.cpp" />
     <ClCompile Include="..\ida2asm\src\main.cpp" />
     <ClCompile Include="..\ida2asm\src\OutputItem\DataItem.cpp" />
     <ClCompile Include="..\ida2asm\src\OutputItem\Directive.cpp" />
@@ -29,13 +31,13 @@
     <ClCompile Include="..\ida2asm\src\OutputWriter\OutputFactory.cpp" />
     <ClCompile Include="..\ida2asm\src\OutputWriter\OutputWriter.cpp" />
     <ClCompile Include="..\ida2asm\src\OutputWriter\VerbatimOutput.cpp" />
+    <ClCompile Include="..\ida2asm\src\Parser\IdaAsmParser.cpp" />
     <ClCompile Include="..\ida2asm\src\References.cpp" />
     <ClCompile Include="..\ida2asm\src\stdinc.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\ida2asm\src\Struct.cpp" />
-    <ClCompile Include="..\ida2asm\src\SymbolFileParser.cpp" />
     <ClCompile Include="..\ida2asm\src\Tokenizer.cpp" />
     <ClCompile Include="..\ida2asm\src\Util\DynaArray.cpp" />
     <ClCompile Include="..\ida2asm\src\Util\StringList.cpp" />
@@ -47,7 +49,10 @@
     <ClInclude Include="..\ida2asm\src\AsmConverter.h" />
     <ClInclude Include="..\ida2asm\src\AsmConverterWorker.h" />
     <ClInclude Include="..\ida2asm\src\DefinesMap.h" />
-    <ClInclude Include="..\ida2asm\src\IdaAsmParser.h" />
+    <ClInclude Include="..\ida2asm\src\InputSymbols\ProcHookList.h" />
+    <ClInclude Include="..\ida2asm\src\InputSymbols\SymbolAction.h" />
+    <ClInclude Include="..\ida2asm\src\InputSymbols\SymbolFileParser.h" />
+    <ClInclude Include="..\ida2asm\src\InputSymbols\SymbolTable.h" />
     <ClInclude Include="..\ida2asm\src\OutputItem\DataItem.h" />
     <ClInclude Include="..\ida2asm\src\OutputItem\Directive.h" />
     <ClInclude Include="..\ida2asm\src\OutputItem\EndProc.h" />
@@ -62,10 +67,10 @@
     <ClInclude Include="..\ida2asm\src\OutputWriter\OutputWriter.h" />
     <ClInclude Include="..\ida2asm\src\OutputWriter\OutputWriterTemplates.h" />
     <ClInclude Include="..\ida2asm\src\OutputWriter\VerbatimOutput.h" />
-    <ClInclude Include="..\ida2asm\src\ParsingException.h" />
+    <ClInclude Include="..\ida2asm\src\Parser\IdaAsmParser.h" />
+    <ClInclude Include="..\ida2asm\src\Parser\ParsingException.h" />
     <ClInclude Include="..\ida2asm\src\References.h" />
     <ClInclude Include="..\ida2asm\src\Struct.h" />
-    <ClInclude Include="..\ida2asm\src\SymbolFileParser.h" />
     <ClInclude Include="..\ida2asm\src\Tokenizer.h" />
     <ClInclude Include="..\ida2asm\src\Util\BlockList.h" />
     <ClInclude Include="..\ida2asm\src\Util\DynaArray.h" />
@@ -125,12 +130,12 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(ProjectDir)..\ida2asm\src;$(ProjectDir)..\ida2asm\src\OutputWriter;$(ProjectDir)..\ida2asm\src\OutputItem;$(ProjectDir)..\ida2asm\src\Util;$(SolutionDir)..\tmp\$(ProjectName)-$(Configuration)\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)..\ida2asm\src;$(ProjectDir)..\ida2asm\src\Parser;$(ProjectDir)..\ida2asm\src\InputSymbols;$(ProjectDir)..\ida2asm\src\OutputWriter;$(ProjectDir)..\ida2asm\src\OutputItem;$(ProjectDir)..\ida2asm\src\Util;$(SolutionDir)..\tmp\$(ProjectName)-$(Configuration)\;$(IncludePath)</IncludePath>
     <IntDir>$(SolutionDir)..\tmp\$(ProjectName)-$(Configuration)\</IntDir>
     <OutDir>$(SolutionDir)..\tmp\$(ProjectName)-$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>$(ProjectDir)..\ida2asm\src;$(ProjectDir)..\ida2asm\src\OutputWriter;$(ProjectDir)..\ida2asm\src\OutputItem;$(ProjectDir)..\ida2asm\src\Util;$(SolutionDir)..\tmp\$(ProjectName)-$(Configuration)\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)..\ida2asm\src;$(ProjectDir)..\ida2asm\src\Parser;$(ProjectDir)..\ida2asm\src\InputSymbols;$(ProjectDir)..\ida2asm\src\OutputWriter;$(ProjectDir)..\ida2asm\src\OutputItem;$(ProjectDir)..\ida2asm\src\Util;$(SolutionDir)..\tmp\$(ProjectName)-$(Configuration)\;$(IncludePath)</IncludePath>
     <IntDir>$(SolutionDir)..\tmp\$(ProjectName)-$(Configuration)\</IntDir>
     <OutDir>$(SolutionDir)..\tmp\$(ProjectName)-$(Configuration)\</OutDir>
   </PropertyGroup>
@@ -142,7 +147,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>$(ProjectDir)..\ida2asm\src\stdinc.h</PrecompiledHeaderFile>
       <ForcedIncludeFiles>$(ProjectDir)..\ida2asm\src\stdinc.h</ForcedIncludeFiles>
-      <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;</PreprocessorDefinitions>
       <MultiProcessorCompilation>false</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
@@ -162,7 +167,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>$(ProjectDir)..\ida2asm\src\stdinc.h</PrecompiledHeaderFile>
       <ForcedIncludeFiles>$(ProjectDir)..\ida2asm\src\stdinc.h</ForcedIncludeFiles>
-      <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS;NDEBUG</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;NDEBUG</PreprocessorDefinitions>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <CallingConvention>Cdecl</CallingConvention>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>

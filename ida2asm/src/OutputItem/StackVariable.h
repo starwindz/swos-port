@@ -1,6 +1,5 @@
 #pragma once
 
-#include "StringView.h"
 #include "Tokenizer.h"
 
 #pragma pack(push, 1)

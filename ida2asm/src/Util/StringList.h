@@ -1,6 +1,5 @@
 #pragma once
 
-#include "StringView.h"
 #include "DynaArray.h"
 
 class StringList
@@ -18,6 +17,7 @@ public:
     };
 
     StringList(size_t initialCapacity);
+    StringList(const StringList& rhs);
     void add(const char *begin, const char *end);
     void add(const String& str);
     bool empty() const;

@@ -3,7 +3,6 @@
 #include "Iterator.h"
 #include "Tokenizer.h"
 #include "DynaArray.h"
-#include "StringView.h"
 
 #pragma pack(push, 1)
 class Struct {
@@ -37,28 +36,28 @@ public:
             if (name) {
                 assert(name->textLength <= kMax);
                 m_nameLength = name->textLength;
-                memcpy(namePtr(), name->text(), name->textLength);
+                name->copyText(namePtr());
             }
 
             m_typeLength = 0;
             if (type) {
                 assert(type->textLength <= kMax);
                 m_typeLength = type->textLength;
-                memcpy(typePtr(), type->text(), type->textLength);
+                type->copyText(typePtr());
             }
 
             m_dupValueLength = 0;
             if (dup) {
                 assert(dup->textLength <= kMax);
                 m_dupValueLength = dup->textLength;
-                memcpy(dupPtr(), dup->text(), dup->textLength);
+                dup->copyText(dupPtr());
             }
 
             m_commentLength = 0;
             if (comment) {
                 assert(comment->textLength <= kMax);
                 m_commentLength = comment->textLength;
-                memcpy(commentPtr(), comment->text(), comment->textLength);
+                comment->copyText(commentPtr());
             }
         }
         static size_t requiredSize(CToken *name, CToken *comment, CToken *type, CToken *dup) {
@@ -95,8 +94,8 @@ public:
 
     Field *addField(CToken *name, size_t fieldLenght, CToken *comment, CToken *type, size_t dup);
     void addComment(const String& comment, Field *lastField);
-    Util::Iterator<Field> begin() const;
-    Util::Iterator<Field> end() const;
+    Iterator::Iterator<Field> begin() const;
+    Iterator::Iterator<Field> end() const;
 
 private:
     char *namePtr() const;
@@ -128,8 +127,8 @@ public:
     void disallowDup();
     String lastStructName() const;
     Struct *findStruct(const String& name) const;
-    Util::Iterator<Struct> begin() const;
-    Util::Iterator<Struct> end() const;
+    Iterator::Iterator<Struct> begin() const;
+    Iterator::Iterator<Struct> end() const;
 
 private:
     size_t m_count = 0;

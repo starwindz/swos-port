@@ -779,7 +779,7 @@ bool gotMousePlayer()
 }
 
 // prevent locking out of first player controls inside play match menu, if it wasn't the player that fired
-void SWOS::SetupPlayers_160()
+void SWOS::PreventPlayer1FireLockout()
 {
     if (m_pl1Controls != m_pl1GameControls || m_pl1Controls == kJoypad && getPl1JoypadIndex() != getPl1GameJoypadIndex())
         D0 = 3;

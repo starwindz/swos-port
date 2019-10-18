@@ -2,7 +2,6 @@
 
 #include "Tokenizer.h"
 #include "Util.h"
-#include "StringView.h"
 #include "Iterator.h"
 
 #pragma pack(push, 1)
@@ -47,7 +46,7 @@ public:
             assert(token && token->textLength);
             Util::assignSize(m_length, token->textLength);
             m_type = token->type;
-            memcpy(textPtr(), token->text(), token->textLength);
+            token->copyText(textPtr());
         }
         static size_t requiredSize(CToken *token) {
             assert(token);
@@ -75,8 +74,8 @@ public:
     {
     public:
         OperandHolder(const Operand *begin, const Operand *end) : m_begin(begin), m_end(end) {}
-        const Util::Iterator<const Operand> begin() const { return m_begin; }
-        const Util::Iterator<const Operand> end() const { return m_end; }
+        const Iterator::Iterator<const Operand> begin() const { return m_begin; }
+        const Iterator::Iterator<const Operand> end() const { return m_end; }
     private:
         const Operand *m_begin;
         const Operand *m_end;

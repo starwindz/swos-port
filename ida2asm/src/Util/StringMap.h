@@ -3,7 +3,6 @@
 #include "DynaArray.h"
 #include "Util.h"
 #include "Tokenizer.h"
-#include "StringView.h"
 #include "Iterator.h"
 
 template<class T>
@@ -26,10 +25,10 @@ public:
             return *this;
         }
         const Node operator*() const {
-            return result;
+            return m_result;
         }
         const Node *operator->() const {
-            return &result;
+            return &m_result;
         }
         bool operator!=(const Iterator& rhs) const {
             return m_node != rhs.m_node;
@@ -39,15 +38,28 @@ public:
     private:
         void assignNode(typename StringMap::Node *node) {
             m_node = node;
-            result.text = node->text();
-            result.hash = node->hash();
-            result.cargo = node->cargo();
+            m_result.text = node->text();
+            m_result.hash = node->hash();
+            m_result.cargo = node->cargo();
         }
         typename StringMap::Node *m_node;
-        Node result;
+        Node m_result;
     };
 
     StringMap(size_t initialCapacity) : m_data(initialCapacity) {}
+    StringMap(const StringMap& rhs) : m_data(rhs.m_data), m_count(rhs.m_count), m_nodes(rhs.m_nodes) {
+        assert(rhs.m_nodes && rhs.m_end);
+
+        auto endOffset = reinterpret_cast<char *>(rhs.m_end) - rhs.m_data.begin();
+        auto nodesOffset = reinterpret_cast<char *>(rhs.m_nodes) - rhs.m_data.begin();
+
+        m_end = reinterpret_cast<Node *>(m_data.begin() + endOffset);
+        m_nodes = reinterpret_cast<LookupNode *>(m_data.begin() + nodesOffset);
+
+        auto ptrDiff = m_data.begin() - rhs.m_data.begin();
+        for (size_t i = 0; i < m_count; i++)
+            m_nodes[i].node = reinterpret_cast<Node *>(reinterpret_cast<char *>(m_nodes[i].node) + ptrDiff);
+    }
     size_t size() const { return m_data.spaceUsed(); }
     size_t count() const { return m_count; }
     bool empty() const { return size() != 0; }
@@ -65,8 +77,7 @@ public:
     }
 
     template<typename... Args>
-    void add(const String& str, Args... args)
-    {
+    void add(const String& str, Args... args) {
         add(str.str(), str.length(), Util::hash(str.str(), str.length()), args...);
     }
 
@@ -76,8 +87,7 @@ public:
     }
 
     template<typename... Args>
-    void add(CToken *token, Args... args)
-    {
+    void add(CToken *token, Args... args) {
         assert(token && token->isId() && token->textLength);
         add(token->text(), token->textLength, token->hash, args...);
     }
@@ -144,6 +154,12 @@ public:
     std::vector<T *> getAll(CToken *token) const {
         assert(token->isId() && token->textLength);
         return getAll(token->text(), token->textLength(), token->hash);
+    }
+
+    void clear() {
+        assert(!m_nodes);
+        m_data.clear();
+        m_count = 0;
     }
 
     void seal() {
@@ -278,21 +294,21 @@ private:
         }
     };
 
-    DynaArray m_data;
-    size_t m_count = 0;
-    LookupNode *m_nodes = nullptr;
-    Node *m_end = nullptr;
-
     std::pair<LookupNode *, LookupNode *> getRange(const char *str, size_t len, Util::hash_t hash) const {
         if (!m_count)
             return {};
 
         assert(m_nodes);
 
-        // force entire table in the cache
+        // force entire table in the cache [TODO: measure this]
         volatile auto c = m_data.begin();
         *c;
 
         return std::equal_range(m_nodes, m_nodes + m_count, hash, NodeComp());
     }
+
+    DynaArray m_data;
+    size_t m_count = 0;
+    LookupNode *m_nodes = nullptr;
+    Node *m_end = nullptr;
 };

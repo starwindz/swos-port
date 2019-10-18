@@ -40,10 +40,7 @@ PlayGoodJumpHeaderComment
 # big AIL & C-lib removal
 # unfortunately, these ranges will have to be updated when file limits change
 cseg_98EFD
-cseg_9A9E1 - cseg_A3368
-cseg_A3368 - Int8Handler
-Int8Handler - dseg
-nullsub_23
+cseg_9A9E1 - dseg
 dataStart - aChairmanScenes
 goalSamples - aSfxPierceM158_
 headerSamples - PIT_countdown
@@ -556,7 +553,7 @@ dseg_11F41C, word
 dseg_11F41E, word
 coachOrPlayer, word
 plNationality, word
-diyFileBuffer, array byte
+competitionFileBuffer, array byte
 g_numSelectedTeams, word
 teamsLoaded, word
 poolplyrLoaded, word
@@ -597,14 +594,14 @@ GameOver
 # current limitation is one hook per proc, but it should be lifted if there's ever need for more
 
 @insert-hook
-RunStoppageEventsAndSetAnimationTables, 320
-GameLoop, 224
-PlayerDoingHeader, 157
-PlayerTackled, 59
-CheckIfBallOutOfPlay, 251
-SetupPlayers, 160
-InputText, 23
-AdjustPlayerSkills, 246
+RunStoppageEventsAndSetAnimationTables, 320, EnqueueCrowdChantsReload
+GameLoop, 224, LoadCrowdChantSampleIfNeeded
+PlayerDoingHeader, 157, PlayHeaderComment
+PlayerTackled, 59, PlayInjuryComment
+CheckIfBallOutOfPlay, 251, FixPenaltyBug
+SetupPlayers, 160, PreventPlayer1FireLockout
+InputText, 23, AbortTextInputOnEscapeAndRightMouseClick
+AdjustPlayerSkills, 246, FixTwoCPUsGameCrash
 
 
 # list of symbols that will be replaced by the C++ code

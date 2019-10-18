@@ -16,7 +16,7 @@ int out(const std::string str)
     assert(m_outPtr + str.length() < m_outBuffer.get() + m_outBufferSize);
 
     if (!str.empty()) {
-        memcpy(m_outPtr, str.data(), str.length());
+        str.copy(m_outPtr, str.length());
         m_outPtr += str.length();
     }
 
@@ -31,7 +31,7 @@ int out(String str)
     assert(m_outPtr + str.length() < m_outBuffer.get() + m_outBufferSize);
 
     if (str.length()) {
-        memcpy(m_outPtr, str.str(), str.length());
+        str.copy(m_outPtr);
         m_outPtr += str.length();
     }
 

@@ -374,7 +374,7 @@ size_t Token::flattenTokenList(const TokenList& tokenList, char *dest)
         assert(token->type == Token::T_NL || token->isComment());
         assert(token->textLength);
 
-        memcpy(dest, token->text(), token->textLength);
+        token->copyText(dest);
         dest += token->textLength;
         length += token->textLength;
     }

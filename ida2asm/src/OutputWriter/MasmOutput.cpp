@@ -4,10 +4,10 @@
 
 constexpr int kExpectedPrefixSize = 300;
 
-MasmOutput::MasmOutput(const char *path, const SymbolFileParser& symFilePareser, const StructStream& structs, const DefinesMap& defines,
+MasmOutput::MasmOutput(const char *path, const SymbolFileParser& symFileParser, const StructStream& structs, const DefinesMap& defines,
     const References& references, const OutputItemStream& outputItems)
 :
-    OutputWriter(path), m_symFileParser(symFilePareser), m_structs(structs), m_defines(defines),
+    OutputWriter(path), m_symFileParser(symFileParser), m_structs(structs), m_defines(defines),
     m_references(references), m_outputItems(outputItems)
 {
     m_outputPrefix.reserve(kExpectedPrefixSize);
@@ -420,7 +420,7 @@ int MasmOutput::outputDataItem(const DataItem *item)
         auto sizeSpecifier = dataSizeSpecifier(item->size());
         column += out(sizeSpecifier, ' ');
         if (!item->name().empty()) {
-            auto replacement = m_symFileParser.symbolReplacement(item->name());
+            auto replacement = m_symFileParser.symbolTable().symbolReplacement(item->name());
             if (!replacement.empty())
                 return out(replacement);
         }

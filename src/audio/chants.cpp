@@ -207,13 +207,13 @@ static void setVolumeOrStopChants(int volume)
     }
 }
 
-void SWOS::RunStoppageEventsAndSetAnimationTables_320()
+void SWOS::EnqueueCrowdChantsReload()
 {
     // fix SWOS bug where crowd chants only get reloaded when auto replays are on
     loadCrowdChantSampleFlag = 1;
 }
 
-void SWOS::GameLoop_224()
+void SWOS::LoadCrowdChantSampleIfNeeded()
 {
     // the code doesn't even get to test the flag unless the replay is started
     if (loadCrowdChantSampleFlag) {

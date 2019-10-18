@@ -49,7 +49,7 @@ Struct::Struct(CToken *name, const TokenList& leadingComments, CToken *comment, 
     Util::assignSize(m_size, size);
 
     Util::assignSize(m_nameLength, name->textLength);
-    memcpy(namePtr(), name->text(), name->textLength);
+    name->copyText(namePtr());
     m_hash = name->hash;
 
     auto leadingCommentsLength = Token::flattenTokenList(leadingComments, leadingCommentsPtr());
@@ -58,7 +58,7 @@ Struct::Struct(CToken *name, const TokenList& leadingComments, CToken *comment, 
     m_lineCommentLength = 0;
     if (comment) {
         Util::assignSize(m_lineCommentLength, comment->textLength);
-        memcpy(lineCommentPtr(), comment->text(), comment->textLength);
+        comment->copyText(lineCommentPtr());
     }
 }
 
@@ -155,12 +155,12 @@ void Struct::addComment(const String& comment, Struct::Field *lastField)
     assert(!comment.empty());
 
     if (lastField) {
-        memcpy(lastField->commentPtr() + lastField->m_commentLength, comment.str(), comment.length());
+        comment.copy(lastField->commentPtr() + lastField->m_commentLength);
         Util::assertSize(lastField->m_commentLength, lastField->m_commentLength + comment.length());
         lastField->m_commentLength += static_cast<uint8_t>(comment.length());
         lastField->m_size += comment.length();
     } else {
-        memcpy(lineCommentPtr() + m_lineCommentLength, comment.str(), comment.length());
+        comment.copy(lineCommentPtr() + m_lineCommentLength);
         Util::assertSize(m_lineCommentLength, m_lineCommentLength + comment.length());
         m_lineCommentLength += static_cast<uint8_t>(comment.length());
     }
@@ -169,12 +169,12 @@ void Struct::addComment(const String& comment, Struct::Field *lastField)
     m_size += static_cast<uint16_t>(comment.length());
 }
 
-auto Struct::begin() const -> Util::Iterator<Field>
+auto Struct::begin() const -> Iterator::Iterator<Field>
 {
     return reinterpret_cast<Field *>(lineCommentPtr() + m_lineCommentLength);
 }
 
-auto Struct::end() const -> Util::Iterator<Field>
+auto Struct::end() const -> Iterator::Iterator<Field>
 {
     return reinterpret_cast<Field *>((char *)this + m_size);
 }
@@ -236,12 +236,12 @@ String StructStream::lastStructName() const
     return m_lastStruct->name();
 }
 
-Util::Iterator<Struct> StructStream::begin() const
+Iterator::Iterator<Struct> StructStream::begin() const
 {
     return reinterpret_cast<Struct *>(m_structs.begin());
 }
 
-Util::Iterator<Struct> StructStream::end() const
+Iterator::Iterator<Struct> StructStream::end() const
 {
     return reinterpret_cast<Struct *>(m_structs.end());
 }

@@ -129,6 +129,7 @@ static const char *parseString(const char *src, char *dst, Token& token)
     bool inQuote = false;
 
     while (*src != '\r') {
+        // since char is signed, we're covering everything with high bit set + less than 32
         if (*src < 32) {
             // escape all the crap IDA puts in strings
             if (inQuote) {

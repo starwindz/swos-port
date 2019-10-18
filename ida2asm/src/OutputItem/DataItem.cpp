@@ -6,13 +6,13 @@ DataItem::DataItem(CToken *name, CToken *structName, uint8_t baseSize) : m_baseS
     m_nameLength = 0;
     if (name) {
         m_nameLength = name->textLength;
-        memcpy(namePtr(), name->text(), name->textLength);
+        name->copyText(namePtr());
     }
 
     m_structNameLength = 0;
     if (structName) {
         Util::assignSize(m_structNameLength, structName->textLength);
-        memcpy(structNamePtr(), structName->text(), structName->textLength);
+        structName->copyText(structNamePtr());
     }
 }
 
@@ -119,7 +119,7 @@ DataItem::Element::Element(CToken *token, bool isOffset, int offset, size_t dup)
         m_type |= kIsOffsetFlag;
 
     Util::assignSize(m_textLength, token->textLength);
-    memcpy(textPtr(), token->text(), token->textLength);
+    token->copyText(textPtr());
 
     if (offset) {
         m_type |= kHasAddressOffset;

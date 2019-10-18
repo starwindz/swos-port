@@ -12,7 +12,7 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <thread>
+#include <future>
 #include <unordered_map>
 
 #include "Util/StringView.h"

@@ -17,14 +17,14 @@ DefinesMap::Define::Define(const TokenList& leadingComments, CToken *comment, CT
     m_commentLength = 0;
     if (comment) {
         m_commentLength = comment->textLength;
-        memcpy(lineCommentPtr(), comment->text(), comment->textLength);
+        comment->copyText(lineCommentPtr());
     }
 
     m_nameLength = name->textLength;
-    memcpy(namePtr(), name->text(), name->textLength);
+    name->copyText(namePtr());
 
     m_valueLength = value->textLength;
-    memcpy(valuePtr(), value->text(), value->textLength);
+    value->copyText(valuePtr());
 
     assert(requiredSize(leadingComments, comment, name, value, inverted) <= kMaxLength);
 }
@@ -130,4 +130,9 @@ auto DefinesMap::begin() const -> StringMap<Define>::Iterator
 auto DefinesMap::end() const -> StringMap<Define>::Iterator
 {
     return m_defines.end();
+}
+
+void DefinesMap::clear()
+{
+    m_defines.clear();
 }

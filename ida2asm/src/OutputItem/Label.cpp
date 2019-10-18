@@ -6,7 +6,7 @@ Label::Label(CToken *token)
     Util::assignSize(m_nameLength, token->textLength);
 
     m_nameLength = token->textLength;
-    memcpy(namePtr(), token->text(), token->textLength);
+    token->copyText(namePtr());
 }
 
 size_t Label::requiredSize(CToken *token)

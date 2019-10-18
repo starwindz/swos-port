@@ -1,6 +1,7 @@
 #pragma once
 
 #include "DynaArray.h"
+#include "Iterator.h"
 
 template<class T>
 class BlockList
@@ -23,11 +24,11 @@ public:
         return *this;
     }
 
-    Util::Iterator<T> begin() const {
-        return Util::Iterator<T>(reinterpret_cast<T *>(m_data.begin()));
+    Iterator::Iterator<T> begin() const {
+        return Iterator::Iterator<T>(reinterpret_cast<T *>(m_data.begin()));
     }
-    Util::Iterator<T> end() const {
-        return Util::Iterator<T>(reinterpret_cast<T *>(m_data.end()));
+    Iterator::Iterator<T> end() const {
+        return Iterator::Iterator<T>(reinterpret_cast<T *>(m_data.end()));
     }
 
 private:

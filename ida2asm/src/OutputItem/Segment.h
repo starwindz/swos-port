@@ -40,6 +40,7 @@ public:
 
     void add(const TokenRange& range);
     void remove(CToken *segment);
+    void clear();
     bool empty() const;
     TokenRange segmentRange(CToken *seg) const;
     bool isSegment(CToken *token) const;

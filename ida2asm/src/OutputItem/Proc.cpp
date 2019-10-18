@@ -5,7 +5,7 @@ Proc::Proc(CToken *name)
     assert(name);
 
     m_nameLength = name->textLength;
-    memcpy(this->namePtr(), name->text(), name->textLength);
+    name->copyText(namePtr());
 }
 
 size_t Proc::requiredSize(CToken *name)

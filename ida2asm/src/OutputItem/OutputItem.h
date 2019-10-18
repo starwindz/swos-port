@@ -2,7 +2,6 @@
 
 #include "DynaArray.h"
 #include "Tokenizer.h"
-#include "StringView.h"
 #include "Instruction.h"
 #include "Label.h"
 #include "Proc.h"
@@ -72,11 +71,12 @@ public:
     void addDataElement(CToken *token, bool isOffset, int offset, size_t dup);
     void addLabel(const TokenList& leadingComments, CToken *comment, CToken *token);
     void addDirective(const TokenList& leadingComments, CToken *comment, CToken *begin, CToken *end);
-    void addSegment(const TokenList& leadingComments, CToken *comment, CToken *begin, CToken *end);
+    void addSegmentStartOrEnd(const TokenList& leadingComments, CToken *comment, CToken *begin, CToken *end);
     void addTrailingComments(const TokenList& comments);
     DataItem *lastDataItem() const;
-    const Util::Iterator<const OutputItem> begin() const;
-    const Util::Iterator<const OutputItem> end() const;
+    const Iterator::Iterator<const OutputItem> begin() const;
+    const Iterator::Iterator<const OutputItem> end() const;
+    void clear();
 
 private:
     template<typename T, OutputItem::Type type, typename... Args>

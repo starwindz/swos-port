@@ -14,7 +14,7 @@ OutputItem::OutputItem(Type type, size_t size, const TokenList& leadingComments,
 
     if (comment) {
         Util::assignSize(m_lineCommentLength, comment->textLength);
-        memcpy(commentPtr(), comment->text(), comment->textLength);
+        comment->copyText(commentPtr());
     }
 }
 
@@ -149,7 +149,7 @@ void OutputItemStream::addDirective(const TokenList& leadingComments, CToken *co
     addOutputItem<Directive, OutputItem::kDirective>(leadingComments, comment, size, begin, end);
 }
 
-void OutputItemStream::addSegment(const TokenList& leadingComments, CToken *comment, CToken *begin, CToken *end)
+void OutputItemStream::addSegmentStartOrEnd(const TokenList& leadingComments, CToken *comment, CToken *begin, CToken *end)
 {
     assert(begin && end && end > begin);
 
@@ -171,14 +171,21 @@ DataItem *OutputItemStream::lastDataItem() const
     return m_lastItem->getItem<DataItem>();
 }
 
-const Util::Iterator<const OutputItem> OutputItemStream::begin() const
+const Iterator::Iterator<const OutputItem> OutputItemStream::begin() const
 {
     return reinterpret_cast<OutputItem *>(m_items.begin());
 }
 
-const Util::Iterator<const OutputItem> OutputItemStream::end() const
+const Iterator::Iterator<const OutputItem> OutputItemStream::end() const
 {
     return reinterpret_cast<OutputItem *>(m_items.end());
+}
+
+void OutputItemStream::clear()
+{
+    m_items.clear();
+    m_lastItem = nullptr;
+    m_currentProc = nullptr;
 }
 
 template<typename T, OutputItem::Type type, typename... Args>

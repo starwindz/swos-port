@@ -47,6 +47,7 @@ public:
     size_t size() const;
     StringMap<Define>::Iterator begin() const;
     StringMap<Define>::Iterator end() const;
+    void clear();
 
 private:
     StringMap<Define> m_defines;

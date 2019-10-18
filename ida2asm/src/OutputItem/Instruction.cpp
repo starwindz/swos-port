@@ -12,12 +12,12 @@ Instruction::Instruction(CToken *prefix, CToken *instructionToken, const Operand
     m_isBranch = instructionToken->instructionType == Token::BranchInstruction;
 
     Util::assignSize(m_instructionTextLength, instructionToken->textLength);
-    memcpy(instructionTextPtr(), instructionToken->text(), instructionToken->textLength);
+    instructionToken->copyText(instructionTextPtr());
 
     m_prefixLength = 0;
     if (prefix) {
         Util::assignSize(m_prefixLength, prefix->textLength);
-        memcpy(prefixPtr(), prefix->text(), prefix->textLength);
+        prefix->copyText(prefixPtr());
     }
 
     m_operandDataSizes[0] = copyTokens(reinterpret_cast<char *>(op1Data()), opTokens[0], opTokens[1]);

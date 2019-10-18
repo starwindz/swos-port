@@ -7,6 +7,13 @@ DynaArray::DynaArray(size_t initialReserved)
         m_data.reset(new char[initialReserved]);
 }
 
+DynaArray::DynaArray(const DynaArray & rhs)
+    : m_reserved(rhs.m_used), m_used(rhs.m_used)
+{
+    m_data.reset(new char[m_used]);
+    memcpy(m_data.get(), rhs.m_data.get(), m_used);
+}
+
 char *DynaArray::add(size_t size)
 {
     assert(m_used <= m_reserved);
@@ -46,4 +53,9 @@ char *DynaArray::begin() const
 char *DynaArray::end() const
 {
     return m_data.get() + m_used;
+}
+
+void DynaArray::clear()
+{
+    m_used = 0;
 }

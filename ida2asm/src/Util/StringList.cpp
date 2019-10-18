@@ -4,6 +4,10 @@ StringList::StringList(size_t initialCapacity): m_data(initialCapacity)
 {
 }
 
+StringList::StringList(const StringList& rhs) : m_data(rhs.m_data)
+{
+}
+
 void StringList::add(const char *begin, const char *end)
 {
     auto len = end - begin;

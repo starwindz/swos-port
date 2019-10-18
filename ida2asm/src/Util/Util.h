@@ -52,6 +52,11 @@ namespace Util {
         return c == ' ' || c == '\n' || c == '\r' || c == '\t';
     }
 
+    static inline bool isDigit(char c)
+    {
+        return c >= '0' && c <= '9';
+    }
+
     void exit(const char *format, int exitCode = EXIT_FAILURE, ...);
     const char *getFilename(const char *path);
     std::string getBasePath(const char *path);
@@ -73,8 +78,6 @@ namespace Util {
 
     constexpr std::array<char, 2> kNewLine = { '\r', '\n' };
     inline const std::string kNewLineString() { return { kNewLine.begin(), kNewLine.end() }; }
-
-    constexpr char kOnEnterSuffix[] = "_OnEnter";
 }
 
 // enable enumeration members to be used as flags

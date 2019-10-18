@@ -11,7 +11,7 @@ class AsmConverterWorker
 {
 public:
     AsmConverterWorker(int index, const char *data, int dataLength, int chunkOffset, int chunkLength,
-        const SymbolFileParser& symFileParser);
+        const SymbolFileParser& symFileParser, SymbolTable& symbolTable);
     void process();
     void output(const char *format, const char *path, const StructStream& structs,
         const DefinesMap& defines, const std::string& prefix, std::pair<CToken *, bool> openSegment);

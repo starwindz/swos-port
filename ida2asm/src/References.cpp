@@ -89,6 +89,13 @@ void References::setIgnored(const String& str, Util::hash_t hash)
         ref->type = kIgnore;
 }
 
+void References::clear()
+{
+    m_labels.clear();
+    m_references.clear();
+    m_amigaRegisters.fill(false);
+}
+
 void References::seal()
 {
     m_labels.seal();

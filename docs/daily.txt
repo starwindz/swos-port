@@ -1726,3 +1726,30 @@ earlier:
 - strange, I'm getting some test failures after a reboot, there could be some timing problems
 08.10.2019.
 - fixed tests, luckily there were no timing problems, just a side effect of new speed scrolling on click
+09.10.2019.
+- fixed menu glitch (it was a small error in refactoring)
+- disabled in-game animations (all of them, I hope)
+10.10.2019.
+- tried to improve ida2asm to support remove ranges split in different files, but didn't manage to finish it
+  even after a furious struggle
+11.10.2019.
+/
+12.10.2019.
+- finally made it work, now I can specify unbroken remove segments and it will be processed automagically,
+  no more need to waste time on that (and in doing that switched to thread pool and removed a case of false
+  sharing, I may have shaved a few ms off the running time :P)
+13.10.2019.
+- [ida2asm] started adding support for unlimited proc hooks, more than half is implemented I'd say
+14.10.2019.
+- [ida2asm] pretty good progress on unlimited proc hooks, was hoping to wrap it up today, but unfortunately
+  got some other things to attend to, hopefully tomorrow is the day
+15.10.2019.
+- [ida2asm] unlimited proc hooks done! tested it, and it works very well + custom names for hooks are really
+  great, finally renamed those awful mnemonic names into something more meaningful; will write the
+  documentation and publish it tomorrow
+- [ida2asm] unfortunately realized that false sharing isn't properly fixed, well, another thing for tomorrow
+16.10.2019.
+/
+17.10.2019.
+- [ida2asm] finally fixed the damn false sharing :) it was pretty hard, as it involved fixing class design
+  and a lot of pointer arithmetics... but it was fun :)

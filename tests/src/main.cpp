@@ -3,7 +3,7 @@
 #include "file.h"
 #include "bmpWriter.h"
 #include <iostream>
-#include <experimental/filesystem>
+#include <filesystem>
 
 static const char kSnapshotDir[] = "snapshots";
 
@@ -58,7 +58,7 @@ static void parseCommandLine(int argc, char **argv)
 
 static void initializeSnapshots()
 {
-    using namespace std::experimental::filesystem;
+    using namespace std::filesystem;
 
     if (!exists(kSnapshotDir) || !is_directory(kSnapshotDir))
         create_directory(kSnapshotDir);

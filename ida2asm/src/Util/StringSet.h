@@ -37,8 +37,8 @@ public:
     void add(const char *str, size_t len);
     bool present(const char *str, size_t len) const;
     void seal();
-    Util::Iterator<Node> begin() const;
-    Util::Iterator<Node> end() const;
+    Iterator::Iterator<Node> begin() const;
+    Iterator::Iterator<Node> end() const;
 
 private:
     void add(const char *str, size_t len, Util::hash_t hash);

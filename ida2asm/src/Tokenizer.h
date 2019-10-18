@@ -48,6 +48,9 @@ struct Token
     inline const char *text() const {
         return (char *)(this + 1);
     }
+    inline void copyText(char *buf) const {
+        memcpy(buf, text(), textLength);
+    }
     inline char firstChar() const {
         assert(textLength > 0);
         return text()[0];

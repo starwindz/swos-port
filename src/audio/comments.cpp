@@ -445,7 +445,7 @@ static void playComment(CommentarySampleTableIndex tableIndex, bool interrupt = 
 // in:
 //     A6 -> player's team
 //
-void SWOS::PlayerDoingHeader_157()
+void SWOS::PlayHeaderComment()
 {
     auto team = A6.as<TeamGeneralInfo *>();
     assert(team);
@@ -457,7 +457,7 @@ void SWOS::PlayerDoingHeader_157()
 // in:
 //     A6 -> player's team
 //
-void SWOS::PlayerTackled_59()
+void SWOS::PlayInjuryComment()
 {
     auto team = A6.as<TeamGeneralInfo *>();
     assert(team);
@@ -549,7 +549,7 @@ void SWOS::PlayGoalkeeperSavedComment()
 }
 
 // fix original SWOS bug where penalty flag remains set when penalty is missed, but it's not near miss
-void SWOS::CheckIfBallOutOfPlay_251()
+void SWOS::FixPenaltyBug()
 {
     performingPenalty = 0;
 }

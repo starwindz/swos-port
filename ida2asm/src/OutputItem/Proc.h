@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Tokenizer.h"
-#include "StringView.h"
 
 #pragma pack(push, 1)
 class Proc

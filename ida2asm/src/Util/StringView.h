@@ -15,6 +15,9 @@ public:
     String(const char (&str)[N]) : m_str(str), m_length(N - 1) {}
     String();
 
+    void assign(const char *str, size_t length);
+    void assign(const char *begin, const char *end);
+
     String(const String& rhs) = default;
     String(String&& rhs);
 
@@ -23,6 +26,8 @@ public:
 
     const char *str() const;
     size_t length() const;
+
+    void copy(char *buf) const;
 
     bool empty() const;
     bool contains(char c) const;
@@ -51,6 +56,7 @@ public:
 
 private:
     static void swap(String& lhs, String& rhs);
+
     const char *m_str = nullptr;
     size_t m_length = 0;
 };

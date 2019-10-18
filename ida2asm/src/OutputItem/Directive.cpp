@@ -60,7 +60,7 @@ Directive::Directive(CToken *begin, CToken *end)
     }
 
     Util::assignSize(m_directiveLenght, directive->textLength);
-    memcpy(directivePtr(), directive->text(), directive->textLength);
+    directive->copyText(directivePtr());
 
     m_numParams = 0;
     auto param = paramsPtr();
@@ -126,7 +126,7 @@ Directive::Param::Param(CToken *token)
     assert(token && token->textLength);
 
     Util::assignSize(m_length, token->textLength);
-    memcpy(textPtr(), token->text(), token->textLength);
+    token->copyText(textPtr());
 }
 
 size_t Directive::Param::requiredSize(CToken *token)

@@ -21,14 +21,19 @@ private:
     size_t parseCommonPart(int length);
     size_t parse(int commonPartLength, int blockSize);
     void checkForParsingErrors(size_t lineNo);
-    void resolveExterns();
+
+    using AllowedChunkList = std::vector<int>;
+
+    AllowedChunkList connectRanges();
+    void resolveExterns(const AllowedChunkList& activeChunks);
+
     void collectSegments();
-    void output(const String& commonPrefix);
+    void output(const String& commonPrefix, const AllowedChunkList& activeChunks);
     void checkForOutputErrors();
     void checkForUnusedSymbols();
     std::string formOutputFilename() const;
     void outputStructsAndDefines();
-    void joinThreads();
+    void waitForWorkers();
     void error(const std::string& desc, size_t lineNo);
 
     int m_numFiles;
@@ -47,5 +52,7 @@ private:
     std::unique_ptr<OutputWriter> m_outputWriter;
 
     std::vector<AsmConverterWorker *> m_workers;
-    std::vector<std::thread> m_threads;
+    std::vector<std::future<void>> m_futures;
+
+    std::vector<SymbolTable *> m_symbolTables;
 };

@@ -29,6 +29,20 @@ String::String()
 {
 }
 
+void String::assign(const char *str, size_t length)
+{
+    m_str = str;
+    m_length = length;
+}
+
+void String::assign(const char *begin, const char *end)
+{
+    assert(end >= begin);
+
+    m_str = begin;
+    m_length = end - begin;
+}
+
 String::String(String&& rhs)
 {
     swap(*this, rhs);
@@ -48,6 +62,11 @@ const char *String::str() const
 size_t String::length() const
 {
     return m_length;
+}
+
+void String::copy(char *buf) const
+{
+    memcpy(buf, m_str, m_length);
 }
 
 bool String::empty() const

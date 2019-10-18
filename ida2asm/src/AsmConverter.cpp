@@ -33,8 +33,9 @@ void AsmConverter::convert()
     auto lineNo = parse(commonPartLength, blockSize);
 
     checkForParsingErrors(lineNo);
-    resolveExterns();
-    output(commonPrefix);
+    auto workersToOutput = connectRanges();
+    resolveExterns(workersToOutput);
+    output(commonPrefix, workersToOutput);
 
     checkForUnusedSymbols();
 }
@@ -77,7 +78,8 @@ size_t AsmConverter::parseCommonPart(int length)
     Tokenizer tokenizer;
     auto limits = tokenizer.tokenize(m_data.get(), length);
 
-    IdaAsmParser parser(m_symFileParser, tokenizer, m_structs, m_defines);
+    auto symbolTableCopy = new SymbolTable(m_symFileParser.symbolTable());
+    IdaAsmParser parser(m_symFileParser, *symbolTableCopy, tokenizer, m_structs, m_defines);
     parser.parse();
 
     if (!parser.ok())
@@ -89,9 +91,14 @@ size_t AsmConverter::parseCommonPart(int length)
 size_t AsmConverter::parse(int commonPartLength, int blockSize)
 {
     for (int i = 0; i < m_numFiles; i++) {
+        m_symbolTables.push_back(new SymbolTable(m_symFileParser.symbolTable()));
+        int chunkOffset = commonPartLength - Util::kNewLine.size() + i * blockSize;
+
         m_workers.push_back(new AsmConverterWorker(i + 1, m_data.get(), m_dataLength,
-            commonPartLength - Util::kNewLine.size() + i * blockSize, blockSize, m_symFileParser));
-        m_threads.emplace_back(&AsmConverterWorker::process, m_workers.back());
+            chunkOffset, blockSize, m_symFileParser, *m_symbolTables.back()));
+
+        auto future = std::async(std::launch::async, &AsmConverterWorker::process, m_workers.back());
+        m_futures.push_back(std::move(future));
     }
 
     // utilize main thread too, this should finish first
@@ -100,7 +107,7 @@ size_t AsmConverter::parse(int commonPartLength, int blockSize)
     // workers should still be busy, so we basically we get this for free :)
     m_symFileParser.outputHeaderFile(m_headerPath);
 
-    joinThreads();
+    waitForWorkers();
 
     return lineNo;
 }
@@ -118,17 +125,50 @@ void AsmConverter::checkForParsingErrors(size_t lineNo)
     }
 }
 
-void AsmConverter::resolveExterns()
+std::vector<int> AsmConverter::connectRanges()
+{
+    std::vector<int> activeChunks(m_numFiles, false);
+    String missingSymbol;
+
+    for (int i = 0; i < m_numFiles - 1; i++) {
+        const auto& parser = m_workers[i]->parser();
+
+        if (missingSymbol.empty()) {
+            assert(parser.foundEndRangeSymbol().empty());
+
+            activeChunks[i] = true;
+            missingSymbol = parser.missingEndRangeSymbol();
+        } else {
+            if (missingSymbol == parser.foundEndRangeSymbol()) {
+                missingSymbol.clear();
+                activeChunks[i] = true;
+            } else {
+                assert(parser.foundEndRangeSymbol().empty());
+            }
+        }
+    }
+
+    assert(m_workers.back()->parser().missingEndRangeSymbol().empty());
+    activeChunks.back() = true;
+
+    return activeChunks;
+}
+
+void AsmConverter::resolveExterns(const AllowedChunkList& allowedChunks)
 {
     collectSegments();
 
     auto constWorkers = std::vector<const AsmConverterWorker *>{ m_workers.begin(), m_workers.end() };
 
-    for (size_t i = 0; i < m_threads.size(); i++)
-        m_threads[i] = std::thread(&AsmConverterWorker::resolveReferences, m_workers[i],
-            std::ref(constWorkers), std::ref(m_segments), std::ref(m_structs), std::ref(m_defines));
+    for (size_t i = 0; i < m_futures.size(); i++) {
+        if (allowedChunks[i]) {
+            auto future = std::async(std::launch::async, &AsmConverterWorker::resolveReferences, m_workers[i],
+                std::ref(constWorkers), std::ref(m_segments), std::ref(m_structs), std::ref(m_defines));
+            m_futures[i] = std::move(future);
+        }
+    }
 
-    joinThreads();
+    waitForWorkers();
 }
 
 void AsmConverter::collectSegments()
@@ -141,7 +181,7 @@ void AsmConverter::collectSegments()
     }
 }
 
-void AsmConverter::output(const String& commonPrefix)
+void AsmConverter::output(const String& commonPrefix, const AllowedChunkList& activeChunks)
 {
     assert(!m_segments.empty());
 
@@ -150,7 +190,10 @@ void AsmConverter::output(const String& commonPrefix)
     CToken *externDefSegment{};
     std::string prefix = commonPrefix.string() + "include " + kDefsFilename + Util::kNewLineString() + Util::kNewLineString();
 
-    for (size_t i = 0; i < m_threads.size(); i++) {
+    for (size_t i = 0; i < m_futures.size(); i++) {
+        if (!activeChunks[i])
+            continue;
+
         CToken *lastSegment{};
         if (i > 0) {
             lastSegment = m_workers[i - 1]->parser().currentSegment();
@@ -166,13 +209,14 @@ void AsmConverter::output(const String& commonPrefix)
         m_workers[i]->setCImportSymbols(m_symFileParser.imports());
         m_workers[i]->setCExportSymbols(m_symFileParser.exports());
 
-        m_threads[i] = std::thread(&AsmConverterWorker::output, m_workers[i], m_format, m_outputPath,
+        auto future = std::async(std::launch::async, &AsmConverterWorker::output, m_workers[i], m_format, m_outputPath,
             std::ref(m_structs), std::ref(m_defines), std::cref(prefix), std::make_pair(openSegment, i == 0));
+        m_futures[i] = std::move(future);
     }
 
     outputStructsAndDefines();
 
-    joinThreads();
+    waitForWorkers();
 
     checkForOutputErrors();
 }
@@ -188,7 +232,9 @@ void AsmConverter::checkForOutputErrors()
         }
     }
 
-    for (int i = 0; i < static_cast<int>(m_workers.size()) - 1; i++) {
+    assert(m_numFiles == m_workers.size() && m_numFiles == m_futures.size());
+
+    for (int i = 0; i < m_numFiles - 1; i++) {
         const auto& limitsError = m_workers[i]->limitsError();
         if (!limitsError.empty()) {
             std::cout << "Check limits of file " << m_workers[i]->filename() <<
@@ -228,7 +274,12 @@ void AsmConverter::checkForUnusedSymbols()
         }
     };
 
-    auto possiblyUnusedSymbols = m_symFileParser.unusedSymbolsForRemoval();
+    assert(m_symbolTables.size() == m_workers.size() && m_symbolTables[0]);
+
+    for (size_t i = 1; i < m_symbolTables.size(); i++)
+        m_symbolTables.front()->mergeSymbols(*m_symbolTables[i]);
+
+    auto possiblyUnusedSymbols = m_symbolTables.front()->unusedSymbolsForRemoval();
     for (const auto& exp : m_symFileParser.exports())
         possiblyUnusedSymbols.push_back(exp);
 
@@ -264,16 +315,16 @@ void AsmConverter::outputStructsAndDefines()
 {
     auto outputFilePath = formOutputFilename();
     m_outputWriter = OutputFactory::create(m_format, outputFilePath.c_str(), m_symFileParser, m_structs, m_defines,
-        References({}), OutputItemStream());
+        References(), OutputItemStream());
 
     if (!m_outputWriter->output(OutputWriter::kStructs | OutputWriter::kDefines))
         Util::exit("Error writing %s.", EXIT_FAILURE, Util::getFilename(outputFilePath.c_str()));
 }
 
-void AsmConverter::joinThreads()
+void AsmConverter::waitForWorkers()
 {
-    for (auto& thread : m_threads)
-        thread.join();
+    for (auto& future : m_futures)
+        future.wait();
 }
 
 void AsmConverter::error(const std::string& desc, size_t lineNo)

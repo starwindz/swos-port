@@ -17,6 +17,12 @@
     <Filter Include="gen-lookup">
       <UniqueIdentifier>{acd012a1-a75b-43b4-af70-71fac8a0bc41}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\InputSymbols">
+      <UniqueIdentifier>{c743d517-8b33-4320-a755-92a5dac2b635}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Parser">
+      <UniqueIdentifier>{735e1f23-bd9c-4456-9ab5-683ef803a237}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\ida2asm\src\AsmConverter.cpp">
@@ -28,9 +34,6 @@
     <ClCompile Include="..\ida2asm\src\DefinesMap.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\ida2asm\src\IdaAsmParser.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\ida2asm\src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -38,9 +41,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\ida2asm\src\Struct.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\ida2asm\src\SymbolFileParser.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\ida2asm\src\Tokenizer.cpp">
@@ -103,6 +103,18 @@
     <ClCompile Include="..\ida2asm\src\Util\StringList.cpp">
       <Filter>Source Files\Util</Filter>
     </ClCompile>
+    <ClCompile Include="..\ida2asm\src\Parser\IdaAsmParser.cpp">
+      <Filter>Source Files\Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ida2asm\src\InputSymbols\ProcHookList.cpp">
+      <Filter>Source Files\InputSymbols</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ida2asm\src\InputSymbols\SymbolFileParser.cpp">
+      <Filter>Source Files\InputSymbols</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ida2asm\src\InputSymbols\SymbolTable.cpp">
+      <Filter>Source Files\InputSymbols</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\ida2asm\src\AsmConverter.h">
@@ -114,16 +126,10 @@
     <ClInclude Include="..\ida2asm\src\DefinesMap.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\ida2asm\src\IdaAsmParser.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\ida2asm\src\References.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="..\ida2asm\src\Struct.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ida2asm\src\SymbolFileParser.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="..\ida2asm\src\Tokenizer.h">
@@ -195,8 +201,23 @@
     <ClInclude Include="..\ida2asm\src\Util\BlockList.h">
       <Filter>Source Files\Util</Filter>
     </ClInclude>
-    <ClInclude Include="..\ida2asm\src\ParsingException.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="..\ida2asm\src\Parser\IdaAsmParser.h">
+      <Filter>Source Files\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ida2asm\src\Parser\ParsingException.h">
+      <Filter>Source Files\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ida2asm\src\InputSymbols\ProcHookList.h">
+      <Filter>Source Files\InputSymbols</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ida2asm\src\InputSymbols\SymbolFileParser.h">
+      <Filter>Source Files\InputSymbols</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ida2asm\src\InputSymbols\SymbolTable.h">
+      <Filter>Source Files\InputSymbols</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ida2asm\src\InputSymbols\SymbolAction.h">
+      <Filter>Source Files\InputSymbols</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

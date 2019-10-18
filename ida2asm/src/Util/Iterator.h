@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Util {
+namespace Iterator {
     template <class T>
     class Iterator
     {

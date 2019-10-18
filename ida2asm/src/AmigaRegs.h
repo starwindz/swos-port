@@ -1,7 +1,5 @@
 #pragma once
 
-#include "StringView.h"
-
 constexpr int kNumAmigaRegisters = 15;
 
 inline int amigaRegisterToIndex(const String& str)

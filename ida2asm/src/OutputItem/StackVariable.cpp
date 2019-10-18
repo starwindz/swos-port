@@ -7,13 +7,13 @@ StackVariable::StackVariable(const String& name, CToken *size, CToken *offset)
     assert(size && size->textLength);
 
     Util::assignSize(m_nameLength, name.length());
-    memcpy(namePtr(), name.str(), name.length());
+    name.copy(namePtr());
 
     Util::assignSize(m_offsetLength, offset->textLength);
-    memcpy(offsetPtr(), offset->text(), offset->textLength);
+    offset->copyText(offsetPtr());
 
     Util::assignSize(m_sizeLength, size->textLength);
-    memcpy(sizePtr(), size->text(), size->textLength);
+    size->copyText(sizePtr());
 
     Util::assignSize(m_offset, offset->parseInt());
 

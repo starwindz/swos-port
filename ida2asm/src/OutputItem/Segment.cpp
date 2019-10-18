@@ -46,7 +46,7 @@ Segment::Param::Param(CToken *param)
     assert(param && param->textLength);
 
     Util::assignSize(m_length, param->textLength);
-    memcpy(textPtr(), param->text(), param->textLength);
+    param->copyText(textPtr());
 }
 
 size_t Segment::Param::requiredSize(CToken *param)
@@ -84,6 +84,11 @@ void SegmentSet::remove(CToken *segment)
 
     if (it != m_segments.end())
         m_segments.erase(it);
+}
+
+void SegmentSet::clear()
+{
+    m_segments.clear();
 }
 
 bool SegmentSet::empty() const

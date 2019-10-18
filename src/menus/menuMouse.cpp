@@ -77,6 +77,10 @@ static bool isEntryScroller(const MenuEntry& entry)
         (entry.u2.spriteIndex == kUpArrowSpriteIndex || entry.u2.spriteIndex == kDownArrowSpriteIndex))
         return true;
 
+    // also quicken +/- fields
+    if (entry.isString() && (entry.string()[0] == '+' || entry.string()[0] == '-') && entry.string()[1] == '\0')
+        return true;
+
     return false;
 }
 
