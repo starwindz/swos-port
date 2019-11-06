@@ -56,7 +56,7 @@ static void fillBitmapInfo(BmpFileHeader& fh, BmpInfoHeader& ih, int width, int 
     ih.colorsImportant = numColors;
 }
 
-bool saveBmp8Bit(const char *path, int width, int height, const char *data, const RgbQuad *palette, int numColors)
+bool saveBmp8Bit(const char *path, int width, int height, const char *data, int pitch, const RgbQuad *palette, int numColors)
 {
     BmpFileHeader fh;
     BmpInfoHeader ih;
@@ -66,10 +66,9 @@ bool saveBmp8Bit(const char *path, int width, int height, const char *data, cons
 
     auto lineWidth = (width + 3) & ~3;
     auto padding = lineWidth - width;
-    auto size = (width + padding) * height;
 
     fillBitmapInfo(fh, ih, width, height, 256);
-    
+
     auto file = fopen(path, "wb");
     if (!file)
         return false;
@@ -83,9 +82,9 @@ bool saveBmp8Bit(const char *path, int width, int height, const char *data, cons
             break;
 
         for (int i = 0; i < height; i++) {
-            if (fwrite(data + (height - i - 1) * width, width, 1, file) != 1)
+            if (fwrite(data + (height - i - 1) * pitch, width, 1, file) != 1)
                 break;
-            if (padding && fwrite(data + (height - i - 1) * width + width, padding, 1, file) != 1)
+            if (padding && fwrite(data + (height - i - 1) * pitch + width, padding, 1, file) != 1)
                 break;
         }
 

@@ -14,5 +14,6 @@
 #include <vector>
 #include <future>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "Util/StringView.h"

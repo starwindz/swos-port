@@ -169,7 +169,7 @@ public:
             return;
 
         // gotta have one non-removed node at the end, so next() doesn't loop away into outer space
-        auto sentinelBuf = m_data.add(sizeof(Node));
+        auto sentinelBuf = m_data.add(Node::requiredSize(1));
         m_end = new (sentinelBuf) Node("z", 1, 0);
 
         auto alignment = (4 - m_data.spaceUsed() % 4) % 4;
@@ -190,10 +190,12 @@ public:
 
         // set up a sentinel for sorted nodes as well, to simplify duplicate elimination
         m_nodes[m_count].hash = m_nodes[m_count - 1].hash + 1;
+        assert(m_end->textPtr()[0] == 'z');
     }
 
     bool hasDuplicates() const {
         assert(m_nodes || !m_count);
+        assert(!m_count || m_end->textPtr()[0] == 'z');
 
         for (size_t i = 1; i < m_count; i++) {
             if (m_nodes[i].node->removed())
@@ -209,6 +211,7 @@ public:
 
     void removeDuplicates() {
         assert(m_nodes || !m_count);
+        assert(!m_count || m_end->textPtr()[0] == 'z');
 
         for (size_t i = 1; i < m_count; i++)
             if (!m_nodes[i].node->removed())

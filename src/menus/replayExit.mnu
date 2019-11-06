@@ -17,7 +17,7 @@ Menu replayExitMenu
         y: kPromptTopItemY
 
         color: @kGreen
-        text: aReplay
+        text: "PLAY AGAIN"
 
         downEntry: >
 

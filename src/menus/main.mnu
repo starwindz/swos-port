@@ -2,7 +2,8 @@
 // Recreation of the SWOS main menu
 //
 
-Menu mainMenu {
+Menu mainMenu
+{
     y: 1
     onInit: ~SWOSMainMenuInit
     initialEntry: friendly
@@ -45,28 +46,28 @@ Menu mainMenu {
         color: @kDarkBlue
 
         upEntry: editTactics
-        downEntry: highlights
+        downEntry: replays
         rightEntry: diyCompetition
 
         text: aEditCustomTeam
         onSelect: ~EditCustomTeamMenu
     }
 
-    Entry highlights {
+    Entry replays {
         color: @kPurple
 
         upEntry: editCustomTeams
         downEntry: options
         rightEntry: presetCompetition
 
-        text: aHighlights
-        onSelect: ~HighlightsMenu
+        text: "REPLAYS"
+        onSelect: ~showReplaysMenu
     }
 
     Entry options {
         color: @kDarkBlue
 
-        upEntry: highlights
+        upEntry: replays
         downEntry: career
         rightEntry: season
 
@@ -109,7 +110,7 @@ Menu mainMenu {
 
         upEntry: diyCompetition
         downEntry: season
-        leftEntry: highlights
+        leftEntry: replays
 
         text: aPresetCompetit
         onSelect: ~PresetCompetitionMenu

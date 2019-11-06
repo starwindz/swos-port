@@ -1,0 +1,474 @@
+Standard SWOS menus
+-------------------
+
+Menu is laid out in memory as a variable length structure that consists of a 22
+bytes header followed by entries, which are 56 bytes each.
+
+Parameters to menu entry functions (before draw, after draw, etc.) are in the
+following registers:
+A5 - pointer to entry which is receiving the event
+A0 - pointer to function itself (since it's called indirectly through A0)
+
+Upon entry, init and onReturn functions of the menu will have A6 point to menu
+header.
+
+Header (size 22 bytes):
+
+           +0  - init function (invoked only once, converting the menu)
+           +4  - onReturn function (invoked when returning to this menu)
+           +8  - onDraw function (invoked each frame, before drawing the items)
+           +12 - pointer to currently selected entry
+           +16 - number of entries in the menu
+           +18 - pointer to the end of the menu (including additional
+                 STDMENUTEXT strings)
+
+Menu entries, following the header:
+
+       0  ; has it already been drawn? (word)
+            0 - no
+            1 - yes
+       2  ; ordinal (0-based)
+       4  ; is it visible?
+            0  - draw
+            !0 - don't
+       6  ; is disabled (word) (1 = disabled, 0 = not)
+       8  ; left item     ; ordinal of entry that's next to be selected once
+       9  ; right item    ; left, right, up, down is pressed on this entry,
+       10 ; up item       ; respectively
+       11 ; down item
+       12 ; left          ; [values: 0 = left, 1 = right, 2 = up, 3 = down]
+       13 ; right         ; direction of movement that is chosen once this
+       14 ; up            ; entry is disabled or invisible
+       15 ; down
+       16 ; left entry    ; ordinal of entry that's to be selected in case this
+       17 ; right entry   ; entry is disabled or invisible
+       18 ; up entry
+       19 ; down entry
+       20 ; x
+       22 ; y
+       24 ; width
+       26 ; height
+       28 ; type1 [0,1,2,3] (word) -- this is something of a background type
+            0: NOP -- nothing is drawn in the first cycle (no background)
+            1: custom draw function -- don't draw anything, but invoke function
+               from offset 30 (dword) with x and y arguments in D0 and D1
+               (custom draw background function)
+            2: standard entry -- has background and frame
+               Ofs. 30 low byte is background color, high byte is color of the
+               internal frame. If the color of internal frame is zero, don't
+               draw it. Outer frame is drawn only if there is room (height is
+               greater than 6 or 8). If background color is zero, no frame is
+               drawn, and the background is colored with color 15
+               (yellow-green-black).
+            3: sprite -- at offset 30 is its index into sprite.dat (word)
+
+       30 ; switch(ofs28) {
+            case 1:
+                ofs30 = pointer to a function getting x and y as parameters
+            case 2:
+                ofs30 = lo nibble: entry background color
+                        hi nibble: frame color
+            case 3:
+                ofs30 = sprite index
+            }
+            0 - do not draw
+
+       34 ; type2 [0,1,2,3,4,5,6,7] -- something of a foreground type
+
+            0: NOP, no foreground
+            1: ofs38 contains a function pointer, invoke it with x and y
+               parameters (D0 and D1)
+            2: ofs38 contains pointer to string.
+               If this pointer has value -1 then additional 70 bytes is
+               allocated after the menu end and string "STDMENUTEXT" is written
+               there; this will be filled later by some of the entry functions
+            3: ofs38 is index of a sprite that will be drawn
+            4: ofs38 is a pointer to string table:
+                 0 - pointer to index variable (word)
+                 4 - word, value of starting index
+                 6 - further we have array of pointers to strings
+               write string from the table indexed by index variable
+            5: multi-line text. First byte is number of lines, followed by that
+               many null-terminated strings (not pointers). Ofs36, low nibble,
+               represents color of the text
+            6: ofs38 is a number (word). It's converted into string and
+               displayed (code for type 2 is used).
+            7: sprite copy with color conversion. offset 38 is a pointer to the
+               following structure:
+                 0 - source sprite index
+                 2 - destination sprite index
+                 4 - color conversion table, 32 bytes long
+               First sprite is copied into second, second is converted to 8
+               colors and eventually drawn to screen.
+
+       36 ; Low nibble of offset 36 represents color of the text. If it's zero
+            then use color 2 (white). Nibble 1 represents font size -- small or
+            big (bit 4 that is, bits 5,6,7 must be zero since we only have two
+            possibilities). If bit 14 is set string is left-aligned, and if bit
+            15 is set string is right-aligned. If neither of these bits is on,
+            string is centered across the entry. If bit 9 isn't set and offset
+            34 is not zero, entry is drawn without text. If bit 13 is set text
+            will blink gently.
+       38 ; see ofs34
+       42 ; onSelect function
+       46 ; controls mask (gets AND-ed with control word)
+       48 ; beforeDraw function, on entry esi = A5 -> entry that's drawn
+       52 ; onReturn function
+
+    sizeof(MenuItem) = 56
+
+x coordinates of menu entries are shifted right by 8 pixels. Therefore entry
+with x coordinate zero is in fact begins at eight pixel of the screen.
+
+beforeDraw function executes first, before anything has been drawn. onReturn
+is executed after all the entry drawing has been done, but before flip so it's
+still possible to alter looks of the entry.
+
+If type1 or type2 fall out of prescribed range, int3 is issued and endless loop
+is entered. int3 will terminate the program if debugger isn't attached.
+
+Type 1 is something of a background type, while type 2 relates to menu entry
+foreground (contents).
+
+All this relates to "screen menus", as we shall call them. They can be
+displayed immediately. There is another kind of menu, which we shall refer to
+as "static" menus -- to be used they must first be converted to screen menus;
+that job is done by the ConvertMenu() procedure (they get copied to buffer
+g_currentMenu in the process, variable which SWOS later exclusively uses to
+access currently shown menu). Static menus have a different format, as their
+purpose is to be space efficient and waste as little space as possible.
+
+Static menu always starts with header. Header coincides with screen menu
+header, and is followed by a number of entries of variable length. Entries are
+comprised of variable number of records, each identified by a word. End of
+entry is marked with record type 0, and end of entire menu is marked with
+entry whose x coordinate is -999.
+
+During the conversion, 8 is added to each entry x coordinate (as already
+mentioned).
+
+Static menu header:
+
+        See screen menu header (first 16 bytes)
+        Only thing that differs is offset 12 - in static menu that is the index
+        of current entry, while screen menu holds it as a pointer
+
+sizeof(StaticMenuHeader) = 16
+
+Example of an entry (variable size):
+
+        0 - x         ;
+        2 - y         ; these four fields are fixed,
+        4 - width     ; ie. always present
+        6 - height    ;
+        8 - type (2, code will branch based on this, there are 22 types)
+       10 - 4 bytes follow which are indices of entries we switch to when up,
+       11   down, left, right is pressed, respectively
+       12
+       13
+       14 - type (4)
+       16 - frame and background color
+       18 - type (8)
+       20 - string flags
+       22 - pointer to entry text
+       26 - type (13)
+       28 - entry function (executes when fire is pressed on this entry)
+       30 - type (0) - marking the end of entry
+
+       (again, this is only an example, menus can be very varied)
+
+
+Each record type has its own fields. Records inside the entry are interpreted
+until we run into type 0 record. Various data from the record is copied into
+offsets of a current screen menu entry.
+
+There are special values for entry x coordinate that have special meaning:
+
+-999   end of menu
+-998   following two words are menuX and menuY (they will get added to x and
+       y of all following entries)
+-997   template entry follows - copy all records belonging to next entry to
+       template entry which is used to initialize all entries
+-996   return template entry back to normal (call InitMenuEntry)
+
+Template entries are used to save space when initializing many entries with
+same records (for example multiple entries that have uniform color and same on
+select function).
+
+There are 22 record types:
+
+---------------------------
+TYPE 0:
+
+End of entry mark
+---------------------------
+TYPE 1:  (invisible entry)
+
+ofs4 (isInvisible) = 1
+---------------------------
+TYPE 2:  (next entries)
+
+Following 4 bytes set to offsets:
++8   left
++9   right
++10  up
++11  down
+---------------------------
+TYPE 3:  (function 1 -- custom background drawing function)
+
+ofs28 = 1
+ofs30 = dword (function)
+
+When entry is drawn, this function is invoked, and no background is drawn
+---------------------------
+TYPE 4:  (entry frame)
+
+ofs28 = 2
+ofs30 = word (background color)
+ofs32 = 0
+---------------------------
+TYPE 5:  (sprite 1 (background))
+
+ofs28 = 3 (word)
+ofs30 = word (sprite index)
+ofs32 = 0 (word)
+---------------------------
+TYPE 6:  (invalid type)
+
+ofs28 = 4
+ofs30 = word
+ofs32 = 0
+Most likely artifact of code conversion -- something like this would cause
+immediate program termination.
+---------------------------
+TYPE 7:  (function 2 -- custom foreground drawing function)
+
+ofs34 = 1 (word)
+ofs36 = 0 (word)
+ofs38 = dword (function taking x and y parameters)
+---------------------------
+TYPE 8:  (string)
+
+ofs34 = 2 (word)
+ofs36 = word (string flags)
+ofs38 = dword (text ptr)
+---------------------------
+TIP 9:  (sprite 2 (foreground))
+
+ofs34 = 3
+ofs36 = 0
+ofs38 = word (sprite index)
+ofs40 = 0 (fill up to a dword)
+---------------------------
+TIP 10: (string table)
+
+ofs34 = 4
+ofs36 = word (string flags)
+ofs38 = dword (pointer to string table)
+---------------------------
+TIP 11: (multi-line text)
+
+ofs34 = 5
+ofs36 = word (string flags)
+ofs38 = dword (pointer to a byte - number of strings, followed by the strings)
+---------------------------
+TIP 12: (number)
+
+ofs34 = 6
+ofs36 = word (string flags)
+ofs38 = word (number to print)
+ofs40 = 0 (filler to a dword)
+---------------------------
+TIP 13: (on select function - fire only)
+
+ofs46 = 32
+ofs42 = dword (on select function)
+---------------------------
+TIP 14: (on select function - all controls accepted)
+
+ofs46 = word
+ofs42 = dword (on select function)
+---------------------------
+TIP 15: (before draw function)
+
+ofs48 = dword (before draw function)
+---------------------------
+TIP 16: (after draw funkcija)
+
+ofs52 = dword (after draw function)
+---------------------------
+TIP 17: (left skip)
+
+ofs16 = byte (next entry if this one is disabled or invisible)
+ofs12 = byte (next direction of search, controls direction)
+---------------------------
+TIP 18: (desno preskakanje)
+
+ofs17 = byte
+ofs13 = byte
+---------------------------
+TIP 19: (gornje preskakanje)
+
+ofs18 = byte
+ofs14 = byte
+---------------------------
+TIP 20: (donje preskakanje)
+
+ofs19 = byte
+ofs15 = byte
+---------------------------
+TIP 21: (color converted sprite)
+
+ofs34 = 7
+ofs36 = 0
+ofs38 = dword (pointer na strukturu, videti opis ofs34)
+
+======
+Colors
+
+Broj boja koje mogu imati pozadine stavki je 16. One se konvertuju preko
+menuitem_colortable tablice u DrawEmptyMenuItem. U radnoj paleti postoji vise
+grupa nijansi od po 16 boja. Posto meniji mogu imati samo 16 boja, njihova
+boja se konvertuje u pocetak nijanse, i na nju se dodaju pikseli fill.256 koji
+su napravljeni tako da budu lepo nijansirani - pitanje je samo u kojoj boji.
+U fill.256 se koriste samo 32 boje (indeksi 0..31), tako da grupe nijansi u
+radnoj paleti mogu imati maksimum 32 boje.
+
+Grupe nijansi:
+
+(boje sa nizim indeksom su tamnije)
+
+32 ..63   - plava prelazi u crnu
+64 ..95   - narandzasta prelazi u smedju
+96 ..127  - rozikasta prelazi u braon
+128..159  - svetlo crvena u jarko crvenu (skoro da i nema razlike)
+160..191  - plava u ljubicastu
+192..223  - svetlo plava u plavu
+224..255  - zuta-zelena-crna
+
+Boje od 0 do 31 (da budemo kompletni):
+
+16..31 - prelaz iz bele u smedju
+
+0  - skoro crna       <  0,   0,  36>
+1  - siva             <180, 180, 180>
+2  - bela             <252, 252, 252>
+3  - prava crna       <  0,   0,   0>
+4  - vrlo tamna braon <108,  36,   0>
+5  - smedja           <180,  72,   0>
+6  - narandzasta      <252, 108,   0>
+7  - tamnija siva     <108, 108, 108>
+8  - svetlija crna    < 36,  36,  36>
+9  - vrlo tamna siva  < 72,  72,  72>
+10 - crvena           <252,   0,   0>
+11 - plava            <  0,   0, 252>
+12 - nesto vrlo tamno <108,   0,  36>
+13 - bledo plava      <144, 144, 252>
+14 - zelena           < 36, 144,   0>
+15 - zuta             <252, 252,   0>
+
+Uzvesi sve ovo u obzir, boje koje se koriste u crtanju pozadine menija su:
+                                      spoljnji okvir:
+0  - rozikasta u braon              [bez pozadine i okvira]
+1  -          -||-                  [sivi]
+2  -          -||-                  [-||-]
+3  - plava u crnu                   [-||-]
+4  - narandzasta u smedju           [narandzasti]
+5  -        -||-                    [   -||-    ]
+6  -        -||-                    [zuti]
+7  - rozikasta u braon              [sivi]
+8  - plava u crnu                   [-||-]
+9  - rozikasta u braon              [-||-]
+10 - svetlo crvena u jarko crvenu   [-||-]
+11 - plava u ljubicastu (roze)      [bledo plavi]
+12 - narandzasta u smedju           [crveni]
+13 - svetlo plava u plavu           [sivi]
+14 - zuta-zelena-crna               [-||-]
+15 -      -||-                      [-||-]
+
+Odavde sledi da se za crtanje pozadine stavki efektivno koristi samo 7 boja
+(nijansi).
+
+Ukoliko DrawEmptyMenu dobije da crta stavku sirine ili visine 1 (linija, od
+frejma verovatno), onda se ne koristi fill.256, jedino se na boju dodaje
+vrednosti delta_color.
+
+--------------
+DrawThickFrame(int color, int x, int y, int width, int height);
+
+Parametri:
+     D0 - color
+     D1 - x
+     D2 - y
+     D3 - width
+     D4 - height
+
+frameColorsTable db 1, 9, 1, 9, 1, 9, 1, 9, 6, 9, 6, 4, 15, 4, 1, 9, 1, 9, 1,
+                 db 3, 1, 9, 13, 8, 10, 9, 1, 9, 1, 9, 1, 9
+
+- prvo konvertuj boju uz pomoc gornje tablice
+- na x i y koordinatama nacrtaj vertikalnu liniju duzine width
+- zatim na istim koordinatama iscrtaj horizontalnu liniju duzine height
+- horizontalna linija na x, y + height - 1, duzine width
+- vertikalna linija na x + width - 1, y, duzine height
+- tako se dobija rectangle oko zadane stavke
+
+Iz frameColorsTable se koristi svaka druga boja (parna), jer se indeksira
+wordom. Moguce boje za okvir su:
+
+0  - siva
+1  - siva
+2  - siva
+3  - siva
+4  - narandzasta
+5  - narandzasta
+6  - zuta
+7  - siva
+8  - siva
+9  - siva
+10 - siva
+11 - bledo plava
+12 - crvena
+13 - siva
+14 - siva
+15 - siva
+
+Jedinstvenih boja ima 5.
+
+Shining cursor
+--------------
+
+Njega crta DrawSelected. Svaki frejm se povecava promenljiva
+game_timer_index, koja se koristi kao indeks u tablicu koja sadrzi boje:
+color_table_shine dw 2, 2, 1, 1, 7, 7, 1, 1
+Kursor se azurira 70 puta u sekundi.
+
+
+Play match menu
+---------------
+Drawing player names: player names start from entry number 13 and end with
+entry 29 (16 entries + 1 invisible). These entries are only used for hit
+testing (for user interaction), drawing is done manually in afterDraw function.
+Entry 33 is player's name: background and text. Entry 31 is small x or check
+sprite. Entry 37 is the same sprite again, but it with different criteria it
+seems. Entry 34 is player's position (G, RB, D...). Entry 35 is that weird
+3-letter string that comes after player name and position.
+
+
+Menu stacking
+-------------
+
+Menus are displayed by ShowMenu procedure. It takes a menu in packed form as a
+parameter in A6, unpacks it, and then calls MenuProc repeatedly until
+g_exitMenu has been set to true.
+
+Before calling PrepareMenu that will prepare given menu (or activate it so to
+say) it pushes pointer to current menu's packed form and it's current entry to
+the stack. This way information about previous menu is saved, and once the
+current menu finishes and steps out of the menu loop, previous menu and it's
+entry are popped off the stack and made into current menu. ShowMenu then
+returns to the caller, as its main task (showing the menu given to it) has
+been completed.
+
+Returning to menu from the game is done differently: SWOS procedure handles
+that by explicitly saving current menu and it's current entry.

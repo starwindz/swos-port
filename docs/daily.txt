@@ -1751,5 +1751,90 @@ earlier:
 16.10.2019.
 /
 17.10.2019.
-- [ida2asm] finally fixed the damn false sharing :) it was pretty hard, as it involved fixing class design
+- [ida2asm] finally fixed the damn false sharing... it was pretty hard, as it involved fixing class design
   and a lot of pointer arithmetics... but it was fun :)
+18.10.2019.
+- converted sprite drawing routine to C++ after a long struggle... SWPE was a huge help at this
+19.10.2019.
+- bench routines seem to use sprite drawing routines of their own, at first I tried to convert them but that
+  proved to be a too massive step, so I will keep some temporary code to route their sprite draw into the new
+  routine that I wrote until it's all nicely converted and cleaned up
+- need to research this a bit more, and find precise connections between 320 -> 336 -> 384
+20.10.2019.
+/
+21.10.2019.
+/
+22.10.2019.
+- started reconstructing highlights menu
+23.10.2019.
+- fixed menu mouse selection being able to select disabled items
+- fixed highlights not exiting on fire
+- fixed saving highlights file with double extension if selecting a filename from the list
+- reimplemented highlights saving
+24.10.2019.
+- fixed tests broken yesterday
+- covered saving file by selecting file from file list with tests; I want to emphasize once again how gross
+  patching the global load file routine is to save selected files pointer
+25.10.2019.
+- reimplemented SaveCoordinatesForHighlights and hooked it up with replay vector, but haven't tested it yet
+26.10.2019.
+- fixed rerouted replay, but getting reminded now of how replays work, it's not as simple as I initially
+  thought, will need to reorganize it a bit
+27.10.2019.
+- implemented replay scheme, it's not really working yet, but felt like in good old SWOS++ days there for a
+  moment ;)
+28.10.2019.
+- added auto save replays option
+29.10.2019.
+- implemented actual auto-saving the current replay file
+- and the replays are finally working!! :) still need to test a few more edge cases, but it's looking good
+30.10.2019.
+- fixed invalid filename for auto saved replay file, and not saving it in binary mode (oops!)
+- fixed invalid logic when aborting load/save
+- saved replays seem to be corrupted :/
+31.10.2019.
+- refactored replays file, fixed some mistakes and finally fixed the corruption bug; but auto saved replay
+  isn't saved properly when game is exited with alt-F1, that's left for tomorrow, too tired now
+01.11.2019.
+- auto saved replay wasn't corrupted on alt-F1 :) I broke playing replays when fixing the bench replay
+  corruption bug; it's too difficult determining dynamically the point of call of InitCurrentGoal(), so I
+  just added a way to remove lines to ida2asm, and removed it directly from BenchCheckControls()
+- [ida2asm] fixed parsing error when hook proc was empty (but leading comma was present)
+- [ida2asm] added support for removing lines, by inserting special hook name "@remove"
+- added capturing in-game screenshots on F2 (file format PNG)
+- in case user-assigned key conflicts with some game function key, game function key will not be doing this
+  function anymore
+- added fast replays/highlights mode, can be toggled via 'F'
+- debug variables can be toggled via 'D'
+- fixed trying to auto-save a replay if alt-F1 is pressed while watching highlights
+- improved replay menu navigation when there are disabled items
+- prevented menu item initially under mouse arrow getting selected (I don't like that)
+02.11.2019.
+- [ida2asm] handled properly cases where start/end removal range symbols are missing (e.g. they got renamed)
+- bah, just realized pressing 'R' during the game messes up replay (cuts it off at the first press)
+- blocked recording while in substitutes (like SWOS++)
+03.11.2019.
+- [ida2asm] fixed reporting same unused symbol multiple times
+- transfered useful part of docs from SWOS++, now on they will be kept in this repository
+- debugged 'R' killing replay problem but no success
+04.11.2019.
+- moved replays to its own "replays" dir, should probably do that for other types as well later
+- still no solution to the replay bug, what could be so different in playback?
+05.11.2019.
+- [ida2asm] fixed nasty and subtle memory overwrite bug in StringMap, didn't allocate 1 more byte for the end
+  sentinel node string content
+- changed "REPLAY" text after friendly game to "PLAY AGAIN" (I think it was confusing considering the usage
+  of term "replay" for watching saved games)
+- oof, fixed at least a part of the replay bug, so a short replay with 1 'R' works now, but the longer one
+  with more doesn't
+- omg, FINALLY fixed the damn thing; if 'R' is pressed during the game, game switches into instant-replay
+  mode, it will replay whatever is in the current hil buffer and will inevitably overflow the buffer (if not
+  interrupted), and our poor class will think the buffer was filled with new data and will save entire
+  contents to replay, which is a double problem: not only will it save unnecessary repeated recording, it
+  will also pick up -1 marker from the buffer (left by the last saved coordinate), and that will make the
+  recording later stop at that point when replayed; so I think it's fixed now, only thing that concerns me
+  a bit is that I managed to get a crash once when pressing 'R' near the beginning of the game: currentHilPtr
+  was null which could only mean that RestoreHighlightPointers() was called without calling
+  SaveHighlightPointers() first, which could happen in case numReplaysInHilFile was 0, which I have no idea
+  why would be 0...) but I never managed to reproduce it so it might have been something temporary; will
+  maybe try some more later... pheww.....

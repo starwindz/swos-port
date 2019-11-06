@@ -9,4 +9,4 @@ struct RgbQuad {
 };
 #pragma pack(pop)
 
-bool saveBmp8Bit(const char *path, int width, int height, const char *data, const RgbQuad *palette, int numColors);
+bool saveBmp8Bit(const char *path, int width, int height, const char *data, int pitch, const RgbQuad *palette, int numColors);

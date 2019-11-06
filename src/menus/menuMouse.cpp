@@ -9,13 +9,10 @@ constexpr int kScrollRateMs = 100;
 static Uint32 m_buttons;
 static int m_x;
 static int m_y;
-static int m_lastX = -1;
-static int m_lastY = -1;
 
-static Uint32 m_startingTicks = SDL_GetTicks();
 static Uint32 m_lastScrollTick;
 
-static bool m_selectedLastFrame;
+static bool m_selectedLastFrame = true;
 static bool m_clickedLastFrame;
 static bool m_scrolling;
 
@@ -153,8 +150,8 @@ static bool mapCoordinatesToGameArea()
 static bool globalWheelHandler(int scrollAmount)
 {
     assert(!m_mouseWheelData.empty());
-    const auto& wheelData = m_mouseWheelData.back();
 
+    const auto& wheelData = m_mouseWheelData.back();
     bool handled = false;
 
     if (scrollAmount > 0 && wheelData.upEntry >= 0) {
@@ -222,7 +219,7 @@ static void checkForEntryClicksAndMouseWheelMovement()
         auto& entry = entries[i];
         bool insideEntry = m_x >= entry.x && m_x < entry.x + entry.width && m_y >= entry.y && m_y < entry.y + entry.height;
 
-        if (insideEntry && entry.visible() && m_reachableEntries[entry.ordinal]) {
+        if (insideEntry && entry.selectable() && m_reachableEntries[entry.ordinal]) {
             currentMenu->selectedEntry = &entry;
             m_selectedLastFrame = true;
 
@@ -271,16 +268,36 @@ void setGlobalWheelEntries(int upEntry /* = -1 */, int downEntry /* = -1 */)
     wheelData.downEntry = downEntry;
 }
 
+static std::pair<int, int> getLastMouseCoordinates()
+{
+    // make sure not to select menu item initially under mouse arrow
+    static bool initialized;
+    static int lastX;
+    static int lastY;
+
+    if (!initialized) {
+        lastX = m_x;
+        lastY = m_y;
+        initialized = true;
+    }
+
+    auto result = std::make_pair(lastX, lastY);
+
+    lastX = m_x;
+    lastY = m_y;
+
+    return result;
+}
+
 void updateMouse()
 {
     m_buttons = SDL_GetMouseState(&m_x, &m_y);
 
-    // make sure to discard initial activity while the window is initializing
-    if ((m_x != m_lastX || m_y != m_lastY) && SDL_GetTicks() - m_startingTicks > 100)
-        m_selectedLastFrame = false;
+    int lastX, lastY;
+    std::tie(lastX, lastY) = getLastMouseCoordinates();
 
-    m_lastX = m_x;
-    m_lastY = m_y;
+    if ((m_x != lastX || m_y != lastY))
+        m_selectedLastFrame = false;
 
     if (handleScrolling())
         return;
@@ -304,7 +321,7 @@ void updateMouse()
 
 // Finds and marks every reachable item starting from the initial one. We must track reachability in order
 // to avoid selecting items with mouse that are never supposed to be selected, like say labels.
-void determineReachableEntries(const MenuBase *menu)
+void determineReachableEntries()
 {
     std::fill(m_reachableEntries.begin(), m_reachableEntries.end(), false);
 

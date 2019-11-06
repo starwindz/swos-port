@@ -1,0 +1,97 @@
+Highlights are recorded by storing camera coordinates, result, animated patterns state and every sprite
+coordinate in the frame. Buffer for each scene is 19,000 bytes long. It is in fact a circular buffer.
+
+Bookkeeping is maintained via three pointers:
+goalBasePtr     - points to the start of the current scene buffer
+nextGoalPtr     - points to the next scene (end of the current)
+currentHilPtr   - pointer in the current scene, how much was filled
+
+Current pointer keeps increasing, and when it reaches end of buffer it is reset to the beginning. This way
+oldest entries are overwritten with newest. After each write special marked -1 is written and the pointer
+isn't bumped so any new data overwrites it. This marker allows game to find start of the scene later on.
+
+Maximum storage is 10 scenes. If there are more, only 10 latest are kept, by shifting all highlights down.
+After eventual shifting, scene data is copied from current buffer to more permanent area (which will go to
+file eventually). Done by SaveHighlight().
+
+Contents of the scene buffer can be viewed by pressing 'R' during the game. The game will fade-out and replay
+short segment that's currently in highlights working buffer. To find the start of the scene, buffer is
+searched for first value with high bit set (start of frame marker), taking care of wrapping the pointer.
+Pressing 'R' during the playback toggles slow motion mode.
+
+It's crucial to start from the dword with high bit set since it represents the start of the frame. Buffer
+pointer might wrap in the middle of the frame, so we can not rely on simply reading the range
+[base ptr - current ptr].
+
+Bafer za gol velicine 19000 bajtova je u stvari cirkularni bafer. Posto se
+pamti samo poslednjih nn sekundi, pointer se povecava, i kada stigne do kraja
+vraca se na pocetak i upisivanje nastavlja odatle, tako da moze zavrsiti na
+bilo kojoj poziciji u baferu. Kada se gol pusta, trazi se negativan dword
+
+
+There are 3 pointers:
+
+hilFileBuffer   - here the highlight file gets loaded
+
+This area contains variables for current highlight, and extends into scene buffer area. Each scene can be
+maximum 19,000 bytes long, and there is room for 10 scenes. Anything beyond that will start overwriting older
+scenes.
+
+Scene buffer is circular and data keeps pouring in, overwriting oldest entries. End is detected by -1 marker.
+
+
+offset:  size:  desc.
+-------  -----  -----
+   0       4    8 - mozda offset do prvog tima?
+   4       4    193626 - izgleda maksimalna velicina fajla: 10 x 19000 + 8 +
+                         2 x 1704 + 210
+                ova dva dworda se upisuju kao konstante (uvek isto), pa bi se
+                mogli iskoristiti za prepoznavanje hil fajlova
+   8     1704   prvi tim, in-game struktura
+1712     1704   drugi tim
+3416      40    ime lige, takmicenja, itd.
+3456      60    ?, mozda je ovo gore duzine 100
+3516     100    tip partije - friendly, cup, itd.
+3616       2    broj snimaka u fajlu
+3618       2    broj golova prvog tima
+3620       2    broj golova drugog tima
+3622       2    nizi bajt - br. pitch fajla, visi bajt - tip terena
+3624       2    broj max zamena
+3626   19000    buffer...
+         x      tu se nalaze informacije o golu koji treba da bude pusten,
+        broj    mislim da svaki gol zauzima 19000 bajtova, ili mozda manje
+       golova   (posto se zavrsava sa -1)
+
+                Pocinje se sa prvim dwordom koji ima setovan najvisi bit (vrsi
+                se pretraga)
+
+                taj dword se sastoji od x i y koordinata kamere (respektivno,
+                bez setovanog najviseg bita), dalje:
+                word: br. golova prvog tima
+                word: br. golova drugog tima (bar na pocetku)
+                2 puta word: nekakav flag [0..7]
+
+                zatim niz dwordova:
+
+                ako najvisi bit nije setovan, u pitanju je sprajt formata:
+
+                31            20 19        10 9              0
+                +-+--------------+------------+-------------+
+                |0|              |            |             |
+                +-+--------------+------------+-------------+
+                 indeks sprajta        x             y
+                   11 bitova      10 bitova      10 bitova
+
+                x i y koordinate su oznacene, bit 9 je bit znaka
+                jedan frejm se zavrsava sa prvim dwordom koji ima setovan
+                najvisi bit, a jedan gol sa -1 ili prelaskom 19000 bajtova
+
+
+Beleske o prosirenju formata fajla
+----------------------------------
+Dodatni podaci mogu ici na kraj fajla, ali je jako bitno da nemaju setovan
+najvisi bit. U tom slucaju, podaci bi se mogli ubacivati i pre pocetka svakog
+gola, ukoliko to ne bi izazvalo "skracenje" gola. Trebalo bi sastaviti neku
+funkciju koja mapira niz proizvoljnih bajtova u niz bajtova koji nemaju setovan
+najvisi bit (mislim da bi bilo dovoljno da svaki cetvrti nema setovan high bit)
+- ako bi se razbilo na bitove onda bi dobili i jednostavnu enkripciju pride.

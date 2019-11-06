@@ -30,7 +30,6 @@ enum EntryElementCode : word {
 static_assert(kColorConvertedSprite == 21, "Element code enum is broken");
 
 #pragma pack(push, 1)
-struct BaseMenu {};
 
 struct SpriteConversionTable {
     word sourceIndex;

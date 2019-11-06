@@ -30,6 +30,7 @@ struct Node
     size_t size;
     std::vector<size_t> children;   // use indices instead of pointers as vector might reallocate and invalidate them
     bool isBad = false;
+    size_t numWrites = 0;
 };
 
 static std::vector<Node> m_nodes = {{ kDirectory, "C:\\" }};
@@ -130,6 +131,7 @@ static void addNode(const char *path, NodeType nodeType, const char *data = null
                 if (nodeType == kFile) {
                     subNode.data = data;
                     subNode.size = size;
+                    subNode.numWrites++;
                 } else {
                     subNode.data = nullptr;
                     subNode.size = 0;
@@ -222,6 +224,13 @@ bool deleteFakeFile(const char *path)
     return true;
 }
 
+size_t getNumFakeFiles()
+{
+    return std::count_if(m_nodes.begin(), m_nodes.end(), [](const auto& node) {
+        return node.type == kFile && !node.isBad;
+    });
+}
+
 bool setFileAsCorrupted(const char *path, bool corrupted /* = true */)
 {
     auto nodeIndex = findNode(path);
@@ -251,6 +260,22 @@ bool fakeFilesEqualByContent(const char *path1, const char *path2)
         return false;
 
     return true;
+}
+
+const char *getFakeFileData(const char *path, size_t& size, size_t& numWrites)
+{
+    auto nodeIndex = findNode(path);
+    if (nodeIndex < 0)
+        return nullptr;
+
+    const auto& node = m_nodes[nodeIndex];
+
+    if (node.type != kFile || node.isBad)
+        return nullptr;
+
+    size = node.size;
+    numWrites = node.numWrites;
+    return node.data;
 }
 
 DIR *opendir(const char *dirName)
@@ -299,15 +324,17 @@ dirent *readdir(DIR *dirp)
 }
 
 
+#define LoadFile LoadFile_REAL
 #define WriteFile WriteFile_REAL
 namespace SWOS {
-    void WriteFile_REAL();
+    int LoadFile_REAL();
+    int WriteFile_REAL();
 }
 
 #define dirExists dirExists_REAL
 std::string pathInRootDir_REAL(const char *filename);
 #define pathInRootDir pathInRootDir_REAL
-int loadFile_REAL(const char *path, void *buffer, bool required = true);
+int loadFile_REAL(const char *path, void *buffer, int maxSize = -1, size_t skipBytes = 0, bool required = true);
 #define loadFile loadFile_REAL
 FILE *openFile_REAL(const char *path, const char *mode = "rb");
 #define openFile openFile_REAL
@@ -318,6 +345,7 @@ FILE *openFile_REAL(const char *path, const char *mode = "rb");
 #undef openFile
 #undef pathInRootDir
 #undef WriteFile
+#undef LoadFile
 
 bool dirExists(const char *path)
 {
@@ -340,10 +368,10 @@ std::string pathInRootDir(const char *filename)
     return filename;
 }
 
-int loadFile(const char *path, void *buffer, bool required /* = true */)
+int loadFile(const char *path, void *buffer, int bufferSize /* = -1 */, size_t skipBytes /* = 0 */, bool required /* = true */)
 {
     if (!m_enableMocking)
-        return loadFile_REAL(path, buffer, required);
+        return loadFile_REAL(path, buffer, bufferSize, skipBytes, required);
 
     auto nodeIndex = findNode(path);
     if (nodeIndex < 0)
@@ -358,10 +386,10 @@ int loadFile(const char *path, void *buffer, bool required /* = true */)
     return node.size;
 }
 
-std::pair<char *, size_t> loadFile(const char *path, size_t bufferOffset /* = 0 */)
+std::pair<char *, size_t> loadFile(const char *path, size_t bufferOffset /* = 0 */, size_t skipBytes /* = 0 */)
 {
     if (!m_enableMocking)
-        return loadFile_REAL(path, bufferOffset);
+        return loadFile_REAL(path, bufferOffset, skipBytes);
 
     auto nodeIndex = findNode(path);
     if (nodeIndex < 0)
@@ -377,7 +405,7 @@ std::pair<char *, size_t> loadFile(const char *path, size_t bufferOffset /* = 0 
     return { buf, node.size + bufferOffset };
 }
 
-void writeFakeFile()
+static void writeFakeFile()
 {
     auto path = joinPaths(rootDir().c_str(), A0.asPtr());
     MockFile mockFile(path.c_str(), A1.asPtr(), D1);
@@ -385,10 +413,42 @@ void writeFakeFile()
     D0 = 0;
 }
 
-void __declspec(naked) SWOS::WriteFile()
+int __declspec(naked) SWOS::WriteFile()
 {
     _asm {
         call writeFakeFile
+        xor eax, eax
+        retn
+    }
+}
+
+static int loadFakeFile()
+{
+    if (!m_enableMocking)
+        return SWOS::LoadFile_REAL();
+
+    auto buffer = A1.asPtr();
+    auto filename = A0.asPtr();
+
+    auto path = joinPaths(rootDir().c_str(), filename);
+    auto nodeIndex = findNode(path.c_str());
+
+    if (nodeIndex < 0)
+        return SWOS::LoadFile_REAL();
+
+    const auto& node = m_nodes[nodeIndex];
+
+    auto savedSelTeamsPtr = selTeamsPtr;    // unreal...
+    memcpy(buffer, node.data, node.size);
+    selTeamsPtr = savedSelTeamsPtr;
+
+    return 0;
+}
+
+int __declspec(naked) SWOS::LoadFile()
+{
+    _asm {
+        call loadFakeFile
         xor eax, eax
         retn
     }

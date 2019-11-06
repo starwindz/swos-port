@@ -5,6 +5,8 @@
 
 typedef unsigned char uchar;
 
+static bool m_debugOutput = true;
+
 /** char2Sprite
 
     c   - character to convert
@@ -227,9 +229,16 @@ void printString(char *str, int x, int y, int color, bool big /* = false */, int
 
 void dumpVariables()
 {
-    char buf[256];
-    snprintf(buf, sizeof(buf), "%hd", animPatternsState);
-    printString(buf, 0, 16, kYellowText, false, ALIGN_LEFT);
+    if (m_debugOutput) {
+        char buf[256];
+        snprintf(buf, sizeof(buf), "%hd", animPatternsState);
+        printString(buf, 0, 16, kYellowText, false, ALIGN_LEFT);
+    }
+}
+
+void toggleDebugOutput()
+{
+    m_debugOutput ^= 1;
 }
 
 #endif

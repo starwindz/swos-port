@@ -3,16 +3,21 @@
 #include "log.h"
 #include "util.h"
 #include <dirent.h>
+#include <direct.h>
 
 static std::string m_rootDir;
 
-// Open a file with consideration to SWOS root directory
+// Opens a file with consideration to SWOS root directory.
 FILE *openFile(const char *path, const char *mode /* = "rb" */)
 {
-    return fopen((m_rootDir + path).c_str(), mode);
+    auto f = fopen((m_rootDir + path).c_str(), mode);
+    if (!f)
+        logWarn("Failed to open file %s with mode \"%s\"", path, mode);
+
+    return f;
 }
 
-// Return size of the given file
+// Returns the size of the given file.
 int getFileSize(const char *path, bool required /* = true */)
 {
     struct stat st;
@@ -28,13 +33,18 @@ int getFileSize(const char *path, bool required /* = true */)
 }
 
 // Internal routine that does all the work.
-static int loadFile(const char *path, void *buffer, int bufferSize, bool required)
+static int doLoadFile(const char *path, void *buffer, size_t bufferSize, size_t skipBytes, bool required)
 {
     auto f = openFile(path);
     if (!f) {
         if (required)
             errorExit("Could not open %s for reading", path);
 
+        return -1;
+    }
+
+    if (fseek(f, skipBytes, SEEK_SET)) {
+        fclose(f);
         return -1;
     }
 
@@ -55,13 +65,19 @@ static int loadFile(const char *path, void *buffer, int bufferSize, bool require
     return bufferSize;
 }
 
-int loadFile(const char *path, void *buffer, bool required /* = true */)
+int loadFile(const char *path, void *buffer, int maxSize /* = -1 */, size_t skipBytes /* = 0 */, bool required /* = true */)
 {
-    auto size = getFileSize(path, required);
-    if (size < 0)
-        return -1;
+    if (maxSize < 0) {
+        maxSize = getFileSize(path, required);
+        if (maxSize < 0)
+            return -1;
+    }
 
-    return loadFile(path, buffer, size, required);
+    auto savedSelTeamsPtr = selTeamsPtr;    // why should a load file routine do this?!?!
+    auto result = doLoadFile(path, buffer, maxSize, skipBytes, required);
+    selTeamsPtr = savedSelTeamsPtr;
+
+    return result;
 }
 
 // loadFile
@@ -69,6 +85,7 @@ int loadFile(const char *path, void *buffer, bool required /* = true */)
 // in:
 //      path         - path of the file to load
 //      bufferOffset - number of additional bytes at the start of the buffer that will remain uninitialized
+//      skipBytes    - number of bytes to skip from the beginning of the file
 // out:
 //      pair of allocated buffer (which caller must free) and its size; nullptr/0 in case of error
 //
@@ -76,7 +93,7 @@ int loadFile(const char *path, void *buffer, bool required /* = true */)
 // its size. Can optionally extend the buffer by a given size, leaving that much initial bytes uninitialized,
 // convenient for writing custom data at the start of the buffer (such as header).
 //
-std::pair<char *, size_t> loadFile(const char *path, size_t bufferOffset /* = 0 */)
+std::pair<char *, size_t> loadFile(const char *path, size_t bufferOffset /* = 0 */, size_t skipBytes /* = 0 */)
 {
     auto size = getFileSize(path, false);
     if (size < 0)
@@ -85,7 +102,7 @@ std::pair<char *, size_t> loadFile(const char *path, size_t bufferOffset /* = 0 
     auto buffer = new char[size + bufferOffset];
     auto dest = buffer + bufferOffset;
 
-    if (loadFile(path, dest, size, false) != size)
+    if (doLoadFile(path, dest, size, skipBytes, false) != size)
         delete[] buffer;
 
     return { buffer, size + bufferOffset };
@@ -105,19 +122,28 @@ std::pair<char *, size_t> loadFile(const char *path, size_t bufferOffset /* = 0 
 // Load file contents into given buffer. If the file can't be found, or some error happens,
 // writes the name of the file to the console, and terminates the program.
 //
-void SWOS::LoadFile()
+int SWOS::LoadFile()
 {
     auto filename = A0.as<const char *>();
     auto buffer = A1.as<char *>();
 
-    auto savedSelTeamsPtr = selTeamsPtr; // why does a load file routine do this?!?!
-
     D0 = 0;
     D1 = loadFile(filename, buffer);
 
-    selTeamsPtr = savedSelTeamsPtr;
-
     _asm xor eax, eax
+}
+
+bool saveFile(const char *path, void *buffer, size_t size)
+{
+    logInfo("Writing `%s' [%s bytes]", path, formatNumberWithCommas(size).c_str());
+
+    auto f = openFile(path, "wb");
+    bool ok = f && fwrite(buffer, 1, size, f) == size;
+
+    if (f)
+        fclose(f);
+
+    return ok;
 }
 
 // WriteFile
@@ -133,19 +159,15 @@ void SWOS::LoadFile()
 //      zero flag set - all OK
 //        -||-  clear - error
 //
-void SWOS::WriteFile()
+int SWOS::WriteFile()
 {
     auto filename = A0.as<const char *>();
     auto buffer = A1.as<char *>();
     auto bufferSize = D1;
 
-    logInfo("Writing `%s' [%s bytes]", filename, formatNumberWithCommas(bufferSize).c_str());
-
-    auto f = openFile(filename, "wb");
-    bool ok = f && fwrite(buffer, 1, bufferSize, f) == bufferSize;
+    bool ok = saveFile(filename, buffer, bufferSize);
 
     if (ok) {
-        fclose(f);
         __asm {
             xor eax, eax
             mov D0, eax
@@ -207,6 +229,18 @@ bool dirExists(const char *path)
 #endif
 }
 
+bool createDir(const char *path)
+{
+    bool result = _mkdir(path) == 0;
+
+    if (!result) {
+        struct stat st;
+        result = stat(path, &st) == 0 && st.st_mode & _S_IFDIR;
+    }
+
+    return result;
+}
+
 // Returns pointer to last dot in the string, if found, or to the last string character otherwise.
 const char *getFileExtension(const char *path)
 {
@@ -233,7 +267,8 @@ static bool isAllowedExtension(const char *ext, const char **allowedExtensions, 
     return false;
 }
 
-FoundFileList findFiles(const char *extension, const char **allowedExtensions /* = nullptr */, size_t numAllowedExtensions /* = 0 */)
+FoundFileList findFiles(const char *extension, const char *dirName /* = nullptr */,
+    const char **allowedExtensions /* = nullptr */, size_t numAllowedExtensions /* = 0 */)
 {
     assert(extension && (extension[0] == '\0' || extension[0] == '.'));
 
@@ -241,10 +276,10 @@ FoundFileList findFiles(const char *extension, const char **allowedExtensions /*
 
     logInfo("Searching for files, extension: %s", extension && *extension ? extension : "*.*");
 
-    auto dirPath = pathInRootDir(".");
+    auto dirPath = pathInRootDir(dirName ? dirName : ".");
     auto dir = opendir(dirPath.c_str());
     if (!dir)
-        sdlErrorExit("Couldn't open SWOS root directory");
+        sdlErrorExit("Couldn't open %s directory", dirName ? dirName : "SWOS root");
 
     bool acceptAll = extension[0] == '\0' || extension[1] == '*';
 
@@ -260,7 +295,7 @@ FoundFileList findFiles(const char *extension, const char **allowedExtensions /*
             continue;
 
         if (!acceptAll) {
-            if (entry->d_namlen < 5)
+            if (entry->d_namlen < 4)
                 continue;
 
             bool match = true;

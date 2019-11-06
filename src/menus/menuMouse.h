@@ -17,4 +17,4 @@ void setMouseWheelEntries(const MouseWheelEntryList& mouseWheelEntries);
 void setGlobalWheelEntries(int upEntry = -1, int downEntry = -1);
 
 void updateMouse();
-void determineReachableEntries(const MenuBase *menu);
+void determineReachableEntries();

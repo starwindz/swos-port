@@ -4,6 +4,7 @@
 #include "render.h"
 #include "audio.h"
 #include "music.h"
+#include "replayOptions.h"
 #include "controlOptionsMenu.h"
 #include "options.mnu.h"
 #include <adlmidi.h>
@@ -54,6 +55,7 @@ void loadOptions()
 
         loadAudioOptions(ini);
         loadVideoOptions(ini);
+        loadReplayOptions(ini);
     } else {
         logWarn("Error loading options, error code: %d", errorCode);
     }
@@ -72,6 +74,7 @@ void saveOptions()
 
     saveAudioOptions(ini);
     saveVideoOptions(ini);
+    saveReplayOptions(ini);
 
     auto path = pathInRootDir(kIniFilename);
     auto errorCode = ini.SaveFile(path.c_str());
@@ -227,7 +230,7 @@ void SWOS::OptionsMenuSelected()
     CommonMenuExit();
 }
 
-void exitOptions()
+static void exitOptions()
 {
     if (controlsStatus == 0x20) {
         SetExitMenuFlag();
@@ -238,28 +241,40 @@ void exitOptions()
     }
 }
 
-void doShowVideoOptionsMenu()
+static void doShowVideoOptionsMenu()
 {
     showVideoOptionsMenu();
 }
 
-void doShowAudioOptionsMenu()
+static void doShowAudioOptionsMenu()
 {
     showAudioOptionsMenu();
 }
 
-void doShowControlOptionsMenu()
+static void doShowControlOptionsMenu()
 {
     showControlOptionsMenu();
 }
 
-void showGameplayOptions()
+static void showGameplayOptions()
 {
     showMenu(gameplayOptionsMenu);
 }
 
-void changeGameStyle()
+static void changeGameStyle()
 {
     logInfo("Game style changed to %s", m_gameStyle ? "AMIGA" : "PC");
     m_gameStyle = !m_gameStyle;
+}
+
+static void initGamePlayOptions()
+{
+    auto autoSaveReplaysEntry = getMenuEntry(GameplayOptionsMenu::autoSaveReplays);
+    strcpy(autoSaveReplaysEntry->string(), getAutoSaveReplays() ? aOn : aOff);
+}
+
+static void toggleAutoSaveReplays()
+{
+    setAutoSaveReplays(!getAutoSaveReplays());
+    initGamePlayOptions();
 }

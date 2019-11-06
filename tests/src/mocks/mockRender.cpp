@@ -80,6 +80,16 @@ std::pair<int, int> getFullScreenDimensions()
     return { m_displayWidth, m_displayHeight };
 }
 
+std::pair<int, int> getVisibleFieldSize()
+{
+    return {};
+}
+
+int getVisibleFieldWidth()
+{
+    return 0;
+}
+
 void switchToWindow()
 {
     m_windowMode = kModeWindow;
@@ -135,5 +145,7 @@ void clearScreen() {}
 void skipFrameUpdate() {}
 void frameDelay(double) {}
 void timerProc() {}
+void fadeIfNeeded() {}
+void makeScreenshot() {}
 
 void SWOS::Flip() {}

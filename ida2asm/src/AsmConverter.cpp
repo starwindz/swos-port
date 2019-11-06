@@ -143,10 +143,16 @@ std::vector<int> AsmConverter::connectRanges()
                 missingSymbol.clear();
                 activeChunks[i] = true;
             } else {
-                assert(parser.foundEndRangeSymbol().empty());
+                const auto& unmatchedEndRangeSymbol = parser.foundEndRangeSymbol();
+                if (!unmatchedEndRangeSymbol.empty())
+                    Util::exit("Encountered unmatched end range symbol `%s' while already looking for end range symbol `%s'", 1,
+                        unmatchedEndRangeSymbol.string().c_str(), missingSymbol.string().c_str());
             }
         }
     }
+
+    if (!missingSymbol.empty())
+        Util::exit("End range symbol `%s' is missing", 1, missingSymbol.string().c_str());
 
     assert(m_workers.back()->parser().missingEndRangeSymbol().empty());
     activeChunks.back() = true;
@@ -264,9 +270,13 @@ void AsmConverter::checkForUnusedSymbols()
 {
     auto exitIfUndefinedSymbols = [](const char *lead, const std::vector<String>& symbols) {
         if (!symbols.empty()) {
+            std::unordered_set<String> uniqueSymbols;
+            for (const auto& str : symbols)
+                uniqueSymbols.insert(str);
+
             std::string error = lead;
 
-            for (const auto& str : symbols)
+            for (const auto& str : uniqueSymbols)
                 error += str.string() + ", ";
 
             error.erase(error.length() - 2, 2);

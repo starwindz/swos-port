@@ -1,0 +1,9 @@
+- Data alignment
+  Data isn't aligned naturally for 32-bit Intel CPU (4 bytes), as SWOS was conversion from 68k, seems it was
+  aligned on 2 byte boundary (one example is highlights buffer which is an array of dwords but is only word
+  aligned). Additionally, each change to data segment might disbalance it further.
+  On 64-bit processors this could represent even more startling problem.
+
+- Refactoring
+  Right now we're forced to replace SWOS procedures one by one, but once enough of them gets replaced, a
+  refactoring could take place into until more satisfying code structure is achieved.

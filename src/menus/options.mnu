@@ -76,9 +76,14 @@ Menu optionsMenu
 
 Menu gameplayOptionsMenu
 {
+    onInit: initGamePlayOptions
+    onReturn: initGamePlayOptions
+
     defaultWidth: kOptionWidth
     defaultHeight: kOptionHeight
     initialEntry: gameLength
+
+    kGamePlayOptionsStartY = kOptionsStartY - kOptionHeight
 
     Entry header {
         x: kBaseX
@@ -96,7 +101,7 @@ Menu gameplayOptionsMenu
     }
 
     Entry {
-        y: kOptionsStartY
+        y: kGamePlayOptionsStartY
         text: aFriendlyDiyGam
     }
 
@@ -106,6 +111,7 @@ Menu gameplayOptionsMenu
     Entry { text: aAutoReplays }
     Entry { text: aAllPlayerTeams }
     Entry { text: aAutoSaveHighli }
+    Entry { text: "AUTO SAVE REPLAYS" }
     Entry { text: aChairmanScenes }
     Entry { text: "GAME STYLE" }
 
@@ -117,7 +123,7 @@ Menu gameplayOptionsMenu
     }
 
     Entry gameLength {
-        y: kOptionsStartY
+        y: kGamePlayOptionsStartY
         stringTable: ~gameLengthStrTable
         onSelect: ~ChangeGameLength
         downEntry: >
@@ -147,6 +153,13 @@ Menu gameplayOptionsMenu
     Entry {
         stringTable: ~autoSaveHlStrTable
         onSelect: ~ChangeAutoSaveHighlights
+        upEntry: <
+        downEntry: >
+    }
+
+    Entry autoSaveReplays {
+        text: @kAlloc
+        onSelect: toggleAutoSaveReplays
         upEntry: <
         downEntry: >
     }

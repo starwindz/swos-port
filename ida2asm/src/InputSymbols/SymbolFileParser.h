@@ -51,6 +51,7 @@ private:
     const char *handlePotentialArray(const char *start, const char *p, ExportEntry& e);
     void parseHookProcLine(const char *symStart, const char *symEnd, const char *start, const char *end);
     void parseRemoveAndNullLine(SymbolAction action, const char *symStart, const char *symEnd, const char *start, const char *end);
+    static bool isRemoveHook(const char *start, const char *end);
     void addHookProcs();
 
     const char *addExportEntry(const char *start, const char *p);

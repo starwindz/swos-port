@@ -44,7 +44,7 @@ private:
     CToken *ignoreLine(CToken *token);
     CToken *handleSymbolActions(SymbolAction action, const String& rangeEnd, CToken *token);
     void checkProcHookStart(CToken *token, SymbolAction action, String& packedProcData);
-    void checkProcHookInsertion(CToken *token);
+    CToken *checkProcHookInsertion(CToken *token);
     bool isLocalVariable(const char *str, size_t len);
     void addReference(CToken *token, bool sizeOperator = false);
     void outputNullProc();

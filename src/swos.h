@@ -7,6 +7,9 @@ typedef uint8_t byte;
 #pragma pack(push, 1)
 struct MenuEntry;
 
+struct BaseMenu {};
+struct PackedMenu : BaseMenu {};
+
 struct Menu {
     void(*onInit)();
     void(*onReturn)();
@@ -131,36 +134,44 @@ struct MenuEntry {
     bool visible() const {
         return !invisible;
     }
-
     void hide() {
         invisible = 1;
     }
-
     void show() {
         invisible = 0;
     }
-
     void setVisible(bool visible) {
         invisible = !visible;
     }
-
+    void disable() {
+        disabled = 1;
+    }
+    void enable() {
+        disabled = 0;
+    }
+    void setEnabled(bool enabled) {
+        disabled = !enabled;
+    }
+    bool selectable() const {
+        return !invisible && !disabled;
+    }
     bool isString() const {
         return type2 == kEntryString;
     }
-
     char *string() {
         assert(type2 == kEntryString);
         return u2.string;
     }
-
     const char *string() const {
         assert(type2 == kEntryString);
         return u2.string;
     }
-
     void setString(char *str) {
         assert(type2 == kEntryString);
         u2.string = str;
+    }
+    void setBackgroundColor(int color) {
+        u1.entryColor = color;
     }
 };
 
@@ -444,8 +455,11 @@ enum SpriteIndices {
     kSquareGridForResultSpriteIndex = 252,
     kBigZeroSpriteIndex = 287,
     kBigZero2SpriteIndex = 297,
+    kTeam1NameSpriteIndex = 307,
+    kTeam2NameSpriteIndex = 308,
     kBigDashSpriteIndex = 309,
     kReplayFrame00SpriteIndex = 1209,
+    kEndSpriteIndex = 1334,
 };
 
 enum GameTypes {
@@ -518,6 +532,7 @@ enum PCKeys {
     kKeyQ          = 0x10,
     kKeyY          = 0x15,
     kKeyN          = 0x31,
+    kKeyF2         = 0x3c,
 };
 
 constexpr int kCursorChar = -1;
@@ -577,6 +592,9 @@ constexpr int kMenuScreenWidth = 320;
 constexpr int kGameScreenWidth = 384;
 
 constexpr int kVirtualScreenSize = 65'536;
+
+static constexpr int kHilHeaderSize = 3'626;
+constexpr int kSingleHighlightBufferSize = 19'000;
 
 // can't keep this a constexpr in C++17 anymore, sigh...
 #if _HAS_CXX17

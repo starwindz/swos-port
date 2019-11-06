@@ -1,0 +1,122 @@
+offset:    length:   description:
+-------    -------   ------------
+   0          2       number of teams that follow, k, usually 80
+k*684+2     k*684     teams, file structures 684 bytes each
+
+[offsets for the usual case of 80 teams]
+
+0x0d5c0      28       ???
+0x0d5dc       4       new balance
+0x0d5e0       4       old balance
+0x0d5e4       4       ???
+0x0d5e8       4       income from player sales
+0x0d5ec       4       general expenditures
+0x0d5f0       4       player wages
+0x0d5f4       4       ticket income
+  ???         ?       ???
+0x16abc       1       ?
+0x16abd       1       season year (-2000, -2100 if greater than 100)
+0x16abe       2       ?
+0x16ac0       2       ?
+0x16ac2       2       game type:
+                      0 - no game (shouldn't be appearing in the file)
+                      1 - DIY Competition
+                      2 - Preset Competition
+                      3 - Season
+                      4 - Career
+                      anything else counts as career
+0x16ac4       2       ?
+0x16ac6       2       ?
+0x16ac8     370       USER_A tactics
+0x16c3a     370       USER_B  -||-
+0x16dac     370       USER_C  -||-
+0x16f1e     370       USER_D  -||-
+0x17090     370       USER_E  -||-
+0x17202     370       USER_F  -||-
+0x17374       2       game length:
+                      0 - 3 minutes
+                      1 - 5 minutes
+                      2 - 7 minutes
+                      3 - 10 minutes
+0x17376       2       auto replay, 0 = no, 1 = yes
+0x17378       2       menu music, 0 = no, 1 = yes
+0x1737a       2       auto save highlights, 0 = no, 1 = yes
+0x1737c       2       both player teams equal, 0 = no, 1 = yes
+0x1737e       2       pitch type:
+                      -2 - seasonal
+                      -1 - random
+                       0 - frozen
+                       1 - muddy
+                       2 - wet
+                       3 - soft
+                       4 - normal
+                       5 - dry
+                       6 - hard
+0x17380       2       comments, 0 = no, 1 = yes
+0x17382       2       chairman animations, 0 = no, 1 = yes
+
+
+Total buffer size is 2120 bytes. It's comprised of 20 seasons, each 106 bytes long.
+
+offset  length  description
+------  ------  -----------
+   0       2    club id, country or continent
+   2       ?    club name (or country, if national coach)
+  20       2    bit flags - what's won of the trophies, 10 bits:
+                9  8  7  6  5  4  3  2  1  0
+                |  |  |  |  |  |  |  |  |  |
+                |  |  |  |  |  |  |  |  |  +------ World Championship
+                |  |  |  |  |  |  |  |  +--------- European Championship
+                |  |  |  |  |  |  |  +------------ European Champions Cup
+                |  |  |  |  |  |  +--------------- UEFA cup
+                |  |  |  |  |  +------------------ Cup Winners Cup
+                |  |  |  |  +--------------------- Premier division champion
+                |  |  |  +------------------------ Invitation tournament winner
+                |  |  +--------------------------- Cup winner
+                |  +------------------------------ ??? (unknown trophy)
+                +--------------------------------- Invitation tournament winner
+  22       4    this offset + address of the string "CHAIRMAN SCENES" = pointer
+                to league string ("SERIE A", "SERIE B", etc.)
+  26       4    some string offset
+  30       4    some string offset
+  34       4    ?
+  38       2    number of goals of the highest scorer
+  40       ?    name of the highest scorer
+  63       1    something about the highest scorer
+  64       1    ?
+  65      11    ?
+  86       1    seem same as 87
+  87       1    final position in the competition:
+                1    - winner
+                2    - 2nd place
+                -100 - finalist
+                -101 - semi-finalist
+                -102 - quarter-finalist
+                -103 - 3rd place
+                -105 - 4th place
+                -104 - still in competition
+                -106 - nothing (dash, "-")
+                - if positive number (but not 1 or 2), then it's a position
+                - if negative, but greater than -110, then it's negated and that's position
+                - otherwise add 110, and that's number of the round where eliminated
+  88       1    ?
+  89       1    ?
+  90       2    total goals scored
+  92       2    total goals allowed
+  94       1    total games played
+  95       1    total wins
+  96       1    total draws
+  97       1    total losses
+  98       1    friendly - number of wins
+  99       1    friendly - number of draws
+ 100       1    friendly - number of losses
+ 101       1    tour - wins
+ 102       1    tour - draws
+ 103       1    tour - losses
+ 104       1    ??
+                1 - qualified
+                2 - not qualified
+                3 - moving to a higher rank
+                otherwise relegated (gave up maybe?)
+ 105       1    = 0 - manager still active, = 1 - resigned,
+                < 0 - sacked, > 1 - retired

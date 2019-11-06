@@ -54,3 +54,4 @@ void updateMatchControls();
 int matchControlsSelected(const MenuEntry *activeEntry);
 void resetMatchControls();
 bool gotMousePlayer();
+bool testForPlayerKeys();

@@ -5,6 +5,7 @@
 #include "render.h"
 #include "music.h"
 #include "controls.h"
+#include "replays.h"
 #include "main.mnu.h"
 #include "quit.mnu.h"
 
@@ -218,7 +219,7 @@ void SWOS::ShowMenu()
     g_exitMenu = 0;
 
     restorePreviousMenu();
-    determineReachableEntries(savedMenu);
+    determineReachableEntries();
 
     menuMouseOnOldMenuRestored();
 
@@ -231,11 +232,7 @@ void SWOS::ToMainGameLoop()
     logInfo("Starting the game...");
 
     saveCurrentMenu();
-    save68kRegisters();
-
-    SAFE_INVOKE(StartMainGameLoop);
-
-    restore68kRegisters();
+    safeInvokeWithSaved68kRegisters(StartMainGameLoop);
     restorePreviousMenu();
 }
 
@@ -260,7 +257,6 @@ __declspec(naked) void SWOS::DoUnchainSpriteInMenus_OnEnter()
 void SWOS::PrepareMenu()
 {
     g_currentMenuPtr = A6;
-    auto packedMenu = A6.as<const MenuBase *>();
 
     A0 = A6;
     A1 = g_currentMenu;
@@ -280,7 +276,7 @@ void SWOS::PrepareMenu()
 
     assert(currentMenu->numEntries < 256);
 
-    determineReachableEntries(packedMenu);
+    determineReachableEntries();
 
     updateMatchControls();
 }

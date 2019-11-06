@@ -18,5 +18,7 @@ void addFakeFiles(const MockFileList& files);
 void addFakeFile(const MockFile& file);
 void addFakeDirectory(const char *path);
 bool deleteFakeFile(const char *path);
+size_t getNumFakeFiles();
 bool setFileAsCorrupted(const char *path, bool corrupted = true);
 bool fakeFilesEqualByContent(const char *path1, const char *path2);
+const char *getFakeFileData(const char *path, size_t& size, size_t& numWrites);

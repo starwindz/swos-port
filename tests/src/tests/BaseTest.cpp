@@ -323,7 +323,7 @@ void BaseTest::takeSnapshot(const char *snapshotDir, const char *caseId, int cas
     std::replace(filename->begin(), filename->end(), ' ', '-');
 
     auto future = std::async(std::launch::async, [filename, screen]() {
-        if (!saveBmp8Bit(filename->c_str(), kVgaWidth, kVgaHeight, screen, getMenuPalette(), 256))
+        if (!saveBmp8Bit(filename->c_str(), kVgaWidth, kVgaHeight, screen, kVgaWidth, getMenuPalette(), 256))
             std::cerr << "Failed to save bitmap " << *filename  << '\n';
         delete[] screen;
         delete filename;

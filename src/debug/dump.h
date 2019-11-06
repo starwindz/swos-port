@@ -37,12 +37,14 @@ enum StringAlignment {
     ALIGN_DOWNLEFT = ALIGN_DOWN | ALIGN_LEFT,
 };
 
-#ifndef NDEBUG
+#if defined(DEBUG) && !defined(SWOS_TEST)
 void getStringLength(char *str, int *w, int *h, bool align, bool big);
 void printString(char *str, int x, int y, int color, bool big = false, int align = NO_ALIGNMENT);
 void dumpVariables();
+void toggleDebugOutput();
 #else
 #define getStringLength(p1, p2, p3, p4, p5) ((void)0)
 #define printString(p1, p2, p3, p4, ...)  ((void)0)
 #define dumpVariables()  ((void)0)
+#define toggleDebugOutput() ((void)0)
 #endif

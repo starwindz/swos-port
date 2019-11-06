@@ -32,6 +32,15 @@
     <Filter Include="mnu2h\tests">
       <UniqueIdentifier>{09c40e7d-02c4-477f-8aa3-825f364e74d0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\replays">
+      <UniqueIdentifier>{41f64120-d366-4863-bea2-e6977c1880ea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\substitutes">
+      <UniqueIdentifier>{54b7d4b6-6f1d-46a3-b507-8e6dffe1060f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\util">
+      <UniqueIdentifier>{1b193c43-49b7-40f0-8dc0-c8c5057d9532}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="..\src\menus\options.mnu">
@@ -85,6 +94,9 @@
     <CustomBuild Include="..\tmp\swos-asm\swos-08.asm">
       <Filter>Source Files\swos-asm</Filter>
     </CustomBuild>
+    <CustomBuild Include="..\src\menus\replays.mnu">
+      <Filter>Source Files\menus</Filter>
+    </CustomBuild>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\main.cpp">
@@ -94,9 +106,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\init.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\util.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\log.cpp">
@@ -168,12 +177,30 @@
     <ClCompile Include="..\src\menus\menuMouse.cpp">
       <Filter>Source Files\menus</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\replays\replays.cpp">
+      <Filter>Source Files\replays</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\video\sprites.cpp">
+      <Filter>Source Files\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\substitutes\substitutes.cpp">
+      <Filter>Source Files\substitutes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\replays\replaysMenu.cpp">
+      <Filter>Source Files\replays</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\replays\ReplayData.cpp">
+      <Filter>Source Files\replays</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\replays\replayOptions.cpp">
+      <Filter>Source Files\replays</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\util\util.cpp">
+      <Filter>Source Files\util</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\swos.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\util.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\log.h">
@@ -247,6 +274,24 @@
     </ClInclude>
     <ClInclude Include="..\src\menus\menuMouse.h">
       <Filter>Source Files\menus</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\video\sprites.h">
+      <Filter>Source Files\video</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\replays\replays.h">
+      <Filter>Source Files\replays</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\replays\replaysMenu.h">
+      <Filter>Source Files\replays</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\replays\ReplayData.h">
+      <Filter>Source Files\replays</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\replays\replayOptions.h">
+      <Filter>Source Files\replays</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\util\util.h">
+      <Filter>Source Files\util</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

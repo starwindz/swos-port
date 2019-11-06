@@ -1,0 +1,22 @@
+- replay files contain the whole game, not just a few short scenes like highlights
+- however they are internally implemented as one big highlight
+- in the menus, they were added side-by-side with highlights and support the same operations
+- loading replay file will overwrite current highlights; opposite is not true
+- if auto save replay option is on, replay file will be saved even if the game is exited via alt-F1
+- on the other hand, if there is no current replay, or it was already auto-saved, it shouldn't be saved again
+- some cases for testing:
+  - very short replay file (<19kb)
+  - very short replay file with 'R' instant replay pressed
+  - loading hil file should not disable current replay
+  - loading rpl file should disable current hil
+  - SWOS++ bug should be gone (condensed replays files when playing multiple friendlies via "replay" menu)
+  - saving replays after loading highlights
+  - loading and saving replay file should result in an identical file
+  - viewing same replay after the game vs. from loaded file
+  - auto-save shouldn't trigger multiple times
+  - auto-save shouldn't trigger when no replay data
+  - bench shouldn't disturb the recording
+  - spamming 'R' during the game shouldn't disturb the recording (vary interrupted and full replays)
+  - games with no data (escape pressed immediately at start) should be handled gracefully
+- one note for the future fixes: length of hil file header is 3,626 bytes, which isn't divisible by 4, but
+  dword replay data buffer immediately follows (making it improperly aligned)

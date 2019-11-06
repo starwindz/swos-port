@@ -121,7 +121,7 @@ struct {
     "KUMBAYA", 8, 36, 49, "KUMB...",
     "KUMBAYA", 9, 36, 49, "KUMBA...",
     "KUMBAYA", 10, 42, 55, "KUMBAYA",
-    // actual competition filename that triggered the assert
+    // actual competition filename that triggered an assert
     "CANADABUAHAHAHIIIIIIIIIIIIIIIII.DIY", 70, 107, -1, "CANADABUAHAHAHIIIIIIII...",
 };
 
@@ -161,7 +161,9 @@ struct FakeFile {
     "stronk.car", { 5, 5, 4, }, { 3, 3, 3, },
     "veryLongFilename.hil", { 8, 7, 0, }, { 3, 3, 3, },
     "veryVeryReallyLongScaryFilename.hil", { 8, 8, 0, }, { 3, 3, 3, },
-    "noEXT", { 0, 4, 0, }, { 3, 3, 3, },
+    "noEXT", { 8, 8, 0, }, { 3, 3, 3, },
+    ".hil", { 9, 8, 0, }, { 3, 3, 3, },
+    ".car", { 9, 9, 0, }, { 3, 4, 3, },
 };
 
 constexpr int kTestEntryTransitionNumFiles = 49;
@@ -171,7 +173,7 @@ auto SelectFilesMenuTest::getCases() -> CaseList
 {
     return {
         { "test select files menu when loading old competition", "load-competition",
-            bind(&SelectFilesMenuTest::setupLoadCompetitionTest), bind(&SelectFilesMenuTest::testLoadCompetition), std::size(kFakeFiles) },
+            bind(&SelectFilesMenuTest::setupLoadCompetitionTest), bind(&SelectFilesMenuTest::testLoadCompetition), std::size(kFakeFiles) * 2 },
         { "test string elision", "string-elision",
             nullptr, bind(&SelectFilesMenuTest::testStringElision), std::size(kElisionExamples), false },
         { "test entry layout", "select-files-layout", nullptr, bind(&SelectFilesMenuTest::testLayout), },
@@ -184,6 +186,8 @@ auto SelectFilesMenuTest::getCases() -> CaseList
         { "test save button show/hide", "select-files-show-save-button", nullptr, bind(&SelectFilesMenuTest::testSaveButtonShowHide) },
         { "test list with long extensions", "select-files-long-extension-list", nullptr, bind(&SelectFilesMenuTest::testLongExtensions) },
         { "test save competition", "select-files-save-competition", nullptr, bind(&SelectFilesMenuTest::testSaveCompetition) },
+        { "test save competition by click", "select-files-save-competition-by-click",
+            nullptr, bind(&SelectFilesMenuTest::testSaveCompetitionByClick) },
     };
 }
 
@@ -194,7 +198,7 @@ void SelectFilesMenuTest::setupLoadCompetitionTest()
     auto root = rootDir();
     addFakeDirectory(root.c_str());
 
-    for (size_t i = 0; i <= m_currentDataIndex; i++)
+    for (size_t i = 0; i <= m_currentDataIndex >> 1; i++)
         if (kFakeFiles[i].name)
             addFakeFile(joinPaths(root.c_str(), kFakeFiles[i].name).c_str());
 
@@ -220,9 +224,10 @@ void SelectFilesMenuTest::testLoadCompetition()
             numVisibleColumns++;
         }
 
+        int index = m_currentDataIndex >> 1;
         int expectedColumnLength = g_skipNonCompetitionFiles ?
-            kFakeFiles[m_currentDataIndex].expectedColumnCompetitionsOnly[i] :
-            kFakeFiles[m_currentDataIndex].expectedColumnLength[i];
+            kFakeFiles[index].expectedColumnCompetitionsOnly[i] :
+            kFakeFiles[index].expectedColumnLength[i];
 
         assertEqual(numVisibleColumns, expectedColumnLength);
 
@@ -334,7 +339,7 @@ void SelectFilesMenuTest::testLayout()
         for (int numFiles = 0; numFiles < kNumFiles; numFiles++) {
             auto filenames = generateFilenames(numFiles, useLongNames);
 
-            showSelectFilesMenu("LAYOUT TEST", filenames, save, nullptr);
+            showSelectFilesMenu("LAYOUT TEST", filenames, save ? ".CAR" : nullptr, nullptr);
 
             ColumnInfo columnInfo(numFiles, useLongNames);
             auto entry = getMenuEntry(kFirstFileEntry);
@@ -448,7 +453,7 @@ void SelectFilesMenuTest::setupEntryTransitionsTest()
 
     auto filenames = generateFilenames(numFiles, useLongNames);
 
-    showSelectFilesMenu("ENTRY TRANSITION TEST", filenames, save, nullptr);
+    showSelectFilesMenu("ENTRY TRANSITION TEST", filenames, save ? ".CAR" : nullptr, nullptr);
 }
 
 // Makes sure arrow renders over background (and not any other menu item).
@@ -550,7 +555,7 @@ void SelectFilesMenuTest::testAbortButton()
         auto filenames = generateFilenames(numFiles, useLongNames);
 
         char saveFilenameBuf[32] = "TUNGA MUNGA";
-        auto selectedFilename = showSelectFilesMenu("TEST ABORT BUTTON", filenames, save, saveFilenameBuf);
+        auto selectedFilename = showSelectFilesMenu("TEST ABORT BUTTON", filenames, save ? ".CAR" : nullptr, saveFilenameBuf);
 
         assertTrue(selectedFilename.empty());
     }
@@ -637,7 +642,7 @@ void SelectFilesMenuTest::testSelectingFiles()
         });
 
         for (selectedFileIndex = 0; selectedFileIndex < kNumFiles; selectedFileIndex++) {
-            auto selectedFilename = showSelectFilesMenu("TEST SELECTING FILES", filenames, save, saveFilenameBuf);
+            auto selectedFilename = showSelectFilesMenu("TEST SELECTING FILES", filenames, save ? ".CAR" : nullptr, saveFilenameBuf);
             auto expectedFilename = filenames[selectedFileIndex].name;
             assertEqual(selectedFilename, expectedFilename);
             assertEqual(saveFilenameBuf, save ? selectedFilename : kInitialSaveFilename);
@@ -719,7 +724,7 @@ void SelectFilesMenuTest::testScrolling()
             numFiles = kNumFilenameItems + ColumnInfo::getNumColumns(useLongNames) + overflowItems;
 
         auto filenames = generateFilenames(numFiles, useLongNames);
-        showSelectFilesMenu("TEST SELECTING FILES", filenames, save);
+        showSelectFilesMenu("TEST SELECTING FILES", filenames, save ? ".CAR" : nullptr);
 
         ColumnInfo columnInfo(numFiles, useLongNames);
         int maxScrollOffset = columnInfo.baseColumnLength + 1 - kMaxEntriesPerColumn;
@@ -768,16 +773,16 @@ void SelectFilesMenuTest::testSaveButtonShowHide()
     auto filenames = generateFilenames(5, false);
 
     char saveFilenameBuf[32] = "TUNGA MUNGA";
-    showSelectFilesMenu("TEST ABORT BUTTON", filenames, true, saveFilenameBuf);
+    showSelectFilesMenu("TEST ABORT BUTTON", filenames, ".CAR", saveFilenameBuf);
 
     assertItemIsVisible(saveLabel);
 
     saveFilenameBuf[0] = '\0';
-    showSelectFilesMenu("TEST ABORT BUTTON", filenames, true, saveFilenameBuf);
+    showSelectFilesMenu("TEST ABORT BUTTON", filenames, ".CAR", saveFilenameBuf);
 
     assertItemIsInvisible(saveLabel);
 
-    showSelectFilesMenu("TEST ABORT BUTTON", filenames, true, nullptr);
+    showSelectFilesMenu("TEST ABORT BUTTON", filenames, ".CAR", nullptr);
 
     assertItemIsInvisible(saveLabel);
 }
@@ -830,6 +835,7 @@ static MenuEntry *findEntry(const char *text)
 void SelectFilesMenuTest::testSaveCompetition()
 {
     resetFakeFiles();
+    enableFileMocking(true);
 
     auto root = rootDir();
     addFakeDirectory(root.c_str());
@@ -879,4 +885,70 @@ void SelectFilesMenuTest::testSaveCompetition()
 
     auto savedDiyPath = joinPaths(root.c_str(), "CANADAZ.DIY");
     assertTrue(fakeFilesEqualByContent(path.c_str(), savedDiyPath.c_str()));
+}
+
+void SelectFilesMenuTest::testSaveCompetitionByClick()
+{
+    resetFakeFiles();
+    enableFileMocking(true);
+
+    auto root = rootDir();
+    addFakeDirectory(root.c_str());
+
+    auto path = joinPaths(root.c_str(), "canada.diy");
+    MockFile canadaDiy(path.c_str(), kCanadaDiyData, kCanadaDiySize);
+    addFakeFile(canadaDiy);
+
+    auto fillerPath = joinPaths(root.c_str(), "ddd.diy");
+    MockFile filler(fillerPath.c_str());
+    addFakeFile(filler);
+
+    SWOS::InitMainMenu();
+    SWOS::MenuProc();
+
+    SWOS_UnitTest::setMenuCallback([] {
+        auto menu = getCurrentMenu();
+        auto entry = menu->selectedEntry;
+
+        assertItemIsString(entry, "CANADA");
+        selectItem(entry);
+
+        SWOS_UnitTest::setMenuCallback([] {
+            auto exitEntry = findEntry("EXIT");
+            selectItem(exitEntry);
+
+            SWOS_UnitTest::setMenuCallback();
+            return false;
+        });
+
+        return false;
+    });
+
+    SAFE_INVOKE(LoadOldCompetitionMenu);
+
+    SWOS_UnitTest::setMenuCallback([] {
+        auto exitEntry = findEntry("CANADA");
+        selectItem(exitEntry);
+
+        return false;
+    });
+
+    auto menu = getCurrentMenu();
+    auto entry = findEntry("SAVE CANADA ROGERS CUP");
+    selectItem(entry);
+
+    size_t size, numWrites;
+    auto data = getFakeFileData(path.c_str(), size, numWrites);
+
+    assertEqual(size, kCanadaDiySize);
+    assertEqual(numWrites, 1);
+
+    // despicable
+    constexpr int kSelTeamsPtrOffset = 5170;
+    constexpr int k2ndPartOffset = kSelTeamsPtrOffset + 4;
+
+    assertFalse(memcmp(data, kCanadaDiyData, kSelTeamsPtrOffset));
+    assertFalse(memcmp(data + k2ndPartOffset, kCanadaDiyData + k2ndPartOffset, size - k2ndPartOffset));
+
+    assertEqual(getNumFakeFiles(), 2);
 }

@@ -26,6 +26,14 @@ void toUpper(char *str);
 void save68kRegisters();
 void restore68kRegisters();
 
+template <typename F>
+void invokeWithSaved68kRegisters(F f)
+{
+    save68kRegisters();
+    f();
+    restore68kRegisters();
+}
+
 size_t hash(const void *buffer, size_t length);
 int getRandomInRange(int min, int max);
 
@@ -68,6 +76,14 @@ inline word hiWord(dword d) {
     __asm pop  edi  \
     __asm pop  esi  \
     __asm pop  ebx  \
+}
+
+// this had to be added since they banned inline assembly in lambda in VS2019
+static inline void safeInvokeWithSaved68kRegisters(void (*f)())
+{
+    save68kRegisters();
+    SAFE_INVOKE(f);
+    restore68kRegisters();
 }
 
 #ifdef _MSC_VER

@@ -170,6 +170,9 @@ will cause a `call GameLoop_224` to be inserted at line 224 of `GameLoop` and
 `call PlayHeaderComment` at line 157 of `PlayerDoingHeader` procedure. On the C++ side,
 `SWOS::GameLoop_224()` and `SWOS::PlayHeaderComment()` will be declared in the output header file.
 
+It is also possible to remove lines. To do so specify special hook name `@remove` at a line that needs to
+be removed.
+
 There are no limitations in number of hooks per procedure, as long as each line corresponds to exactly
 one hook.
 

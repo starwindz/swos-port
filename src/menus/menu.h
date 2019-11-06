@@ -9,13 +9,13 @@
 constexpr int kMenuStringLength = 70;
 constexpr int kMenuOffset = 8;
 
-static inline void prepareMenu(const SWOS_Menu::BaseMenu& menu)
+static inline void prepareMenu(const BaseMenu& menu)
 {
     A6 = &menu;
     SWOS::PrepareMenu();
 }
 
-static inline void showMenu(const SWOS_Menu::BaseMenu& menu)
+static inline void showMenu(const BaseMenu& menu)
 {
     A6 = &menu;
     SWOS::ShowMenu();
@@ -50,12 +50,6 @@ static inline int getCurrentEntryOrdinal()
 {
     auto currentMenu = getCurrentMenu();
     return currentMenu->selectedEntry ? currentMenu->selectedEntry->ordinal : -1;
-}
-
-static inline void setCurrentEntry(int ordinal)
-{
-    D0 = ordinal;
-    SetCurrentEntry();
 }
 
 static inline void drawMenuText(int x, int y, const char *text, int color = kWhiteText2)
@@ -133,6 +127,11 @@ static inline void highlightEntry(int ordinal)
 {
     auto entry = getMenuEntry(ordinal);
     highlightEntry(entry);
+}
+
+static inline void setCurrentEntry(int ordinal)
+{
+    highlightEntry(ordinal);
 }
 
 static inline bool inputText(char *destBuffer, int maxLength, bool allowExtraChars = false)

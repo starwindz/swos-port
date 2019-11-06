@@ -169,14 +169,20 @@
     <ClCompile Include="..\src\menus\menuMouse.cpp" />
     <ClCompile Include="..\src\options.cpp" />
     <ClCompile Include="..\src\pitch.cpp" />
+    <ClCompile Include="..\src\replays\ReplayData.cpp" />
+    <ClCompile Include="..\src\replays\replayOptions.cpp" />
+    <ClCompile Include="..\src\replays\replays.cpp" />
+    <ClCompile Include="..\src\replays\replaysMenu.cpp" />
     <ClCompile Include="..\src\stdinc.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)..\src\stdinc.h</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)..\src\stdinc.h</PrecompiledHeaderFile>
     </ClCompile>
-    <ClCompile Include="..\src\util.cpp" />
+    <ClCompile Include="..\src\substitutes\substitutes.cpp" />
+    <ClCompile Include="..\src\util\util.cpp" />
     <ClCompile Include="..\src\video\render.cpp" />
+    <ClCompile Include="..\src\video\sprites.cpp" />
     <ClCompile Include="..\src\video\videoOptionsMenu.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -202,10 +208,15 @@
     <ClInclude Include="..\src\menus\menuCodes.h" />
     <ClInclude Include="..\src\menus\menuMouse.h" />
     <ClInclude Include="..\src\options.h" />
+    <ClInclude Include="..\src\replays\ReplayData.h" />
+    <ClInclude Include="..\src\replays\replayOptions.h" />
+    <ClInclude Include="..\src\replays\replays.h" />
+    <ClInclude Include="..\src\replays\replaysMenu.h" />
     <ClInclude Include="..\src\stdinc.h" />
     <ClInclude Include="..\src\swos.h" />
-    <ClInclude Include="..\src\util.h" />
+    <ClInclude Include="..\src\util\util.h" />
     <ClInclude Include="..\src\video\render.h" />
+    <ClInclude Include="..\src\video\sprites.h" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="Types.natvis" />
@@ -340,6 +351,19 @@
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)..\mnu2h\CodeGenerator.py;$(ProjectDir)..\mnu2h\Constants.py;$(ProjectDir)..\mnu2h\Entry.py;$(ProjectDir)..\mnu2h\Menu.py;$(ProjectDir)..\mnu2h\mnu2h.py;$(ProjectDir)..\mnu2h\Parser.py;$(ProjectDir)..\mnu2h\Preprocessor.py;$(ProjectDir)..\mnu2h\PreprocExpression.py;$(ProjectDir)..\mnu2h\StringTable.py;$(ProjectDir)..\mnu2h\Token.py;$(ProjectDir)..\mnu2h\Tokenizer.py;$(ProjectDir)..\mnu2h\Util.py;$(ProjectDir)..\mnu2h\Variable.py;$(ProjectDir)..\mnu2h\VariableStorage.py;$(ProjectDir)..\src\menus\common.mh</AdditionalInputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkObjects>
     </CustomBuild>
+    <CustomBuild Include="..\src\menus\replays.mnu">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">python $(ProjectDir)..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compiling %(Filename) menu...</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">python $(ProjectDir)..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compiling %(Filename) menu...</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename)%(Extension).h</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename)%(Extension).h</Outputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)..\mnu2h\CodeGenerator.py;$(ProjectDir)..\mnu2h\Constants.py;$(ProjectDir)..\mnu2h\Entry.py;$(ProjectDir)..\mnu2h\Menu.py;$(ProjectDir)..\mnu2h\mnu2h.py;$(ProjectDir)..\mnu2h\Parser.py;$(ProjectDir)..\mnu2h\Preprocessor.py;$(ProjectDir)..\mnu2h\PreprocExpression.py;$(ProjectDir)..\mnu2h\StringTable.py;$(ProjectDir)..\mnu2h\Token.py;$(ProjectDir)..\mnu2h\Tokenizer.py;$(ProjectDir)..\mnu2h\Util.py;$(ProjectDir)..\mnu2h\Variable.py;$(ProjectDir)..\mnu2h\VariableStorage.py;$(ProjectDir)..\src\menus\common.mh</AdditionalInputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</LinkObjects>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)..\mnu2h\CodeGenerator.py;$(ProjectDir)..\mnu2h\Constants.py;$(ProjectDir)..\mnu2h\Entry.py;$(ProjectDir)..\mnu2h\Menu.py;$(ProjectDir)..\mnu2h\mnu2h.py;$(ProjectDir)..\mnu2h\Parser.py;$(ProjectDir)..\mnu2h\Preprocessor.py;$(ProjectDir)..\mnu2h\PreprocExpression.py;$(ProjectDir)..\mnu2h\StringTable.py;$(ProjectDir)..\mnu2h\Token.py;$(ProjectDir)..\mnu2h\Tokenizer.py;$(ProjectDir)..\mnu2h\Util.py;$(ProjectDir)..\mnu2h\Variable.py;$(ProjectDir)..\mnu2h\VariableStorage.py;$(ProjectDir)..\src\menus\common.mh</AdditionalInputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkObjects>
+    </CustomBuild>
     <None Include="cpp.hint" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -374,7 +398,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(SolutionDir)..\tmp\$(ProjectName)-$(Configuration);$(VC_IncludePath);$(WindowsSDK_IncludePath);..\include;..\include\SDL2;..\include\SDL2_image;..\include\SDL_net;..\include\adlmidi;..\include\crashrpt;..\include\simpleini;$(ProjectDir)..\src;$(ProjectDir)..\src\audio;$(ProjectDir)..\src\controls;$(ProjectDir)..\src\debug;$(ProjectDir)..\src\files;$(ProjectDir)..\src\menus;$(ProjectDir)..\src\video;$(ProjectDir)..\tmp\swos-asm;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)..\tmp\$(ProjectName)-$(Configuration);$(VC_IncludePath);$(WindowsSDK_IncludePath);..\include;..\include\SDL2;..\include\SDL2_image;..\include\SDL_net;..\include\adlmidi;..\include\crashrpt;..\include\simpleini;$(ProjectDir)..\src;$(ProjectDir)..\src\audio;$(ProjectDir)..\src\controls;$(ProjectDir)..\src\debug;$(ProjectDir)..\src\files;$(ProjectDir)..\src\menus;$(ProjectDir)..\src\replays;$(ProjectDir)..\src\sprites;$(ProjectDir)..\src\video;$(ProjectDir)..\src\util;$(ProjectDir)..\tmp\swos-asm;$(IncludePath)</IncludePath>
     <LibraryPath>..\lib\$(Configuration);$(LibraryPath)</LibraryPath>
     <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <RunCodeAnalysis>false</RunCodeAnalysis>
@@ -383,7 +407,7 @@
     <OutDir>$(SolutionDir)..\bin\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>$(SolutionDir)..\tmp\$(ProjectName)-$(Configuration);$(VC_IncludePath);$(WindowsSDK_IncludePath);..\include;..\include\SDL2;..\include\SDL2_image;..\include\SDL_net;..\include\adlmidi;..\include\crashrpt;..\include\simpleini;$(ProjectDir)..\src;$(ProjectDir)..\src\audio;$(ProjectDir)..\src\controls;$(ProjectDir)..\src\debug;$(ProjectDir)..\src\files;$(ProjectDir)..\src\menus;$(ProjectDir)..\src\video;$(ProjectDir)..\tmp\swos-asm;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)..\tmp\$(ProjectName)-$(Configuration);$(VC_IncludePath);$(WindowsSDK_IncludePath);..\include;..\include\SDL2;..\include\SDL2_image;..\include\SDL_net;..\include\adlmidi;..\include\crashrpt;..\include\simpleini;$(ProjectDir)..\src;$(ProjectDir)..\src\audio;$(ProjectDir)..\src\controls;$(ProjectDir)..\src\debug;$(ProjectDir)..\src\files;$(ProjectDir)..\src\menus;$(ProjectDir)..\src\replays;$(ProjectDir)..\src\sprites;$(ProjectDir)..\src\video;$(ProjectDir)..\src\util;$(ProjectDir)..\tmp\swos-asm;$(IncludePath)</IncludePath>
     <LibraryPath>..\lib\$(Configuration);$(LibraryPath)</LibraryPath>
     <IntDir>$(SolutionDir)..\tmp\$(ProjectName)-$(Configuration)\</IntDir>
     <TargetName>$(ProjectName)-$(Configuration)</TargetName>

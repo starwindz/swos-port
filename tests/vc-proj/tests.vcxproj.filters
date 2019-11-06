@@ -32,6 +32,15 @@
     <Filter Include="Source Files\tests\data">
       <UniqueIdentifier>{e4eb1364-0e4b-4afc-b3c1-0e0ea29cfd2e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\project-files\replays">
+      <UniqueIdentifier>{97499e64-6ec8-43b3-a197-fd09d03c2b50}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\project-files\video">
+      <UniqueIdentifier>{7527cdcc-d53b-4982-ad23-0cde7f1757e2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\project-files\substitutes">
+      <UniqueIdentifier>{941e50fa-03f2-4b5d-ada9-e4feba89904d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\main.cpp">
@@ -109,9 +118,6 @@
     <ClCompile Include="..\src\lib\unitTest.cpp">
       <Filter>Source Files\lib</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\lib\bmpWriter.cpp">
-      <Filter>Source Files\lib</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\tests\EditTacticsMenuTest.cpp">
       <Filter>Source Files\tests</Filter>
     </ClCompile>
@@ -141,6 +147,27 @@
     </ClCompile>
     <ClCompile Include="..\..\src\menus\menuMouse.cpp">
       <Filter>Source Files\project-files\menus</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\replays\replays.cpp">
+      <Filter>Source Files\project-files\replays</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\video\sprites.cpp">
+      <Filter>Source Files\project-files\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\substitutes\substitutes.cpp">
+      <Filter>Source Files\project-files\substitutes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\replays\ReplayData.cpp">
+      <Filter>Source Files\project-files\replays</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\replays\replayOptions.cpp">
+      <Filter>Source Files\project-files\replays</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\replays\replaysMenu.cpp">
+      <Filter>Source Files\project-files\replays</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib\bmpWriter.cpp">
+      <Filter>Source Files\lib</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -186,9 +213,6 @@
     <ClInclude Include="..\src\lib\exceptions.h">
       <Filter>Source Files\lib</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\lib\bmpWriter.h">
-      <Filter>Source Files\lib</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\tests\EditTacticsMenuTest.h">
       <Filter>Source Files\tests</Filter>
     </ClInclude>
@@ -224,6 +248,24 @@
     </ClInclude>
     <ClInclude Include="..\src\tests\canada.diy.h">
       <Filter>Source Files\tests\data</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\replays\replays.h">
+      <Filter>Source Files\project-files\replays</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\video\sprites.h">
+      <Filter>Source Files\project-files\video</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\replays\ReplayData.h">
+      <Filter>Source Files\project-files\replays</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\replays\replayOptions.h">
+      <Filter>Source Files\project-files\replays</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\replays\replaysMenu.h">
+      <Filter>Source Files\project-files\replays</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\bmpWriter.h">
+      <Filter>Source Files\lib</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

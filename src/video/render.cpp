@@ -1,8 +1,9 @@
 #include "render.h"
-#include "log.h"
 #include "util.h"
+#include "file.h"
 #include "controls.h"
 #include "dump.h"
+#include <SDL_image.h>
 
 static SDL_Window *m_window;
 static SDL_Renderer *m_renderer;
@@ -27,6 +28,10 @@ constexpr int kDefaultFullScreenHeight = 480;
 
 static int m_windowWidth = kWindowWidth;
 static int m_windowHeight = kWindowHeight;
+static int m_fieldWidth = kGameScreenWidth;
+static int m_fieldHeight = kVgaHeight;
+
+// full-screen dimensions
 static int m_displayWidth = kDefaultFullScreenWidth;
 static int m_displayHeight = kDefaultFullScreenHeight;
 static bool m_windowResizable = true;
@@ -36,6 +41,8 @@ const char kVideoSection[] = "video";
 const char kWindowMode[] = "windowMode";
 const char kWindowWidthKey[] = "windowWidth";
 const char kWindowHeightKey[] = "windowHeight";
+const char kFieldWidthKey[] = "fieldWidth";
+const char kFieldHeightKey[] = "fieldHeight";
 const char kWindowResizable[] = "windowResizable";
 const char kFullScreenWidth[] = "fullScreenWidth";
 const char kFullScreenHeight[] = "fullScreenHeight";
@@ -128,7 +135,17 @@ bool isInFullScreenMode()
 std::pair<int, int> getFullScreenDimensions()
 {
     return { m_displayWidth, m_displayHeight };
-};
+}
+
+std::pair<int, int> getVisibleFieldSize()
+{
+    return { m_fieldWidth, m_fieldHeight };
+}
+
+int getVisibleFieldWidth()
+{
+    return m_fieldWidth;
+}
 
 static bool setDisplayMode(int width, int height)
 {
@@ -319,6 +336,9 @@ void loadVideoOptions(const CSimpleIniA& ini)
     m_windowWidth = ini.GetLongValue(kVideoSection, kWindowWidthKey, kWindowWidth);
     m_windowHeight = ini.GetLongValue(kVideoSection, kWindowHeightKey, kWindowHeight);
 
+    m_fieldWidth = ini.GetLongValue(kVideoSection, kFieldWidthKey, kGameScreenWidth);
+    m_fieldHeight = ini.GetLongValue(kVideoSection, kFieldHeightKey, kVgaHeight);
+
     normalizeWindowSize(m_windowWidth, m_windowHeight);
 
     m_displayWidth = ini.GetLongValue(kVideoSection, kFullScreenWidth);
@@ -427,7 +447,8 @@ static void determineIfDelayNeeded()
     m_delay = 2 * sum >= m_lastFramesDelay.size();
 }
 
-void clearScreen()
+template <typename F>
+static void requestPixelAccess(F drawFunction)
 {
     Uint32 *pixels;
     int pitch;
@@ -437,16 +458,23 @@ void clearScreen()
         return;
     }
 
-    auto color = &m_palette[0];
-    auto rgbaColor = SDL_MapRGBA(m_pixelFormat, color[0], color[1], color[2], 255);
-
-    for (int y = 0; y < kVgaHeight; y++) {
-        for (int x = 0; x < kVgaWidth; x++) {
-            pixels[y * pitch / sizeof(Uint32) + x] = rgbaColor;
-        }
-    }
+    drawFunction(pixels, pitch);
 
     SDL_UnlockTexture(m_texture);
+}
+
+void clearScreen()
+{
+    requestPixelAccess([](Uint32 *pixels, int pitch) {
+        auto color = &m_palette[0];
+        auto rgbaColor = SDL_MapRGBA(m_pixelFormat, color[0], color[1], color[2], 255);
+
+        for (int y = 0; y < kVgaHeight; y++) {
+            for (int x = 0; x < kVgaWidth; x++) {
+                pixels[y * pitch / sizeof(Uint32) + x] = rgbaColor;
+            }
+        }
+    });
 }
 
 void skipFrameUpdate()
@@ -462,9 +490,6 @@ void updateScreen(const char *inData /* = nullptr */, int offsetLine /* = 0 */, 
 
     m_lastRenderStartTime = SDL_GetPerformanceCounter();
 
-    Uint32 *pixels;
-    int pitch;
-
     auto data = reinterpret_cast<const uint8_t *>(inData ? inData : (vsPtr ? vsPtr : linAdr384k));
 
 #ifdef DEBUG
@@ -472,19 +497,15 @@ void updateScreen(const char *inData /* = nullptr */, int offsetLine /* = 0 */, 
         dumpVariables();
 #endif
 
-    if (SDL_LockTexture(m_texture, nullptr, (void **)&pixels, &pitch)) {
-        logWarn("Failed to lock drawing texture");
-        return;
-    }
-
-    for (int y = offsetLine; y < numLines; y++) {
-        for (int x = 0; x < kVgaWidth; x++) {
-            auto color = &m_palette[data[y * screenWidth + x] * 3];
-            pixels[y * pitch / sizeof(Uint32) + x] = SDL_MapRGBA(m_pixelFormat, color[0], color[1], color[2], 255);
+    requestPixelAccess([&](Uint32 *pixels, int pitch) {
+        for (int y = offsetLine; y < numLines; y++) {
+            for (int x = 0; x < kVgaWidth; x++) {
+                auto color = &m_palette[data[y * screenWidth + x] * 3];
+                pixels[y * pitch / sizeof(Uint32) + x] = SDL_MapRGBA(m_pixelFormat, color[0], color[1], color[2], 255);
+            }
         }
-    }
+    });
 
-    SDL_UnlockTexture(m_texture);
     SDL_RenderCopy(m_renderer, m_texture, nullptr, nullptr);
     SDL_RenderPresent(m_renderer);
 
@@ -553,6 +574,60 @@ void timerProc()
         if (!timerBoolean)
             bumpBigSFrame = -1;
     }
+}
+
+void fadeIfNeeded()
+{
+    if (!skipFade) {
+        FadeIn();
+        skipFade = -1;
+    }
+}
+
+std::string ensureScreenshotsDirectory()
+{
+    auto path = pathInRootDir("screenshots");
+    createDir(path.c_str());
+    return path;
+}
+
+void makeScreenshot()
+{
+    char filename[256];
+
+    auto t = time(nullptr);
+    strftime(filename, sizeof(filename), "screenshot-%Y-%m-%d-%H-%M-%S.png", localtime(&t));
+
+    const auto& screenshotsPath = ensureScreenshotsDirectory();
+    const auto& path = joinPaths(screenshotsPath.c_str(), filename);
+
+    requestPixelAccess([&](Uint32 *pixels, int pitch) {
+        Uint32 rMask, gMask, bMask, aMask;
+#if SDL_BYTEORDER == SDL_LIL_ENDIAN
+        rMask = 0xff000000;
+        gMask = 0x00ff0000;
+        bMask = 0x0000ff00;
+        aMask = 0x000000ff;
+#else
+        rMask = 0x000000ff;
+        gMask = 0x0000ff00;
+        bMask = 0x00ff0000;
+        aMask = 0xff000000;
+#endif
+
+        auto surface = SDL_CreateRGBSurfaceFrom(pixels, kVgaWidth, kVgaHeight, 32, pitch, rMask, gMask, bMask, aMask);
+        bool surfaceLocked = surface ? SDL_LockSurface(surface) >= 0 : false;
+
+        if (surface && surfaceLocked && IMG_SavePNG(surface, path.c_str()) >= 0)
+            logInfo("Created screenshot %s", filename);
+        else
+            logWarn("Failed to save screenshot %s", filename);
+
+        if (surfaceLocked)
+            SDL_UnlockSurface(surface);
+
+        SDL_FreeSurface(surface);
+    });
 }
 
 void SWOS::Flip()

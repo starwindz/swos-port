@@ -778,6 +778,15 @@ bool gotMousePlayer()
     return m_pl1GameControls == kMouse || m_pl2GameControls == kMouse;
 }
 
+// Returns true if last pressed key belongs to selected keys of any currently active player.
+bool testForPlayerKeys()
+{
+    byte key = static_cast<byte>(lastKey);
+
+    return m_pl1GameControls == kKeyboard1 && m_pl1ScanCodes.has(key) ||
+        m_pl2GameControls == kKeyboard2 && m_pl2ScanCodes.has(key);
+}
+
 // prevent locking out of first player controls inside play match menu, if it wasn't the player that fired
 void SWOS::PreventPlayer1FireLockout()
 {

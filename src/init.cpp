@@ -4,6 +4,7 @@
 #include "audio.h"
 #include "render.h"
 #include "options.h"
+#include "replays.h"
 #include "controls.h"
 
 #ifdef NDEBUG
@@ -90,6 +91,8 @@ static void init()
     setupExtendedMemory();
 
     initAudio();
+
+    initReplays();
 }
 
 // showImageReel

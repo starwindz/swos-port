@@ -13,6 +13,7 @@
 #include <vector>
 #include <functional>
 #include <condition_variable>
+#include <sys/stat.h>
 
 #ifdef _WIN32
 #include <Windows.h>
@@ -23,5 +24,6 @@
 #include <SDL_mixer.h>
 
 #include "assert.h"
+#include "swos.h"
 #include "swossym.h"
 #include "log.h"

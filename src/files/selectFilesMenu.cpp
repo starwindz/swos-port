@@ -24,8 +24,8 @@ using EntriesPerColumnList = std::array<int, kMaxColumns>;
 
 static const char *m_menuTitle;
 static std::string m_selectedFilename;
-static bool m_saving;
-static char *m_saveFilename;
+static const char *m_saveExtension;
+static char *m_saveFilenameBuffer;
 
 static int m_numColumns;
 static bool m_longNames;
@@ -77,7 +77,7 @@ FoundFileList findFiles(dword packedExtension)
     auto ext = codeToExtension(packedExtension);
     auto numAllowedExtensions = std::size(kAllowedExtensions) - (g_skipNonCompetitionFiles ? 3 : 0);
 
-    return findFiles(ext, kAllowedExtensions, numAllowedExtensions);
+    return findFiles(ext, nullptr, kAllowedExtensions, numAllowedExtensions);
 }
 
 static char *getFilenameBuffer(const std::string& selectedFilename)
@@ -152,9 +152,7 @@ static int selectFileToSaveDialog()
     auto menuTitle = A1.asPtr();
     auto saveFilename = A0.asPtr();
 
-    auto selectedFilename = showSelectFilesMenu(menuTitle, files, true, saveFilename);
-    if (!selectedFilename.empty())
-        selectedFilename += ext;
+    auto selectedFilename = showSelectFilesMenu(menuTitle, files, ext, saveFilename);
 
     A0 = getFilenameBuffer(selectedFilename);
     return getSwosErrorCode(A0);
@@ -181,14 +179,15 @@ __declspec(naked) int SWOS::SelectFileToSaveDialog()
 }
 
 std::string showSelectFilesMenu(const char *menuTitle, const FoundFileList& filenames,
-    bool saving /* = false */, char *saveFilename /* = nullptr */)
+    const char *saveExtension /* = nullptr */, char *saveFilenameBuffer /* = nullptr */)
 {
     assert(menuTitle);
+    assert(!saveExtension || strlen(saveExtension) == 4 && saveExtension[0] == '.');
 
     m_menuTitle = menuTitle;
     m_filenames = filenames;
-    m_saving = saving;
-    m_saveFilename = saveFilename;
+    m_saveExtension = saveExtension;
+    m_saveFilenameBuffer = saveFilenameBuffer;
 
     showMenu(selectFilesMenu);
 
@@ -197,8 +196,8 @@ std::string showSelectFilesMenu(const char *menuTitle, const FoundFileList& file
 
 static void selectInitialEntry()
 {
-    if (m_saving)
-        setCurrentEntry(m_saveFilename && *m_saveFilename ? saveLabel : inputSaveFilename);
+    if (m_saveExtension)
+        setCurrentEntry(m_saveFilenameBuffer && *m_saveFilenameBuffer ? saveLabel : inputSaveFilename);
     else if (m_filenames.empty())
         setCurrentEntry(SelectFilesMenu::abort);
 }
@@ -232,17 +231,17 @@ static void copyStringUntilDot(char *dest, const char *src)
 
 static void setSaveFilename()
 {
-    if (m_saving) {
+    if (m_saveExtension) {
         auto saveFilenameEntry = getMenuEntry(inputSaveFilename);
 
-        assert(!m_saveFilename || strlen(m_saveFilename) < kMenuStringLength);
+        assert(!m_saveFilenameBuffer || strlen(m_saveFilenameBuffer) < kMenuStringLength);
 
         auto dest = saveFilenameEntry->string();
-        copyStringUntilDot(dest, m_saveFilename);
+        copyStringUntilDot(dest, m_saveFilenameBuffer);
 
         saveFilenameEntry->show();
 
-        if (m_saveFilename && *m_saveFilename)
+        if (m_saveFilenameBuffer && *m_saveFilenameBuffer)
             getMenuEntry(saveLabel)->show();
     }
 }
@@ -336,7 +335,7 @@ static int findArrowsX()
 {
     int x = kDefaultArrowX + kMenuOffset;
 
-    if (!m_saving)
+    if (!m_saveExtension)
         return x;
 
     auto widthPerItem = m_longNames ? kLongNameFullWidth : kShortNameFullWidth;
@@ -389,7 +388,7 @@ static void updateScrollArrows(int startY, int verticalSize, int verticalSlack)
         scrollUpArrow->y = startY - verticalSlack + kArrowVerticalMargin;
         scrollDownArrow->y = startY + verticalSize + kArrowVerticalMargin;
 
-        if (m_saving) {
+        if (m_saveExtension) {
             auto yBounds = getFilenameAreaVerticalBounds();
             scrollUpArrow->y = yBounds.first - 1;
             scrollDownArrow->y = yBounds.second - scrollDownArrow->height + 2;
@@ -416,7 +415,7 @@ static std::tuple<int, int, int> repositionFilenameEntries()
     constexpr int kTotalFilenameHeight = kFilenameHeight + kVerticalMargin;
     auto verticalSize = maxEntriesPerColumn * kTotalFilenameHeight;
 
-    auto lastEntry = getMenuEntry(m_saving ? inputSaveFilename : SelectFilesMenu::abort);
+    auto lastEntry = getMenuEntry(m_saveExtension ? inputSaveFilename : SelectFilesMenu::abort);
     int verticalSlack = (lastEntry->y - startY - verticalSize) / 2;
     startY += verticalSlack;
 
@@ -578,8 +577,8 @@ static void selectFile()
         m_selectedFilename.clear();
 
     // opportunity for overflow, all places that call have had their buffers widened enough, until we can remove it entirely
-    if (m_saving && m_saveFilename)
-        strcpy(m_saveFilename, m_selectedFilename.c_str());
+    if (m_saveExtension && m_saveFilenameBuffer)
+        strcpy(m_saveFilenameBuffer, m_selectedFilename.c_str());
 
     SetExitMenuFlag();
 }
@@ -590,17 +589,28 @@ static void abortSelectFile()
     SetExitMenuFlag();
 }
 
+static void updateSaveFilename(const char *filename)
+{
+    if (m_saveExtension && m_saveFilenameBuffer) {
+        auto p = m_saveFilenameBuffer;
+        while (*filename)
+            *p++ = *filename++;
+
+        strcpy(p, m_saveExtension);
+    }
+}
+
 static void inputFilenameToSave()
 {
     auto entry = A5.asMenuEntry();
     auto entryString = entry->string();
 
     if (inputText(entryString, kMaxSaveFilenameChars, true)) {
-        assert(m_saveFilename && m_saving);
+        assert(m_saveFilenameBuffer && m_saveExtension);
 
-        if (m_saveFilename) {
-            copyStringUntilDot(m_saveFilename, entryString);
-            m_selectedFilename = m_saveFilename;
+        if (m_saveFilenameBuffer) {
+            updateSaveFilename(entryString);
+            m_selectedFilename = m_saveFilenameBuffer;
         }
 
         SetExitMenuFlag();
@@ -611,9 +621,7 @@ static void saveFileSelected()
 {
     auto inputFilenameEntry = getMenuEntry(inputSaveFilename);
     m_selectedFilename = inputFilenameEntry->string();
-
-    if (m_saving && m_saveFilename)
-        strcpy(m_saveFilename, m_selectedFilename.c_str());
+    updateSaveFilename(m_selectedFilename.c_str());
 
     SetExitMenuFlag();
 }

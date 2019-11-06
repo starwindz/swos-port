@@ -488,7 +488,12 @@ void SymbolFileParser::parseHookProcLine(const char *symStart, const char *symEn
     start = skipWhiteSpace(start);
     if (*start == ',') {
         start = skipWhiteSpace(start + 1);
-        hookName.assign(start, end);
+
+        if (start >= end)
+            error("expected hook name");
+
+        if (!isRemoveHook(start, end))
+            hookName.assign(start, end);
     } else if (*start == '\n') {
         auto numLen = numEnd - numStart;
         if (procLen + numLen + 1 >= kProcNameLength)
@@ -510,8 +515,10 @@ void SymbolFileParser::parseHookProcLine(const char *symStart, const char *symEn
     String procName(symStart, symEnd);
     m_procHookList.add(procName, hookName, line, m_lineNo);
 
-    m_imports.add(hookName);
-    m_importEntries.emplace(hookName);
+    if (!hookName.empty()) {
+        m_imports.add(hookName);
+        m_importEntries.emplace(hookName);
+    }
 }
 
 void SymbolFileParser::parseRemoveAndNullLine(SymbolAction action, const char *symStart, const char *symEnd,
@@ -528,6 +535,16 @@ void SymbolFileParser::parseRemoveAndNullLine(SymbolAction action, const char *s
             flags |= kRemoveSolo;
     }
     m_symbolTable.addSymbolAction(symStart, symEnd, flags, start, end);
+}
+
+bool SymbolFileParser::isRemoveHook(const char *start, const char *end)
+{
+    assert(end >= start);
+
+    constexpr char kRemoveHook[] = "@remove";
+    constexpr int kRemoveHookLen = sizeof(kRemoveHook) - 1;
+
+    return end - start == kRemoveHookLen && !memcmp(start, kRemoveHook, kRemoveHookLen);
 }
 
 void SymbolFileParser::addHookProcs()

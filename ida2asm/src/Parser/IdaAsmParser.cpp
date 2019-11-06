@@ -282,7 +282,9 @@ CToken *IdaAsmParser::parseInstruction(CToken *token, TokenList& comments)
 {
     assert(token->category == Token::Instruction);
 
-    checkProcHookInsertion(token);
+    auto skipToken = checkProcHookInsertion(token);
+    if (skipToken)
+        return skipToken;
 
     CToken *prefix{};
 
@@ -539,10 +541,13 @@ CToken *IdaAsmParser::parseLabel(CToken *token, TokenList& comments)
 {
     assert(token && token->isId());
 
-    if (token->isLocalLabel())
-        checkProcHookInsertion(token);
-    else
+    if (token->isLocalLabel()) {
+        auto skipToken = checkProcHookInsertion(token);
+        if (skipToken)
+            return skipToken;
+    } else {
         m_references.addLabel(token);
+    }
 
     auto name = token;
     advance(token);
@@ -862,25 +867,28 @@ void IdaAsmParser::checkProcHookStart(CToken *token, SymbolAction action, String
     }
 }
 
-void IdaAsmParser::checkProcHookInsertion(CToken *token)
+CToken *IdaAsmParser::checkProcHookInsertion(CToken *token)
 {
     if (m_currentHookLine < static_cast<int>(m_lineNo))
         verifyHookLine(token);
 
     if (m_currentProc && m_currentHookLine == m_lineNo) {
-        auto hookProc = outputCallInstruction(token, [this, token](auto nameToken) {
-            auto buffer = const_cast<char *>(nameToken->text());
-            const auto& hookName = ProcHookList::getCurrentHookProc(m_currentProcHook);
+        const auto& hookName = ProcHookList::getCurrentHookProc(m_currentProcHook);
 
-            if (nameToken->textLength < hookName.length())
-                error("hook proc name \"" + hookName.string() + "\" too long, limit is " +
-                    std::to_string(nameToken->textLength) + ')', token);
+        if (!hookName.empty()) {
+            auto hookProc = outputCallInstruction(token, [this, token, &hookName](auto nameToken) {
+                auto buffer = const_cast<char *>(nameToken->text());
 
-            hookName.copy(buffer);
-            nameToken->textLength = hookName.length();
-        });
+                if (nameToken->textLength < hookName.length())
+                    error("hook proc name \"" + hookName.string() + "\" too long, limit is " +
+                        std::to_string(nameToken->textLength) + ')', token);
 
-        m_references.addReference(hookProc.first);
+                hookName.copy(buffer);
+                nameToken->textLength = hookName.length();
+            });
+
+            m_references.addReference(hookProc.first);
+        }
 
         auto prevHookLine = ProcHookList::getCurrentHookLine(m_currentProcHook);
 
@@ -891,7 +899,12 @@ void IdaAsmParser::checkProcHookInsertion(CToken *token)
         } else {
             m_currentHookLine = -1;
         }
+
+        if (hookName.empty())
+            return skipUntilNewLine(token);
     }
+
+    return nullptr;
 }
 
 bool IdaAsmParser::isLocalVariable(const char *str, size_t len)
