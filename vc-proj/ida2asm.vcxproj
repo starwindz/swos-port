@@ -77,6 +77,7 @@
     <ClInclude Include="..\ida2asm\src\Util\BlockList.h" />
     <ClInclude Include="..\ida2asm\src\Util\DynaArray.h" />
     <ClInclude Include="..\ida2asm\src\Util\Iterator.h" />
+    <ClInclude Include="..\ida2asm\src\Util\PascalString.h" />
     <ClInclude Include="..\ida2asm\src\Util\StringList.h" />
     <ClInclude Include="..\ida2asm\src\Util\StringMap.h" />
     <ClInclude Include="..\ida2asm\src\Util\StringSet.h" />

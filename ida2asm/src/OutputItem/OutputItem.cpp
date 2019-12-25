@@ -165,6 +165,11 @@ void OutputItemStream::addTrailingComments(const TokenList& comments)
     m_lastItem = new (buffer) OutputItem(OutputItem::kComment, bufferSize, comments, nullptr);
 }
 
+OutputItem *OutputItemStream::lastItem() const
+{
+    return m_lastItem;
+}
+
 DataItem *OutputItemStream::lastDataItem() const
 {
     assert(m_lastItem->type() == OutputItem::kDataItem);

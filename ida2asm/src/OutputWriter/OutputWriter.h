@@ -38,6 +38,7 @@ public:
     virtual std::string getOutputError() const { return m_error; }
     virtual std::string segmentDirective(const TokenRange& range) const = 0;
     virtual std::string endSegmentDirective(const TokenRange& range) const = 0;
+    virtual std::pair<const char *, size_t> getContiguousVariablesStructData() { return {}; }
 
 protected:
     static constexpr int kTabSize = 4;
@@ -53,6 +54,7 @@ protected:
     size_t outputLength() const;
     char *getOutputPtr() const;
     void setOutputPtr(char *ptr);
+    void resetOutputPtr();
     void unget(size_t numChars);
 
     std::string m_error;

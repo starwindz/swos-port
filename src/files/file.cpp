@@ -108,6 +108,15 @@ std::pair<char *, size_t> loadFile(const char *path, size_t bufferOffset /* = 0 
     return { buffer, size + bufferOffset };
 }
 
+static void loadFileImp()
+{
+    auto filename = A0.as<const char *>();
+    auto buffer = A1.as<char *>();
+
+    D0 = 0;
+    D1 = loadFile(filename, buffer);
+}
+
 // LoadFile
 //
 // in:
@@ -122,15 +131,20 @@ std::pair<char *, size_t> loadFile(const char *path, size_t bufferOffset /* = 0 
 // Load file contents into given buffer. If the file can't be found, or some error happens,
 // writes the name of the file to the console, and terminates the program.
 //
-int SWOS::LoadFile()
+__declspec(naked) int SWOS::LoadFile()
 {
-    auto filename = A0.as<const char *>();
-    auto buffer = A1.as<char *>();
-
+#ifdef SWOS_VM
+    loadFileImp();
     D0 = 0;
-    D1 = loadFile(filename, buffer);
-
-    _asm xor eax, eax
+    g_flags.zero = true;
+    return 0;
+#else
+    __asm {
+        call loadFileImp
+        xor  eax, eax
+        retn
+    }
+#endif
 }
 
 bool saveFile(const char *path, void *buffer, size_t size)
@@ -146,6 +160,15 @@ bool saveFile(const char *path, void *buffer, size_t size)
     return ok;
 }
 
+static int writeFileImp()
+{
+    auto filename = A0.as<const char *>();
+    auto buffer = A1.as<char *>();
+    auto bufferSize = D1;
+
+    return saveFile(filename, buffer, bufferSize);
+}
+
 // WriteFile
 //
 // in:
@@ -159,26 +182,20 @@ bool saveFile(const char *path, void *buffer, size_t size)
 //      zero flag set - all OK
 //        -||-  clear - error
 //
-int SWOS::WriteFile()
+__declspec(naked) int SWOS::WriteFile()
 {
-    auto filename = A0.as<const char *>();
-    auto buffer = A1.as<char *>();
-    auto bufferSize = D1;
-
-    bool ok = saveFile(filename, buffer, bufferSize);
-
-    if (ok) {
-        __asm {
-            xor eax, eax
-            mov D0, eax
-        }
-    } else {
-        __asm {
-            xor eax, eax
-            inc eax
-            mov D0, eax
-        }
+#ifdef SWOS_VM
+    auto result = writeFileImp();
+    g_flags.zero = result != 0;
+    D0 = !result;
+    return 0;
+#else
+    __asm {
+        call writeFileImp
+        call setZeroFlagAndD0FromAl
+        retn
     }
+#endif
 }
 
 void setRootDir(const char *dir)

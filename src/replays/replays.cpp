@@ -304,7 +304,7 @@ void showHighlights()
     assert(hilNumGoals > 0);
 
     m_playing = true;
-    m_fastReplay = false;
+    m_fastReplay = 0;
 
     hilStarted = 1;
     gameMaxSubstitutes = hilMaxSubstitutes;

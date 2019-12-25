@@ -2,7 +2,9 @@
 
 #include "swos.h"
 
-#define sizeofarray(x) (sizeof(x)/sizeof(x[0]))
+#ifndef  sizeofarray
+# define sizeofarray(a) (sizeof(a)/sizeof((a)[0]))
+#endif
 
 constexpr int kMaxPath = 256;
 
@@ -64,8 +66,11 @@ inline word hiWord(dword d) {
     return d >> 16;
 }
 
+#ifdef SWOS_VM
+# define SAFE_INVOKE(proc) (proc)()
+#else
 // preserve registers VC++ doesn't expect to change between calls
-#define SAFE_INVOKE(proc) \
+# define SAFE_INVOKE(proc) \
 {                   \
     __asm push ebx  \
     __asm push esi  \
@@ -77,6 +82,7 @@ inline word hiWord(dword d) {
     __asm pop  esi  \
     __asm pop  ebx  \
 }
+#endif
 
 // this had to be added since they banned inline assembly in lambda in VS2019
 static inline void safeInvokeWithSaved68kRegisters(void (*f)())

@@ -63,10 +63,14 @@ void SWOS::InitGame_OnEnter()
 __declspec(naked) void SWOS::ClearBackground_OnEnter()
 {
     // fix SWOS bug, just in case
+#ifdef SWOS_VM
+    g_edx.all = 0;
+#else
     _asm {
         xor edx, edx
         retn
     }
+#endif
 }
 
 void SWOS::MainKeysCheck_OnEnter()
@@ -188,6 +192,10 @@ static void swosSetPalette(const char *palette)
 // called from SWOS, with palette in esi
 __declspec(naked) void SWOS::SetPalette()
 {
+#ifdef SWOS_VM
+    auto palette = reinterpret_cast<char *>(g_esi.all);
+    swosSetPalette(palette);
+#else
     __asm {
         push ebx
         push esi
@@ -202,6 +210,7 @@ __declspec(naked) void SWOS::SetPalette()
         pop  ebx
         retn
     }
+#endif
 }
 
 void SWOS::DrawSprites()

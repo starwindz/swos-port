@@ -6,6 +6,7 @@
 #include "ProcHookList.h"
 #include "SymbolAction.h"
 #include "SymbolTable.h"
+#include "PascalString.h"
 
 class SymbolFileParser
 {
@@ -13,7 +14,7 @@ public:
     static constexpr char kEndMarker[5] = { "@end" };
     static constexpr char kOnEnterSuffix[9] = { "_OnEnter" };
 
-    SymbolFileParser(const char *symbolsFilePath, const char *headerFilePath);
+    SymbolFileParser(const char *symbolsFilePath, const char *headerFilePath, const char *outputPath);
     SymbolFileParser(const SymbolFileParser& other);
 
     SymbolTable& symbolTable();
@@ -23,6 +24,9 @@ public:
 
     const StringList& exports() const;
     const StringList& imports() const;
+
+    bool cOutput() const;
+    String exportedType(const String& var) const;
 
 private:
 #pragma pack(push, 1)
@@ -41,8 +45,9 @@ private:
     void output68kRegisters();
     void outputExports();
     void outputImports();
-    void outputExportFunction(const ExportEntry& exp);
-    void outputExportVariable(const ExportEntry& exp);
+    void outputContiguousCTableInclude();
+    template <typename F> void getExportFunctionDeclaration(const ExportEntry& exp, F write);
+    template <typename F> void getExportVariableDeclaration(const ExportEntry& exp, F write);
 
     void parseSymbolFile();
     static const char *parseComment(const char *p);
@@ -113,6 +118,7 @@ private:
 
     const char *m_path;
     const char *m_headerPath;
+    bool m_cOutput;
     std::unique_ptr<const char[]> m_data;
     size_t m_dataSize = 0;
     size_t m_lineNo = 1;
@@ -126,4 +132,6 @@ private:
 
     SymbolTable m_symbolTable;
     ProcHookList m_procHookList;
+
+    StringMap<PascalString> m_exportTypes;
 };

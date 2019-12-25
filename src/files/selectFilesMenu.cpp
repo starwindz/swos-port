@@ -88,12 +88,6 @@ static char *getFilenameBuffer(const std::string& selectedFilename)
     return filenameBuffer;
 }
 
-// SWOS expects 0 for success, 1 for error
-static bool getSwosErrorCode(const char *ptr)
-{
-    return !ptr || !ptr[0];
-}
-
 static bool getFilenameAndExtension()
 {
     auto savedExtension = D0.asDword();
@@ -109,7 +103,7 @@ static bool getFilenameAndExtension()
     if (!D1)
         D1 = extensionToCode(selectedFilename);
 
-    return getSwosErrorCode(A0);
+    return D1 && D1.asPtr()[0];
 }
 
 // GetFilenameAndExtension
@@ -121,8 +115,8 @@ static bool getFilenameAndExtension()
 //      A0 -> menu title
 //      A1 ->   -||-
 // out:
-//      D0 - 1 = success (zero flag set)
-//           0 = no files selected (zero flag clear)
+//      D0 - 0 = success (zero flag set)
+//           1 = no files selected (zero flag clear)
 //      D1 - extension
 //      A0 -> selected filename
 //      zero flag - clear = error
@@ -137,14 +131,21 @@ static bool getFilenameAndExtension()
 //
 __declspec(naked) int SWOS::GetFilenameAndExtension()
 {
+#ifdef SWOS_VM
+    auto result = getFilenameAndExtension();
+    g_flags.zero = result;
+    D0 = !result;
+    return 0;
+#else
     __asm {
         call getFilenameAndExtension
         call setZeroFlagAndD0FromAl
         retn
     }
+#endif
 }
 
-static int selectFileToSaveDialog()
+static bool selectFileToSaveDialog()
 {
     auto ext = codeToExtension(D0);
     auto files = findFiles(ext);
@@ -155,7 +156,8 @@ static int selectFileToSaveDialog()
     auto selectedFilename = showSelectFilesMenu(menuTitle, files, ext, saveFilename);
 
     A0 = getFilenameBuffer(selectedFilename);
-    return getSwosErrorCode(A0);
+
+    return A0 && A0.asPtr()[0];
 }
 
 // SelectFileToSaveDialog
@@ -171,11 +173,18 @@ static int selectFileToSaveDialog()
 //
 __declspec(naked) int SWOS::SelectFileToSaveDialog()
 {
+#ifdef SWOS_VM
+    auto result = selectFileToSaveDialog();
+    g_flags.zero = result;
+    D0 = !result;
+    return 0;
+#else
     __asm {
         call selectFileToSaveDialog
         call setZeroFlagAndD0FromAl
         retn
     }
+#endif
 }
 
 std::string showSelectFilesMenu(const char *menuTitle, const FoundFileList& filenames,

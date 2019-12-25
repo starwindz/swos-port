@@ -31,8 +31,20 @@ size_t DataItem::requiredElementSize(CToken *token, int offset)
 
 void DataItem::addElement(char *buf, CToken *token, bool isOffset, int offset, size_t dup)
 {
+    assert(m_numElements < std::numeric_limits<decltype(m_numElements)>::max());
+
     auto elem = new (buf) Element(token, isOffset, offset, dup);
     m_numElements++;
+}
+
+bool DataItem::contiguous() const
+{
+    return (m_numElements & kContiguousDataFlag) != 0;
+}
+
+void DataItem::setContiguous()
+{
+    m_numElements |= kContiguousDataFlag;
 }
 
 String DataItem::name() const
@@ -52,7 +64,7 @@ String DataItem::structName() const
 
 size_t DataItem::numElements() const
 {
-    return m_numElements;
+    return m_numElements & ~kContiguousDataFlag;
 }
 
 auto DataItem::begin() const -> const Element *
@@ -78,7 +90,7 @@ char *DataItem::structNamePtr() const
 DataItem::Element::Element(CToken *token, bool isOffset, int offset, size_t dup) : m_type(kNone)
 {
     assert(token);
-    assert(token->category == Token::Id || token->category == Token::Number || token->category == Token::Dup);
+    assert(token->category == Token::kId || token->category == Token::kNumber || token->category == Token::kDup);
 
     Util::assignSize(m_dup, dup);
 

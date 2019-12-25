@@ -1,6 +1,7 @@
 #include "AsmConverterWorker.h"
 #include "Struct.h"
 #include "DefinesMap.h"
+#include "DataItem.h"
 
 AsmConverterWorker::AsmConverterWorker(int index, const char *data, int dataLength,
     int chunkOffset, int chunkLength, const SymbolFileParser& symFileParser, SymbolTable& symbolTable)
@@ -37,7 +38,7 @@ void AsmConverterWorker::output(const char *format, const char *path, const Stru
     assert(m_segments);
 
     m_filename = formOutputPath(path);
-    m_outputWriter = OutputFactory::create(format, m_filename.c_str(), m_symFileParser, structs, defines,
+    m_outputWriter = OutputFactory::create(format, m_filename.c_str(), m_index, m_symFileParser, structs, defines,
         m_parser.references(), m_parser.outputItems());
 
     auto outputPrefix = segmentsOutput(openingSegments.first);
@@ -66,6 +67,8 @@ void AsmConverterWorker::resolveReferences(const std::vector<const AsmConverterW
     for (auto worker : workers)
         if (worker != this)
             m_parser.references().resolve(worker->m_parser.references());
+
+    ignoreContiguousTableExterns(workers);
 }
 
 void AsmConverterWorker::setCImportSymbols(const StringList& syms)
@@ -113,6 +116,11 @@ IdaAsmParser& AsmConverterWorker::parser()
     return m_parser;
 }
 
+OutputWriter& AsmConverterWorker::outputWriter()
+{
+    return *m_outputWriter.get();
+}
+
 void AsmConverterWorker::resolveLocalReferences()
 {
     m_parser.references().resolve();
@@ -131,6 +139,45 @@ void AsmConverterWorker::resolveStructsAndDefines(const StructStream& structs, c
 
     for (const auto& def : defines)
         m_parser.references().setIgnored(def.text, def.hash);
+}
+
+// If creating C files, each file must not generate extern declaration for any variable that's marked as contiguous
+// in any other file (since they get converted to struct members and then we get linker error).
+void AsmConverterWorker::ignoreContiguousTableExterns(const std::vector<const AsmConverterWorker *>& workers)
+{
+    if (!m_symFileParser.cOutput())
+        return;
+
+    auto ignoreExtern = [this](const DataItem *dataItem) {
+        const auto& name = dataItem->name();
+        if (!name.empty()) {
+            auto hash = Util::hash(name.str(), name.length());
+            m_parser.references().setIgnored(name, hash);
+        }
+    };
+
+    for (auto worker : workers) {
+        if (worker == this)
+            continue;
+
+        const auto& outputItems = worker->parser().outputItems();
+        for (auto item = outputItems.begin(); item != outputItems.end(); item = item->next()) {
+            if (item->type() == OutputItem::kDataItem) {
+                auto dataItem = item->getItem<DataItem>();
+                if (dataItem->contiguous()) {
+                    do {
+                        ignoreExtern(dataItem);
+
+                        item = item->next();
+                        assert(item != outputItems.end() && item->type() == OutputItem::kDataItem);
+                        dataItem = item->getItem<DataItem>();
+                    } while (!dataItem->contiguous());
+
+                    ignoreExtern(dataItem);
+                }
+            }
+        }
+    }
 }
 
 std::string AsmConverterWorker::segmentsOutput(CToken *openSegment)

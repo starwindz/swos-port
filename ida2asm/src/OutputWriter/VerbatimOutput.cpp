@@ -31,7 +31,7 @@ bool VerbatimOutput::output(OutputFlags flags, CToken *)
         return true;
 
     if (!(flags & (kStructs | kDefines)))
-        out("include defs.inc", Util::kNewLine, Util::kNewLine);
+        out("include defs.inc", Util::kDoubleNewLine);
 
     if (flags & kStructs)
         outputStructs();
@@ -93,7 +93,7 @@ void VerbatimOutput::outputStruct(const Struct& struc)
         if (!field.type().empty()) {
             column += out(field.type(), ' ');
         } else {
-            auto fieldSize = dataSizeSpecifier(field.byteSize());
+            auto fieldSize = dataSizeSpecifier(field.elementSize());
             column += out(fieldSize, ' ');
         }
 

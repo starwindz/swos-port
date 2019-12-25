@@ -128,15 +128,20 @@ int getRandomInRange(int min, int max)
 
 __declspec(naked) int setZeroFlagAndD0FromAl()
 {
+    // SWOS expects 0 for success, 1 for error
     __asm {
         and  eax, 0xff
         test eax, eax
-        mov  D0, eax
-        jz   done
+        jz   fail
 
-        or eax, eax
+        xor  eax, eax
+        jmp  done
+
+fail:
+        inc  eax
 
 done:
+        mov  D0, eax
         retn
     }
 }

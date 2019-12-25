@@ -114,7 +114,7 @@ static bool showImageReel(const char **imageList)
     memset(imageBuffer, 0, 3 * kVgaScreenSize);
 
     // first image palette is used for all scrolling images
-    if (loadFile(*imageList, currentImageBuffer, -1, false) != k256ImageSize)
+    if (loadFile(*imageList, currentImageBuffer, -1) != k256ImageSize)
         return true;
 
     setPalette(currentImageBuffer + kVgaScreenSize);
@@ -353,6 +353,11 @@ static char *introDrawFrame(char *frameData)
 
 __declspec(naked) void SWOS::IntroDrawFrame()
 {
+#ifdef SWOS_VM
+    auto frameData = reinterpret_cast<char *>(g_esi.all);
+    auto result = introDrawFrame(frameData);
+    g_esi.all = reinterpret_cast<int32_t>(result);
+#else
     __asm {
         push esi
         call introDrawFrame
@@ -360,6 +365,7 @@ __declspec(naked) void SWOS::IntroDrawFrame()
         mov  esi, eax
         retn
     }
+#endif
 }
 
 static void showImageReelsAndIntro()

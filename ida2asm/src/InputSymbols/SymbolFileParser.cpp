@@ -3,7 +3,8 @@
 #include "Util.h"
 
 constexpr int kImportsCapacity = 3'000;
-constexpr int kExportsCapacity = 7'500;
+constexpr int kExportsCapacity  = 7'500;
+constexpr int kExportTypesCapacity = 25'000;
 constexpr int kMaxExportEntries = 600;
 
 static const char kHeader[] =
@@ -57,14 +58,17 @@ static const char kHeader[] =
     "extern \"C\" {\n"
     "    extern Register ";
 
-SymbolFileParser::SymbolFileParser(const char *symbolFilePath, const char *headerFilePath)
+SymbolFileParser::SymbolFileParser(const char *symbolFilePath, const char *headerFilePath, const char *outputPath)
     : m_path(symbolFilePath), m_headerPath(headerFilePath), m_imports(kImportsCapacity),
-    m_exports(kExportsCapacity), m_importEntries(kImportsCapacity * 3 / 2)
+    m_exports(kExportsCapacity), m_importEntries(kImportsCapacity * 3 / 2), m_exportTypes(kExportTypesCapacity)
 {
     auto result = Util::loadFile(symbolFilePath, true);
     m_data.reset(result.first);
     m_dataSize = result.second;
     m_exportEntries.reserve(kMaxExportEntries);
+
+    size_t len = strlen(outputPath);
+    m_cOutput = len > 3 && outputPath[len - 1] == 'c' && outputPath[len - 2] == '.';
 
     parseSymbolFile();
 
@@ -77,8 +81,8 @@ SymbolFileParser::SymbolFileParser(const char *symbolFilePath, const char *heade
 
 SymbolFileParser::SymbolFileParser(const SymbolFileParser& other)
     : m_path(other.m_path), m_headerPath(other.m_headerPath), m_exports(other.m_exports),
-    m_imports(other.m_imports), m_exportEntries(other.m_exportEntries),
-    m_importEntries(other.m_importEntries), m_symbolTable(other.m_symbolTable)
+    m_imports(other.m_imports), m_exportEntries(other.m_exportEntries), m_importEntries(other.m_importEntries),
+    m_symbolTable(other.m_symbolTable), m_exportTypes(other.m_exportTypes), m_cOutput(other.m_cOutput)
 {
 }
 
@@ -103,6 +107,7 @@ void SymbolFileParser::outputHeaderFile(const char *path)
     output68kRegisters();
     outputExports();
     outputImports();
+    outputContiguousCTableInclude();
 
     fclose(m_headerFile);
 }
@@ -115,6 +120,20 @@ const StringList& SymbolFileParser::exports() const
 const StringList& SymbolFileParser::imports() const
 {
     return m_imports;
+}
+
+bool SymbolFileParser::cOutput() const
+{
+    return m_cOutput;
+}
+
+String SymbolFileParser::exportedType(const String& var) const
+{
+    auto type = m_exportTypes.get(var);
+    if (type)
+        return { type->data(), type->length() };
+
+    return {};
 }
 
 void SymbolFileParser::output68kRegisters()
@@ -130,17 +149,37 @@ void SymbolFileParser::output68kRegisters()
 
 void SymbolFileParser::outputExports()
 {
+    char buf[256];
+    int len = 0;
+
+    auto write = [&](const String& str) {
+        assert(len + str.length() < sizeof(buf));
+        str.copy(buf + len);
+        len += str.length();
+    };
+
     for (const auto& exp : m_exportEntries) {
+        if (exp.prefix.length() + exp.type.length() + 20 >= sizeof(buf))
+            error("export \"" + exp.symbol.string() + "\" too long");
+
+        len = 0;
+
         xfwrite("    extern ");
 
         if (exp.function || exp.functionPointer)
-            outputExportFunction(exp);
-        else {
-            outputExportVariable(exp);
-        }
+            getExportFunctionDeclaration(exp, write);
+        else
+            getExportVariableDeclaration(exp, write);
+
+        xfwrite(buf, len);
+
+        if (m_cOutput)
+            m_exportTypes.add(exp.symbol, buf, len);
 
         xfwrite(";\n");
     }
+
+    m_exportTypes.seal();
 }
 
 void SymbolFileParser::outputImports()
@@ -169,26 +208,37 @@ void SymbolFileParser::outputImports()
     xfwrite("}\n");
 }
 
-void SymbolFileParser::outputExportFunction(const ExportEntry& exp)
+void SymbolFileParser::outputContiguousCTableInclude()
+{
+    if (m_cOutput) {
+        char buf[256];
+        auto len = sprintf(buf, "\n#include \"%s\"", Util::kTablesHeaderName);
+        xfwrite(buf, len);
+    }
+}
+
+template <typename F>
+void SymbolFileParser::getExportFunctionDeclaration(const ExportEntry& exp, F write)
 {
     assert(exp.function || exp.functionPointer);
 
-    xfwrite("void ");
+    write("void ");
 
     if (exp.functionPointer)
-        xfwrite("(*");
+        write("(*");
 
     if (!exp.prefix.empty())
-        xfwrite(exp.prefix);
-    xfwrite(exp.symbol);
+        write(exp.prefix);
+    write(exp.symbol);
 
     if (exp.functionPointer)
-        xfwrite(")");
+        write(")");
 
-    xfwrite("()");
+    write("()");
 }
 
-void SymbolFileParser::outputExportVariable(const ExportEntry& exp)
+template <typename F>
+void SymbolFileParser::getExportVariableDeclaration(const ExportEntry& exp, F write)
 {
     assert(!exp.function && !exp.functionPointer);
 
@@ -202,29 +252,29 @@ void SymbolFileParser::outputExportVariable(const ExportEntry& exp)
         charsToRemove = 3;
     }
 
-    xfwrite(exp.type.substr(0, exp.type.length() - charsToRemove));
+    write(exp.type.substr(0, exp.type.length() - charsToRemove));
 
     if (!isPointer)
-        xfwrite(" ");
+        write(" ");
 
     if (needsParens)
-        xfwrite("(*");
+        write("(*");
 
     if (!exp.prefix.empty())
-        xfwrite(exp.prefix);
-    xfwrite(exp.symbol);
+        write(exp.prefix);
+    write(exp.symbol);
 
     if (needsParens)
-        xfwrite(")");
+        write(")");
 
     if (exp.trailingArray)
-        xfwrite("[]");
+        write("[]");
 
     if (exp.array) {
-        xfwrite("[");
+        write("[");
         if (!exp.arraySize.empty())
-            xfwrite(exp.arraySize);
-        xfwrite("]");
+            write(exp.arraySize);
+        write("]");
     }
 }
 
@@ -332,6 +382,10 @@ void SymbolFileParser::parseSymbolFile()
                         m_symbolTable.addSymbolAction(symStart, symEnd, kRemove | kRemoveSolo, nullptr, 0);
                     }
                 } else if (action == kSaveCppRegisters || action == kOnEnter) {
+                    // makes no sense to save virtual registers since C++ code won't use them
+                    if (action == kSaveCppRegisters && m_cOutput)
+                        continue;
+
                     m_symbolTable.addSymbolAction(symStart, symEnd, action);
                     if (action == kOnEnter) {
                         char buf[256];

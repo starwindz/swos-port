@@ -27,3 +27,8 @@
 #include "swos.h"
 #include "swossym.h"
 #include "log.h"
+
+#ifdef SWOS_VM
+# include "vm.h"
+# define __declspec(naked)
+#endif

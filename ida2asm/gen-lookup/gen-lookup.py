@@ -12,6 +12,8 @@ kTokenTypeEnumFilename = 'TokenTypeEnum.h'
 kLineBreakLimit = 120
 kNumTestLoops = 1500
 
+kNoBreakMarker = '$no-break'
+
 def makePath(*args, **kwargs):
     return os.path.abspath(os.path.join(*args, **kwargs))
 
@@ -218,7 +220,7 @@ static const char *parseNumber(const char *src, char *dst, Token& token)
         if (!isDigit(src[1])) {
             *dst = *src;
             token.type = *src == '+' ? Token::T_PLUS : Token::T_MINUS;
-            token.category = Token::Operator;
+            token.category = Token::kOperator;
             token.textLength = 1;
             return src + 1;
         }
@@ -277,7 +279,7 @@ static const char *parseDup(const char *src, char *dst, Token& token)
     assert(src[0] == 'd' && src[1] == 'u' && src[2] == 'p' && src[3] == '(' && src[4] != ')');
 
     src += 4;
-    token.category = Token::Dup;
+    token.category = Token::kDup;
 
     // IDA 7.0 adds spaces sometimes
     while (Util::isSpace(*src))
@@ -309,7 +311,7 @@ static const char *parseDup(const char *src, char *dst, Token& token)
         if (*src == ')')
             *dst++ = *src++;
 
-        token.category = Token::Id;
+        token.category = Token::kId;
         token.type = Token::T_ID;
         token.textLength = src - start;
         token.hash = Util::hash(start, token.textLength);
@@ -328,7 +330,7 @@ static const char *parseId(const char *start, const char *src, char *dst, Token&
     while (!isDelimiter(*src))
         *dst++ = *src++;
 
-    token.category = Token::Id;
+    token.category = Token::kId;
     token.type = Token::T_ID;
     token.textLength = src - start;
     token.hash = Util::hash(start, token.textLength);
@@ -342,7 +344,7 @@ def lookupTokenPrologue():
     }} else if (*p == '{ch}') {{
         token.type = Token::{type};
         token.textLength = 1;
-        token.category = Token::Operator;
+        token.category = Token::kOperator;
         *id = '{ch}';
         return p + 1;'''
 
@@ -358,12 +360,12 @@ def lookupTokenPrologue():
     if (*p == '\r' || *p == '\n' ) {
         token.type = Token::T_NL;
         token.textLength = 2;
-        token.category = Token::Whitespace;
+        token.category = Token::kWhitespace;
         *id++ = '\r';
         *id = '\n';
         return p + 1 + (p[1] == '\n');
     } else if (isNumberStart(*p)) {
-        token.category = Token::Number;
+        token.category = Token::kNumber;
         return parseNumber(p, id, token);''' + \
     op(',', 'T_COMMA') + r'''
     } else if (*p == ';') {
@@ -375,29 +377,41 @@ def lookupTokenPrologue():
             id += p - start;
         }
 
+        auto commentStart = p + 1 + Util::isSpace(p[1]);
+
         for (; *p != '\r'; p++)
             *id++ = *p == '\t' ? ' ' : *p;
 
+        auto commentLength = p - commentStart;
+
         token.textLength = p - start;
-        token.category = Token::Whitespace;
+        token.category = Token::kWhitespace;
+
+        ''' + fr'''if (commentLength == {len(kNoBreakMarker) + 1} && !memcmp(commentStart, "{kNoBreakMarker}", {len(kNoBreakMarker)})) {{
+            switch (commentStart[{len(kNoBreakMarker)}]) {{
+            case '{{': token.noBreakStatus = Token::kStartNoBreak; break;
+            case '}}': token.noBreakStatus = Token::kEndNoBreak; break;
+            default: assert(false);
+            }}
+        }}''' + '\n' + r'''
         return filterComment(start, token);''' + \
     op('[', 'T_LBRACKET') + op(']', 'T_RBRACKET') + op('(', 'T_LPAREN') + op(')', 'T_RPAREN') + r'''
     } else if (*p == '+') {
         // to disambiguate uses of + we will have to regard it as binary operator always, and numbers can't start with it
         token.textLength = 1;
         token.type = Token::T_PLUS;
-        token.category = Token::Operator;
+        token.category = Token::kOperator;
         *id = '+';
         return p + 1;
     } else if (*p == '\'') {
-        token.category = Token::Id;
+        token.category = Token::kId;
         return parseString(p + 1, id, token);
     } else if (p[0] == 'd' && p[1] == 'u' && p[2] == 'p' && p[3] == '(' && p[4] != ')') {
         return parseDup(p, id, token);''' + \
     op('*', 'T_MULT') + '''
     } else if (!*p) {
         token.type = Token::T_EOF;
-        token.category = Token::Eof;
+        token.category = Token::kEof;
         return p;
     } else {
         start = p;
@@ -444,14 +458,14 @@ def outputLookupToken(tokens, useIfs):
         out(indent + f'token.type = Token::{token["type"]};')
         out(indent + 'token.textLength = p - start;')
 
-        if token['category'] == 'Register' and 'subCategory' in token:
+        if token['category'] == 'kRegister' and 'subCategory' in token:
             registerType = token['subCategory']
             out(indent + f'token.registerType = Token::{registerType};')
             out(indent + f'token.registerSize = {str(token["registerSize"])};')
-        elif token['category'] == 'Instruction' and 'subCategory' in token:
+        elif token['category'] == 'kInstruction' and 'subCategory' in token:
             instructionType = token['subCategory']
             out(indent + f'token.instructionType = Token::{instructionType};')
-        elif token['category'] == 'Keyword' and 'subCategory' in token:
+        elif token['category'] == 'kKeyword' and 'subCategory' in token:
             keywordType = token['subCategory']
             out(indent + f'token.keywordType = Token::{keywordType};')
 
@@ -519,7 +533,7 @@ def processInputFile(file):
                 sys.exit(f'Duplicate token {id} found in line {lineNo}')
 
             tokenSet.add(id)
-            tokens.append({ 'type': type, 'id': id, 'category': category[0], 'line': lineNo })
+            tokens.append({ 'type': type, 'id': id, 'category': 'k' + category[0], 'line': lineNo })
 
             if category[0] == 'Register':
                 if len(category) < 3:
@@ -527,7 +541,7 @@ def processInputFile(file):
                 tokens[-1]['registerSize'] = category[2]
 
             if category[1]:
-                tokens[-1]['subCategory'] = category[1]
+                tokens[-1]['subCategory'] = 'k' + category[1]
         lineNo += 1
 
     tokens.sort(key=lambda token: token['id'])
@@ -571,7 +585,7 @@ def outputTestTokens(testTokens):
     for i, token in enumerate(testTokens):
         subCategory = 0
         if 'subCategory' in token:
-            if token['category'] == 'Register':
+            if token['category'] == 'kRegister':
                 subCategory = f'({token["registerSize"]} << 8) | (int)Token::{token["subCategory"]}'
             else:
                 if token['type'] == 'T_ID' or token['type'] == 'T_STRING':
@@ -614,13 +628,33 @@ def outputTestFunction(lookupFunction):
     auto token = reinterpret_cast<Token *>(tokenData);
     constexpr int kMaxDisplayLength = 25;
 
+    auto verifyNoBreakMarker = [](CToken *token) {
+        if (token->type == Token::T_COMMENT) {
+            auto p = token->text();
+            auto len = token->textLength;
+
+            while (Util::isSpace(*p))
+                p++, len--;
+
+            if (len == ''' + f'''{len(kNoBreakMarker) + 1} && !memcmp(p, "{kNoBreakMarker}", len)) {{
+                switch (p[{len(kNoBreakMarker)}])''' + r''' {
+                case '{': return token->noBreakStatus == Token::kStartNoBreak;
+                case '}': return token->noBreakStatus == Token::kEndNoBreak;
+                default: assert(false); return false;
+                }
+            }
+        }
+
+        return true;
+    };
+
     int i = 0;
     for (const auto& expectedToken: kTestTokens) {
         auto prev = p;
         p = ''', end=''); out(lookupFunction, end=''); out(r'''(*token, p);
         if (expectedToken.type != token->type || expectedToken.category != token->category ||
             expectedToken.subCategory != token->instructionType || expectedToken.textLength != token->textLength ||
-            (token->textLength && memcmp(expectedToken.text, token->text(), token->textLength))) {
+            (token->textLength && memcmp(expectedToken.text, token->text(), token->textLength)) || !verifyNoBreakMarker(token)) {
             std::cout << "Test failed at token #" << i << "!\n";
             const auto& str = std::string(prev);
             std::cout << "String: " << str.substr(0, kMaxDisplayLength) << (str.size() <= kMaxDisplayLength ? "" : "...") << '\n';
@@ -645,7 +679,7 @@ def testLookupEpilogue(specificPart):
         p++;
 
     if (*p == '\'') {
-        token.category = Token::Id;
+        token.category = Token::kId;
         return parseString(p + 1, id, token);
     }
 
@@ -679,7 +713,7 @@ def testLookupEpilogue(specificPart):
             break;
         }
         if (token.type != Token::T_NONE) {
-            token.category = Token::Operator;
+            token.category = Token::kOperator;
             return p;
         }
     }
@@ -710,7 +744,7 @@ static const std::unordered_map<std::string, std::tuple<Token::Type, Token::Cate
     for token in tokens:
         subCategory = 0
         if 'subCategory' in token:
-            if token['category'] == 'Register':
+            if token['category'] == 'kRegister':
                 subCategory = f'({token["registerSize"]} << 8) | (int)Token::{token["subCategory"]}'
             else:
                 subCategory = ('Token::' if token['type'] != 'T_ID' else '(int)') + token['subCategory']
@@ -762,7 +796,7 @@ struct Keyword {
         id = token['id']
         subCategory = 0
         if 'subCategory' in token:
-            if token['category'] == 'Register':
+            if token['category'] == 'kRegister':
                 subCategory = f'({token["registerSize"]} << 8) | (int)Token::{token["subCategory"]}'
             else:
                 subCategory = ('Token::' if token['type'] != 'T_ID' else '(int)') + token['subCategory']
@@ -822,7 +856,7 @@ struct GperfToken { const char *name; Token::Type type; Token::Category category
     for token in tokens:
         subCategory = 0
         if 'subCategory' in token:
-            if token['category'] == 'Register':
+            if token['category'] == 'kRegister':
                 subCategory = f'({token["registerSize"]} << 8) | (int)Token::{token["subCategory"]}'
             else:
                 subCategory = ('Token::' if token['type'] != 'T_ID' else '(int)') + token['subCategory']
@@ -920,11 +954,11 @@ def createTestbed(outputDir, tokens, tokenSet, testPerformance):
 
         add = lambda id, type, category, subCategory: testTokens.append(
             { 'id': id, 'type': type, 'category': category, 'subCategory': subCategory })
-        addTestId = lambda id: add(id, 'T_ID', 'Id', str(simpleHash(id)))
-        addTestNumber = lambda num, type: testTokens.append({ 'type': type, 'category': 'Number', 'id': str(num).replace('_', '') })
-        addComment = lambda comment: testTokens.append({ 'type': 'T_COMMENT', 'category': 'Whitespace', 'id': comment.replace(r'\t', ' ') + r'\r\n' })
-        addDup = lambda id, type: testTokens.append({ 'id': id, 'type': type, 'category': 'Dup' })
-        addString = lambda id: testTokens.append({ 'id': id, 'category': 'Id', 'type': 'T_STRING' })
+        addTestId = lambda id: add(id, 'T_ID', 'kId', str(simpleHash(id)))
+        addTestNumber = lambda num, type: testTokens.append({ 'type': type, 'category': 'kNumber', 'id': str(num).replace('_', '') })
+        addComment = lambda comment: testTokens.append({ 'type': 'T_COMMENT', 'category': 'kWhitespace', 'id': comment.replace(r'\t', ' ') + r'\r\n' })
+        addDup = lambda id, type: testTokens.append({ 'id': id, 'type': type, 'category': 'kDup' })
+        addString = lambda id: testTokens.append({ 'id': id, 'category': 'kId', 'type': 'T_STRING' })
 
 
         # some edge-case id's:
@@ -956,15 +990,19 @@ def createTestbed(outputDir, tokens, tokenSet, testPerformance):
         addTestNumber('11b', 'T_BIN')
         addTestNumber('00h', 'T_HEX')
         # comment
-        testTokens.append({ 'id': r'\r\n', 'category': 'Whitespace', 'type': 'T_NL' })
+        testTokens.append({ 'id': r'\r\n', 'category': 'kWhitespace', 'type': 'T_NL' })
         addComment(r' ; -----\t----123+900h-- abcdefgh\t')
+        addComment(r' ; $no-break{')
+        testTokens[-1]['subCategory'] = 'kStartNoBreak'
+        addComment(r' ; $no-break}')
+        testTokens[-1]['subCategory'] = 'kEndNoBreak'
         # struc/union
-        add('struc', 'T_STRUC', 'Keyword', 'StructUnion')
-        add('union', 'T_UNION', 'Keyword', 'StructUnion')
+        add('struc', 'T_STRUC', 'kKeyword', 'kStructUnion')
+        add('union', 'T_UNION', 'kKeyword', 'kStructUnion')
         # data size specifiers
-        add('db', 'T_DB', 'Keyword', 'DataSizeSpecifier')
-        add('dw', 'T_DW', 'Keyword', 'DataSizeSpecifier')
-        add('dd', 'T_DD', 'Keyword', 'DataSizeSpecifier')
+        add('db', 'T_DB', 'kKeyword', 'kDataSizeSpecifier')
+        add('dw', 'T_DW', 'kKeyword', 'kDataSizeSpecifier')
+        add('dd', 'T_DD', 'kKeyword', 'kDataSizeSpecifier')
 
         # generate random strings as IDs
         for i in range(kNumTestLoops):
@@ -1005,20 +1043,20 @@ def createTestbed(outputDir, tokens, tokenSet, testPerformance):
         delimiterTokens = []
 
         # test everything mashed together without whitespace
-        testDelimiters = (('+', 'T_PLUS', 'Operator'), ('b', 'T_ID', 'Id'), ('+', 'T_PLUS', 'Operator'), ('+', 'T_PLUS', 'Operator'),
-            ('-', 'T_MINUS', 'Operator'), ('b', 'T_ID', 'Id'), ('-', 'T_MINUS', 'Operator'), ('-', 'T_MINUS', 'Operator'),
-            ('ebx', 'T_EBX', 'Register'), (',', 'T_COMMA', 'Operator'), ('eax', 'T_EAX', 'Register'), ('[', 'T_LBRACKET', 'Operator'),
-            ('eax', 'T_EAX', 'Register'), ('+', 'T_PLUS', 'Operator'), ('ebx', 'T_EBX', 'Register'), ('*', 'T_MULT', 'Operator'),
-            ('ecx', 'T_ECX', 'Register'), ('-', 'T_MINUS', 'Operator'), ('edx', 'T_EDX', 'Register'), (']', 'T_RBRACKET', 'Operator'),
-            ('esi', 'T_ESI', 'Register'), ('(', 'T_LPAREN', 'Operator'), ('edi', 'T_EDI', 'Register'), (')', 'T_RPAREN', 'Operator'))
+        testDelimiters = (('+', 'T_PLUS', 'kOperator'), ('b', 'T_ID', 'kId'), ('+', 'T_PLUS', 'kOperator'), ('+', 'T_PLUS', 'kOperator'),
+            ('-', 'T_MINUS', 'kOperator'), ('b', 'T_ID', 'kId'), ('-', 'T_MINUS', 'kOperator'), ('-', 'T_MINUS', 'kOperator'),
+            ('ebx', 'T_EBX', 'kRegister'), (',', 'T_COMMA', 'kOperator'), ('eax', 'T_EAX', 'kRegister'), ('[', 'T_LBRACKET', 'kOperator'),
+            ('eax', 'T_EAX', 'kRegister'), ('+', 'T_PLUS', 'kOperator'), ('ebx', 'T_EBX', 'kRegister'), ('*', 'T_MULT', 'kOperator'),
+            ('ecx', 'T_ECX', 'kRegister'), ('-', 'T_MINUS', 'kOperator'), ('edx', 'T_EDX', 'kRegister'), (']', 'T_RBRACKET', 'kOperator'),
+            ('esi', 'T_ESI', 'kRegister'), ('(', 'T_LPAREN', 'kOperator'), ('edi', 'T_EDI', 'kRegister'), (')', 'T_RPAREN', 'kOperator'))
 
         for token in testDelimiters:
             delimitersString += token[0]
             delimiterTokens.append({ 'id': token[0], 'type': token[1], 'category': token[2], })
             if token[1] == 'T_ID':
                 delimiterTokens[-1]['subCategory'] = simpleHash(token[0])
-            elif token[2] == 'Register':
-                delimiterTokens[-1]['subCategory'] = 'GeneralRegister'
+            elif token[2] == 'kRegister':
+                delimiterTokens[-1]['subCategory'] = 'kGeneralRegister'
                 delimiterTokens[-1]['registerSize'] = 4
 
         testString = delimitersString + ' ' + testString
@@ -1052,13 +1090,13 @@ def createTestbed(outputDir, tokens, tokenSet, testPerformance):
             addDup(cleanId, token[1])
             if token[1] == 'T_ID':
                 testTokens[-1]['id'] = token[0]
-                testTokens[-1]['category'] = 'Id'
+                testTokens[-1]['category'] = 'kId'
                 testTokens[-1]['subCategory'] = simpleHash(token[0])
             testString += ' ' + token[0]
 
         # number followed by keyword
         addTestNumber('356', 'T_NUM')
-        add('eax', 'T_EAX', 'Register', 'GeneralRegister')
+        add('eax', 'T_EAX', 'kRegister', 'kGeneralRegister')
         testTokens[-1]['registerSize'] = 4
         testString += ' ' + '356eax'
 
@@ -1069,7 +1107,7 @@ def createTestbed(outputDir, tokens, tokenSet, testPerformance):
 
         for i in range(len(testTokens)):
             if testTokens[i]['type'] == 'T_COMMENT':
-                testTokens.insert(i + 1, { 'id': r'\r\n', 'category': 'Whitespace', 'type': 'T_NL' })
+                testTokens.insert(i + 1, { 'id': r'\r\n', 'category': 'kWhitespace', 'type': 'T_NL' })
                 i += 1
 
         outputTestString(testString)

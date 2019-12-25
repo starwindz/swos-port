@@ -30,6 +30,7 @@ private:
 
     void collectSegments();
     void output(const String& commonPrefix, const AllowedChunkList& activeChunks);
+    void outputContiguousTablesHeader();
     void checkForOutputErrors();
     void checkForUnusedSymbols();
     void outputStructsAndDefines();

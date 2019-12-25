@@ -44,7 +44,7 @@ bool OutputFactory::formatSupported(const char *format)
     return findOutputFormat(format) != nullptr;
 }
 
-std::unique_ptr<OutputWriter> OutputFactory::create(const char *formatStr, const char *path, const SymbolFileParser& symFileParser,
+std::unique_ptr<OutputWriter> OutputFactory::create(const char *formatStr, const char *path, int index, const SymbolFileParser& symFileParser,
     const StructStream& structs, const DefinesMap& defines, const References& references, const OutputItemStream& outputItems)
 {
     auto format = findOutputFormat(formatStr);
@@ -57,7 +57,7 @@ std::unique_ptr<OutputWriter> OutputFactory::create(const char *formatStr, const
     case kMasm:
         return std::make_unique<MasmOutput>(path, symFileParser, structs, defines, references, outputItems);
     case kC:
-        return std::make_unique<COutput>(path, symFileParser, structs, defines, references, outputItems);
+        return std::make_unique<COutput>(path, index, symFileParser, structs, defines, references, outputItems);
     default:
         assert(false);
         return nullptr;

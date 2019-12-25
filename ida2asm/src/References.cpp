@@ -179,7 +179,7 @@ auto References::externs() const -> std::vector<std::tuple<String, ReferenceType
     decltype(externs()) result;
     result.reserve(m_references.count() + kNumAmigaRegisters);
 
-    // make things simply, always import Amiga registers, except if they're defined here
+    // make things simple, always import Amiga registers, except if they're defined here
     for (int i = 0; i < kNumAmigaRegisters; i++)
         if (!m_amigaRegisters[i])
             result.emplace_back(std::make_tuple(indexToAmigaRegister(i), kDword, String()));

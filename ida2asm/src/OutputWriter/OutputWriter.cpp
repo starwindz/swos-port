@@ -114,6 +114,11 @@ void OutputWriter::setOutputPtr(char *ptr)
     m_outPtr = ptr;
 }
 
+void OutputWriter::resetOutputPtr()
+{
+    m_outPtr = m_outBuffer.get();
+}
+
 void OutputWriter::unget(size_t numChars)
 {
     m_outPtr -= numChars;

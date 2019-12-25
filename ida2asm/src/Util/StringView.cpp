@@ -136,6 +136,11 @@ char String::last() const
     return m_length > 0 ? m_str[m_length - 1] : '\0';
 }
 
+char String::secondLast() const
+{
+    return m_length > 1 ? m_str[m_length - 2] : '\0';
+}
+
 String String::withoutLast() const
 {
     assert(m_length > 0);
@@ -147,7 +152,7 @@ int String::toInt() const
     int result = 0;
 
     for (size_t i = 0; i < m_length; i++)
-        result += result * 10 + m_str[i] - '0';
+        result = result * 10 + m_str[i] - '0';
 
     return result;
 }

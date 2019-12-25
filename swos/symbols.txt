@@ -250,7 +250,7 @@ SetExitMenuFlag, function
 CalcMenuEntryAddress, function
 ShowErrorMenu, function
 g_currentMenu, array char[6500]
-g_currentMenuPtr, MenuBase *
+g_currentMenuPtr, BaseMenu *
 previousMenuItem, MenuEntry *
 g_exitMenu, word
 player1ClearFlag, word
@@ -618,8 +618,8 @@ dseg_10E846, word
 dseg_11F41C, word
 dseg_11F41E, word
 coachOrPlayer, word
-plNationality, word
-competitionFileBuffer, array byte
+plNationality, byte
+competitionOver, word
 g_numSelectedTeams, word
 teamsLoaded, word
 poolplyrLoaded, word

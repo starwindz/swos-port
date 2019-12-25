@@ -613,7 +613,7 @@ constexpr int kSingleHighlightBufferSize = 19'000;
 
 // can't keep this a constexpr in C++17 anymore, sigh...
 #if _HAS_CXX17
-static
+static const
 #else
 constexpr
 #endif

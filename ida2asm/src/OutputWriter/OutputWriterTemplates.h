@@ -37,13 +37,13 @@ int out(String str)
     return str.length();
 }
 
-template<>
-int out(decltype(Util::kNewLine) newLine)
+template<size_t N>
+int out(const std::array<char, N>& array)
 {
-    for (auto c : newLine)
+    for (auto c : array)
         out(c);
 
-    return newLine.size();
+    return array.size();
 }
 
 template<>

@@ -7,8 +7,8 @@
 class COutput : public OutputWriter
 {
 public:
-    COutput(const char *path, const SymbolFileParser& symFileParser, const StructStream& structs, const DefinesMap& defines,
-        const References& references, const OutputItemStream& outputItems);
+    COutput(const char *path, int index, const SymbolFileParser& symFileParser, const StructStream& structs,
+        const DefinesMap& defines, const References& references, const OutputItemStream& outputItems);
     void setOutputPrefix(const std::string&) override {}
     void setCImportSymbols(const StringList *syms) override;
     void setCExportSymbols(const StringList *syms) override;
@@ -17,23 +17,31 @@ public:
     const char *getDefsFilename() const override;
     std::string segmentDirective(const TokenRange&) const override { return {}; }
     std::string endSegmentDirective(const TokenRange&) const override { return {}; }
+    std::pair<const char *, size_t> getContiguousVariablesStructData() override;
 
 private:
-    bool outputFile(const char *filename, const char *contents, size_t size);
+    bool outputFile(const char *filename, const char *contents, size_t size, const char *mode = "wb");
     bool outputVmFiles();
 
     void outputStructs();
     void outputStruct(Struct& struc);
+    void outputTableStructs();
 
     bool outputExterns();
 
     void outputDefines();
     void outputCodeAndData();
 
-    void outputForwardDeclarationsAndTagLabels();
+    void runFirstPass();
 
     void outputInstruction(const Instruction *instruction);
-    void outputDataItem(const DataItem *item, const OutputItem *nextItem, bool onlyDeclare);
+
+    enum DataItemOutputFormat { kDefine, kDeclare, kDeclareExtern, kValueOnly };
+    const OutputItem *outputDataItem(const OutputItem *item, DataItemOutputFormat format, bool checkTableVar = false);
+    void outputDataItemValue(const OutputItem *item, bool isOffset);
+    bool canConsumeItem(const OutputItem *prev, const OutputItem *item) const;
+    bool isString(const DataItem *item);
+
     void outputItem(const DataItem::Element *element, bool zeroTerminate);
     void outputProc(const Proc *proc);
     void outputEndProc(const EndProc *endProc, const String& comment, const OutputItem *next);
@@ -91,9 +99,10 @@ private:
 
     using OutputIterator = Iterator::Iterator<const OutputItem>;
     OutputIterator checkForSwitchTable(OutputIterator it, const Instruction *instruction);
-    OutputIterator checkForSwitchTable(OutputIterator it, const DataItem *dataItem);
+    const OutputItem *checkForSwitchTable(const OutputItem *item, const DataItem *dataItem);
 
     void fillStructInfo();
+    void resetAutoDataIndex();
     bool isFinalRetn(const OutputItem& item);
     bool isLastLineEmpty() const;
     void outputOriginalInstructionComment(const Instruction *instruction, const char *start);
@@ -101,32 +110,42 @@ private:
     size_t getLineLength(const char *start);
     void outputComment(const String& comment, bool endWithNewLine = true);
     void outputFunctionInvoke(const String& target);
-    size_t getDataItemArraySize(const DataItem *item);
+    size_t getDataItemArraySize(const OutputItem *item);
 
     struct OperandInfo {
         String base;
         String offset;
         String displacement;
         String scale;
-        bool address = false;
-        bool pointer = false;
         size_t size = 0;
         Token::Type baseType;
         Token::Type offsetType;
         Token::Type displacementType;
+        bool address = false;
+        bool pointer = false;
+        bool dereference = false;
+        bool structField = false;
+        bool straightReg = false;
+        bool forceAddress = false;
     };
     using InstructionOperandsInfo = std::array<OperandInfo, 3>;
 
-    void ensureFunction();
+    void initTableVariables();
+    bool isTableVar(const OutputItem *item);
+    int getGlobalTableIndex(int localIndex);
+
     void outputInstructionArgument(const OperandInfo& op, bool assignAddress = false, size_t defaultSize = 0);
     void outputToken(const String& op, Token::Type type, bool isInstruction = true);
     void outputLabel(const String& label);
     InstructionOperandsInfo getOperandsInfo(const Instruction *instruction) const;
+    void fixLocalVariableAccess(InstructionOperandsInfo& opInfo) const;
     void ensureSizeInformation(const Instruction *instruction, InstructionOperandsInfo& opInfo) const;
+    void overrideOrPropagateStructVarSize(InstructionOperandsInfo& opInfo) const;
     size_t getStructVariableSize(const String& structName, const String& fieldName) const;
     String expandStructField(Iterator::Iterator<const Instruction::Operand>& op, OperandInfo& opInfo,
         char *dest, bool forceSearch = false) const;
     bool isSpriteVar(const String& str);
+    size_t getNextAutoVar(char *destBuffer);
 
     struct TypeInfo {
         const char *unsignedType;
@@ -143,24 +162,26 @@ private:
     const StringList *m_cExportSymbols = nullptr;
 
     bool m_insideProc = false;
-    int m_autoGeneratedProcIndex = 0;
     int m_dataIndex = 0;
+    int m_index;
 
-    class SizeAndOffsetHolder {
-        uint8_t m_offset;
-        uint8_t m_size;
+    class StructFieldInfoHolder {
+        uint16_t m_offset;
+        uint16_t m_size;
     public:
-        SizeAndOffsetHolder(size_t offset, size_t size) {
+        StructFieldInfoHolder(size_t offset, size_t size) {
             Util::assignSize(m_offset, offset);
             Util::assignSize(m_size, size);
         }
-        static size_t requiredSize(size_t, size_t) { return sizeof(SizeAndOffsetHolder); }
-        uint8_t offset() const { return m_offset; }
-        uint8_t size() const { return m_size; }
+        static size_t requiredSize(size_t, size_t) { return sizeof(StructFieldInfoHolder); }
+        size_t offset() const { return m_offset; }
+        size_t size() const { return m_size; }
     };
 
-    StringMap<SizeAndOffsetHolder> m_structMap;
+    StringMap<StructFieldInfoHolder> m_structMap;
     StringSet m_inProcLabels;
 
     static const std::vector<String> m_spriteStructVars;
+
+    std::vector<std::pair<const OutputItem *, const OutputItem *>> m_tableVarRanges;
 };

@@ -16,6 +16,7 @@ IdaAsmParser::IdaAsmParser(const SymbolFileParser& symbolFileParser, SymbolTable
 void IdaAsmParser::parse()
 {
     TokenList comments;
+    Token::NoBreakStatus noBreakStatus = Token::kNoBreakNotPresent;
     m_lineNo = 1;
 
     try {
@@ -25,6 +26,11 @@ void IdaAsmParser::parse()
             switch (token->type) {
             case Token::T_COMMENT:
                 comments.push_back(token);
+                noBreakStatus = token->noBreakStatus;
+                if (noBreakStatus == Token::kEndNoBreak && m_outputItems.lastItem()->type() == OutputItem::kDataItem) {
+                    m_outputItems.lastDataItem()->setContiguous();
+                    noBreakStatus = Token::kNoBreakNotPresent;
+                }
                 assert(next < m_tokenizer.end() && next->isNewLine());
                 continue;
 
@@ -40,7 +46,7 @@ void IdaAsmParser::parse()
                     token = parseLabel(token, comments);
                 } else if (token->lastChar() == '=' && token->textLength > 1) {
                     token = parseStackVariable(token, comments);
-                } else if (next->keywordType == Token::StructUnion) {
+                } else if (next->keywordType == Token::kStructUnion) {
                     token = parseStruct(token, comments);
                 } else if (next->type == Token::T_SEGMENT || next->type == Token::T_ENDS) {
                     token = parseSegment(token, comments);
@@ -52,8 +58,9 @@ void IdaAsmParser::parse()
                     token = parseProc(token, comments);
                 } else if (next->type == Token::T_ENDP) {
                     token = parseEndProc(token, comments);
-                } else if (next->category == Token::Keyword && next->keywordType == Token::DataSizeSpecifier || next->isId()) {
-                    token = parseDataItem(token, comments);
+                } else if (next->category == Token::kKeyword && next->keywordType == Token::kDataSizeSpecifier || next->isId()) {
+                    token = parseDataItem(token, comments, noBreakStatus);
+                    noBreakStatus = Token::kNoBreakNotPresent;
                 } else {
                     expectedCustom("something good", token);
                 }
@@ -64,19 +71,19 @@ void IdaAsmParser::parse()
 
             default:
                 switch (token->category) {
-                case Token::Instruction:
+                case Token::kInstruction:
                     token = parseInstruction(token, comments);
                     break;
-                case Token::Ignore:
+                case Token::kIgnore:
                     token = ignoreLine(token);
                     m_lineNo += token->isNewLine();
                     continue;   // careful not to drop accumulated leading comments
-                case Token::Keyword:
+                case Token::kKeyword:
                     if (token->type == Token::T_ALIGN || token->type == Token::T_ASSUME) {
                         token = parseDirective(token, comments);
                         break;
-                    } else if (token->keywordType == Token::DataSizeSpecifier) {
-                        token = parseDataItem(token, comments);
+                    } else if (token->keywordType == Token::kDataSizeSpecifier) {
+                        token = parseDataItem(token, comments, noBreakStatus);
                         break;
                     }
                     // assume fall-through
@@ -181,7 +188,7 @@ CToken *IdaAsmParser::skipLeadingEmptyLines()
 
 CToken *IdaAsmParser::parseStruct(CToken *token, TokenList& comments)
 {
-    assert(token && token->next()->keywordType == Token::StructUnion);
+    assert(token && token->next()->keywordType == Token::kStructUnion);
     assert(token->next()->type == Token::T_STRUC || token->next()->type == Token::T_UNION);
 
     int structLine = m_lineNo;
@@ -200,7 +207,7 @@ CToken *IdaAsmParser::parseStruct(CToken *token, TokenList& comments)
     comments.clear();
 
     while (token < m_tokenizer.end()) {
-        if (token->category == Token::Whitespace) {
+        if (token->category == Token::kWhitespace) {
             assert(token->isComment() || token->isNewLine());
             if (token->isNewLine()) {
                 m_lineNo++;
@@ -218,7 +225,7 @@ CToken *IdaAsmParser::parseStruct(CToken *token, TokenList& comments)
             return token->next()->next();
         }
 
-        if (token->category == Token::Register)
+        if (token->category == Token::kRegister)
             error("register names are not allowed as struct members", token);
         else if (*token == "width" || *token == "type" || *token == "name")
             error(std::string(1, '`') + token->string() + "' is not allowed as a struct member", token);
@@ -227,7 +234,7 @@ CToken *IdaAsmParser::parseStruct(CToken *token, TokenList& comments)
         CToken *fieldName{};
 
         // check if it's an anonymous field
-        if (token->category != Token::Keyword || token->keywordType != Token::DataSizeSpecifier) {
+        if (token->category != Token::kKeyword || token->keywordType != Token::kDataSizeSpecifier) {
             fieldName = token;
             advance(token);
         }
@@ -241,11 +248,11 @@ CToken *IdaAsmParser::parseStruct(CToken *token, TokenList& comments)
             size = token->dataSize();
 
         advance(token);
-        if (token->category != Token::Number && (!token->isId() || *token != "?"))
+        if (token->category != Token::kNumber && (!token->isId() || *token != "?"))
             expectedCustom("`?' or size", token);
 
         CToken *dup{};
-        if (token->category == Token::Number) {
+        if (token->category == Token::kNumber) {
             if (type)
                 m_structs.disallowDup();
             dup = token;
@@ -280,7 +287,7 @@ CToken *IdaAsmParser::parseStruct(CToken *token, TokenList& comments)
 
 CToken *IdaAsmParser::parseInstruction(CToken *token, TokenList& comments)
 {
-    assert(token->category == Token::Instruction);
+    assert(token->category == Token::kInstruction);
 
     auto skipToken = checkProcHookInsertion(token);
     if (skipToken)
@@ -288,12 +295,12 @@ CToken *IdaAsmParser::parseInstruction(CToken *token, TokenList& comments)
 
     CToken *prefix{};
 
-    if (token->instructionType == Token::PrefixInstruction) {
+    if (token->instructionType == Token::kPrefixInstruction) {
         prefix = token;
         advance(token);
     }
 
-    if (token->category != Token::Instruction)
+    if (token->category != Token::kInstruction)
         expectedCustom("instruction", token);
 
     auto instructionToken = token;
@@ -315,14 +322,14 @@ CToken *IdaAsmParser::parseInstruction(CToken *token, TokenList& comments)
     };
 
     auto checkBranchSpecifier = [&token, this](const std::string& what, CToken *instruction) {
-        if (instruction->instructionType != Token::BranchInstruction)
+        if (instruction->instructionType != Token::kBranchInstruction)
             error(what + " used with a non-branch instruction " + instruction->string(), token);
     };
 
     while (!token->isNewLine()) {
         switch (token->type) {
         case Token::T_ID:
-            opTypes[operandNo] |= instructionToken->instructionType == Token::BranchInstruction ? Instruction::kLabel : Instruction::kVariable;
+            opTypes[operandNo] |= instructionToken->instructionType == Token::kBranchInstruction ? Instruction::kLabel : Instruction::kVariable;
             // need to look it up to know the size
             // opSizes[operandNo] = 4;
             addOperandToken();
@@ -421,13 +428,13 @@ CToken *IdaAsmParser::parseInstruction(CToken *token, TokenList& comments)
             break;
 
         default:
-            if (token->category == Token::Register) {
+            if (token->category == Token::kRegister) {
                 opTypes[operandNo] |= Instruction::kRegister;
                 // in case it's something like mov al, byte ptr [esi+ecx+35]
                 if (!(opTypes[operandNo] & Instruction::kIndirect))
                     setSize(token->registerSize);
                 addOperandToken();
-            } else if (token->category == Token::Number) {
+            } else if (token->category == Token::kNumber) {
                 opTypes[operandNo] |= Instruction::kLiteral;
                 addOperandToken();
             } else {
@@ -614,7 +621,7 @@ CToken *IdaAsmParser::parseProc(CToken *token, TokenList& comments)
         auto nextToken = getNextSignificantToken(token);
         if (nextToken.first->type == Token::T_INT) {
             auto param = nextToken.first->next();
-            if (param->category == Token::Number && param->parseInt() == 3) {
+            if (param->category == Token::kNumber && param->parseInt() == 3) {
                 // leave it for abort functions
                 if (!m_currentProc->startsWith("Fatal") && !m_currentProc->startsWith("Endless")) {
                     m_lineNo += nextToken.second;
@@ -661,9 +668,9 @@ CToken *IdaAsmParser::parseEndProc(CToken *token, TokenList& comments)
     return token;
 }
 
-CToken *IdaAsmParser::parseDataItem(CToken *token, TokenList& comments)
+CToken *IdaAsmParser::parseDataItem(CToken *token, TokenList& comments, Token::NoBreakStatus noBreakStatus)
 {
-    assert(token->isId() || token->category == Token::Keyword && token->keywordType == Token::DataSizeSpecifier);
+    assert(token->isId() || token->category == Token::kKeyword && token->keywordType == Token::kDataSizeSpecifier);
 
     CToken *name{};
     if (token->isId()) {
@@ -734,6 +741,10 @@ CToken *IdaAsmParser::parseDataItem(CToken *token, TokenList& comments)
     }
 
     m_outputItems.addDataItem(comments, lineComment, name, structName, size);
+
+    if (noBreakStatus != Token::kNoBreakNotPresent)
+        m_outputItems.lastDataItem()->setContiguous();
+
     comments.clear();
 
     while (!token->isNewLine()) {
@@ -760,7 +771,7 @@ CToken *IdaAsmParser::parseDataItem(CToken *token, TokenList& comments)
                 expectNumber(token);
                 offset = token->parseInt();
             }
-        } else if (token->next()->category == Token::Dup) {
+        } else if (token->next()->category == Token::kDup) {
             expectNumber(token);
             dup = token->parseInt();
 
@@ -770,7 +781,7 @@ CToken *IdaAsmParser::parseDataItem(CToken *token, TokenList& comments)
                 addReference(token);
         }
 
-        if (dataElement->category != Token::Id && dataElement->category != Token::Number && dataElement->category != Token::Dup)
+        if (dataElement->category != Token::kId && dataElement->category != Token::kNumber && dataElement->category != Token::kDup)
             expectedCustom("label or numeric constant", dataElement);
 
         m_outputItems.addDataElement(dataElement, isOffset, offset, dup);
@@ -791,7 +802,7 @@ CToken *IdaAsmParser::parseStackVariable(CToken *token, TokenList& comments)
     advance(token);
 
     auto sizeOrStruct = token;
-    if (!token->isId() && (token->category != Token::Keyword || token->keywordType != Token::SizeSpecifier))
+    if (!token->isId() && (token->category != Token::kKeyword || token->keywordType != Token::kSizeSpecifier))
         expectedCustom("size specifier or struct name", token);
     advance(token);
 
@@ -819,7 +830,7 @@ CToken *IdaAsmParser::parseStackVariable(CToken *token, TokenList& comments)
 CToken *IdaAsmParser::ignoreLine(CToken *token)
 {
     // preserve the comment if present
-    while (token->category != Token::Whitespace)
+    while (token->category != Token::kWhitespace)
         advance(token);
 
     return token;
@@ -950,7 +961,7 @@ void IdaAsmParser::addReference(CToken *token, bool sizeOperator)
 void IdaAsmParser::outputNullProc()
 {
     static const char tokenBuff[sizeof(Token) + 4] = {
-        (char)Token::T_RETN, 0, Token::Instruction, Token::BranchInstruction, 0, 0, 0, 4, 0, 0, 0, 'r', 'e', 't', 'n',
+        (char)Token::T_RETN, 0, Token::kInstruction, Token::kBranchInstruction, 0, 0, 0, 4, 0, 0, 0, 'r', 'e', 't', 'n',
     };
     static_assert(sizeof(Token) == 11, "Fix retn token");
     auto retnToken = reinterpret_cast<CToken *>(tokenBuff);
@@ -963,14 +974,14 @@ void IdaAsmParser::outputNullProc()
 CToken *IdaAsmParser::outputSaveCppRegistersInstructions(CToken *token)
 {
     static const char tokenBuff[8 * sizeof(Token) + 4 * 4 + 4 * 3] = {
-        (char)Token::T_PUSH, 0, Token::Instruction, Token::GeneralInstruction, 0, 0, 0, 4, 0, 0, 0, 'p', 'u', 's', 'h',
-        (char)Token::T_EBX, 0, Token::Register, Token::GeneralRegister, 0, 0, 0, 3, 0, 0, 0, 'e', 'b', 'x',
-        (char)Token::T_PUSH, 0, Token::Instruction, Token::GeneralInstruction, 0, 0, 0, 4, 0, 0, 0, 'p', 'u', 's', 'h',
-        (char)Token::T_ESI, 0, Token::Register, Token::GeneralRegister, 0, 0, 0, 3, 0, 0, 0, 'e', 's', 'i',
-        (char)Token::T_PUSH, 0, Token::Instruction, Token::GeneralInstruction, 0, 0, 0, 4, 0, 0, 0, 'p', 'u', 's', 'h',
-        (char)Token::T_EDI, 0, Token::Register, Token::GeneralRegister, 0, 0, 0, 3, 0, 0, 0, 'e', 'd', 'i',
-        (char)Token::T_PUSH, 0, Token::Instruction, Token::GeneralInstruction, 0, 0, 0, 4, 0, 0, 0, 'p', 'u', 's', 'h',
-        (char)Token::T_EBP, 0, Token::Register, Token::GeneralRegister, 0, 0, 0, 3, 0, 0, 0, 'e', 'b', 'p',
+        (char)Token::T_PUSH, 0, Token::kInstruction, Token::kGeneralInstruction, 0, 0, 0, 4, 0, 0, 0, 'p', 'u', 's', 'h',
+        (char)Token::T_EBX, 0, Token::kRegister, Token::kGeneralRegister, 0, 0, 0, 3, 0, 0, 0, 'e', 'b', 'x',
+        (char)Token::T_PUSH, 0, Token::kInstruction, Token::kGeneralInstruction, 0, 0, 0, 4, 0, 0, 0, 'p', 'u', 's', 'h',
+        (char)Token::T_ESI, 0, Token::kRegister, Token::kGeneralRegister, 0, 0, 0, 3, 0, 0, 0, 'e', 's', 'i',
+        (char)Token::T_PUSH, 0, Token::kInstruction, Token::kGeneralInstruction, 0, 0, 0, 4, 0, 0, 0, 'p', 'u', 's', 'h',
+        (char)Token::T_EDI, 0, Token::kRegister, Token::kGeneralRegister, 0, 0, 0, 3, 0, 0, 0, 'e', 'd', 'i',
+        (char)Token::T_PUSH, 0, Token::kInstruction, Token::kGeneralInstruction, 0, 0, 0, 4, 0, 0, 0, 'p', 'u', 's', 'h',
+        (char)Token::T_EBP, 0, Token::kRegister, Token::kGeneralRegister, 0, 0, 0, 3, 0, 0, 0, 'e', 'b', 'p',
     };
     static_assert(sizeof(Token) == 11, "Fix save registers tokens");
 
@@ -995,14 +1006,14 @@ CToken *IdaAsmParser::outputSaveCppRegistersInstructions(CToken *token)
 void IdaAsmParser::outputRestoreCppRegistersInstructions()
 {
     static const char tokenBuff[8 * sizeof(Token) + 8 * 3] = {
-        (char)Token::T_POP, 0, Token::Instruction, Token::GeneralInstruction, 0, 0, 0, 3, 0, 0, 0, 'p', 'o', 'p',
-        (char)Token::T_EBP, 0, Token::Register, Token::GeneralRegister, 0, 0, 0, 3, 0, 0, 0, 'e', 'b', 'p',
-        (char)Token::T_POP, 0, Token::Instruction, Token::GeneralInstruction, 0, 0, 0, 3, 0, 0, 0, 'p', 'o', 'p',
-        (char)Token::T_EDI, 0, Token::Register, Token::GeneralRegister, 0, 0, 0, 3, 0, 0, 0, 'e', 'd', 'i',
-        (char)Token::T_POP, 0, Token::Instruction, Token::GeneralInstruction, 0, 0, 0, 3, 0, 0, 0, 'p', 'o', 'p',
-        (char)Token::T_ESI, 0, Token::Register, Token::GeneralRegister, 0, 0, 0, 3, 0, 0, 0, 'e', 's', 'i',
-        (char)Token::T_POP, 0, Token::Instruction, Token::GeneralInstruction, 0, 0, 0, 3, 0, 0, 0, 'p', 'o', 'p',
-        (char)Token::T_EBX, 0, Token::Register, Token::GeneralRegister, 0, 0, 0, 3, 0, 0, 0, 'e', 'b', 'x',
+        (char)Token::T_POP, 0, Token::kInstruction, Token::kGeneralInstruction, 0, 0, 0, 3, 0, 0, 0, 'p', 'o', 'p',
+        (char)Token::T_EBP, 0, Token::kRegister, Token::kGeneralRegister, 0, 0, 0, 3, 0, 0, 0, 'e', 'b', 'p',
+        (char)Token::T_POP, 0, Token::kInstruction, Token::kGeneralInstruction, 0, 0, 0, 3, 0, 0, 0, 'p', 'o', 'p',
+        (char)Token::T_EDI, 0, Token::kRegister, Token::kGeneralRegister, 0, 0, 0, 3, 0, 0, 0, 'e', 'd', 'i',
+        (char)Token::T_POP, 0, Token::kInstruction, Token::kGeneralInstruction, 0, 0, 0, 3, 0, 0, 0, 'p', 'o', 'p',
+        (char)Token::T_ESI, 0, Token::kRegister, Token::kGeneralRegister, 0, 0, 0, 3, 0, 0, 0, 'e', 's', 'i',
+        (char)Token::T_POP, 0, Token::kInstruction, Token::kGeneralInstruction, 0, 0, 0, 3, 0, 0, 0, 'p', 'o', 'p',
+        (char)Token::T_EBX, 0, Token::kRegister, Token::kGeneralRegister, 0, 0, 0, 3, 0, 0, 0, 'e', 'b', 'x',
     };
     static_assert(sizeof(Token) == 11, "Fix restore registers tokens");
 
@@ -1026,8 +1037,8 @@ std::pair<CToken *, CToken *> IdaAsmParser::outputCallInstruction(CToken *token,
     constexpr int kProcNameMaxLength = ProcHookList::kProcNameLength;
 
     static char tokenBuff[2 * sizeof(Token) + 4 + kProcNameMaxLength] = {
-        (char)Token::T_CALL, 0, Token::Instruction, Token::BranchInstruction, 0, 0, 0, 4, 0, 0, 0, 'c', 'a', 'l', 'l',
-        (char)Token::T_ID, 1, Token::Id,
+        (char)Token::T_CALL, 0, Token::kInstruction, Token::kBranchInstruction, 0, 0, 0, 4, 0, 0, 0, 'c', 'a', 'l', 'l',
+        (char)Token::T_ID, 1, Token::kId,
     };
     static_assert(sizeof(Token) == 11, "Fix on enter hook tokens");
 
@@ -1106,7 +1117,7 @@ std::pair<CToken *, size_t> IdaAsmParser::getNextSignificantToken(CToken *token)
 {
     size_t numNewLines = 0;
 
-    while (token->category == Token::Whitespace) {
+    while (token->category == Token::kWhitespace) {
         numNewLines += token->type == Token::T_NL;
         advance(token);
     }
@@ -1123,7 +1134,7 @@ std::pair<CToken *, std::vector<CToken *>> IdaAsmParser::collectComments(CToken 
     auto prev = token;
     advance(token);
 
-    while (token->category == Token::Whitespace) {
+    while (token->category == Token::kWhitespace) {
         comments.push_back(token);
         m_lineNo += token->type == Token::T_NL;
         prev = token;
@@ -1257,7 +1268,7 @@ std::string IdaAsmParser::tokenToString(CToken *token)
 {
     std::string str(token->typeToString());
 
-    if (token->isId() || token->type == Token::T_STRING || token->category == Token::Number)
+    if (token->isId() || token->type == Token::T_STRING || token->category == Token::kNumber)
         str += " `" + token->string() + '\'';
 
     return str;

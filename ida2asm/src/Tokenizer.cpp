@@ -7,7 +7,7 @@ int Token::parseInt() const
 {
     assert(textLength > 0);
     assert(type == Token::T_HEX || type == Token::T_NUM || type == Token::T_BIN);
-    assert(category == Number || category == Dup);
+    assert(category == kNumber || category == kDup);
 
     int value = 0;
 
@@ -204,18 +204,15 @@ auto Tokenizer::determineBlockStart(const TokenRange& limits) -> std::tuple<Bloc
                 }
             }
             token = skipUntilNewLine(token);
-        } else if (token->category == Token::Whitespace) {
-            bool starting;
-            if (isNoBreakMarker(token, starting)) {
-                if (starting) {
-                    state[kInNoBreakBlock]++;
+        } else if (token->category == Token::kWhitespace) {
+            if (token->noBreakStatus == Token::kStartNoBreak) {
+                state[kInNoBreakBlock]++;
+            } else if (token->noBreakStatus == Token::kEndNoBreak) {
+                if (!state[kInNoBreakBlock]) {
+                    m_start = skipUntilNewLine(token->next())->next();
+                    noBreakContinued = true;
                 } else {
-                    if (!state[kInNoBreakBlock]) {
-                        m_start = skipUntilNewLine(token->next())->next();
-                        noBreakContinued = true;
-                    } else {
-                        state[kInNoBreakBlock]--;
-                    }
+                    state[kInNoBreakBlock]--;
                 }
             } else {
                 if (!comment)
@@ -229,7 +226,7 @@ auto Tokenizer::determineBlockStart(const TokenRange& limits) -> std::tuple<Bloc
                 state[kTrailingDebris] = 1;
 
             if (!state[kSeenLimitCheckpoint]) {
-                bool isInstruction = token->category == Token::Instruction;
+                bool isInstruction = token->category == Token::kInstruction;
                 bool isDataItem = false;
 
                 if (!isInstruction)
@@ -278,24 +275,21 @@ auto Tokenizer::determineBlockEnd(const TokenRange& limits, BlockState state, CT
                         state[kSeenLimitCheckpoint] = 1;
                 }
                 token = skipUntilNewLine(token);
-            } else if (token->category == Token::Whitespace) {
+            } else if (token->category == Token::kWhitespace) {
                 if (!comment)
                     comment = token;
 
-                bool starting;
-                if (isNoBreakMarker(token, starting)) {
-                    if (starting)
-                        state[kInNoBreakBlock]++;
-                    else if (!--state[kInNoBreakBlock])
-                        m_end = skipUntilNewLine(token->next())->next();
-                }
+                if (token->noBreakStatus == Token::kStartNoBreak)
+                    state[kInNoBreakBlock]++;
+                else if (token->noBreakStatus == Token::kEndNoBreak && !--state[kInNoBreakBlock])
+                    m_end = skipUntilNewLine(token->next())->next();
             } else if (token->isEof()) {
                 break;
             } else {
                 comment = nullptr;
 
                 if (!state[kSeenLimitCheckpoint]) {
-                    bool isInstruction = token->category == Token::Instruction;
+                    bool isInstruction = token->category == Token::kInstruction;
                     bool isDataItem = false;
 
                     if (!isInstruction)
@@ -320,35 +314,13 @@ std::pair<bool, CToken *> Tokenizer::isDataItemLine(CToken *token)
     bool result = false;
 
     while (!token->isNewLine()) {
-        if (token->isDataSizeSpecifier() || token->category == Token::Dup || *token == "<>")
+        if (token->isDataSizeSpecifier() || token->category == Token::kDup || *token == "<>")
             result = true;
 
         advance(token);
     }
 
     return { result, token };
-}
-
-bool Tokenizer::isNoBreakMarker(CToken *token, bool& starting)
-{
-    if (!token->isComment())
-        return false;
-
-    const char kBreakMarker[] = { ';', ' ', '$', 'n', 'o', '-', 'b', 'r', 'e', 'a', 'k' };
-
-    if (token->textLength >= sizeof(kBreakMarker) + 1) {
-        size_t i = 0;
-        while (i < token->textLength && token->text()[i] != ';')
-            i++;
-
-        if (token->textLength - i == sizeof(kBreakMarker) + 1 && !memcmp(token->text() + i, kBreakMarker, sizeof(kBreakMarker)) &&
-            (token->endsWith('{') || token->endsWith('}'))) {
-            starting = token->endsWith('{');
-            return true;
-        }
-    }
-
-    return false;
 }
 
 CToken *Tokenizer::skipUntilNewLine(CToken *token)

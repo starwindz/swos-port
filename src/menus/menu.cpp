@@ -238,11 +238,15 @@ void SWOS::ToMainGameLoop()
 
 __declspec(naked) void SWOS::DoUnchainSpriteInMenus_OnEnter()
 {
+#ifdef SWOS_VM
+    g_ecx.all = 0;
+#else
     // only cx is loaded, but later whole ecx is tested; make this right
     _asm {
         xor ecx, ecx
         retn
     }
+#endif
 }
 
 // PrepareMenu
@@ -318,8 +322,7 @@ void SWOS::InitMainMenuStuff()
     coachOrPlayer = 1;
     SetDefaultNameAndSurname();
     plNationality = kEng;       // English is the default
-    competitionFileBuffer[2] = 0;
-    competitionFileBuffer[3] = 0;
+    competitionOver = 0;
     g_numSelectedTeams = 0;
     InitHighestScorersTable();
     teamsLoaded = 0;

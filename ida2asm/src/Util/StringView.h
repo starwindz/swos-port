@@ -41,6 +41,7 @@ public:
     bool endsWith(char c) const;
     char first() const;
     char last() const;
+    char secondLast() const;
     String substr(int from, int len = -1) const;
     String withoutLast() const;
     int toInt() const;
@@ -53,6 +54,7 @@ public:
     bool operator==(const char *str) const;
     bool operator!=(const String& rhs) const { return !operator==(rhs); }
     bool operator!=(char c) const { return !operator==(c); }
+    bool operator!=(const char *str) const { return !operator==(str); }
     bool operator<(const String& rhs) const;
     char operator[](size_t index) const;
     operator std::string() const { return { m_str, m_length }; }

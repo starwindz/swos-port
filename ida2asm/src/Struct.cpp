@@ -223,7 +223,7 @@ void StructStream::addField(CToken *name, size_t byteSize, CToken *comment, CTok
 void StructStream::addComment(CToken *token)
 {
     assert(m_lastStruct);
-    assert(token && token->textLength && token->category == Token::Whitespace);
+    assert(token && token->textLength && token->category == Token::kWhitespace);
 
     m_structs.add(token->textLength);
     m_lastStruct->addComment(token, m_lastField);

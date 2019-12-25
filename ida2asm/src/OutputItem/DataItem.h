@@ -10,6 +10,8 @@ public:
     static size_t requiredSize(CToken *name, CToken *structName);
     static size_t requiredElementSize(CToken *token, int offset);
     void addElement(char *buf, CToken *token, bool isOffset, int offset, size_t dup);
+    bool contiguous() const;
+    void setContiguous();
 
     String name() const;
     String structName() const;
@@ -60,6 +62,8 @@ public:
     Element *begin();
 
 private:
+    static constexpr int kContiguousDataFlag = 0x80;
+
     char *namePtr() const;
     char *structNamePtr() const;
 

@@ -789,6 +789,10 @@ void SWOS::GetKey()
 
 __declspec(naked) void SWOS::JoyKeyOrCtrlPressed()
 {
+#ifdef SWOS_VM
+    auto result = anyInputActive();
+    g_flags.zero = result;
+#else
     __asm {
         push ecx
         call anyInputActive
@@ -796,6 +800,7 @@ __declspec(naked) void SWOS::JoyKeyOrCtrlPressed()
         pop  ecx
         retn
     }
+#endif
 }
 
 static void joySetStatus(word& status, const JoypadValues& values)

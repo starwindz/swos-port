@@ -49,10 +49,10 @@ public:
 
             m_type = token->type;
 
-            if (token->category == Token::Category::Register)
+            if (token->category == Token::Category::kRegister)
                 m_type |= kRegisterBit;
 
-            if (token->category == Token::Category::Number)
+            if (token->category == Token::Category::kNumber)
                 m_type |= kNumericConstantBit;
 
             token->copyText(textPtr());

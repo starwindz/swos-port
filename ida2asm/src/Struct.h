@@ -27,37 +27,30 @@ public:
     bool operator==(const String& str) const;
 
     struct Field {
-        Field(CToken *name, size_t byteSize, CToken *comment, CToken *type, CToken *dup) {
+        Field(CToken *name, size_t elementSize, CToken *comment, CToken *type, CToken *dup) {
             m_size = requiredSize(name, comment, type, dup);
-            Util::assignSize(m_fieldLength, byteSize);
+            Util::assignSize(m_elementSize, elementSize);
 
             constexpr size_t kMax = std::numeric_limits<decltype(m_nameLength)>::max();
-            m_nameLength = 0;
-            if (name) {
-                assert(name->textLength <= kMax);
-                m_nameLength = name->textLength;
-                name->copyText(namePtr());
-            }
 
-            m_typeLength = 0;
-            if (type) {
-                assert(type->textLength <= kMax);
-                m_typeLength = type->textLength;
-                type->copyText(typePtr());
-            }
+            const std::tuple<CToken *, uint8_t *, char * (Field::*)() const> kStringData[] = {
+                { name, &m_nameLength, &Field::namePtr, },
+                { type, &m_typeLength, &Field::typePtr, },
+                { dup, &m_dupValueLength, &Field::dupPtr, },
+                { comment, &m_commentLength, &Field::commentPtr, },
+            };
 
-            m_dupValueLength = 0;
-            if (dup) {
-                assert(dup->textLength <= kMax);
-                m_dupValueLength = dup->textLength;
-                dup->copyText(dupPtr());
-            }
+            for (const auto& data : kStringData) {
+                auto token = std::get<0>(data);
+                auto destLength = std::get<1>(data);
+                auto getBufferFunc = std::get<2>(data);
 
-            m_commentLength = 0;
-            if (comment) {
-                assert(comment->textLength <= kMax);
-                m_commentLength = comment->textLength;
-                comment->copyText(commentPtr());
+                *destLength = 0;
+                if (token) {
+                    assert(token->textLength <= kMax);
+                    *destLength = token->textLength;
+                    token->copyText((this->*getBufferFunc)());
+                }
             }
         }
         static size_t requiredSize(CToken *name, CToken *comment, CToken *type, CToken *dup) {
@@ -68,7 +61,8 @@ public:
             return sizeof(Field) + nameLength + commentLength + typeLength + dupLength;
         }
 
-        size_t byteSize() const { return m_fieldLength; }
+        size_t elementSize() const { return m_elementSize; }
+        size_t byteSize() const { return m_elementSize * (!dup().empty() ? dup().toInt() : 1); }
         Field *next() const { return reinterpret_cast<Field *>((char *)this + m_size); }
         String name() const { return { namePtr(), m_nameLength }; }
         String comment() const { return { commentPtr(), m_commentLength }; }
@@ -82,7 +76,7 @@ public:
         char *commentPtr() const { return dupPtr() + m_dupValueLength; }
 
         uint32_t m_size;
-        uint8_t m_fieldLength;
+        uint8_t m_elementSize;
         uint8_t m_dupValueLength;
         uint8_t m_typeLength;
         uint8_t m_nameLength;

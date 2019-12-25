@@ -16,33 +16,38 @@ struct Token
     };
 
     enum Category : uint8_t {
-        Whitespace,
-        Instruction,
-        Register,
-        Dup,
-        Ignore,
-        Keyword,
-        Operator,
-        Number,
-        Id,
-        Eof,
+        kWhitespace,
+        kInstruction,
+        kRegister,
+        kDup,
+        kIgnore,
+        kKeyword,
+        kOperator,
+        kNumber,
+        kId,
+        kEof,
     };
     // keep as a full 32-bit int value so we can use it for initialization in tests
     enum InstructionType {
-        GeneralInstruction,
-        BranchInstruction,
-        PrefixInstruction,
-        ShiftRotateInstruction,
+        kGeneralInstruction,
+        kBranchInstruction,
+        kPrefixInstruction,
+        kShiftRotateInstruction,
     };
     enum RegisterType : uint8_t {
-        GeneralRegister,
-        SegmentRegister,
+        kGeneralRegister,
+        kSegmentRegister,
     };
     enum KeywordType {
-        GeneralKeyword,
-        StructUnion,
-        SizeSpecifier,
-        DataSizeSpecifier,
+        kGeneralKeyword,
+        kStructUnion,
+        kSizeSpecifier,
+        kDataSizeSpecifier,
+    };
+    enum NoBreakStatus {
+        kNoBreakNotPresent,
+        kStartNoBreak,
+        kEndNoBreak,
     };
 
     inline const char *text() const {
@@ -95,7 +100,7 @@ struct Token
         return type == T_COMMENT;
     }
     inline bool isDataSizeSpecifier() const {
-        return category == Keyword && keywordType == DataSizeSpecifier;
+        return category == kKeyword && keywordType == kDataSizeSpecifier;
     }
     inline bool isNewLine() const {
         return type == T_NL;
@@ -117,7 +122,7 @@ struct Token
     }
     template <size_t N>
     inline bool operator==(const char (&str)[N]) const {
-        return (category == Whitespace || ((category == Keyword || category == Id) && hash == Util::constHash(str))) &&
+        return (category == kWhitespace || ((category == kKeyword || category == kId) && hash == Util::constHash(str))) &&
             textLength == N - 1 && !memcmp(text(), str, N - 1);
     }
     template <size_t N>
@@ -147,6 +152,7 @@ struct Token
             uint8_t registerSize;
         };
         KeywordType keywordType;
+        NoBreakStatus noBreakStatus;
         Util::hash_t hash;
     };
     uint32_t textLength;  // length of text which is trailing the struct
@@ -168,6 +174,8 @@ static inline void advance(Token*& token)
 class Tokenizer
 {
 public:
+    static constexpr char kBreakMarker[] = { ';', ' ', '$', 'n', 'o', '-', 'b', 'r', 'e', 'a', 'k' };
+
     TokenRange tokenize(const char *data, long size, long hardSize = -1);
     std::tuple<std::string, bool, bool> determineBlockLimits(const TokenRange& limits);
     CToken *begin() const;
@@ -181,7 +189,6 @@ private:
     std::pair<BlockState, bool> determineBlockEnd(const TokenRange& limits, BlockState state, CToken *comment);
 
     static std::pair<bool, CToken *> isDataItemLine(CToken *token);
-    static bool isNoBreakMarker(CToken *token, bool& starting);
     static CToken *skipUntilNewLine(CToken *token);
     static Token *makeToken(Token *token, Token::Type type);
 

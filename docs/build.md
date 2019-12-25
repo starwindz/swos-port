@@ -28,20 +28,22 @@ Also corresponding dll's are required to run.
 
 `swos-port` is composed of several inter-dependent projects. Goal of this document is to describe those
 dependencies and their build steps in high-level and give overview to help anyone interested in understanding the
-build system, improving it or creating a better one.
+build system, improving it or creating a better one. However as mentioned this is only a high level overview,
+for complete details Visual Studio build files would need to be consulted.
 
 ## `ida2asm`
 
-Project at the bottom of dependency chain that build first is`ida2asm`. Detailed informations about `ida2asm` can
+Project at the bottom of dependency chain that builds first is`ida2asm`. Detailed informations about `ida2asm` can
 be found [here](ida2asm.md), but in a nutshell it is a tool to convert assembly output from IDA into a real assembly
 file(s) that can be assembled by MASM cleanly without errors.
 
-In order for it to build successfully token lookup function must be generated from Python source file:
-`ida2asm/gen-lookup/gen-lookup.py`. The Python script depends on token list `ida2asm/gen-lookup/tokens.lst`
-and will output `TokenTypeEnum.h` and `TokenLookup.h`.
+First step in building `ida2asm` is to build the token lookup function. It is generated from Python source
+file: `ida2asm/gen-lookup/gen-lookup.py`. The Python script depends on token list `ida2asm/gen-lookup/tokens.lst`
+and will output `TokenTypeEnum.h` and `TokenLookup.h`. Those will contain lookup function used by the
+tokenizer which is a state machine built to recognize tokens from `tokens.lst`.
 
-When successfully built they are included by the rest of C++ sources located in `ida2asm/src`, which are then
-compiled in the usual manner.
+When successfully built these files are included by the rest of C++ sources located in `ida2asm/src`,
+which are then compiled in the usual manner.
 
 ## `token-lookup-tester`
 

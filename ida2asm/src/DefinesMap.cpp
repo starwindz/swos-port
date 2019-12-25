@@ -98,7 +98,7 @@ DefinesMap::DefinesMap(size_t capacity) : m_defines(capacity)
 
 void DefinesMap::add(const TokenList& leadingComments, CToken *comment, CToken *name, CToken *value, bool inverted)
 {
-    assert(name->isId() && value->category == Token::Number);
+    assert(name->isId() && value->category == Token::kNumber);
     m_defines.add(name->text(), name->textLength, name->hash, leadingComments, comment, name, value, inverted);
 }
 

@@ -96,7 +96,7 @@ bool ReplayData::save(const char *filename, bool overwrite)
     fclose(f);
 
     if (!result)
-        logWarn("Failed to save replay file %s", path);
+        logWarn("Failed to save replay file %s", path.c_str());
 
     return result;
 }

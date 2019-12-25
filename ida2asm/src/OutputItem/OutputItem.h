@@ -73,6 +73,7 @@ public:
     void addDirective(const TokenList& leadingComments, CToken *comment, CToken *begin, CToken *end);
     void addSegmentStartOrEnd(const TokenList& leadingComments, CToken *comment, CToken *begin, CToken *end);
     void addTrailingComments(const TokenList& comments);
+    OutputItem *lastItem() const;
     DataItem *lastDataItem() const;
     const Iterator::Iterator<const OutputItem> begin() const;
     const Iterator::Iterator<const OutputItem> end() const;

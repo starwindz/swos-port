@@ -26,11 +26,13 @@ public:
     std::string filename() const;
     const IdaAsmParser& parser() const;
     IdaAsmParser& parser();
+    OutputWriter& outputWriter();
 
 private:
     void resolveLocalReferences();
     void resolveImports();
     void resolveStructsAndDefines(const StructStream& structs, const DefinesMap& defines);
+    void ignoreContiguousTableExterns(const std::vector<const AsmConverterWorker *>& workers);
     std::string segmentsOutput(CToken *openSegment);
     int getPreviousNonCommentLine(int offset) const;
     int getPreviousLine(int offset) const;

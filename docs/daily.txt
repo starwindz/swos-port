@@ -1942,7 +1942,7 @@ earlier:
   compiling errors
 09.12.2019.
 - classified labels properly, no more errors there, fixed bunch of other compiling errors, error count is now
-  at 20-30ish with only 2 knows cases to fix (albeit a bit tricky)
+  at 20-30ish with only 2 known cases to fix (albeit a bit tricky)
 - I slipped with failing to mark some static buffers used by multiple threads as thread local, and was
   getting weird random null bytes in output, but always at numeric offsets converted from struct fields,
   it looked pretty funny ;)
@@ -1964,3 +1964,69 @@ earlier:
 - only one file left to clean... ONE... unless I die first
 - and the damned C converter is finally done, 2.3k lines and about 4x the size of the ASM counterpart
 - only one crash with changes this big... not bad ;)
+14.12.2019.
+- VS build system is too retarded to support different projects building the same files, so I'll just create
+  a separate *.sln to build with generated C files
+- and after numerous ordeals it's finally compiling and building! :)
+- now all that's left is the integration, connecting flags to VM flags, already figured out a nice way, will
+  abstract it with macros and replace all naked ASM (if it's possible ;)), and of course debugging the thing
+15.12.2019.
+- integrated fully with the code (parts that mess with zero flags), now debugging
+- something weird is happening, seems like compiler is moving parts of string pool to non-contiguous memory
+  locations :/
+16.12.2019.
+- trying to force string pool into contiguous block of memory by turning it into a struct; all variables
+  access will be turned into struct fields access; easier said than done ;) plenty of problems, couldn't
+  finish it today, but hopefully it will fall tomorrow
+17.12.2019.
+- after many setbacks finally got the string pool as struct set up, very close to compiling the thing again,
+  now getting 13 (bad luck!) linker errors, type of extern seems to be different than the defined variable
+  for some reason
+- finally fixed string pool, now getting infinite loop :P seems one level of indirection is missing when
+  using brackets, that will have remain for tomorrow
+18.12.2019.
+- was inverting zero flag, oops :)
+- also fixed some indirect access
+- movs/stos/loop instruction were incorrectly implemented: bumping pointer before the write, always
+  incrementing by 1 instead of 1/2/4, and not reflecting pointer increments back to esi/edi
+- something's broken in DoUnchainSpriteInMenus()
+19.12.2019.
+/
+20.12.2019.
+- seems the culprit is invalid offset calculation in structs (mistake in Token::toInt() implementation
+  :facepalm), fixed it and now there's an infinite loop inside bubble sort in InitializeTacticsPositions()
+21.12.2019.
+- carry flag calculation in CMP was wrong, additionally it was in the wrong spot for SUB/ADD (after
+  destination gets updated instead of before)
+- argh more pointer table problems... if they're not contiguous it's gonna crash, I'll have to solve this
+  thing in some kind of generic way
+- some asserts started firing, seems instruction size wasn't being determined correctly when one of the
+  operands was a struct field (e.g. mov eax, [esi + Struct.field] or move [structVar + Struct.field], 42)
+22.12.2019.
+- fixed instruction size
+- realized there will need to be some changes to the architecture to accommodate generic contiguous tables,
+  current hacks simply won't do
+- transforming sources in preparation of contiguous tables gathering, we'll need to mark no-break tokens
+  [done], then create lists of ranges & string sets of removed variables for each chunk, and merge those
+  individual tables into read-only global one (done at resolve reference time) which will be finally used
+  when outputting (so each chunk will have complete information and those ugly tables header per file can
+  be eliminated)
+23.12.2019.
+- very close to finishing the damn contiguous variables support:
+    - created a list of user defined types for externs in input symbol parser
+    - added support to mark data items as contiguous (only start & end), and wired it to parser
+    - ignored externs belonging to other file tables during externs resolution phase
+    - just one global header is created for the structures, right after the output is done (it's a perfect
+      spot as all the information is available and it doesn't parallelize well)
+    - when outputting the file user defined type overrides auto-detected type from the assembly
+        here we have a problem, as types might not match (int variable vs array) and there are also
+        empty array dimensions (can't have those inside structs) + need to debug some
+24.12.2019.
+- it's finally compiling with contiguous variables support!! hallelujah!!! but... it's still crashing :(
+  (we're back to InitializeTacticsPositions())
+- after a long fight got it to run without crashing, but with messed up strings and keyboard not functioning;
+  the problem lies in data alignment, C compiler does whatever it likes with it, lays it out in unpredictable
+  way, while the code assumes it will be contiguous without alignment; the game uses huge number of tables,
+  and marking them manually will be a lot of work, my hope is that some compiler specific switch could be
+  discovered and make this problem go away
+- so either a compiler switch, or shoving _everything_ into structs (ugh)
