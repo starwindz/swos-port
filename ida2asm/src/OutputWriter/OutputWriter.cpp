@@ -109,6 +109,11 @@ char *OutputWriter::getOutputPtr() const
     return m_outPtr;
 }
 
+char OutputWriter::lastOutputChar() const
+{
+    return m_outPtr > m_outBuffer.get() ? m_outPtr[-1] : '\0';
+}
+
 void OutputWriter::setOutputPtr(char *ptr)
 {
     m_outPtr = ptr;
@@ -119,7 +124,7 @@ void OutputWriter::resetOutputPtr()
     m_outPtr = m_outBuffer.get();
 }
 
-void OutputWriter::unget(size_t numChars)
+void OutputWriter::removeOutputChar(size_t numChars /* = 1 */)
 {
     m_outPtr -= numChars;
     assert(m_outPtr >= m_outBuffer.get());

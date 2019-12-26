@@ -141,7 +141,7 @@ DataItem::Element::Element(CToken *token, bool isOffset, int offset, size_t dup)
     }
 }
 
-auto DataItem::Element::next() const -> const Element *
+auto DataItem::Element::next() const -> Element *
 {
     return reinterpret_cast<Element *>((char *)(this + 1) + m_textLength);
 }

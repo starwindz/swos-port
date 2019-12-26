@@ -53,9 +53,10 @@ protected:
     bool save();
     size_t outputLength() const;
     char *getOutputPtr() const;
+    char lastOutputChar() const;
     void setOutputPtr(char *ptr);
     void resetOutputPtr();
-    void unget(size_t numChars);
+    void removeOutputChar(size_t numChars = 1);
 
     std::string m_error;
 

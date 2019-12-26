@@ -37,7 +37,7 @@ public:
     {
     public:
         Element(CToken *token, bool isOffset, int offset, size_t dup);
-        const Element *next() const;
+        Element *next() const;
         String text() const;
         int value() const;
         bool isNumber() const;

@@ -38,8 +38,13 @@ private:
 
     enum DataItemOutputFormat { kDefine, kDeclare, kDeclareExtern, kValueOnly };
     const OutputItem *outputDataItem(const OutputItem *item, DataItemOutputFormat format, bool checkTableVar = false);
-    void outputDataItemValue(const OutputItem *item, bool isOffset);
-    bool canConsumeItem(const OutputItem *prev, const OutputItem *item) const;
+    String getDataItemName(const DataItem *item, char *nameBuff);
+    const OutputItem *findLastBelongingItem(const OutputItem *item);
+    size_t getDataItemArraySize(const OutputItem *first, const OutputItem *last);
+    bool outputDataItemType(const DataItem *dataItem, DataItemOutputFormat format, const String& name, size_t arraySize, bool isOffset);
+    void outputDataItemValue(const OutputItem *item, const OutputItem *lastItem, bool isOffset);
+    bool isZeroInitArray(const OutputItem *item);
+    bool canConsumeItem(size_t size, const OutputItem *item) const;
     bool isString(const DataItem *item);
 
     void outputItem(const DataItem::Element *element, bool zeroTerminate);
@@ -110,7 +115,6 @@ private:
     size_t getLineLength(const char *start);
     void outputComment(const String& comment, bool endWithNewLine = true);
     void outputFunctionInvoke(const String& target);
-    size_t getDataItemArraySize(const OutputItem *item);
 
     struct OperandInfo {
         String base;
@@ -131,7 +135,7 @@ private:
     using InstructionOperandsInfo = std::array<OperandInfo, 3>;
 
     void initTableVariables();
-    bool isTableVar(const OutputItem *item);
+    bool isTableVar(const OutputItem *item) const;
     int getGlobalTableIndex(int localIndex);
 
     void outputInstructionArgument(const OperandInfo& op, bool assignAddress = false, size_t defaultSize = 0);

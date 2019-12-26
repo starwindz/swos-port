@@ -2030,3 +2030,6 @@ earlier:
   and marking them manually will be a lot of work, my hope is that some compiler specific switch could be
   discovered and make this problem go away
 - so either a compiler switch, or shoving _everything_ into structs (ugh)
+25.12.2019.
+- put 68k registers near x86 ones to improve cache coherency
+- implemented multi-line array collapsing into one line, but the menu is still messed up :(
