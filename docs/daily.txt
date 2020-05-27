@@ -2047,3 +2047,89 @@ earlier:
 - going crazy with all the typecasts (from ASM to C++ types in defines for structs vars)
 - fixed text output in menus!! hallelujah! still, keyboard isn't working and menu items aren't rendered
   properly :D
+28.12.2019.
+- found out why controls weren't working: I was actually using keyboard variables from SWOS as if they were
+  contiguous (as a struct) in my code, hihi, just added no-break for now but it'll have to be changed for a
+  new architecture
+- also found out that contiguous variables problem extends to menus (their packed form), for now will detect
+  them and add contiguous flag automatically (have only just started though)
+- a proper solution would require some sort of code layer for accessing the memory (a virtualization of
+  sorts); still have to figure out all the details, and it will take foreva to implement... but this is what
+  will make iOS and Android ports tick
+29.12.2019.
+/
+30.12.2019.
+/
+31.12.2019.
+/
+01.01.2020.
+/
+02.01.2020.
+/
+03.01.2020.
+/
+04.01.2020.
+/
+05.01.2020.
+/
+06.01.2020.
+/
+07.01.2020.
+/
+08.01.2020.
+/
+09.01.2020.
+/
+10.01.2020.
+- did some theorizing on the new memory layer™ technology, it's not all that frightening
+11.01.2020.
+/
+12.01.2020.
+/
+
+....
+
+13.01.2020. - 19.05.2020.
+- big pause period, lots of changes on work, been trying to get into Android development, will continue
+  trying, maybe making a career switch (Kotlin+NDK might give a good edge and allow me to find good remote
+  jobs easier) and all that will most definitely help Android game porting efforts ;)
+
+....
+
+20.05.2020.
+- sorted out game docs a bit, needed to look up some things and realized it's a bit messy
+  it's not easy translating soccer terms, even had to look them up on soccer for dummies :D
+- feels really good to be back in VS2019, it's just so much better than VS2015
+- reversed DoAI() a little bit, on to something here perhaps, but there's more work to be done
+21.05.2020.
+- went through Meson release logs, seems it has improved a lot, will give it another shot
+22.05.2020.
+- today I learned that ARM _does_ support misaligned memory access :O however, it only pertains to modern
+  ones (so it might still crash on older one), there is a performance hit, and some other potential problems,
+  so it should still be avoided
+- Meson is a bit skimpy on the tutorial-style documentation, and I suspect VS support is poor, which would
+  force me to improve it myself and that might take prohibitively long time; instead, I might just create
+  build scripts with ninja in mind, and simply maintain VS project files separately; this might just be
+  satisfactory solution in the short term (and give me time to potentially improve VS support gradually,
+  well, maybe ;))
+23.05.2020.
+- went through Meson manual and source code
+24.05.2020.
+- accomplished massive progress in Meson scripts; will take it in steps:
+    step 1 - win32 version/asm
+    step 2 - win32 version/C
+    step 3 - Android
+    step 4 - iOS
+  so far working on step 1 :) gotta fix up the menu compiler
+25.05.2020.
+- moving forward with Meson scripts, very rough outline is done, now ironing out the quirks, will need to
+  reorganize script locations a bit
+26.05.2020.
+- advanced further, there are some problems with include directory paths, on it atm
+- finally got the Meson Manual book after some shenanigans, thanks Playa! :)
+27.05.2020.
+- oh dear, I seem to have broken career loading... 5 months ago x_x
+  luckily it was a small oversight, just used a wrong register in what was supposed to be a fix for another
+  thing :)
+- added prompt asking the user if they really want to play with the mouse... hopefully this will make
+  getting into the game clearer for the players, so they can let poor Playa breathe a little :)

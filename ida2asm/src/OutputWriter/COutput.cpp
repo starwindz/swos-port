@@ -39,7 +39,7 @@ void COutput::setCExportSymbols(const StringList *syms)
     m_cExportSymbols = syms;
 }
 
-bool COutput::output(OutputFlags flags, CToken *openingSegment /* = nullptr */)
+bool COutput::output(OutputFlags flags, CToken *)
 {
     // we'll need a bigger output buffer to accommodate large number of C statements per line
     int size = 4 * (m_structs.size() + m_defines.size() + m_outputItems.size());

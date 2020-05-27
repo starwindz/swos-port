@@ -380,7 +380,7 @@ static bool isPlayMatchEntry(const MenuEntry *entry)
 
 static void playMatchSelected(int playerNo)
 {
-    if (reinterpret_cast<TeamFile *>(careerTeam)->teamControls == KComputerTeam)
+    if (reinterpret_cast<TeamFile *>(careerTeam)->teamControls == kComputerTeam)
         pl1IsntPlayer = 1;
 
     useColorTable = 0;
@@ -390,10 +390,39 @@ static void playMatchSelected(int playerNo)
     SetExitMenuFlag();
 }
 
+static bool useMouseConfirmation(int playerNo)
+{
+    if (playerNo > 0) {
+        auto controls = getGameControls(playerNo);
+        if (controls == kMouse) {
+            auto useMouse = showContinueAbortPrompt("USE MOUSE CONTROLS", "YES", "NO", {
+                "",
+                "ARE YOU SURE YOU WANT TO PLAY",
+                "THE GAME USING THE MOUSE?",
+                "",
+                "SELECT ''PLAY MATCH'' WITH DESIRED",
+                "CONTROLLER TO USE IT IN THE GAME",
+            });
+
+            if (!useMouse)
+                disableGameControls(playerNo);
+
+            return useMouse;
+        }
+    }
+
+    return true;
+}
+
+// return true if it's a play match entry; if so, menu system backs out and we handle everything in here
 static bool checkForPlayMatchEntry(const MenuEntry *activeEntry)
 {
     if (isPlayMatchEntry(activeEntry)) {
-        int playerNo = matchControlsSelected(activeEntry);
+        int playerNo = matchControlsSelected();
+
+        if (!useMouseConfirmation(playerNo))
+            return true;
+
         updateMatchControls();
 
         if (playerNo >= 0) {

@@ -137,7 +137,7 @@ struct Token
     static size_t tokenListLength(const TokenList& tokenList);
 
     // generated
-    static const char *Token::typeToString(Token::Type type);
+    static const char *typeToString(Token::Type type);
 
     const inline char *typeToString() const {
         return typeToString(type);

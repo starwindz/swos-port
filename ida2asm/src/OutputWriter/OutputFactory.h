@@ -13,7 +13,7 @@ class OutputFactory
 public:
     OutputFactory() = delete;
 
-    static std::string OutputFactory::getSupportedFormats();
+    static std::string getSupportedFormats();
     static bool formatSupported(const char *format);
     static std::unique_ptr<OutputWriter> create(const char *format, const char *path, int index, const SymbolFileParser& symFileParser,
         const StructStream& structs, const DefinesMap& defines, const References& references, const OutputItemStream& outputItems);

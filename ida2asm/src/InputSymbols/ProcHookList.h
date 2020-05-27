@@ -20,9 +20,9 @@ public:
     std::vector<ProcHookItem> getItems();
     String encodeProcHook(const ProcHookItem *begin, const ProcHookItem *end);
 
-    static int getCurrentHookLine(String& procHook);
-    static String getCurrentHookProc(String& procHook);
-    static bool moveToNextHook(String& procHook);
+    static int getCurrentHookLine(const String& procHook);
+    static String getCurrentHookProc(const String& procHook);
+    static bool moveToNextHook(const String& procHook);
 
 private:
 #pragma pack(push, 1)

@@ -166,6 +166,13 @@ Controls getPl2Controls()
     return m_pl2Controls;
 }
 
+Controls getGameControls(int playerNo)
+{
+    assert(playerNo == 1 || playerNo == 2);
+
+    return playerNo == 1 ? m_pl1GameControls : m_pl2GameControls;
+}
+
 void setPl1Controls(Controls controls, int joypadIndex /* = -1 */)
 {
     assert(controls != kJoypad || joypadIndex >= 0 && joypadIndex < getNumJoypads());
@@ -221,6 +228,16 @@ void setPl1GameControls(Controls controls)
 void setPl2GameControls(Controls controls)
 {
     m_pl2GameControls = controls;
+}
+
+void disableGameControls(int playerNo)
+{
+    assert(playerNo == 1 || playerNo == 2);
+
+    if (playerNo == 1)
+        m_pl1GameControls = kNone;
+    else
+        m_pl2GameControls = kNone;
 }
 
 ScanCodes& getPl1ScanCodes()
@@ -686,13 +703,14 @@ static void setControlsSelected(Controls controls, int joypadIndex = -1)
     m_matchControlsFiring.push_back(index);
 }
 
-static bool areControlsFiring(Controls controls, int joypadIndex = -1)
+static bool wereControlsFiring(Controls controls, int joypadIndex = -1)
 {
     int index = getControlsIndex(controls, joypadIndex);
     return std::find(m_matchControlsFiring.begin(), m_matchControlsFiring.end(), index) != m_matchControlsFiring.end();
 }
 
-int matchControlsSelected(const MenuEntry *entry)
+// assign player controls based on the controllers that are currently firing (disregard presses from previous frame)
+int matchControlsSelected()
 {
     assert(m_pl1GameControls == kNone || m_pl2GameControls == kNone);
 
@@ -709,15 +727,15 @@ int matchControlsSelected(const MenuEntry *entry)
         auto playerNo = controlInfo.second;
 
         if (*controls == kNone) {
-            if (otherControls != kKeyboard1 && (controlWord & kFire) && !areControlsFiring(kKeyboard1)) {
+            if (otherControls != kKeyboard1 && (controlWord & kFire) && !wereControlsFiring(kKeyboard1)) {
                 *controls = kKeyboard1;
-            } else if (otherControls != kKeyboard2 && (m_pl2ControlWord & kFire) && !areControlsFiring(kKeyboard2)) {
+            } else if (otherControls != kKeyboard2 && (m_pl2ControlWord & kFire) && !wereControlsFiring(kKeyboard2)) {
                 *controls = kKeyboard2;
-            } else if (otherControls != kMouse && SDL_GetMouseState(nullptr, nullptr) && !areControlsFiring(kMouse)) {
+            } else if (otherControls != kMouse && SDL_GetMouseState(nullptr, nullptr) && !wereControlsFiring(kMouse)) {
                 *controls = kMouse;
             } else {
                 for (int i = 0; i < getNumJoypads(); i++) {
-                    if (otherJoypadIndex != i && getJoypad(i).anyButtonDown() && !areControlsFiring(kJoypad, i)) {
+                    if (otherJoypadIndex != i && getJoypad(i).anyButtonDown() && !wereControlsFiring(kJoypad, i)) {
                         *controls = kJoypad;
                         playerNo == 1 ? setPl1GameJoypadIndex(i) : setPl2GameJoypadIndex(i);
                         logInfo("Player %d playing with joypad %d", playerNo, i);

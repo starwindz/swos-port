@@ -294,7 +294,7 @@ struct TeamStatsData {
 
 enum TeamControls : byte {
     kTeamNotSelected = 0,
-    KComputerTeam = 1,
+    kComputerTeam = 1,
     kPlayerCoach = 2,
     kCoach = 3,
 };

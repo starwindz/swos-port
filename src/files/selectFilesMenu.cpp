@@ -103,7 +103,7 @@ static bool getFilenameAndExtension()
     if (!D1)
         D1 = extensionToCode(selectedFilename);
 
-    return D1 && D1.asPtr()[0];
+    return A0 && A0.asPtr()[0];
 }
 
 // GetFilenameAndExtension

@@ -43,7 +43,7 @@ private:
     CToken *parseStackVariable(CToken *token, TokenList& comments);
     CToken *ignoreLine(CToken *token);
     CToken *handleSymbolActions(SymbolAction action, const String& rangeEnd, CToken *token);
-    void checkProcHookStart(CToken *token, SymbolAction action, String& packedProcData);
+    void checkProcHookStart(CToken *token, SymbolAction action, const String& packedProcData);
     CToken *checkProcHookInsertion(CToken *token);
     bool isLocalVariable(const char *str, size_t len);
     void addReference(CToken *token, bool sizeOperator = false);

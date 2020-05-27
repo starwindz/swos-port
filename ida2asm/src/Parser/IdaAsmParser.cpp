@@ -880,7 +880,7 @@ CToken *IdaAsmParser::handleSymbolActions(SymbolAction action, const String& ran
     return token;
 }
 
-void IdaAsmParser::checkProcHookStart(CToken *token, SymbolAction action, String& packedProcData)
+void IdaAsmParser::checkProcHookStart(CToken *token, SymbolAction action, const String& packedProcData)
 {
     if (action & kInsertCall) {
         verifyHookLine(token);

@@ -46,19 +46,19 @@ String ProcHookList::encodeProcHook(const ProcHookItem *begin, const ProcHookIte
     return { buf, requiredSize };
 }
 
-int ProcHookList::getCurrentHookLine(String& procHook)
+int ProcHookList::getCurrentHookLine(const String& procHook)
 {
     auto hookList = (PackedProcHookList *)procHook.data();
     return hookList->getCurrentLine();
 }
 
-String ProcHookList::getCurrentHookProc(String& procHook)
+String ProcHookList::getCurrentHookProc(const String& procHook)
 {
     auto hookList = (PackedProcHookList *)procHook.data();
     return hookList->getCurrentHookProc();
 }
 
-bool ProcHookList::moveToNextHook(String& procHook)
+bool ProcHookList::moveToNextHook(const String& procHook)
 {
     auto hookList = (PackedProcHookList *)procHook.data();
     return hookList->moveToNextHook();

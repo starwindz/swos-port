@@ -249,6 +249,7 @@ RestorePreviousMenu, function
 SetExitMenuFlag, function
 CalcMenuEntryAddress, function
 ShowErrorMenu, function
+DoContinueAbortMenu, function
 g_currentMenu, array char[6500]
 g_currentMenuPtr, BaseMenu *
 previousMenuItem, MenuEntry *
@@ -678,7 +679,7 @@ gameTime, array byte[4]
 chosenTactics, word
 
 ### debug dump
-breakCameraMode, word
+AI_team_num_maybe, word
 
 
 #

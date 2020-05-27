@@ -20,11 +20,13 @@ enum Controls {
 
 Controls getPl1Controls();
 Controls getPl2Controls();
+Controls getGameControls(int playerNo);
 
 void setPl1Controls(Controls controls, int joypadIndex = -1);
 void setPl2Controls(Controls controls, int joypadIndex = -1);
 void setPl1GameControls(Controls controls);
 void setPl2GameControls(Controls controls);
+void disableGameControls(int playerNo);
 
 ScanCodes& getPl1ScanCodes();
 ScanCodes& getPl2ScanCodes();
@@ -51,7 +53,7 @@ void initGameControls();
 void finishGameControls();
 
 void updateMatchControls();
-int matchControlsSelected(const MenuEntry *activeEntry);
+int matchControlsSelected();
 void resetMatchControls();
 bool gotMousePlayer();
 bool testForPlayerKeys();

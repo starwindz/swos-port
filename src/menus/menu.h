@@ -27,6 +27,40 @@ static inline void showError(const char *error)
     ShowErrorMenu();
 }
 
+static inline bool showContinueAbortPrompt(const char *header, const char *continueText,
+    const char *abortText, const std::vector<const char *>& message)
+{
+//    assert(message.size() < 7);
+
+    A0 = header;
+    A2 = continueText;
+    A3 = abortText;
+
+    char buf[512];
+
+    char numLines = 0;
+    auto p = buf + 1;
+    auto sentinel = buf + sizeof(buf) - 1;
+
+    for (auto line : message) {
+        numLines++;
+        do {
+            if (p >= sentinel)
+                break;
+            *p++ = *line;
+        } while (*line++);
+    }
+
+    *p = '\0';
+    buf[0] = numLines;
+
+    A1 = buf;
+
+    DoContinueAbortMenu();
+
+    return D0 == 0;
+}
+
 static inline Menu *getCurrentMenu()
 {
     return reinterpret_cast<Menu *>(g_currentMenu);

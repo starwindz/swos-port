@@ -231,7 +231,7 @@ void dumpVariables()
 {
     if (m_debugOutput) {
         char buf[256];
-        snprintf(buf, sizeof(buf), "%hd", animPatternsState);
+        snprintf(buf, sizeof(buf), "%hd", AI_team_num_maybe);
         printString(buf, 0, 16, kYellowText, false, ALIGN_LEFT);
     }
 }

@@ -383,6 +383,7 @@ offset:  size:  desc.
                 a single frame
   50       1    fire, = -1 as long as it's pressed, 0 when released
   51       1    current fire, set to 1 very shortly (for one frame)
+                set from pl1ShortFire, joystick fire but only in this cycle
   52       2    ??? (UpdatePlayers ga setuje) (za vreme utakmice nula)
                 ako je razlicito od nule, resetuj joy1_short_fire_counter na
                 nulu (za CPU tim)
