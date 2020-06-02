@@ -230,7 +230,7 @@ std::string joinPaths(const char *path1, const char *path2)
     std::string result = path1;
     auto dirSeparator = getDirSeparator();
 
-    if (result.back() != dirSeparator)
+    if (!result.empty() && result.back() != dirSeparator)
         result += dirSeparator;
 
     return result + path2;

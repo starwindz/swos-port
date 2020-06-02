@@ -161,6 +161,8 @@ namespace SWOS_UnitTest
         }
     };
 
+
+    void assertImp(bool expr, const char *exprStr, const char *file, int line);
     bool ignoreAsserts(bool ignored);
 
     class AssertSilencer {

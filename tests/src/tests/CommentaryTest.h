@@ -38,5 +38,5 @@ private:
     void testEndGameCrowdSample();
     void testEndGameComment();
 
-    static const CommentaryTest::EnqueuedSamplesData CommentaryTest::kEnqueuedSamplesData;
+    static const CommentaryTest::EnqueuedSamplesData kEnqueuedSamplesData;
 };

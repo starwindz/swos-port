@@ -25,7 +25,7 @@ static int dummyIntProc(int) { return 0; }
 
 struct EnvSetter {
     EnvSetter() {
-        _putenv("SDL_DYNAMIC_API=" SDL_ADDRESS_FETCHER_DLL);
+        _putenv("SDL_DYNAMIC_API=.\\\\" SDL_ADDRESS_FETCHER_DLL);
     }
 };
 

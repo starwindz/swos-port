@@ -6,9 +6,8 @@ static uint32_t m_tableSize;
 
 BOOL WINAPI DllMain(HINSTANCE, DWORD fdwReason, LPVOID)
 {
-    if (fdwReason == DLL_PROCESS_ATTACH) {
-        _putenv("SDL_DYNAMIC_API=" SDL_ADDRESS_FETCHER_DLL);
-    }
+    if (fdwReason == DLL_PROCESS_ATTACH)
+        _putenv("SDL_DYNAMIC_API=.\\\\" SDL_ADDRESS_FETCHER_DLL);
 
     return TRUE;
 }

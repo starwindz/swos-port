@@ -12,7 +12,7 @@ struct ScanCodes {
     bool has(byte scanCode) const;
     bool hasNullScancode() const;
     void fromArray(const byte *scanCodes);
-    void load(const CSimpleIni& ini, const char *section, const char **keys, const ScanCodes& default);
+    void load(const CSimpleIni& ini, const char *section, const char **keys, const ScanCodes& defaultCodes);
     void save(CSimpleIni& ini, const char *section, const char **keys);
     void log(const char *leading = "");
 };

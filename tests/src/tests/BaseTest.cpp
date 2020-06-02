@@ -95,10 +95,15 @@ auto BaseTest::doRunTests(const TestOptions &options, const TestNamesSet& testLi
     FailureList failures;
     int numTestsRan = 0;
 
+    // wait for C++20 ;)
+    auto testListContains = [&testList](const char *name) {
+        return testList.find(name) != testList.end();
+    };
+
     for (size_t i = 0; i < m_tests.size(); i++) {
         auto test = m_tests[i];
 
-        if (!testList.contains(test->name()))
+        if (!testListContains(test->name()))
             continue;
 
         std::cout << "Running " << test->displayName() << " tests\n  ";
@@ -109,7 +114,7 @@ auto BaseTest::doRunTests(const TestOptions &options, const TestNamesSet& testLi
 
         for (size_t j = 0; j < cases.size(); j++) {
             const auto& testCase = cases[j];
-            if (!testList.contains(testCase.id) && !testList.contains(testCase.name))
+            if (!testListContains(testCase.id) && !testListContains(testCase.name))
                 continue;
 
             for (auto& k = test->m_currentDataIndex = 0; k < testCase.numTests; k++) {

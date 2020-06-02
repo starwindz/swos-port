@@ -207,7 +207,11 @@ class CodeGenerator:
             out(f'    EntryEnd ee{entry.ordinal:02}{{}};')
 
         out('\n    MenuEnd menuEnd{};')
-        out(f'}} static const {menuName};\n')
+        out('}')
+        out(f'#ifndef {kStubIfdef}')
+        out(f'static const {menuName}')
+        out('#endif')
+        out(';')
 
         self.outputMenuVariables(menuName, menu, out)
 

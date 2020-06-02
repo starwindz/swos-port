@@ -2133,3 +2133,55 @@ earlier:
   thing :)
 - added prompt asking the user if they really want to play with the mouse... hopefully this will make
   getting into the game clearer for the players, so they can let poor Playa breathe a little :)
+- finally compiling without errors using Meson, and it even works without crashing!! :D
+  it's only annoying me by recompiling needlessly, will need to find out why's that happening
+- phew, solved it! it seems the problem was in passing absolute paths to Meson; Meson turns path into some
+  weird identifiers for ninja, and when they're absolute they start with C: which ninja eliminates in file
+  name, but not in its internal id, and the result is that it never can find the files after the build (on
+  disk they look something like _blah_blah but ninja is looking for C_blah_blah)
+  had to resort to invoking Python instead of cmd to get the source file paths recursively and in relative
+  form (Python has to be available since it's needed anyway for the build and Meson itself)
+- I'm amazed how elegant ninja build is, quite a slick little software
+- so step 1 of the plan finished, more to come! ;)
+28.05.2020.
+- ops, still need to add tests to the build; on it
+- moved all the Meson scripts to main branch (the test succeeded ;))
+- extended backup script to backup meson build files too, and went back to regular backup scheme
+- replaced cmd calls with Python so the globbing is now portable
+29.05.2020.
+- refactored build scripts a bit, working on tests, it's more difficult than anticipated but it's
+  coming around
+- tests are built!!!
+- but when I ran them, one test was crashing, but only in release version, debug was just fine... after hour+
+  of debugging, eventual inspection of generated code showed that the optimizer was eliminating the code to
+  save selTeamsPtr after it gets overwritten when loading teams from file... for f@#$&! sake (seems even the
+  compiler thinks it's a garbage code)
+- fixed some mistakes in the test code when running without --swos-dir parameter (directly from the game dir)
+- had a hard time fixing up tester in regard to SDL address fetcher DLL, but made it, now the tester fails
+  some tests, but those will have to be dealt with later
+- found a small bug in Meson along the way
+30.05.2020.
+- it's so devilishly difficult to debug non-VS-built executable from VS, but copied Meson-built debug exe
+  and pdb over its, bumped timestamp, pressed F5 and it worked perfectly :D
+- finally made it, tests are passing!! it was some weirdness in the order of the object files sent to the
+  linker: if test files are linked first, SWOS_STUB_MENU_DATA seems to be defined when it shouldn't and
+  stubbed menu routines will be linked in the wrong file (the file that uses the real ones); not really sure
+  why is this happening but rearranging linker order solves it
+- update: I've stopped defining the menu in stubs mode, so now it doesn't depend on the linking order, but
+  it's still a mystery, I don't think it should have happened in the first place
+- generated *.map file and checking it out, quite interesting, we get
+    0005:00005780       ?selectFilesMenu@@3USWOS_Menu_selectFilesMenu@@B 0080f780     selectFilesMenu.obj
+    0005:001475b0       ?selectFilesMenu@@3USWOS_Menu_selectFilesMenu@@B 009515b0     SelectFilesMenuTest.obj
+  the decorated name is the same! could this be a bug in the linker?
+- talked to a friend to see if I'm crazy, turns out I'm not (yet :))
+  tried a minimal example with gcc, it works so it's definitely a MSVC++ bug!
+  updated to latest Visual Studio, they solved it... so much for that :P
+- learned about Meson Filesystem module, and improved the scripts accordingly
+31.05.2020.
+- had an interesting idea, how about making a translation into ARM assembler? it would still have
+  misalignment problem and might not work on older CPUs, but it would be so much faster and simpler than C
+  conversion; will try to make a proof of concept and see if it will work properly without proper alignment
+01.06.2020.
+- there's quite a bit of stuff to read on the ARM architecture and its assembler
+02.06.2020.
+- learning about ARM and its architecture, although haven't managed to read much today

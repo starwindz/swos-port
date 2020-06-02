@@ -325,7 +325,7 @@ bool anyInputActive()
     int numKeys;
     auto keyState = SDL_GetKeyboardState(&numKeys);
 
-    if (std::find(keyState, keyState + numKeys, true) != keyState + numKeys)
+    if (std::find(keyState, keyState + numKeys, 1) != keyState + numKeys)
         return true;
 
     if (pl1UsingJoypad() && getPl1Joypad().handle &&

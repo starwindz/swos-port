@@ -26,10 +26,10 @@ void ScanCodes::fromArray(const byte *scanCodes)
     bench = scanCodes[5];
 }
 
-void ScanCodes::load(const CSimpleIni& ini, const char *section, const char **keys, const ScanCodes& default)
+void ScanCodes::load(const CSimpleIni& ini, const char *section, const char **keys, const ScanCodes& defaultCodes)
 {
-    auto load = [&ini, section](const char *key, long default) {
-        auto keyValue = ini.GetLongValue(section, key, default);
+    auto load = [&ini, section](const char *key, long defaultKey) {
+        auto keyValue = ini.GetLongValue(section, key, defaultKey);
 
         if (keyValue > 255)
             logWarn("Out of range key value (%d) for %s", keyValue, key);
@@ -37,12 +37,12 @@ void ScanCodes::load(const CSimpleIni& ini, const char *section, const char **ke
         return static_cast<byte>(keyValue);
     };
 
-    up = load(keys[0], default.up);
-    down = load(keys[1], default.down);
-    left = load(keys[2], default.left);
-    right = load(keys[3], default.right);
-    fire = load(keys[4], default.fire);
-    bench = load(keys[5], default.bench);
+    up = load(keys[0], defaultCodes.up);
+    down = load(keys[1], defaultCodes.down);
+    left = load(keys[2], defaultCodes.left);
+    right = load(keys[3], defaultCodes.right);
+    fire = load(keys[4], defaultCodes.fire);
+    bench = load(keys[5], defaultCodes.bench);
 }
 
 void ScanCodes::save(CSimpleIni& ini, const char *section, const char **keys) {

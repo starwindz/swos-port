@@ -78,6 +78,9 @@ static bool isFinalComponent(const char *path)
 template<typename F>
 void visitEachPathComponent(const char *path, F f)
 {
+    if (!path || !*path)
+        return;
+
     auto currentComponent = path;
 
     while (currentComponent) {
@@ -174,6 +177,10 @@ void addFakeDirectory(const char *path)
 static std::tuple<int, int, int> findNodeAndParent(const char *path)
 {
     assert(!m_nodes.empty() && m_nodes[0].isDirectory());
+
+    if (path && path[0] == '.' && !path[1])
+        return { 0, -1, -1 };
+
     int currentNodeIndex = 0;
     int parentNodeIndex = -1;
     int childIndex = -1;
@@ -438,7 +445,7 @@ static int loadFakeFile()
 
     const auto& node = m_nodes[nodeIndex];
 
-    auto savedSelTeamsPtr = selTeamsPtr;    // unreal...
+    volatile auto savedSelTeamsPtr = selTeamsPtr;    // unreal... and also optimizer was eliminating it X_X
     memcpy(buffer, node.data, node.size);
     selTeamsPtr = savedSelTeamsPtr;
 

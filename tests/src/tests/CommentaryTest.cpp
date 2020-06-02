@@ -343,7 +343,7 @@ const CommentaryTest::EnqueuedSamplesData CommentaryTest::kEnqueuedSamplesData =
     { &tacticsChangedSampleTimer, PlayTacticsChangeSample, },
 };
 
-const std::array<char *, 5> kEndGameComments = {
+const std::array<const char *, 5> kEndGameComments = {
     "hard\\M406_f_.RAW",
     "hard\\M406_g_.RAW",
     "hard\\M406_h_.RAW",

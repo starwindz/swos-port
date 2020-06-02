@@ -66,4 +66,5 @@ echo "Creating archive: $destPath"
     'tests/sdl-address-table-fetcher/vc-proj/*.vcxproj' 'tests/sdl-address-table-fetcher/vc-proj/*.filters' \
     'tests/src/*' 'tests/vc-proj/*.sln' 'tests/vc-proj/*.vcxproj' 'tests/vc-proj/*.filters' \
     'vc-proj/*.sln' 'vc-proj/*.vcxproj' 'vc-proj/*.user' 'vc-proj/*.filters' \
-    vc-proj/Types.natvis backup.sh README.md
+    tests/meson.build tests/sdl-address-table-fetcher/meson.build \
+    vc-proj/Types.natvis backup.sh README.md meson.build

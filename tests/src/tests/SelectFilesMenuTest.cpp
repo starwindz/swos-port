@@ -196,7 +196,8 @@ void SelectFilesMenuTest::setupLoadCompetitionTest()
     resetFakeFiles();
 
     auto root = rootDir();
-    addFakeDirectory(root.c_str());
+    if (!root.empty())
+        addFakeDirectory(root.c_str());
 
     for (size_t i = 0; i <= m_currentDataIndex >> 1; i++)
         if (kFakeFiles[i].name)
@@ -752,7 +753,7 @@ void SelectFilesMenuTest::testAbortSave()
 
     setupFakeFiles({ "bomb.hil", "tomb.hil", "romb.hil", "zomb.hil" });
 
-    constexpr char *kSaveFilename = "MALI MIKA";
+    constexpr char kSaveFilename[] = "MALI MIKA";
     char saveFilenameBuf[32];
     strcpy(saveFilenameBuf, kSaveFilename);
 

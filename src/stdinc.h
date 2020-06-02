@@ -15,11 +15,17 @@
 #include <condition_variable>
 #include <sys/stat.h>
 
+// prevent name clash of WriteFile that comes from SWOS and a Win32 API function
 #ifdef _WIN32
-#include <Windows.h>
+# define WriteFile Win32WriteFile
 #endif
 
 #include <SimpleIni.h>
+
+#ifdef _WIN32
+# undef WriteFile
+#endif
+
 #include <SDL2/SDL.h>
 #include <SDL_mixer.h>
 

@@ -8,7 +8,7 @@ constexpr int kGameChunkSize = 4'096;
 
 constexpr int kIntroBufferSize = 95256;
 
-constexpr char *kAudioDir = "audio";
+constexpr char kAudioDir[] = "audio";
 
 int getMusicVolume();
 

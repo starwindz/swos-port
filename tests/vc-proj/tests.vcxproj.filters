@@ -91,9 +91,6 @@
     <ClCompile Include="..\src\tests\VideoOptionsMenuTest.cpp">
       <Filter>Source Files\tests</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\video\videoOptionsMenu.cpp">
-      <Filter>Source Files\project-files\menus</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\mocks\mockAudio.cpp">
       <Filter>Source Files\mocks</Filter>
     </ClCompile>
@@ -168,6 +165,9 @@
     </ClCompile>
     <ClCompile Include="..\src\lib\bmpWriter.cpp">
       <Filter>Source Files\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\video\videoOptionsMenu.cpp">
+      <Filter>Source Files\project-files\video</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

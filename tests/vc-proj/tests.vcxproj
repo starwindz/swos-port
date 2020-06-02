@@ -43,14 +43,14 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <IncludePath>..\sdl-address-table-fetcher\src;$(SolutionDir)..\include;$(SolutionDir)..\include\SDL2;$(OutDir);$(SolutionDir)..\include\adlmidi;$(SolutionDir)..\include\crashrpt;$(SolutionDir)..\include\simpleini;$(ProjectDir)..\src;$(ProjectDir)..\src\lib;$(ProjectDir)..\src\tests;$(ProjectDir)..\src\mocks;$(SolutionDir)..\src;$(SolutionDir)..\src\audio;$(SolutionDir)..\src\controls;$(SolutionDir)..\src\debug;$(SolutionDir)..\src\files;$(SolutionDir)..\src\menus;$(SolutionDir)..\src\replays;$(SolutionDir)..\src\sprites;$(SolutionDir)..\src\video;$(SolutionDir)..\src\util;$(SolutionDir)..\tmp\swos-asm;$(SolutionDir)..\tmp\swos-port-$(Configuration);$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)..\tmp\sdl-address-table-fetcher-$(Configuration);$(SolutionDir)..\tmp\swos-port-$(Configuration);..\..\lib\$(Configuration);$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
+    <LibraryPath>$(SolutionDir)..\tmp\sdl-address-table-fetcher-$(Configuration);$(SolutionDir)..\tmp\swos-port-$(Configuration);..\..\lib\windows\$(Configuration);$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
     <IntDir>$(SolutionDir)..\tmp\$(ProjectName)-$(Configuration)\</IntDir>
     <TargetName>$(ProjectName)$(Configuration)</TargetName>
     <OutDir>$(SolutionDir)..\tmp\$(ProjectName)-$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IncludePath>..\sdl-address-table-fetcher\src;$(SolutionDir)..\include;$(SolutionDir)..\include\SDL2;$(OutDir);$(SolutionDir)..\include\adlmidi;$(SolutionDir)..\include\crashrpt;$(SolutionDir)..\include\simpleini;$(ProjectDir)..\src;$(ProjectDir)..\src\lib;$(ProjectDir)..\src\tests;$(ProjectDir)..\src\mocks;$(SolutionDir)..\src;$(SolutionDir)..\src\audio;$(SolutionDir)..\src\controls;$(SolutionDir)..\src\debug;$(SolutionDir)..\src\files;$(SolutionDir)..\src\menus;$(SolutionDir)..\src\replays;$(SolutionDir)..\src\sprites;$(SolutionDir)..\src\video;$(SolutionDir)..\src\util;$(SolutionDir)..\tmp\swos-asm;$(SolutionDir)..\tmp\swos-port-$(Configuration);$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)..\tmp\sdl-address-table-fetcher-$(Configuration);$(SolutionDir)..\tmp\swos-port-$(Configuration);..\..\lib\$(Configuration);$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
+    <LibraryPath>$(SolutionDir)..\tmp\sdl-address-table-fetcher-$(Configuration);$(SolutionDir)..\tmp\swos-port-$(Configuration);..\..\lib\windows\$(Configuration);$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
     <IntDir>$(SolutionDir)..\tmp\$(ProjectName)-$(Configuration)\</IntDir>
     <TargetName>$(ProjectName)$(Configuration)</TargetName>
     <OutDir>$(SolutionDir)..\tmp\$(ProjectName)-$(Configuration)\</OutDir>
@@ -60,7 +60,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>SWOS_TEST;DIRENT_H;DEBUG;SDL_ADDRESS_FETCHER_DLL=".\\SdlAddressTableFetcher.dll";NOMINMAX;_CRT_SECURE_NO_WARNINGS;DECLSPEC=;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>SWOS_TEST;DIRENT_H;DEBUG;SDL_ADDRESS_FETCHER_DLL="SdlAddressTableFetcher.dll";NOMINMAX;_CRT_SECURE_NO_WARNINGS;DECLSPEC=;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>$(SolutionDir)..\src\stdinc.h</PrecompiledHeaderFile>
       <ForcedIncludeFiles>$(SolutionDir)..\src\stdinc.h</ForcedIncludeFiles>
@@ -75,10 +75,11 @@
       <AdditionalDependencies>SdlAddressTableFetcher.lib;SDL2d.lib;SDL2maind.lib;swos-01.obj;swos-02.obj;swos-03.obj;swos-04.obj;swos-05.obj;swos-06.obj;swos-07.obj;swos-08.obj;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+      <GenerateMapFile>true</GenerateMapFile>
     </Link>
     <CustomBuildStep>
-      <Command>
-      </Command>
+      <Command>copy $(SolutionDir)..\tmp\sdl-address-table-fetcher-$(Configuration)\SdlAddressTableFetcher.dll $(OutDir)</Command>
+      <Message>Copying SDL address table fetcher</Message>
     </CustomBuildStep>
     <PostBuildEvent>
       <Command>
@@ -111,6 +112,7 @@
     </Link>
     <CustomBuildStep>
       <Command>copy $(SolutionDir)..\tmp\sdl-address-table-fetcher-$(Configuration)\SdlAddressTableFetcher.dll $(OutDir)</Command>
+      <Message>Copying SDL address table fetcher</Message>
     </CustomBuildStep>
     <PostBuildEvent>
       <Command>

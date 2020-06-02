@@ -589,7 +589,7 @@ CToken *IdaAsmParser::parseProc(CToken *token, TokenList& comments)
     assert(!m_currentProc);
     assert(m_localVars.empty());
 
-    auto& action = m_symbolTable.symbolAction(token);
+    const auto& action = m_symbolTable.symbolAction(token);
 
     if (action.first & kRemoveEndRange)
         clearCollectedOutput(token);
