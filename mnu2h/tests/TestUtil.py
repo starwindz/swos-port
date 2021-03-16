@@ -10,6 +10,53 @@ import TestHelper
 @ddt
 class TestUtil(unittest.TestCase):
     @data(
+        ('switch', 'a swimming pad', True),
+        ('rabbit', 'a fox hunt companion', False),
+        ('private', 'a barbecue stand', True),
+        ('friend', 'a whipping cream', True),
+        ('bubble', 'a form of air transport', False),
+        ('catch', 'a throw', True),
+        ('throw', 'a catch', True),
+        ('whistle', 'a way to catch fish', False),
+        ('int', 'a stamina', True),
+        ('power', 'a fishing tool', False),
+        ('auto', 'a bicycle', True),
+        ('weather', 'an excuse', False),
+        ('import', 'an export', True),
+        ('default', 'a get-out-of-dept for free card', True),
+        ('imaginary', 'an escapism', False),
+        ('float', 'an ocean exploring tool', True),
+        ('this', 'a that', True),
+        ('landing gear', 'a propellant', False),
+        ('module', 'a space station', True),
+        ('case', 'a riot barricade', True),
+        ('bucket', 'an anti-tank armour', False),
+        ('register', 'a breaking and entering tool', True),
+        ('double', 'an errand boy', True),
+        ('union', 'a private enterprise', True),
+    )
+    def testVerifyNonCppKeyword(self, testData):
+        word, context, isCppKeyword = testData
+
+        expectedToken = Token(word, 'heaven', 22)
+        errored = False
+
+        def errorHandler(actualErrorStr, actualToken):
+            self.assertEqual(actualToken, expectedToken)
+
+            expectedErrorStr = f"can't use a C++ keyword `{expectedToken.string}'"
+            if context:
+                expectedErrorStr += f' as {context}'
+            self.assertEqual(actualErrorStr, expectedErrorStr)
+
+            nonlocal errored
+            errored = True
+
+        Util.error = errorHandler
+        Util.verifyNonCppKeyword(expectedToken.string, expectedToken, context)
+        self.assertEqual(isCppKeyword, errored)
+
+    @data(
         (1, 1, -1, 2),
         (1, -1, -1, 0x80000000),
         (1, -1, 5, 32),
@@ -78,6 +125,8 @@ class TestUtil(unittest.TestCase):
         ('a', 'a'),
         ('bat mobile', 'a bat mobile'),
         ('Samurai', 'a Samurai'),
+        ('entry alias', 'an entry alias'),
+        ('canvas', 'a canvas'),
     )
     def testArticle(self, testData):
         self.doInputOuputTest(testData, Util.withArticle)

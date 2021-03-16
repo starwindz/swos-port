@@ -4,13 +4,16 @@ import unittest
 from unittest import mock
 from ddt import ddt, data
 
-from Token import Token
-from Parser import Parser
-from StringTable import StringTable
-from TestHelper import getParserWithData as getParserWithData
-
 import TestHelper
 import Util
+
+from Token import Token
+from StringTable import StringTable
+from TestHelper import getParserWithData
+
+from Parser.Parser import Parser
+from Parser.MenuParser import MenuParser
+from Parser.EntryParser import EntryParser
 
 @ddt
 class TestParser(unittest.TestCase):
@@ -31,6 +34,7 @@ class TestParser(unittest.TestCase):
         ('a =`#include "something"', 2, "directive `include' not allowed in this context"),
         ('a = )', 1, 'unmatched parenthesis'),
         ('a = (5``()', 3, 'unmatched parenthesis'),
+        ('a = #join`(,5,6,")")', 2, 'value to join missing'),
         ('a = (5))', 1, "unexpected `)'"),
         ('a = (((`5`))', 3, "unexpected end of file while looking for a closing parenthesis `)'"),
         ('a = +', 1, 'unexpected end of file'),
@@ -51,6 +55,7 @@ class TestParser(unittest.TestCase):
         ('a`=`"BUT".lower(12 yeees?)', 3, "`yeees' unexpected, only `,' or `)' allowed"),
         ('a`=`"DIP".brmbrm(3,5)', 3, "`brmbrm' is not a known string function"),
         ('a`=`"GOW"[49]', 3, "index 49 out of bounds for string `GOW'"),
+        ('export a`=`"TRD"', 1, 'top-level exports not allowed'),
 
         # menu errors
         ('Menu', 1, 'unexpected end of file while looking for a menu name'),
@@ -62,15 +67,16 @@ class TestParser(unittest.TestCase):
         ('Menu`Tetrahedron`{`export`default = 56 }', 5, "can't use a C++ keyword `default' as an exported variable name"),
         ('Menu Tetrahedron`{ 1 = 2 }', 2, "`1' is not a valid identifier"),
         ('Menu Tetrahedron`{ bomba`.`25 = 2 }', 4, "`25' is not a valid identifier"),
-        ('Menu Tetrahedron`{`export`x: 23 }', 4, "Menu properties can't be exported"),
+        ('Menu Tetrahedron`{`export`x: 23 }', 4, "menu properties can't be exported"),
         ('Menu Tetrahedron`{ myVar = 2`myVar = 3 }', 3, "variable `myVar' redefined"),
         ('Menu Tetrahedron`{ myVar: 2 }', 2, "unknown menu property: `myVar'"),
+        ('Menu Tetrahedron`{ defaultMachine: "wash" }', 2, "unknown menu property: `defaultMachine'"),
         ('Menu Tetrahedron`{ x:` }', 2, "missing property value for `x'"),
         ('Menu Tetrahedron`{ `x `oops }', 4, "expecting menu variable assignment or property, got `oops'"),
         ('Menu Tetrahedron`{`Entry {`width:`@kTextWidth + 3`number: 156 }`}', 3,
             'non-text entry uses @kTextWidth/@kTextHeight constants'),
         ('Menu Tetrahedron`{`Entry {`width:`@kTextWidth + 3`text: "GLITCH"`textFlags: "WOOP-WOOP"}`}', 3,
-            "unable to convert string `\"WOOP-WOOP\"' to integer"),
+            'text flags must be integer'),
         ('Menu Tetrahedron`{`Entry {`stringTable: [ initVar, aStr1, aStr2 ]`width: @kTextWidth`}`}', 3,
             "`aStr1' is not a string, can't measure"),
         ('Menu Tetrahedron`{`Entry sonicBoom`{}`sonicBoom.leftEntry = vastEmptiness`}', 5, "entry `vastEmptiness' undefined"),
@@ -80,6 +86,15 @@ class TestParser(unittest.TestCase):
         ('owie`=`@previousX', 3, 'attempting to use a menu variable outside of a menu'),
         ('#warningsOff`Menu Tetrahedron`{`Entry`BlodyIsland`{}`export`BlodyIsland`=1850`}', 8,
             "can't export constant `BlodyIsland' since there is an entry with same name"),
+        ('Menu Tetrahedron`{`onInit: Capitol`onDraw: swos.PlayerBeginTackling`}', 3,
+         "menu `Tetrahedron' contains mixed type functions"),
+        ('Menu Tetrahedron`{`entryAlias Action = {`}', 3, 'entry name missing'),
+        ('Menu Tetrahedron`{`entryAlias 25 = 26 {`}', 3, "`25' is not a valid identifier"),
+        ('Menu Tetrahedron`{`entryAlias goto = 26 {`}', 3, "can't use a C++ keyword `goto' as an entry alias"),
+        ('Menu Tetrahedron`{`entryAlias Action = Reaction }', 3, "unknown entry: `Reaction'"),
+        ('Menu Tetrahedron`{`entryAlias = Reaction }', 3, 'entry alias missing'),
+        ('Menu Tetrahedron`{`Entry Reaction {}`entryAlias Action = Reaction`entryAlias Action = NonAction }', 5, "entry alias `Action' redefined"),
+        ('Menu Tetrahedron`{`Entry Reaction {}`entryAlias Reaction = Action`}', 4, "entry `Reaction' already exists"),
 
         # entry errors
         ('Menu Tetrahedron { yummie`=`IceCream`.Stracciatella', 3, "`IceCream' is not recognized as an entry name"),
@@ -87,6 +102,7 @@ class TestParser(unittest.TestCase):
         ('Menu Tetrahedron { Entry`{ upEntry: < } }', 2, 'referencing entry before the first one'),
         ('Menu Tetrahedron { Entry`{ downEntry: > } }', 2, 'referencing entry beyond the last one'),
         ('Menu Tetrahedron { Entry`{ downEntry: Loonie } }', 2, "undefined entry reference: `Loonie'"),
+        ('Menu Tetrahedron { Entry`{ downEntry: 1/0 } }', 2, "unable to evaluate: `1/0'"),
         ('Menu Tetrahedron { Entry`Zyx{} Zyx.prp = 156 }', 2, "entry `Zyx' does not have property `prp'"),
         ('Menu Sonny`{ Entry`22 {} }', 3, "`22' is not a valid entry name"),
         ('Menu Sonny`{ Entry`#{23} {} }', 3, "`23' is not a valid entry name"),
@@ -115,9 +131,9 @@ class TestParser(unittest.TestCase):
 
         # function errors
         ('Menu Hightower`{`onInit:', 3, "missing property value for `onInit'"),
-        ('Menu Hightower`{`onInit: else', 3, "can't use a C++ keyword `else' as a name of handler function"),
+        ('Menu Hightower`{`onInit: else', 3, "can't use a C++ keyword `else' as a name of a menu handler function"),
         ('Menu Hightower`{`onInit: ~', 3, 'unexpected end of file while looking for a handler function'),
-        ('Menu Hightower`{`onInit: 25_33', 3, "expected handler function, got `25_33'"),
+        ('Menu Hightower`{`onInit: 25', 3, "expected handler function, got `25'"),
 
         # preprocessor errors
         ('#', 1, 'unexpected end of file'),
@@ -127,13 +143,13 @@ class TestParser(unittest.TestCase):
         ('#include ', 1, 'unexpected end of file while looking for an include filename'),
         ('#include`what?', 2, "expecting quoted file name, got `what'"),
         ('#{201}`:blabla', 2, "invalid format specifier: `blabla'"),
-        ('#{202}`:', 2, 'unexpected end of file while looking for a width specification'),
+        ('#{202}`:', 2, 'unexpected end of file while looking for a format specification'),
         ('#join`(`bob`,`#{203}:+5)', 1, "`bob +203' is not a valid identifier"),
 
         ('#textWidth', 1, "unexpected end of file while looking for `('"),
         ('#textWidth`pft', 2, "expected `(', but got `pft' instead"),
         ('#textWidth(', 1, "unexpected end of file"),
-        ('#textWidth(`blabla', 2, "expected `)', but got `blabla' instead"),
+        ('#textWidth(`blabla', 2, "expected a string, but got `blabla' instead"),
         ('#textWidth(`"SHAWSHANK"', 2, "unexpected end of file while looking for a comma `,' or closing parentheses `)'"),
         ('#textWidth("SHAWSHANK"`eek', 2, "expected `)', but got `eek' instead"),
         ('#textWidth(`"SHAWSHANK"`,', 3, 'unexpected end of file while looking for a font size'),
@@ -142,7 +158,7 @@ class TestParser(unittest.TestCase):
         ('#textHeight', 1, "unexpected end of file while looking for `('"),
         ('#textHeight pft', 1, "expected `(', but got `pft' instead"),
         ('#textHeight(`', 1, "unexpected end of file"),
-        ('#textHeight(blabla', 1, "expected a string, but got `blabla' instead"),
+        ('#textHeight(blabla', 1, "`blabla' is not a numeric value'"),
         ('#textHeight("SHAWSHANK"', 1, "unexpected end of file while looking for a comma `,' or closing parentheses `)'"),
         ('#textHeight(``"SHAWSHANK" eek', 3, "expected `)', but got `eek' instead"),
         ('#textHeight(`"SHAWSHANK",', 2, 'unexpected end of file while looking for a font size'),
@@ -165,9 +181,9 @@ class TestParser(unittest.TestCase):
         ('#{uni3=5}`#repeat`uni1`+`uni2`*`uni3`#endRepeat', 3,
             "repeat count expression must not contain uninitialized variables (`uni1', `uni2')"),
         ('Menu King`{`#repeat`5`Entry`{ x: #i } }', 3, 'unterminated repeat directive'),
-        ('#repeat`+', 2, "unable to convert token `+' to integer"),
-        ('#repeat #+', 1, "unable to convert token `#' to integer"),
-        ('#repeat`#`join(', 2, "unable to convert token `#' to integer"),
+        ('#repeat`+', 2, "unexpected end of file while looking for a primary expression"),
+        ('#repeat #+', 1, "`#' is not a valid operand"),
+        ('#repeat`#`join(', 2, "`#' is not a valid operand"),
         ('bum=23 `#repeat `bum `=>', 4, 'unexpected end of file while looking for a loop variable'),
         ('#repeat `25`=>`join', 4, "`join' is a reserved preprocessor word"),
         ('bum=53 `#repeat `bum `=> `join `#endRepeat', 5, "`join' is a reserved preprocessor word"),
@@ -177,6 +193,7 @@ class TestParser(unittest.TestCase):
         ('#repeat`10`something`#ohNoes', 4, "unknown preprocessor variable `ohNoes'"),
         ('#repeat`11`hmm`#eval`0*0`oops`#endRepeat', 5, "expected `{', but got `0' instead"),
         ('#repeat`14`hmm`#eval{0*0 oops`#endRepeat', 4, "expected `}', but got `oops' instead"),
+        ('#repeat`"ha-ha"`=>`oops`Menu {}#endRepeat', 2, "repeat count must be integer (`ha-ha' given)"),
 
         ('#print', 1, 'missing expression to print'),
         ('#print,', 1, 'missing expression to print'),
@@ -189,18 +206,33 @@ class TestParser(unittest.TestCase):
         ('#{`5`=`25`}', 3, "operator `=' expects lvalue"),
         ('#{`10`/`0`}', 4, 'division by zero'),
         ('#{`i=7,`11`/`(`14`-`i`*`2`)`}', 6, 'division by zero'),
-        ('#{`2`?`}', 4, "unable to convert token `}' to integer"),
+        ('#{`2`?`}', 4, 'unexpected end of expression'),
         ('#{(`2`?`3`:`4`)`=`15`}', 8, "operator `=' expects lvalue"),
-        ('#{`(`}', 3, "unable to convert token `}' to integer"),
-        ('#{`)`}', 2, "unable to convert token `)' to integer"),
-        ('#`{`"OY"`}', 3, 'unable to convert string `"OY"\' to integer'),
-        ('node="LEFT"`#{2`*`node}', 4, "unable to convert token `node' to integer"),
+        ('#{`(`}', 3, 'unexpected end of expression'),
+        ('#{`)`}', 2, "`)' is not a valid operand"),
+        ('#`{`.`}', 3, "`.' is not a valid operand"),
         ('#{5`--`}', 2, "operator `--' expects lvalue"),
         ('#{`i`++`=`88`}', 4, "operator `=' expects lvalue"),
         ('#{`i`=`44`,`(`i`+`16`)`=`33`}', 11, "operator `=' expects lvalue"),
         ('#{(`i`,`70`)`=`77`}', 6, "operator `=' expects lvalue"),
         ('#{(`i`=`5`,`i`=`"10"`)`=`"25"`}', 10, "operator `=' expects lvalue"),
         ('#`{`0`&&', 4, 'unexpected end of file while looking for a primary expression'),
+        ('#`{"star"`/`5}', 3, "operator `/' only operates on integers"),
+        ('#`{5`^`"star"`}', 3, "operator `^' only operates on integers"),
+        ('#`{`"infinity"`*`"zero"}', 4, "invalid operand types (string and string) for operator `*'"),
+        ('a=+""`#`{`a`|`2}', 4, "in variable `a': operator `+' cannot operate on strings"),
+        ('blj=$#{`5 + blj}', 2, "in variable `blj': `$' is not a valid operand"),
+        ('#`{"Clark Kent"[`5`}', 4, "expected `]', but got `}' instead"),
+        ('#`{"Clark Kent"[5 +}', 2, 'unexpected end of expression'),
+        ('#`{"Clark Kent"`[5 + 6)', 3, "expected `]', but got `)' instead"),
+        ('#`{"bla"`[`"truc"]}', 3, "invalid operand types (string and string) for operator `[]'"),
+        ('#`{`:5}', 3, "`5' is not a valid identifier"),
+        ('#`{:}', 2, "`}' is not a valid identifier"),
+        ('#`{`~`"D.O.O."}', 3, "operator `~' cannot operate on strings"),
+        ('#`{`int("heey")`}`', 3, "unable to convert `heey' to integer"),
+        ('a="hats"%"down"#`{`~`9+a}', 4, "in variable `a': operator `%' only operates on integers"),
+        ('a="hats"`b="down"`c=a%b`#{`~`9-c}', 6, "in variable `c': operator `%' only operates on integers"),
+        ('#{`a="string",`a+=a[0],`a|=0xffff}', 4, "operator `|=' only operates on integers"),
     )
     def testParsingErrors(self, testData):
         input, expectedLine, expectedError = testData
@@ -233,8 +265,8 @@ class TestParser(unittest.TestCase):
         ('``pumpItUp', 3, "unexpected end of file while looking for an equal sign (`=')"),
         ('', 0, None),
         ('a = 5', 0, None),
-        ('#{a`=`"0x5a"}', 0, None),
-        ('#{a`=`"a5"}', 3, "unable to convert string `\"a5\"' to integer"),
+        ('#{a`=`0x5a}', 0, None),
+        ('#{a`=`$}', 3, "`$' is not a valid operand"),
     )
     def testIncludes(self, testData):
         kMainInputFile = 'sine'
@@ -270,6 +302,7 @@ class TestParser(unittest.TestCase):
             }
         ),
         ('''#warningsOff
+            whichEntry = 'e2'
             Menu m1
             {
                 onInit: wakeUpInTheMorning
@@ -282,7 +315,7 @@ class TestParser(unittest.TestCase):
                     onSelect: takeMeHome
                     stringTable: [ g_soundOff, aOn, aOff ]
                     downEntry: >
-                    rightEntry: e2
+                    rightEntry: whichEntry + 1 - 1
                 }
 
                 e1.width = 53
@@ -328,6 +361,8 @@ class TestParser(unittest.TestCase):
                 #repeat 3 => entryIndex
                     Entry #join(e, #entryIndex) {
                         y: @prevEndY + 2
+                        width: @currentOrd * 5
+                        textFlags: @previousOrd * 7
                     }
                 #endRepeat
                 Entry numba2 {
@@ -335,12 +370,15 @@ class TestParser(unittest.TestCase):
                     textFlags: @kBigText
                     width: @kTextWidth
                     y: numba1.y
+                    rightEntry: e1 + 9 + e1.width
                 }
                 e0.x = 72
                 e0.upEntry = e1.upEntry
                 e1.upEntry = e0.upEntry
             }
             Menu m3 {
+                onRestore: IamBakckToo
+
                 defaultX: 5
                 defaultY: 6
                 defaultWidth: 11
@@ -353,7 +391,10 @@ class TestParser(unittest.TestCase):
                     color: @kRed
                 }
 
-                Entry krang1 {}
+                Entry krang1 {
+                    leftEntry: @nextOrdinal * 2
+                    rightEntry: @nextOrd * 3
+                }
 
                 ResetTemplate
 
@@ -365,8 +406,21 @@ class TestParser(unittest.TestCase):
                     text: "trick"
                     leftEntry: (5+7)/2*3
                 }
+
+                entryAlias #join(brain, 1) = krang1
+                entryAlias brain2 = #join(krang, 2)
+
+                Entry krang4 {
+                    x: 2 * #join(brain,1).endX - 44
+                    y: brain2.endY + 13
+                    width: 123
+                    upEntry: brain1
+                }
+
+                entryAlias brain4 = krang4
+                brain4.width = 20
             }''', {
-                'func': { 'wakeUpInTheMorning', 'takeMeHome', 'thinkYoureLuckyPunk', 'iJustGotBack' },
+                'func': { 'wakeUpInTheMorning', 'takeMeHome', 'thinkYoureLuckyPunk', 'iJustGotBack', 'IamBakckToo' },
                 'st': {
                     'm1': (
                         ('e1', 'g_soundOff', 0, 'aOn', 'aOff'),
@@ -375,9 +429,10 @@ class TestParser(unittest.TestCase):
                 },
                 'menu': [
                     # default values expansion is delayed, hence it needs to be a string
+                    # menu name/num. entries/total num. entries (including templates)
                     ('m1', 3, 3, { 'onInit': 'wakeUpInTheMorning', 'defaultWidth': '50' }),
                     ('m2', 5, 5, { 'onReturn': 'iJustGotBack', 'y': 23 }),
-                    ('m3', 3, 5, {}),
+                    ('m3', 4, 6, { 'onReturn': 'IamBakckToo' }),
                 ],
                 'entry': {
                     'm1': (
@@ -388,15 +443,16 @@ class TestParser(unittest.TestCase):
                     ),
                     'm2': (
                         ('numba1', (('x', 50), ('y', 25), ('height', 10), ('text', '"Hey you!"'))),
-                        ('e0', (('x', 72), ('y', 37), ('height', 5), ('upEntry', -1))),
-                        ('e1', (('x', 50), ('y', 44), ('height', 5), ('upEntry', -1))),
-                        ('e2', (('x', 50), ('y', 51), ('height', 5))),
-                        ('numba2', (('x', 50), ('y', 25), ('height', 5), ('width', 100))),
+                        ('e0', (('x', 72), ('y', 37), ('width', '1 * 5'), ('height', 5), ('textFlags', '0 * 7'), ('upEntry', -1))),
+                        ('e1', (('x', 50), ('y', 44), ('width', '2 * 5'), ('height', 5), ('textFlags', '1 * 7'), ('upEntry', -1))),
+                        ('e2', (('x', 50), ('y', 51), ('width', '3 * 5'), ('height', 5), ('textFlags', '2 * 7'))),
+                        ('numba2', (('x', 50), ('y', 25), ('height', 5), ('width', 100), ('rightEntry', 21))),
                     ),
                     'm3': (
-                        ('krang1', (('x', '5'), ('y', '6'), ('width', '42'), ('height', '12'), ('color', '0'))),
-                        ('krang2', (('x', '5'), ('y', '6'), ('width', '11'), ('height', '12'), ('color', '14'))),
-                        ('krang3', (('x', '5'), ('y', '6'), ('width', '700'), ('height', '800'), ('color', '14'), ('leftEntry', 18))),
+                        ('krang1', (('x', 5), ('y', 6), ('width', 42), ('height', 12), ('color', 0), ('leftEntry', 2), ('rightEntry', 3))),
+                        ('krang2', (('x', 5), ('y', 6), ('width', 11), ('height', 12), ('color', 14))),
+                        ('krang3', (('x', 5), ('y', 6), ('width', 700), ('height', 800), ('color', 14), ('leftEntry', 18))),
+                        ('krang4', (('x', 50), ('y', 31), ('width', 20))),
                     ),
                 },
             }
@@ -432,7 +488,7 @@ class TestParser(unittest.TestCase):
 
                     self.assertEqual(stringTable.variable, variable)
                     self.assertEqual(stringTable.initialValue, initialValue)
-                    self.assertEqual(stringTable.values, values)
+                    self.assertSequenceEqual(stringTable.values, values)
 
             self.assertEqual(len(actualStringTableLengths), totalStringTables)
 
@@ -467,7 +523,7 @@ class TestParser(unittest.TestCase):
                 for property, expectedValue in entryProperties:
                     self.assertTrue(hasattr(entry, property))
                     actualValue = getattr(entry, property)
-                    if type(actualValue) is str and actualValue.startswith('('):
+                    if isinstance(actualValue, str) and not Util.isString(actualValue) and '(' in actualValue:
                         actualValue = eval(actualValue)
                     self.assertEqual(str(actualValue), str(expectedValue))
 
@@ -482,6 +538,10 @@ class TestParser(unittest.TestCase):
         ('heavenlyBody = @kScreenWidth Menu FlashBack { x: heavenlyBody }', None),
         ('#warningsOff Pirate1 = @kAlloc', None),
         ('#warningsOff Pirate2 = @kAlloc #warningsOn', "unused global variable `Pirate2'"),
+        ('m1=m2 Menu Santana { Entry { x:#{m1+5} } }', "from variable `m1': using uninitialized variable `m2'"),
+        ('a=b+c Menu Santana { Entry { x:#{a+6} } }', "from variable `a': using uninitialized variables: `b', `c'"),
+        ('a=b+c b=3 c=6 Menu Santana { Entry { x:#{a+7+c} } }', None),
+        ('#warningsOff a=b+c Menu Santana { Entry { x:#{a+8} } }', None),
     )
     def testWarnings(self, testData, mockPrint):
         input, expectedWarning = testData
@@ -549,7 +609,9 @@ class TestParser(unittest.TestCase):
             Entry {}
             pOrd1 = @previousOrd
             Entry {}
-            pOrd2 = @prevOrdinal
+            TemplateEntry {}
+            pOrd2 = @currentOrdinal
+            pOrd3 = @prevOrdinal
         }
 
         #join(joined, #join(Hyb, rid), #{3 * dark}, #{dark / 6}) = 100
@@ -560,17 +622,17 @@ class TestParser(unittest.TestCase):
     '''), {
         'globals': (
             ('global', '45'), ('aString', "'Hello, world!'"), ('joinedHybrid181', '100'), ('c', "'t'"),
-            ('global2', '(2 * 45)'), ('last', '(13)'), ('kScreenWidth', '320'), ('kScreenHeight', '200'),
+            ('global2', '2 * (45)'), ('last', '((13))'), ('kScreenWidth', '320'), ('kScreenHeight', '200'),
         ),
         'menu': (
             ('Night', (
                 ('shadows', '1'), ('sun', '0'), ('go', '"Auf Wiedersehen Monty"'), ('alloc', '-1'),
                 ('q_0000', '10'), ('q_0001', '15'), ('hawk', '32'), ('Medjed', '"Bear"'),
-                ('hinge', '(17 + 29)'), ('binge', '92'), ('blob', '(-92)'), ('glob', '(-(-92))'),
+                ('hinge', '((17 + 29))'), ('binge', '92'), ('blob', '(-(92))'), ('glob', '(-((-(92))))'),
             )),
             ('Day', (
                 ('sun', '1'), ('skies', '"Blue"'), ('p_0', '0'), ('p_1', '3'), ('p_2', '6'),
-                ('pOrdInit', '0'), ('pOrd0', '0'), ('pOrd1', '1'), ('pOrd2', '2'),
+                ('pOrdInit', '0'), ('pOrd0', '0'), ('pOrd1', '1'), ('pOrd2', '2'), ('pOrd3', '2')
             )),
         ),
         'preproc': (('dark', 6), ('forTea', 2), ('hybrid', 215)),
@@ -615,54 +677,6 @@ class TestParser(unittest.TestCase):
         self.assertEqual(actualIndex, expectedIndex)
 
     @data(
-        ('switch', 'a swimming pad', True),
-        ('rabbit', 'a fox hunt companion', False),
-        ('private', 'a barbecue stand', True),
-        ('friend', 'a whipping cream', True),
-        ('bubble', 'a form of air transport', False),
-        ('catch', 'a throw', True),
-        ('throw', 'a catch', True),
-        ('whistle', 'a way to catch fish', False),
-        ('int', 'a stamina', True),
-        ('power', 'a fishing tool', False),
-        ('auto', 'a bicycle', True),
-        ('weather', 'an excuse', False),
-        ('import', 'an export', True),
-        ('default', 'a get-out-of-dept for free card', True),
-        ('imaginary', 'an escapism', False),
-        ('float', 'an ocean exploring tool', True),
-        ('this', 'a that', True),
-        ('landing gear', 'a propellant', False),
-        ('module', 'a space station', True),
-        ('case', 'a riot barricade', True),
-        ('bucket', 'an anti-tank armour', False),
-        ('register', 'a breaking and entering tool', True),
-        ('double', 'an errand boy', True),
-        ('union', 'a private enterprise', True),
-    )
-    def testVerifyNonCppKeyword(self, testData):
-        word, context, isCppKeyword = testData
-        parser = getParserWithData()
-
-        expectedToken = Token(word, 'heaven', 22)
-        errored = False
-
-        def errorHandler(actualErrorStr, actualToken):
-            self.assertEqual(actualToken, expectedToken)
-
-            expectedErrorStr = f"can't use a C++ keyword `{expectedToken.string}'"
-            if context:
-                expectedErrorStr += f' as {context}'
-            self.assertEqual(actualErrorStr, expectedErrorStr)
-
-            nonlocal errored
-            errored = True
-
-        parser.error = errorHandler
-        parser.verifyNonCppKeyword(expectedToken, context)
-        self.assertEqual(isCppKeyword, errored)
-
-    @data(
         ('defWidth', 'defaultWidth'),
         ('defaultWidth', 'defaultWidth'),
         ('defHeight', 'defaultHeight'),
@@ -678,7 +692,7 @@ class TestParser(unittest.TestCase):
     )
     def testMenuPropertyAliases(self, testData):
         property, expected = testData
-        actual = Parser.expandMenuPropertyAliases(property)
+        actual = MenuParser.expandMenuPropertyAliases(property)
         self.assertEqual(actual, expected)
 
     @data(
@@ -691,7 +705,7 @@ class TestParser(unittest.TestCase):
     )
     def testEntryPropertyAliases(self, testData):
         property, expected = testData
-        actual = Parser.expandEntryPropertyAliases(Token(property))
+        actual = EntryParser.expandEntryPropertyAliases(Token(property))
         self.assertEqual(actual, expected)
 
     @data(
@@ -716,6 +730,19 @@ class TestParser(unittest.TestCase):
         parser = getParserWithData('#warningsOff ' + input)
         actual = parser.varStorage.getGlobalVariable('t').value
         actual = Util.unquotedString(actual)
+        self.assertEqual(actual, expected)
+
+    @data(
+        ('tandara=4`mandara=10`broc=5`result = tandara + mandara * broc', 54),
+        ('tandara=4`mandara=10`broc=5`result = tandara * (mandara + broc)', 60),
+        ('tandara=4`mandara=10`broc=5`result = (mandara + broc) * tandara', 60),
+        ('a=10+14`b=12-2+2`c=a-b`result=a-c', 12),
+        ('p=24`t=11`result=p+(t % 3 > 0)', 25),
+    )
+    def testExpressions(self, testData):
+        input, expected = testData
+        parser = getParserWithData('#warningsOff ' + input.replace('`', '\n'))
+        actual = eval(parser.varStorage.getGlobalVariable('result').value)
         self.assertEqual(actual, expected)
 
 def extractExpectedData(testData, key):

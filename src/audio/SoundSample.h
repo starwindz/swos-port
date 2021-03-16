@@ -22,7 +22,7 @@ public:
     bool hasData() const;
     int chanceModifier() const;
     void setChanceModifier(int chanceModifier);
-    size_t hash() const;
+    unsigned hash() const;
 
     bool operator==(const SoundSample& other) const;
 
@@ -30,9 +30,9 @@ private:
     void assign(const SoundSample& other);
     void convertRawToWav();
     void loadChunk();
-    std::tuple<char *, size_t, bool> loadWithAnyAudioExtension(const char *path, size_t baseNameLength, const char *ext);
+    std::tuple<char *, unsigned, bool> loadWithAnyAudioExtension(const char *path, unsigned baseNameLength, const char *ext);
 
-    static size_t getAudioFileOffset(const char *ext, bool isRaw);
+    static unsigned getAudioFileOffset(const char *ext, bool isRaw);
     static bool isRawExtension(const char *ext);
     static bool is11KhzSample(const char *name);
     static int getMaxAudioExensionLength();

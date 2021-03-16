@@ -14,6 +14,7 @@ class Menu:
         self.exportedVariables = {}
         self.entries = {}
         self.variables = {}
+        self.entryAliases = {}
         self.templateEntry = Entry()
         self.templateActive = False
         self.name = ''
@@ -74,6 +75,7 @@ class Menu:
 
     def numEntries(self):
         numEntries = 0
+
         for currentEntry in self.entries.values():
             if isinstance(currentEntry, Entry) and not currentEntry.isTemplate():
                 numEntries += 1

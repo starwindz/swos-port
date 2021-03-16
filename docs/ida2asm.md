@@ -77,7 +77,7 @@ extern "C" {
 C++ via the generated header file. Inside assembly files they will be prefixed with underscore, and made
 public. Syntax for exporting symbols is:
 ```
-<symbol> [, function |, (array | pointer | ptr | functionPointer) <type>['['<size>']'] |, <type>]
+<symbol> [, function |, (array | pointer | ptr | functionPointer) <type>['['<size>']'] |, <type>] [(align: <n>)]
 ```
 
 SWOS assembly file contains large amount of symbols, and limiting exports to only the used ones helps
@@ -95,7 +95,10 @@ keyBuffer, array char[10]                       # becomes: char keyBuffer[10];
 introTeamChantIndices, array const int8_t[16]   # becomes: const int8_t introTeamChantIndices[16];
 sortedSprites, array Player * [79]              # becomes: Player *sortedSprites[79]
 spriteGraphicsPtr, array SpriteGraphics *(*)    # becomes: SpriteGraphics *(*spriteGraphicsPtr)[];
+g_currentMenu, array char[6500] (align: 4)      # becomes: char g_currentMenu[6500]; (with 4 byte alignment)
 ```
+
+`align` modifier can be used to manually specify the alignment of the variable in bytes.
 
 ### `@remove` section
 

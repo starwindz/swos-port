@@ -1,0 +1,411 @@
+Short description of SWOS controls data flow, top to bottom.
+
+Game Controls
+=============
+
+The game uses a few fields in TeamGeneralInfo structure to control the players. These fields are initialized
+from global variables each frame by TeamsControlCheck() (called inside the main loop). It will invoke
+Player1StatusProc/Player2StatusProc to get fresh data.
+
+Field:                 Initialized with variable: (substitute 1 with 2 for player 2)
+- currentDirection      - pl1Direction          // only changes if allowed by the player state
+- direction             - pl1Direction          // always changes depending on the controls
+- fireThisFrame         - pl1ShortFire          // true only if the initial fire press was in this cycle
+- secondaryFire         - pl1SecondaryFire
+- firePressed           - pl1Fire               // true while fire is pressed, false otherwise
+- quickFire             - pl1FireCounter
+- normalFire            - pl1FireCounter
+
+Player1StatusProc/Player2StatusProc
+===================================
+
+The global variables mentioned above are set by Player1StatusProc and Player2StatusProc.
+The full list is:
+    pl1Left
+    pl1Right
+    pl1Up
+    pl1Down
+    pl1Fire
+    pl1ShortFire
+    pl1FireCounter
+    pl1SecondaryFire
+    pl1UpRight
+    pl1DownRight
+    pl1DownLeft
+    pl1UpLeft
+    pl1Direction
+(substitute 1 with 2 for player 2 variables)
+
+Their values: 0 - not pressed, -1 - pressed (except for pl1ShortFire, pl1LastFired: 0/1 and pl1FireCounter).
+
+They are filled in from the input variables containing control flags.
+Which input will be used is decided by g_inputControls variable. Possible values:
+    1 - keyboard only
+    2 - joypad only
+    3 - joypad and keyboard
+    4 - keyboard and joypad
+    5 - two joypads
+    6 - mouse               // value present but not used in the original game
+
+If it has a value 1 (keyboard only), keyboardControlFlags are used, otherwise g_pl1ControlFlags are used (set
+by Joy1SetStatus/Joy2SetStatus call).
+
+Both input bit flag variables have the same format:
+bit   7|6|5|4|3|2|1|0
+      | | | | | | | +-- up
+      | | | | | | +---- down
+      | | | | | +------ left
+      | | | | +-------- right
+      | | | +---------- 0 - not used
+      | | +------------ fire
+      | +-------------- bench
+      +---------------- 0 - not used
+
+pl1FireCounter is calculated by the following algorithm:
+
+if (pl1LastFired) {
+    pl1ShortFire = 0;                   // initialize short fire, assume none
+
+    if (pl1Fire) {
+        if (pl1FireCounter)             // there was fire in the last frame, and it's still going
+            --pl1FireCounter;           // decrease the counter but test it too, for overflow
+    } else {
+        pl1LastFired = 0;               // there was fire, but it stopped in this frame
+        pl1FireCounter = -pl1FireCounter; // the counter is now positive and holds the number of
+                                          // frames the fire button was pressed
+    }
+} else if (pl1Fire) {
+    pl1ShortFire = 1;                   // short fire is on, we are just beginning to fire in this frame
+    pl1LastFired = 1;
+    pl1FireCounter = -1;                // reset the counter
+}
+
+Then a variable named pl1Direction is formed. Its values are:
+          0
+      7   |   1
+        \ | /
+     6 ---+--- 2
+        / | \
+      5   |   3
+          4
+
+or -1 if none of the above
+
+These functions are called from several places, but the main ones are TeamsControlCheck() during the game,
+and MenuCheckControls() during the menus.
+
+Lower level joypad routines
+===========================
+
+There exist five procedures for joypad interfacing. Those are:
+
+Joy1SetStatus
+Joy1NormalizeReadings
+ |- Joy1NormalizeX
+ +- Joy1NormalizeY
+ReadGamePort
+
+(for joypad 2 equivalent procedures are used)
+
+Joy1SetStatus
+=============
+
+This procedure reads the values of g_joy1XValue and g_joy1YValue variables, values from the game I/O port for
+fire, and combines it all into g_pl1Status.
+
+bit   7|6|5|4|3|2|1|0 - g_pl1Status
+      | | | | | | | +-- up
+      | | | | | | +---- down
+      | | | | | +------ left
+      | | | | +-------- right
+      | | | +---------- 0 - not used
+      | | +------------ fire
+      | +-------------- bench
+      +---------------- 0 - not used
+
+Fire and bench values are read directly from the game I/O port 0x201 which returns button values in bits 4-7.
+SWOS only uses bits 5 & 6, and which will be fire and which bench is determined by variables g_joy1Fire1 and
+g_joy1Fire2. They contain -1 for fire and -2 for bench. The values are assigned during the setup.
+
+Joy1NormalizeReadings
+=====================
+
+This procedure merely invokes Joy1NormalizeX and Joy1NormalizeY.
+
+Joy1NormalizeX
+==============
+
+Inputs are:
+    g_joy1X             - raw value from the joypad readings
+    g_joy1CenterX
+    g_joy1XLeftDivisor  - simply max left minus center (full range to the left)
+    g_joy1XRightDivisor
+    g_joy1MinX          - minimum raw value cut-off (number of positive readings in a 65,536 times loop)
+    g_joy1MaxX          - maximum raw value cut-off
+    joyLimit            - maximum resulting value
+
+g_joy1X contains raw values from the joypad reading for X axis. Other variables are set during the
+calibration (coming from setup.dat).
+
+Output is g_joy1XValue, in the range -127 (all the way left) - 0 (center) - +127 (all the way right).
+
+It is calculated using the following algorithm:
+
+if (g_joy1X < g_joy1CenterX) {
+    if (g_joy1X > g_joy1MinX) {
+        dword centerDistance = (g_joy1CenterX - g_joy1X) << 16;  // use 32-bit division
+        auto result = (centerDistance / g_joy1XLeftDivisor / 2) >> 16;
+        if (result < joyLimit)
+            result = 0;
+        g_joy1XValue = -result;
+    } else {
+        g_joy1XValue = -127;    // out of range to the left, assign minimum value
+    }
+} else if (g_joy1X > g_joy1CenterX) {
+    if (g_joy1X < g_joy1MaxX) {
+        dword centerDistance = (g_joy1X - g_joy1CenterX) << 16;
+        auto result = (centerDistance / g_joy1XRightDivisor / 2) >> 16;
+        if (result < joyLimit)
+            result = 0;
+        g_joy1XValue = result;
+    } else {
+        g_joy1XValue = 127;     // out of range to the right, assign maximum value
+    }
+} else {
+    g_joy1XValue = 0;           // dead center, value 0
+}
+
+Other routines are Joy1NormalizeY, Joy2NormalizeX, Joy2NormalizeY and their operation is equivalent.
+
+ReadGamePort
+============
+
+This is the lowest level procedure. It simply reads inputs from the game port in a loop, and places them in
+variables g_joy1X, g_joy1Y, g_joy2X and g_joy2Y. X axis is negative on the left, positive on the right, and
+Y axis is negative toward the top, and positive toward the bottom.
+It immediately exits if no joypad controls are selected (testing g_inputControls). If any are, it decides
+whether to use the number of loops from g_numLoopsJoy1 or g_numLoopsJoy2.
+This procedure is called once per frame, from Flip().
+
+
+Keyboard
+========
+
+Main variable for keyboard controls is keyboardControlFlags. It contains all the keys pressed in the form of
+a bit field:
+
+                        1 - key pressed
+                        0 - key not pressed
+
+                   bit   7|6|5|4|3|2|1|0 - keyboardControlFlags
+                         | | | | | | | +-- up
+                         | | | | | | +---- down
+                         | | | | | +------ left
+                         | | | | +-------- right
+                         | | | +---------- 0 - not used
+                         | | +------------ fire
+                         | +-------------- 0 - not used
+                         +---------------- clear if any of key above is released
+
+It is set by SetKeyboardControlWord() procedure, based on the g_scanCode variable.
+SetKeyboardControlWord() is called directly from the keyboard interrupt handler.
+
+Having a variable that holds the state of keyboard controls has an advantage. If the state of the keys were
+read directly we wouldn't be able to prevent unwanted repeated keys (or it would be significantly harder).
+This way keyboardControlFlags are set to zero before showing a new menu or returning to the previous one,
+where we want to cancel all the keys that are currently held down. That is enough to prevent accidental
+selection of various menu entries with a single fire press as new menus unfold.
+
+controlMask variable
+====================
+
+Set by MenuProc() when an item is selected (fired). Made by combining up, down, left, right, fire and
+menuControlsDirection. Later used by menu event handlers for more complex keyboard interaction.
+Values:
+
+bit    9  8  7  6  5  4  3  2  1  0
+       |  |  |  |  |  |  |  |  |  |
+       |  |  |  |  |  |  |  |  |  +-- fire
+       |  |  |  |  |  |  |  |  +----- left
+       |  |  |  |  |  |  |  +-------- right
+       |  |  |  |  |  |  +----------- up
+       |  |  |  |  |  +-------------- down
+       |  |  |  |  +----------------- short fire
+       |  |  |  +-------------------- up left
+       |  |  +----------------------- down right
+       |  +-------------------------- up right
+       +----------------------------- down left
+
+Bits 10-15 unused.
+
+It's mostly used by menu event handlers if they require more complex keyboard handling (like edit tactics
+menu).
+
+Int9KeyboardHandler
+===================
+
+Directly reads key scan code from keyboard controller port 0x60 and stores it into g_scanCode variable. Saves
+old scan code to g_prevScanCode. Also stores scan codes into keyBuffer, circular buffer 10 bytes large. Number
+of keys in the buffer is tracked via variable keyCount. Once everything is stored, SetKeyboardControlWord() is
+invoked. If F6 is pressed a debug routine TeamHexDumpToSecondMonitor() is called.
+
+GetKey
+======
+
+It takes the key directly from the key buffer and, if not empty, moves all the keys in it one spot to the
+left. Places "raw" value to variable lastKey, while the converted one (via convertKeysTable) goes to
+convertedKey. If Alt+F1 is pressed, returns to text mode and issues int 3.
+
+MenuCheckControls
+=================
+
+This function will construct menu inputs out of currently selected controls. If there are two players it will
+combine (logical OR) their inputs. Menu control variables that are written to are:
+    shortFire
+    fire
+    left
+    right
+    up
+    down
+    menuControlsDirection
+    menuControlsDirection2
+
+And also pl1Fire is set.
+
+The inputs are variables set by Player1StatusProc/Player2StatusProc.
+
+Pseudo-code:
+
+GetKey();   // set convertedKey and lastKey
+
+if (fireCounter > 0)        // keep it in <= 0 range
+    fireCounter = 0;
+
+if (player1ClearFlag) {     // clear flags are used before the game starts
+    pl1Fire = 0;
+    shortFire = 0;
+    fire = 0;
+    left = 0;
+    right = 0;
+    up = 0;
+    down = 0;
+    menuControlsDirection = -1;
+    menuControlsDirection2 = -1;
+} else {
+    Player1StatusProc();    // update player 1 control variables
+
+    if (pl1FireCounter) {
+        fireCounter = pl1FireCounter;
+        if (pl1FireCounter >= 0)
+            pl1FireCounter = 0;
+    }
+
+    if (!pl1Fire) {
+        if (skipFireEveryOtherFrame)    // skipFireEveryOtherFrame is always 0
+            pl1Fire = ++pl1SkipFireCounter & 1;
+        if (leaveFireFlag)
+            pl1Fire = 1;
+    }
+
+    shortFire = 0;          // copy player 1 controls, except the fire, that will be determined later
+    shortFire = pl1FireThisFrame;
+    fire = 0;
+    fire = pl1Fire;
+    left = pl1Left;
+    right = pl1Right;
+    up = pl1Up;
+    down = pl1Down;
+    menuControlsDirection = pl1Direction;
+    menuControlsDirection2 = pl1Direction;
+}
+
+pl2Fire = 0;
+if (!player2ClearFlag && twoPlayers) {
+    Player2StatusProc();
+
+    if (pl2FireCounter) {
+        fireCounter = pl2FireCounter;
+        if (pl2FireCounter >= 0)
+            pl2FireCounter = 0;
+    }
+
+    if (!pl2Fire && pl2SkipFireCounter)
+        pl2Fire = 1;
+
+    shortFire = pl2ShortFire | shortFire;
+    fire = pl2Fire | fire;
+    left |= pl2Left;
+    right |= pl2Right;
+    up |= pl2Up;
+    down |= pl2Down;
+    if (pl1Direction < 0) {
+        menuControlsDirection = pl2Direction;
+        menuControlsDirection2 = pl2Direction;
+    }
+}
+
+if (fireResetFlag) {
+    if (fire) {
+        fire = 0;
+        shortFire = 0;
+    } else {
+        fireResetFlag = 0;
+    }
+}
+
+if (shortFire) {
+    longFireTime = 0;   // if there's short fire there can't be long at the same time, so reset
+    longFireFlag = 0;
+} else if (fire) {
+    longFireTime += timerDifference;
+    if (longFireTime >= 24) {
+        longFireTime = 16;
+        ++longFireFlag;
+        shortFire = 1;
+    }
+}
+
+if (fire) {
+    if (menuControlsDirection == lastControls) {
+        controlsHeldTimer += timerDifference;
+        if (controlsHeldTimer >= 24)
+            controlsHeldTimer = 16;
+
+@@reset_controls:
+        menuControlsDirection = -1;
+    }
+
+@@set_controls:
+    controlsHeldTimer = 0;
+    lastControls = menuControlsDirection;
+} else {
+    // the part below is responsible for maintaining that fine short delay right before the keys start
+    // repeating, when held; say when holding down, the cursor moves down 1 row, holds a little, and then
+    // starts moving quickly downward
+
+    if (menuControlsDirection != lastControls)
+        goto @@set_controls;
+
+    controlsHeldTimer += timerDifference;
+
+    if (controlsHeldTimer < 12)
+        goto @@reset_controls;
+
+    controlsHeldTimer = 8;
+}
+
+// in case of two joypads configuration keep the keyboard running manually
+if (g_inputControls == 5 && g_inputingText != -1 && !fire && menuControlsDirection < 0) {
+    if (lastKey == g_upScanCode)
+        menuControlsDirection = 0;
+    else if (lastKey == g_rightScanCode)
+        menuControlsDirection = 2;
+    else if (lastKey == g_downScanCode)
+        menuControlsDirection = 4;
+    else (lastKey == g_leftScanCode)
+        menuControlsDirection = 6;
+    } else if (lastKey == g_fireScanCode) {
+        shortFire = 1;
+        fire = 1;
+    }
+}

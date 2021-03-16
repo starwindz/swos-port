@@ -3,6 +3,7 @@
 #include "file.h"
 #include "bmpWriter.h"
 #include <iostream>
+#undef pop
 #include <filesystem>
 
 static const char kSnapshotDir[] = "snapshots";

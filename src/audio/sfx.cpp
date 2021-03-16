@@ -5,6 +5,12 @@
 SfxSamplesArray m_sfxSamples;
 static int m_crowdLoopChannel = -1;
 
+void clearSfxSamplesCache()
+{
+    for (auto& sample : m_sfxSamples)
+        sample.free();
+}
+
 void initSfxBeforeTheGame()
 {
     m_crowdLoopChannel = -1;

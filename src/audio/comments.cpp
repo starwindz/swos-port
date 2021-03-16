@@ -36,12 +36,12 @@ struct SampleTable {
         totalSampleChance = 0;
     }
 
-    size_t getRandomSampleIndex() const {
+    unsigned getRandomSampleIndex() const {
         assert(totalSampleChance > 0 && totalSampleChance >= static_cast<int>(samples.size()));
 
         int randomSampleChance = getRandomInRange(0, std::max(0, totalSampleChance - 1));
 
-        size_t index = 0;
+        unsigned index = 0;
         for (; index < samples.size(); index++) {
             randomSampleChance -= samples[index].chanceModifier();
             if (randomSampleChance < 0)
@@ -91,7 +91,7 @@ static std::array<SampleTable, kNumSampleTables> m_sampleTables = {{
     { "yellow_card" },
 }};
 
-void clearSampleCache()
+void clearCommentsSampleCache()
 {
     for (auto& table : m_sampleTables)
         table.reset();
@@ -118,7 +118,7 @@ bool commenteryOnChannelFinished(int channel)
     return false;
 }
 
-static SwosDataPointer<const char> *getOnDemandSampleTable()
+SwosDataPointer<const char> *getOnDemandSampleTable()
 {
     // unique samples used in tables of on-demand comment filenames
     static SwosDataPointer<const char> kOnDemandSamples[] = {
@@ -381,7 +381,7 @@ static bool isLastPlayedComment(SoundSample& sample)
     return false;
 }
 
- bool fixIndexToSkipLastPlayedComment(size_t& sampleIndex, size_t lastPlayedIndex, std::vector<SoundSample>& samples)
+static bool fixIndexToSkipLastPlayedComment(unsigned& sampleIndex, unsigned lastPlayedIndex, std::vector<SoundSample>& samples)
 {
      if (samples.size() > 1 && (lastPlayedIndex == sampleIndex || isLastPlayedComment(samples[sampleIndex]))) {
          sampleIndex = (sampleIndex + 1) % samples.size();

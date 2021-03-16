@@ -41,6 +41,24 @@
     <Filter Include="Source Files\project-files\substitutes">
       <UniqueIdentifier>{941e50fa-03f2-4b5d-ada9-e4feba89904d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\project-files\controls\joypads">
+      <UniqueIdentifier>{529e052d-1667-4623-af82-edeaa826fb8b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\project-files\controls\keyboard">
+      <UniqueIdentifier>{42dff330-45f0-4272-888b-9060c836356e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\project-files\controls\mouse">
+      <UniqueIdentifier>{32492cc2-697b-406b-a6fe-30939e4a2409}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\project-files\text">
+      <UniqueIdentifier>{63b4c43d-1a16-4e8f-bed8-e26edba8bfc4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\swos-cpp">
+      <UniqueIdentifier>{23bfc3d1-75fb-4b69-95ed-12d34b9d42d2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\project-files\controls\joypads\ui">
+      <UniqueIdentifier>{159d8d74-0c57-445c-8916-c51fe1a758d0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\main.cpp">
@@ -49,22 +67,13 @@
     <ClCompile Include="..\..\src\stdinc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\menus\menu.cpp">
+    <ClCompile Include="..\..\src\menus\menus.cpp">
       <Filter>Source Files\project-files\menus</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\controls\controlOptionsMenu.cpp">
       <Filter>Source Files\project-files\controls</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\controls\controls.cpp">
-      <Filter>Source Files\project-files\controls</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\controls\joypadConfigMenu.cpp">
-      <Filter>Source Files\project-files\controls</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\controls\joypads.cpp">
-      <Filter>Source Files\project-files\controls</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\controls\scanCodes.cpp">
       <Filter>Source Files\project-files\controls</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\files\selectFilesMenu.cpp">
@@ -169,27 +178,150 @@
     <ClCompile Include="..\..\src\video\videoOptionsMenu.cpp">
       <Filter>Source Files\project-files\video</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\controls\joypads\joypad.cpp">
+      <Filter>Source Files\project-files\controls\joypads</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\controls\joypads\joypadConfig.cpp">
+      <Filter>Source Files\project-files\controls\joypads</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\controls\joypads\joypadConfigRegister.cpp">
+      <Filter>Source Files\project-files\controls\joypads</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\controls\joypads\joypadGuidConfig.cpp">
+      <Filter>Source Files\project-files\controls\joypads</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\controls\joypads\joypads.cpp">
+      <Filter>Source Files\project-files\controls\joypads</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\controls\joypads\sdlMappingParser.cpp">
+      <Filter>Source Files\project-files\controls\joypads</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\controls\keyboard\keyboard.cpp">
+      <Filter>Source Files\project-files\controls\keyboard</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\controls\keyboard\keyBuffer.cpp">
+      <Filter>Source Files\project-files\controls\keyboard</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\controls\keyboard\keyConfig.cpp">
+      <Filter>Source Files\project-files\controls\keyboard</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\controls\keyboard\scancodes.cpp">
+      <Filter>Source Files\project-files\controls\keyboard</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\controls\mouse\mouse.cpp">
+      <Filter>Source Files\project-files\controls\mouse</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\menus\drawMenu.cpp">
+      <Filter>Source Files\project-files\menus</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\menus\unpackMenu.cpp">
+      <Filter>Source Files\project-files\menus</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\text\text.cpp">
+      <Filter>Source Files\project-files\text</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tmp\swos-cpp-gen-$(PlatformArchitecture)\swos-01.cpp">
+      <Filter>Source Files\swos-cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tmp\swos-cpp-gen-$(PlatformArchitecture)\swos-02.cpp">
+      <Filter>Source Files\swos-cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tmp\swos-cpp-gen-$(PlatformArchitecture)\swos-03.cpp">
+      <Filter>Source Files\swos-cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tmp\swos-cpp-gen-$(PlatformArchitecture)\swos-04.cpp">
+      <Filter>Source Files\swos-cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tmp\swos-cpp-gen-$(PlatformArchitecture)\swos-05.cpp">
+      <Filter>Source Files\swos-cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tmp\swos-cpp-gen-$(PlatformArchitecture)\swos-06.cpp">
+      <Filter>Source Files\swos-cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tmp\swos-cpp-gen-$(PlatformArchitecture)\swos-07.cpp">
+      <Filter>Source Files\swos-cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tmp\swos-cpp-gen-$(PlatformArchitecture)\swos-08.cpp">
+      <Filter>Source Files\swos-cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tmp\swos-cpp-gen-$(PlatformArchitecture)\vm.cpp">
+      <Filter>Source Files\swos-cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\menus\mainMenu.cpp">
+      <Filter>Source Files\project-files\menus</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\controls\joypads\VirtualJoypad.cpp">
+      <Filter>Source Files\project-files\controls\joypads</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\controls\keyboard\setupKeyboardMenu.cpp">
+      <Filter>Source Files\project-files\controls\keyboard</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\controls\gameControlEvents.cpp">
+      <Filter>Source Files\project-files\controls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\controls\selectGameControlEventsMenu.cpp">
+      <Filter>Source Files\project-files\controls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\controls\keyboard\redefineKeysMenu.cpp">
+      <Filter>Source Files\project-files\controls\keyboard</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\controls\keyboard\testKeyboardMenu.cpp">
+      <Filter>Source Files\project-files\controls\keyboard</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\menus\menuProc.cpp">
+      <Filter>Source Files\project-files\menus</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\controls\menuControls.cpp">
+      <Filter>Source Files\project-files\controls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\tests\SetupKeyboardMenuTest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\controls\joypads\ui\configureAxisMenu.cpp">
+      <Filter>Source Files\project-files\controls\joypads\ui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\controls\joypads\ui\configureHatMenu.cpp">
+      <Filter>Source Files\project-files\controls\joypads\ui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\controls\joypads\ui\joypadConfigMenu.cpp">
+      <Filter>Source Files\project-files\controls\joypads\ui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\controls\joypads\ui\configureTrackballMenu.cpp">
+      <Filter>Source Files\project-files\controls\joypads\ui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\controls\joypads\ui\joypadQuickConfigMenu.cpp">
+      <Filter>Source Files\project-files\controls\joypads\ui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\controls\quickConfigMenu.cpp">
+      <Filter>Source Files\project-files\controls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\controls\joypads\ui\testJoypadMenu.cpp">
+      <Filter>Source Files\project-files\controls\joypads\ui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\controls\testControlsMenu.cpp">
+      <Filter>Source Files\project-files\controls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\controls\joypads\JoypadElementValue.cpp">
+      <Filter>Source Files\project-files\controls\joypads</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\controls\selectMatchControls.cpp">
+      <Filter>Source Files\project-files\controls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\controls\gameControls.cpp">
+      <Filter>Source Files\project-files\controls</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\stdinc.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\menus\menu.h">
+    <ClInclude Include="..\..\src\menus\menus.h">
       <Filter>Source Files\project-files\menus</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\controls\controlOptionsMenu.h">
       <Filter>Source Files\project-files\controls</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\controls\controls.h">
-      <Filter>Source Files\project-files\controls</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\controls\joypadConfigMenu.h">
-      <Filter>Source Files\project-files\controls</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\controls\joypads.h">
-      <Filter>Source Files\project-files\controls</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\controls\scanCodes.h">
       <Filter>Source Files\project-files\controls</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\files\file.h">
@@ -266,6 +398,103 @@
     </ClInclude>
     <ClInclude Include="..\src\lib\bmpWriter.h">
       <Filter>Source Files\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\controls\joypads\joypad.h">
+      <Filter>Source Files\project-files\controls\joypads</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\controls\joypads\joypadConfig.h">
+      <Filter>Source Files\project-files\controls\joypads</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\controls\joypads\joypadConfigRegister.h">
+      <Filter>Source Files\project-files\controls\joypads</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\controls\joypads\joypadGuidConfig.h">
+      <Filter>Source Files\project-files\controls\joypads</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\controls\joypads\joypads.h">
+      <Filter>Source Files\project-files\controls\joypads</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\controls\joypads\sdlMappingParser.h">
+      <Filter>Source Files\project-files\controls\joypads</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\controls\gameControlEvents.h">
+      <Filter>Source Files\project-files\controls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\controls\keyboard\keyboard.h">
+      <Filter>Source Files\project-files\controls\keyboard</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\controls\keyboard\keyBuffer.h">
+      <Filter>Source Files\project-files\controls\keyboard</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\controls\keyboard\keyConfig.h">
+      <Filter>Source Files\project-files\controls\keyboard</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\controls\keyboard\scancodes.h">
+      <Filter>Source Files\project-files\controls\keyboard</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\controls\mouse\mouse.h">
+      <Filter>Source Files\project-files\controls\mouse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\text\text.h">
+      <Filter>Source Files\project-files\text</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\menus\drawMenu.h">
+      <Filter>Source Files\project-files\menus</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\menus\mainMenu.h">
+      <Filter>Source Files\project-files\menus</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\controls\joypads\VirtualJoypad.h">
+      <Filter>Source Files\project-files\controls\joypads</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\controls\keyboard\setupKeyboardMenu.h">
+      <Filter>Source Files\project-files\controls\keyboard</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\controls\selectGameControlEventsMenu.h">
+      <Filter>Source Files\project-files\controls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\controls\keyboard\redefineKeysMenu.h">
+      <Filter>Source Files\project-files\controls\keyboard</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\controls\keyboard\testKeyboardMenu.h">
+      <Filter>Source Files\project-files\controls\keyboard</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\controls\menuControls.h">
+      <Filter>Source Files\project-files\controls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\tests\SetupKeyboardMenuTest.h" />
+    <ClInclude Include="..\..\src\controls\joypads\ui\configureAxisMenu.h">
+      <Filter>Source Files\project-files\controls\joypads\ui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\controls\joypads\ui\configureHatMenu.h">
+      <Filter>Source Files\project-files\controls\joypads\ui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\controls\joypads\ui\joypadConfigMenu.h">
+      <Filter>Source Files\project-files\controls\joypads\ui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\controls\joypads\ui\configureTrackballMenu.h">
+      <Filter>Source Files\project-files\controls\joypads\ui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\controls\joypads\ui\joypadQuickConfigMenu.h">
+      <Filter>Source Files\project-files\controls\joypads\ui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\controls\quickConfigMenu.h">
+      <Filter>Source Files\project-files\controls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\controls\joypads\JoypadElementValue.h">
+      <Filter>Source Files\project-files\controls\joypads</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\controls\joypads\ui\testJoypadMenu.h">
+      <Filter>Source Files\project-files\controls\joypads\ui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\controls\testControlsMenu.h">
+      <Filter>Source Files\project-files\controls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\controls\selectMatchControls.h">
+      <Filter>Source Files\project-files\controls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\controls\gameControls.h">
+      <Filter>Source Files\project-files\controls</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

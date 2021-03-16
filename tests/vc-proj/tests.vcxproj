@@ -5,9 +5,17 @@
       <Configuration>Debug</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="Release|Win32">
       <Configuration>Release</Configuration>
       <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -22,7 +30,20 @@
     <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
@@ -37,33 +58,53 @@
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>..\sdl-address-table-fetcher\src;$(SolutionDir)..\include;$(SolutionDir)..\include\SDL2;$(OutDir);$(SolutionDir)..\include\adlmidi;$(SolutionDir)..\include\crashrpt;$(SolutionDir)..\include\simpleini;$(ProjectDir)..\src;$(ProjectDir)..\src\lib;$(ProjectDir)..\src\tests;$(ProjectDir)..\src\mocks;$(SolutionDir)..\src;$(SolutionDir)..\src\audio;$(SolutionDir)..\src\controls;$(SolutionDir)..\src\debug;$(SolutionDir)..\src\files;$(SolutionDir)..\src\menus;$(SolutionDir)..\src\replays;$(SolutionDir)..\src\sprites;$(SolutionDir)..\src\video;$(SolutionDir)..\src\util;$(SolutionDir)..\tmp\swos-asm;$(SolutionDir)..\tmp\swos-port-$(Configuration);$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)..\tmp\sdl-address-table-fetcher-$(Configuration);$(SolutionDir)..\tmp\swos-port-$(Configuration);..\..\lib\windows\$(Configuration);$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
-    <IntDir>$(SolutionDir)..\tmp\$(ProjectName)-$(Configuration)\</IntDir>
+    <IncludePath>..\sdl-address-table-fetcher\src;$(SolutionDir)..\..\include;$(SolutionDir)..\..\include\SDL2;$(OutDir);$(SolutionDir)..\..\include\adlmidi;$(SolutionDir)..\..\include\crashrpt;$(SolutionDir)..\..\include\simpleini;$(ProjectDir)..\src;$(ProjectDir)..\src\lib;$(ProjectDir)..\src\tests;$(ProjectDir)..\src\mocks;$(SolutionDir)..\..\src;$(SolutionDir)..\..\src\audio;$(SolutionDir)..\..\src\controls;$(SolutionDir)..\..\src\debug;$(SolutionDir)..\..\src\files;$(SolutionDir)..\..\src\menus;$(SolutionDir)..\..\src\replays;$(SolutionDir)..\..\src\sprites;$(SolutionDir)..\..\src\text;$(SolutionDir)..\..\src\video;$(SolutionDir)..\..\src\util;$(SolutionDir)..\..\src\controls\joypads;$(SolutionDir)..\..\src\controls\joypads\ui;$(SolutionDir)..\..\src\controls\keyboard;$(SolutionDir)..\..\src\controls\mouse;$(SolutionDir)..\..\tmp\mnu2h;$(SolutionDir)..\..\tmp\swos-cpp-gen-32;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)..\..\tmp\sdl-address-table-fetcher-$(Platform)-$(Configuration);..\..\lib\win32\$(Configuration);$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
+    <IntDir>$(SolutionDir)..\..\tmp\$(ProjectName)-$(Platform)-$(Configuration)\</IntDir>
     <TargetName>$(ProjectName)$(Configuration)</TargetName>
-    <OutDir>$(SolutionDir)..\tmp\$(ProjectName)-$(Configuration)\</OutDir>
+    <OutDir>$(SolutionDir)..\..\tmp\$(ProjectName)-$(Platform)-$(Configuration)\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <TargetName>$(ProjectName)$(Configuration)</TargetName>
+    <IncludePath>..\sdl-address-table-fetcher\src;$(SolutionDir)..\..\include;$(SolutionDir)..\..\include\SDL2;$(OutDir);$(SolutionDir)..\..\include\adlmidi;$(SolutionDir)..\..\include\crashrpt;$(SolutionDir)..\..\include\simpleini;$(ProjectDir)..\src;$(ProjectDir)..\src\lib;$(ProjectDir)..\src\tests;$(ProjectDir)..\src\mocks;$(SolutionDir)..\..\src;$(SolutionDir)..\..\src\audio;$(SolutionDir)..\..\src\controls;$(SolutionDir)..\..\src\debug;$(SolutionDir)..\..\src\files;$(SolutionDir)..\..\src\menus;$(SolutionDir)..\..\src\replays;$(SolutionDir)..\..\src\sprites;$(SolutionDir)..\..\src\text;$(SolutionDir)..\..\src\video;$(SolutionDir)..\..\src\util;$(SolutionDir)..\..\src\controls\joypads;$(SolutionDir)..\..\src\controls\joypads\ui;$(SolutionDir)..\..\src\controls\keyboard;$(SolutionDir)..\..\src\controls\mouse;$(SolutionDir)..\..\tmp\mnu2h;$(SolutionDir)..\..\tmp\swos-cpp-gen-64;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)..\..\tmp\sdl-address-table-fetcher-$(Platform)-$(Configuration);..\..\lib\win64\$(Configuration);$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
+    <IntDir>$(SolutionDir)..\..\tmp\$(ProjectName)-$(Platform)-$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)..\..\tmp\$(ProjectName)-$(Platform)-$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>..\sdl-address-table-fetcher\src;$(SolutionDir)..\include;$(SolutionDir)..\include\SDL2;$(OutDir);$(SolutionDir)..\include\adlmidi;$(SolutionDir)..\include\crashrpt;$(SolutionDir)..\include\simpleini;$(ProjectDir)..\src;$(ProjectDir)..\src\lib;$(ProjectDir)..\src\tests;$(ProjectDir)..\src\mocks;$(SolutionDir)..\src;$(SolutionDir)..\src\audio;$(SolutionDir)..\src\controls;$(SolutionDir)..\src\debug;$(SolutionDir)..\src\files;$(SolutionDir)..\src\menus;$(SolutionDir)..\src\replays;$(SolutionDir)..\src\sprites;$(SolutionDir)..\src\video;$(SolutionDir)..\src\util;$(SolutionDir)..\tmp\swos-asm;$(SolutionDir)..\tmp\swos-port-$(Configuration);$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)..\tmp\sdl-address-table-fetcher-$(Configuration);$(SolutionDir)..\tmp\swos-port-$(Configuration);..\..\lib\windows\$(Configuration);$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
-    <IntDir>$(SolutionDir)..\tmp\$(ProjectName)-$(Configuration)\</IntDir>
+    <IncludePath>..\sdl-address-table-fetcher\src;$(SolutionDir)..\..\include;$(SolutionDir)..\..\include\SDL2;$(OutDir);$(SolutionDir)..\..\include\adlmidi;$(SolutionDir)..\..\include\crashrpt;$(SolutionDir)..\..\include\simpleini;$(ProjectDir)..\src;$(ProjectDir)..\src\lib;$(ProjectDir)..\src\tests;$(ProjectDir)..\src\mocks;$(SolutionDir)..\..\src;$(SolutionDir)..\..\src\audio;$(SolutionDir)..\..\src\controls;$(SolutionDir)..\..\src\debug;$(SolutionDir)..\..\src\files;$(SolutionDir)..\..\src\menus;$(SolutionDir)..\..\src\replays;$(SolutionDir)..\..\src\sprites;$(SolutionDir)..\..\src\text;$(SolutionDir)..\..\src\video;$(SolutionDir)..\..\src\util;$(SolutionDir)..\..\src\controls\joypads;$(SolutionDir)..\..\src\controls\joypads\ui;$(SolutionDir)..\..\src\controls\keyboard;$(SolutionDir)..\..\src\controls\mouse;$(SolutionDir)..\..\tmp\mnu2h;$(SolutionDir)..\..\tmp\swos-cpp-gen-32;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)..\..\tmp\sdl-address-table-fetcher-$(Platform)-$(Configuration);..\..\lib\win32\$(Configuration);$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
+    <IntDir>$(SolutionDir)..\..\tmp\$(ProjectName)-$(Platform)-$(Configuration)\</IntDir>
     <TargetName>$(ProjectName)$(Configuration)</TargetName>
-    <OutDir>$(SolutionDir)..\tmp\$(ProjectName)-$(Configuration)\</OutDir>
+    <OutDir>$(SolutionDir)..\..\tmp\$(ProjectName)-$(Platform)-$(Configuration)\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <TargetName>$(ProjectName)$(Configuration)</TargetName>
+    <IncludePath>..\sdl-address-table-fetcher\src;$(SolutionDir)..\..\include;$(SolutionDir)..\..\include\SDL2;$(OutDir);$(SolutionDir)..\..\include\adlmidi;$(SolutionDir)..\..\include\crashrpt;$(SolutionDir)..\..\include\simpleini;$(ProjectDir)..\src;$(ProjectDir)..\src\lib;$(ProjectDir)..\src\tests;$(ProjectDir)..\src\mocks;$(SolutionDir)..\..\src;$(SolutionDir)..\..\src\audio;$(SolutionDir)..\..\src\controls;$(SolutionDir)..\..\src\debug;$(SolutionDir)..\..\src\files;$(SolutionDir)..\..\src\menus;$(SolutionDir)..\..\src\replays;$(SolutionDir)..\..\src\sprites;$(SolutionDir)..\..\src\text;$(SolutionDir)..\..\src\video;$(SolutionDir)..\..\src\util;$(SolutionDir)..\..\src\controls\joypads;$(SolutionDir)..\..\src\controls\joypads\ui;$(SolutionDir)..\..\src\controls\keyboard;$(SolutionDir)..\..\src\controls\mouse;$(SolutionDir)..\..\tmp\mnu2h;$(SolutionDir)..\..\tmp\swos-cpp-gen-64;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)..\..\tmp\sdl-address-table-fetcher-$(Platform)-$(Configuration);..\..\lib\win64\$(Configuration);$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
+    <IntDir>$(SolutionDir)..\..\tmp\$(ProjectName)-$(Platform)-$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)..\..\tmp\$(ProjectName)-$(Platform)-$(Configuration)\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level2</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>SWOS_TEST;DIRENT_H;DEBUG;SDL_ADDRESS_FETCHER_DLL="SdlAddressTableFetcher.dll";NOMINMAX;_CRT_SECURE_NO_WARNINGS;DECLSPEC=;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>SWOS_TEST;SWOS_VM;DIRENT_H;DEBUG;SDL_ADDRESS_FETCHER_DLL="SdlAddressTableFetcher.dll";NOMINMAX;_CRT_SECURE_NO_WARNINGS;DECLSPEC=;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>$(SolutionDir)..\src\stdinc.h</PrecompiledHeaderFile>
-      <ForcedIncludeFiles>$(SolutionDir)..\src\stdinc.h</ForcedIncludeFiles>
+      <PrecompiledHeaderFile>$(SolutionDir)..\..\src\stdinc.h</PrecompiledHeaderFile>
+      <ForcedIncludeFiles>$(SolutionDir)..\..\src\stdinc.h</ForcedIncludeFiles>
       <DisableSpecificWarnings>4731</DisableSpecificWarnings>
       <AdditionalIncludeDirectories>$(ProjectDir)..\src\mocks;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <UndefinePreprocessorDefinitions>NDEBUG</UndefinePreprocessorDefinitions>
@@ -72,7 +113,38 @@
       <AssemblerOutput>NoListing</AssemblerOutput>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>SdlAddressTableFetcher.lib;SDL2d.lib;SDL2maind.lib;swos-01.obj;swos-02.obj;swos-03.obj;swos-04.obj;swos-05.obj;swos-06.obj;swos-07.obj;swos-08.obj;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SdlAddressTableFetcher.lib;SDL2d.lib;SDL2maind.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Console</SubSystem>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+      <GenerateMapFile>true</GenerateMapFile>
+    </Link>
+    <CustomBuildStep>
+      <Command>copy $(SolutionDir)..\tmp\sdl-address-table-fetcher-$(Configuration)\SdlAddressTableFetcher.dll $(OutDir)</Command>
+      <Message>Copying SDL address table fetcher</Message>
+    </CustomBuildStep>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level2</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>SWOS_TEST;SWOS_VM;DIRENT_H;DEBUG;SDL_ADDRESS_FETCHER_DLL="SdlAddressTableFetcher.dll";NOMINMAX;_CRT_SECURE_NO_WARNINGS;DECLSPEC=;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>$(SolutionDir)..\..\src\stdinc.h</PrecompiledHeaderFile>
+      <ForcedIncludeFiles>$(SolutionDir)..\..\src\stdinc.h</ForcedIncludeFiles>
+      <DisableSpecificWarnings>4731</DisableSpecificWarnings>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\src\mocks;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <UndefinePreprocessorDefinitions>NDEBUG</UndefinePreprocessorDefinitions>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <PreprocessToFile>false</PreprocessToFile>
+      <AssemblerOutput>NoListing</AssemblerOutput>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>SdlAddressTableFetcher.lib;SDL2d.lib;SDL2maind.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <GenerateMapFile>true</GenerateMapFile>
@@ -88,15 +160,15 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level2</WarningLevel>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>SWOS_TEST;DIRENT_H;NDEBUG;SDL_ADDRESS_FETCHER_DLL=".\\SdlAddressTableFetcher.dll";NOMINMAX;_CRT_SECURE_NO_WARNINGS;DECLSPEC=;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>SWOS_TEST;SWOS_VM;DIRENT_H;NDEBUG;SDL_ADDRESS_FETCHER_DLL=".\\SdlAddressTableFetcher.dll";NOMINMAX;_CRT_SECURE_NO_WARNINGS;DECLSPEC=;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>$(SolutionDir)..\src\stdinc.h</PrecompiledHeaderFile>
-      <ForcedIncludeFiles>$(SolutionDir)..\src\stdinc.h</ForcedIncludeFiles>
+      <PrecompiledHeaderFile>$(SolutionDir)..\..\src\stdinc.h</PrecompiledHeaderFile>
+      <ForcedIncludeFiles>$(SolutionDir)..\..\src\stdinc.h</ForcedIncludeFiles>
       <DisableSpecificWarnings>4731</DisableSpecificWarnings>
       <AdditionalIncludeDirectories>$(ProjectDir)..\src\mocks;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
@@ -106,7 +178,40 @@
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>SdlAddressTableFetcher.lib;SDL2.lib;SDL2main.lib;swos-01.obj;swos-02.obj;swos-03.obj;swos-04.obj;swos-05.obj;swos-06.obj;swos-07.obj;swos-08.obj;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SdlAddressTableFetcher.lib;SDL2.lib;SDL2main.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Console</SubSystem>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+    </Link>
+    <CustomBuildStep>
+      <Command>copy $(SolutionDir)..\tmp\sdl-address-table-fetcher-$(Configuration)\SdlAddressTableFetcher.dll $(OutDir)</Command>
+      <Message>Copying SDL address table fetcher</Message>
+    </CustomBuildStep>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level2</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>SWOS_TEST;SWOS_VM;DIRENT_H;NDEBUG;SDL_ADDRESS_FETCHER_DLL=".\\SdlAddressTableFetcher.dll";NOMINMAX;_CRT_SECURE_NO_WARNINGS;DECLSPEC=;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>$(SolutionDir)..\..\src\stdinc.h</PrecompiledHeaderFile>
+      <ForcedIncludeFiles>$(SolutionDir)..\..\src\stdinc.h</ForcedIncludeFiles>
+      <DisableSpecificWarnings>4731</DisableSpecificWarnings>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\src\mocks;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <PreprocessToFile>false</PreprocessToFile>
+      <AssemblerOutput>NoListing</AssemblerOutput>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>SdlAddressTableFetcher.lib;SDL2.lib;SDL2main.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
@@ -126,14 +231,44 @@
     <ClCompile Include="..\..\src\audio\SoundSample.cpp" />
     <ClCompile Include="..\..\src\controls\controlOptionsMenu.cpp" />
     <ClCompile Include="..\..\src\controls\controls.cpp" />
-    <ClCompile Include="..\..\src\controls\joypadConfigMenu.cpp" />
-    <ClCompile Include="..\..\src\controls\joypads.cpp" />
-    <ClCompile Include="..\..\src\controls\scanCodes.cpp" />
+    <ClCompile Include="..\..\src\controls\gameControlEvents.cpp" />
+    <ClCompile Include="..\..\src\controls\gameControls.cpp" />
+    <ClCompile Include="..\..\src\controls\joypads\JoypadElementValue.cpp" />
+    <ClCompile Include="..\..\src\controls\joypads\ui\configureAxisMenu.cpp" />
+    <ClCompile Include="..\..\src\controls\joypads\ui\configureHatMenu.cpp" />
+    <ClCompile Include="..\..\src\controls\joypads\Joypad.cpp" />
+    <ClCompile Include="..\..\src\controls\joypads\JoypadConfig.cpp" />
+    <ClCompile Include="..\..\src\controls\joypads\ui\configureTrackballMenu.cpp" />
+    <ClCompile Include="..\..\src\controls\joypads\ui\joypadConfigMenu.cpp" />
+    <ClCompile Include="..\..\src\controls\joypads\JoypadConfigRegister.cpp" />
+    <ClCompile Include="..\..\src\controls\joypads\JoypadGuidConfig.cpp" />
+    <ClCompile Include="..\..\src\controls\joypads\joypads.cpp" />
+    <ClCompile Include="..\..\src\controls\joypads\SdlMappingParser.cpp" />
+    <ClCompile Include="..\..\src\controls\joypads\ui\joypadQuickConfigMenu.cpp" />
+    <ClCompile Include="..\..\src\controls\joypads\ui\testJoypadMenu.cpp" />
+    <ClCompile Include="..\..\src\controls\joypads\VirtualJoypad.cpp" />
+    <ClCompile Include="..\..\src\controls\keyboard\keyboard.cpp" />
+    <ClCompile Include="..\..\src\controls\keyboard\keyBuffer.cpp" />
+    <ClCompile Include="..\..\src\controls\keyboard\KeyConfig.cpp" />
+    <ClCompile Include="..\..\src\controls\keyboard\redefineKeysMenu.cpp" />
+    <ClCompile Include="..\..\src\controls\keyboard\scancodes.cpp" />
+    <ClCompile Include="..\..\src\controls\keyboard\setupKeyboardMenu.cpp" />
+    <ClCompile Include="..\..\src\controls\keyboard\testKeyboardMenu.cpp" />
+    <ClCompile Include="..\..\src\controls\menuControls.cpp" />
+    <ClCompile Include="..\..\src\controls\mouse\mouse.cpp" />
+    <ClCompile Include="..\..\src\controls\quickConfigMenu.cpp" />
+    <ClCompile Include="..\..\src\controls\selectGameControlEventsMenu.cpp" />
+    <ClCompile Include="..\..\src\controls\selectMatchControls.cpp" />
+    <ClCompile Include="..\..\src\controls\testControlsMenu.cpp" />
     <ClCompile Include="..\..\src\files\selectFilesMenu.cpp" />
     <ClCompile Include="..\..\src\game.cpp" />
     <ClCompile Include="..\..\src\init.cpp" />
-    <ClCompile Include="..\..\src\menus\menu.cpp" />
+    <ClCompile Include="..\..\src\menus\drawMenu.cpp" />
+    <ClCompile Include="..\..\src\menus\mainMenu.cpp" />
+    <ClCompile Include="..\..\src\menus\menuProc.cpp" />
+    <ClCompile Include="..\..\src\menus\menus.cpp" />
     <ClCompile Include="..\..\src\menus\menuMouse.cpp" />
+    <ClCompile Include="..\..\src\menus\unpackMenu.cpp" />
     <ClCompile Include="..\..\src\pitch.cpp" />
     <ClCompile Include="..\..\src\replays\ReplayData.cpp" />
     <ClCompile Include="..\..\src\replays\replayOptions.cpp" />
@@ -141,11 +276,23 @@
     <ClCompile Include="..\..\src\replays\replaysMenu.cpp" />
     <ClCompile Include="..\..\src\stdinc.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\..\src\substitutes\substitutes.cpp" />
+    <ClCompile Include="..\..\src\text\text.cpp" />
     <ClCompile Include="..\..\src\video\sprites.cpp" />
     <ClCompile Include="..\..\src\video\videoOptionsMenu.cpp" />
+    <ClCompile Include="..\..\tmp\swos-cpp-gen-$(PlatformArchitecture)\swos-01.cpp" />
+    <ClCompile Include="..\..\tmp\swos-cpp-gen-$(PlatformArchitecture)\swos-02.cpp" />
+    <ClCompile Include="..\..\tmp\swos-cpp-gen-$(PlatformArchitecture)\swos-03.cpp" />
+    <ClCompile Include="..\..\tmp\swos-cpp-gen-$(PlatformArchitecture)\swos-04.cpp" />
+    <ClCompile Include="..\..\tmp\swos-cpp-gen-$(PlatformArchitecture)\swos-05.cpp" />
+    <ClCompile Include="..\..\tmp\swos-cpp-gen-$(PlatformArchitecture)\swos-06.cpp" />
+    <ClCompile Include="..\..\tmp\swos-cpp-gen-$(PlatformArchitecture)\swos-07.cpp" />
+    <ClCompile Include="..\..\tmp\swos-cpp-gen-$(PlatformArchitecture)\swos-08.cpp" />
+    <ClCompile Include="..\..\tmp\swos-cpp-gen-$(PlatformArchitecture)\vm.cpp" />
     <ClCompile Include="..\src\lib\bmpWriter.cpp" />
     <ClCompile Include="..\src\lib\exceptions.cpp" />
     <ClCompile Include="..\src\lib\unitTest.cpp" />
@@ -165,22 +312,52 @@
     <ClCompile Include="..\src\tests\EditTacticsMenuTest.cpp" />
     <ClCompile Include="..\src\tests\SelectFilesMenuTest.cpp" />
     <ClCompile Include="..\src\tests\VideoOptionsMenuTest.cpp" />
+    <ClCompile Include="..\src\tests\SetupKeyboardMenuTest.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\controls\controlOptionsMenu.h" />
     <ClInclude Include="..\..\src\controls\controls.h" />
-    <ClInclude Include="..\..\src\controls\joypadConfigMenu.h" />
-    <ClInclude Include="..\..\src\controls\joypads.h" />
-    <ClInclude Include="..\..\src\controls\scanCodes.h" />
+    <ClInclude Include="..\..\src\controls\gameControlEvents.h" />
+    <ClInclude Include="..\..\src\controls\gameControls.h" />
+    <ClInclude Include="..\..\src\controls\joypads\JoypadElementValue.h" />
+    <ClInclude Include="..\..\src\controls\joypads\ui\configureAxisMenu.h" />
+    <ClInclude Include="..\..\src\controls\joypads\ui\configureHatMenu.h" />
+    <ClInclude Include="..\..\src\controls\joypads\Joypad.h" />
+    <ClInclude Include="..\..\src\controls\joypads\JoypadConfig.h" />
+    <ClInclude Include="..\..\src\controls\joypads\ui\configureTrackballMenu.h" />
+    <ClInclude Include="..\..\src\controls\joypads\ui\joypadConfigMenu.h" />
+    <ClInclude Include="..\..\src\controls\joypads\JoypadConfigRegister.h" />
+    <ClInclude Include="..\..\src\controls\joypads\JoypadGuidConfig.h" />
+    <ClInclude Include="..\..\src\controls\joypads\joypads.h" />
+    <ClInclude Include="..\..\src\controls\joypads\SdlMappingParser.h" />
+    <ClInclude Include="..\..\src\controls\joypads\ui\joypadQuickConfigMenu.h" />
+    <ClInclude Include="..\..\src\controls\joypads\ui\testJoypadMenu.h" />
+    <ClInclude Include="..\..\src\controls\joypads\VirtualJoypad.h" />
+    <ClInclude Include="..\..\src\controls\keyboard\keyboard.h" />
+    <ClInclude Include="..\..\src\controls\keyboard\keyBuffer.h" />
+    <ClInclude Include="..\..\src\controls\keyboard\KeyConfig.h" />
+    <ClInclude Include="..\..\src\controls\keyboard\redefineKeysMenu.h" />
+    <ClInclude Include="..\..\src\controls\keyboard\scancodes.h" />
+    <ClInclude Include="..\..\src\controls\keyboard\setupKeyboardMenu.h" />
+    <ClInclude Include="..\..\src\controls\keyboard\testKeyboardMenu.h" />
+    <ClInclude Include="..\..\src\controls\menuControls.h" />
+    <ClInclude Include="..\..\src\controls\mouse\mouse.h" />
+    <ClInclude Include="..\..\src\controls\quickConfigMenu.h" />
+    <ClInclude Include="..\..\src\controls\selectGameControlEventsMenu.h" />
+    <ClInclude Include="..\..\src\controls\selectMatchControls.h" />
+    <ClInclude Include="..\..\src\controls\testControlsMenu.h" />
     <ClInclude Include="..\..\src\files\file.h" />
     <ClInclude Include="..\..\src\files\selectFilesMenu.h" />
-    <ClInclude Include="..\..\src\menus\menu.h" />
+    <ClInclude Include="..\..\src\menus\drawMenu.h" />
+    <ClInclude Include="..\..\src\menus\mainMenu.h" />
+    <ClInclude Include="..\..\src\menus\menus.h" />
     <ClInclude Include="..\..\src\menus\menuMouse.h" />
     <ClInclude Include="..\..\src\replays\ReplayData.h" />
     <ClInclude Include="..\..\src\replays\replayOptions.h" />
     <ClInclude Include="..\..\src\replays\replays.h" />
     <ClInclude Include="..\..\src\replays\replaysMenu.h" />
     <ClInclude Include="..\..\src\stdinc.h" />
+    <ClInclude Include="..\..\src\text\text.h" />
     <ClInclude Include="..\..\src\video\sprites.h" />
     <ClInclude Include="..\src\lib\bmpWriter.h" />
     <ClInclude Include="..\src\lib\exceptions.h" />
@@ -199,6 +376,7 @@
     <ClInclude Include="..\src\tests\EditTacticsMenuTest.h" />
     <ClInclude Include="..\src\tests\SelectFilesMenuTest.h" />
     <ClInclude Include="..\src\tests\VideoOptionsMenuTest.h" />
+    <ClInclude Include="..\src\tests\SetupKeyboardMenuTest.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

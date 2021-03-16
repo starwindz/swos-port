@@ -42,8 +42,9 @@ namespace SWOS_UnitTest
     void assertItemIsVisibleImp(const MenuEntry *entry, const char *, bool visible, const char *file, int line);
     void assertItemEnabledImp(int index, const char *indexStr, bool enabled, const char *file, int line);
     void assertItemIsStringImp(int index, const char *indexStr, const char *value, const char *file, int line);
-    void assertItemIsStringImp(const MenuEntry *entry, const char *, const char *value, const char *file, int line);
+    void assertItemIsStringImp(const MenuEntry *entry, const char *, const char *value, const char *file, int line, bool matchCase = true);
     void assertItemIsStringImp(const MenuEntry *entry, const char *, const std::string& value, const char *file, int line);
+    void assertItemIsStringImpCaseInsensitive(int index, const char *indexStr, const char *value, const char *file, int line);
     void assertItemIsStringTableImp(int index, const char *indexStr, const char *value, const char *file, int line);
     void assertItemIsSpriteImp(int index, const char *indexStr, int spriteIndex, const char *spriteIndexStr, const char *file, int line);
     void assertItemHasColorImp(int index, const char *indexStr, int color, const char *colorStr, const char *file, int line);
@@ -56,7 +57,7 @@ namespace SWOS_UnitTest
 
     int numItems();
     bool isItemVisible(int index);
-    bool queueKeys(const std::vector<SDL_Scancode>& keys);
+    void queueKeys(const std::vector<SDL_Scancode>& keys);
 }
 
 #define assertTrue(e) SWOS_UnitTest::assertTrueImp(e, #e, __FILE__, __LINE__)
@@ -69,6 +70,7 @@ namespace SWOS_UnitTest
 #define assertItemIsInvisible(i) SWOS_UnitTest::assertItemIsVisibleImp(i, #i, false, __FILE__, __LINE__)
 #define assertItemVisibility(i, v) SWOS_UnitTest::assertItemIsVisibleImp(i, #i, v, __FILE__, __LINE__)
 #define assertItemIsString(i, s) SWOS_UnitTest::assertItemIsStringImp(i, #i, s, __FILE__, __LINE__)
+#define assertItemIsStringCaseInsensitive(i, s) SWOS_UnitTest::assertItemIsStringImp(i, #i, s, __FILE__, __LINE__, false)
 #define assertItemIsStringTable(i, s) SWOS_UnitTest::assertItemIsStringTableImp(i, #i, s, __FILE__, __LINE__)
 #define assertItemIsSprite(i, s) SWOS_UnitTest::assertItemIsSpriteImp(i, #i, s, #s, __FILE__, __LINE__)
 #define assertItemHasColor(i, c) SWOS_UnitTest::assertItemHasColorImp(i, #i, c, #c, __FILE__, __LINE__)

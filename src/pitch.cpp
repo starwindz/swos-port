@@ -26,7 +26,7 @@ void SWOS::ReadPitchFile()
     if (auto file = openFile(pitchFilename)) {
         for (int i = 0; i < 55; i++) {
             if (!SDL_RWread(file, buffer, 168, 1))
-                logWarn("Failed reading pitch file %s, line %d", pitchFilename, i);
+                logWarn("Failed reading pitch file %s, line %d", pitchFilename.asConstCharPtr(), i);
             buffer += 176;
         }
         SDL_RWclose(file);

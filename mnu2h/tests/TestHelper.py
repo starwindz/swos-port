@@ -1,7 +1,7 @@
 import unittest
 from unittest import mock
 
-from Parser import Parser
+from Parser.Parser import Parser
 
 kTestFilename = 'InAGaddaDaVida'
 

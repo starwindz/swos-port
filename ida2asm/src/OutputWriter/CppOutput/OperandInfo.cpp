@@ -58,7 +58,7 @@ size_t OperandInfo::size() const
 
     default:
         assert(false);
-        // fall-through
+        [[fallthrough]];
 
     case kImmediate:
         return 0;

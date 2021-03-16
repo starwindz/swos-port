@@ -2,12 +2,6 @@
 #include "render.h"
 #include "util.h"
 
-static SpriteGraphics *getSprite(int index)
-{
-    assert(index > (swos.vsPtr != swos.linAdr384k ? kMaxMenuSprite : -1) && index < kNumSprites);
-    return swos.spritesIndex[index];
-}
-
 SpriteClipper::SpriteClipper(int spriteIndex, int x, int y)
 {
     auto sprite = getSprite(spriteIndex);
@@ -57,6 +51,12 @@ bool SpriteClipper::clip()
     return x < fieldWidth && width > 0 && y < fieldHeight && height > 0;
 }
 
+SpriteGraphics *getSprite(int index)
+{
+    assert(index >= 0 && index < kNumSprites);
+    return swos.spritesIndex[index];
+}
+
 void drawTeamNameSprites(int spriteIndex, int x, int y)
 {
     assert(spriteIndex == kTeam1NameSprite || spriteIndex == kTeam2NameSprite);
@@ -89,14 +89,14 @@ static char *drawPixelRow(SpriteClipper& p, char *dest, int spriteDelta, int fie
         byte pixelPair = *p.from;
 
         if (int pixel = (pixelPair >> 4) & 0x0f)
-            *dest = pixel | swos.deltaColor;
+            *dest = pixel | swos.g_deltaColor;
         dest++;
 
         if (!--width)
             break;
 
         if (int pixel = pixelPair & 0x0f)
-            *dest = pixel | swos.deltaColor;
+            *dest = pixel | swos.g_deltaColor;
         dest++;
 
         p.from++;
@@ -109,7 +109,8 @@ static char *drawPixelRow(SpriteClipper& p, char *dest, int spriteDelta, int fie
 }
 
 // globals used: [to be removed when possible]
-//     deltaColor - OR it with every byte to write
+//     g_deltaColor - OR it with every byte to write
+//
 void drawSprite(int spriteIndex, int x, int y, bool saveSpritePixelsFlag /* = true */)
 {
     // TODO: remove this
@@ -122,6 +123,33 @@ void drawSprite(int spriteIndex, int x, int y, bool saveSpritePixelsFlag /* = tr
 
     if (clipper.clip())
         drawSpriteUnclipped(clipper, saveSpritePixelsFlag);
+}
+
+int drawCharSprite(int spriteIndex, int x, int y, int color)
+{
+    auto sprite = getSprite(spriteIndex);
+    auto startDest = swos.linAdr384k + kMenuScreenWidth * (y + (swos.g_cameraY & 0x0f)) + x;
+    auto stride = kMenuScreenWidth - 16 * sprite->wquads;
+
+    assert(stride >= 0);
+
+    for (int i = 0; i < 4; i++) {
+        auto src = sprite->data + (i > 1);
+        auto dest = startDest;
+
+        for (int j = 0; j < sprite->height; j++) {
+            for (int k = 0; k < sprite->wquads * 4; k++) {
+                auto pixel = (i % 2 ? *src : (*src >> 4)) & 0x0f;
+                if (pixel)
+                    dest[i] = pixel == kNearBlackText ? pixel : color;
+                dest += 4;
+                src += 2;
+            }
+            dest += stride;
+        }
+    }
+
+    return sprite->width;
 }
 
 void drawSpriteUnclipped(SpriteClipper& c, bool saveSpritePixelsFlag /* = true */)
@@ -144,7 +172,7 @@ void drawSpriteUnclipped(SpriteClipper& c, bool saveSpritePixelsFlag /* = true *
         // a sprite was clipped so that it starts on an odd pixel
         while (c.height--) {
             if (int pixel = *c.from & 0x0f)
-                *dest = pixel | swos.deltaColor;
+                *dest = pixel | swos.g_deltaColor;
 
             c.from++;
             dest = drawPixelRow(c, dest + 1, spriteDelta, fieldDelta);
@@ -215,100 +243,4 @@ void copySprite(int sourceSpriteIndex, int destSpriteIndex, int xOffset, int yOf
 void SWOS::CopySprite()
 {
     copySprite(D0.asWord(), D3.asWord(), D1.asInt16(), D2.asInt16());
-}
-
-static std::pair<int, int> charSpriteWidth(char c, const CharTable *charTable)
-{
-    assert(c >= ' ');
-
-    if (c == ' ')
-        return { charTable->spaceWidth, 0 };
-
-    auto spriteIndex = charTable->conversionTable[c - ' '];
-    spriteIndex += charTable->spriteIndexOffset;
-    const auto& sprite = (*swos.spriteGraphicsPtr)[spriteIndex];
-
-    return { sprite.width, charTable->charSpacing };
-}
-
-int getStringPixelLength(const char *str, bool bigText /* = false */)
-{
-    const auto charTable = bigText ? &swos.bigCharsTable : &swos.smallCharsTable;
-    int len = 0;
-    int spacing = 0;
-
-    for (char c; c = *str; str++) {
-        int charWidth, nextSpacing;
-        std::tie(charWidth, nextSpacing) = charSpriteWidth(c, charTable);
-        len += charWidth + spacing;
-        spacing = nextSpacing;
-    }
-
-    return len;
-}
-
-// Ensures that string fits inside a given pixel limitation.
-// If not, replaces last characters with "..." in a way that the string will fit.
-void elideString(char *str, int maxStrLen, int maxPixels, bool bigText /* = false */)
-{
-    assert(str && maxPixels);
-
-    const auto charTable = bigText ? &swos.bigCharsTable : &swos.smallCharsTable;
-    int dotWidth, spacing;
-    std::tie(dotWidth, spacing) = charSpriteWidth('.', charTable);
-
-    constexpr int kNumDotsInEllipsis = 3;
-    int ellipsisWidth = kNumDotsInEllipsis * dotWidth;
-
-    int len = 0;
-    std::array<int, kNumDotsInEllipsis> prevWidths = {};
-
-    for (int i = 0; str[i]; i++) {
-        auto c = str[i];
-
-        int charWidth, nextSpacing;
-        std::tie(charWidth, nextSpacing) = charSpriteWidth(c, charTable);
-
-        if (len + charWidth + spacing > maxPixels) {
-            int pixelsRemaining = maxPixels - len;
-
-            int j = prevWidths.size() - 1;
-
-            while (true) {
-                if (pixelsRemaining >= ellipsisWidth) {
-                    if (maxStrLen - i >= kNumDotsInEllipsis + 1) {
-                        auto dotsInsertPoint = str + i;
-                        std::fill(dotsInsertPoint, dotsInsertPoint + kNumDotsInEllipsis, '.');
-                        str[i + kNumDotsInEllipsis] = '\0';
-
-                        assert(getStringPixelLength(str, bigText) <= maxPixels);
-                        return;
-                    } else {
-                        if (i > 0) {
-                            i--;
-                        } else {
-                            *str = '\0';
-                            return;
-                        }
-                    }
-                } else {
-                    i--;
-                    if (i < 0) {
-                        *str = '\0';
-                        return;
-                    }
-                    pixelsRemaining += prevWidths[j];
-                    j--;
-                    assert(j >= 0 || pixelsRemaining >= ellipsisWidth);
-                }
-            }
-        }
-
-        len += charWidth + spacing;
-        spacing = nextSpacing;
-        std::move(prevWidths.begin() + 1, prevWidths.end(), prevWidths.begin());
-        prevWidths.back() = charWidth;
-    }
-
-    assert(getStringPixelLength(str, bigText) <= maxPixels);
 }

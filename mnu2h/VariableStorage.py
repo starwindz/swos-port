@@ -184,6 +184,8 @@ class VariableStorage:
             result = checkedMenu().previousOrdinal
         elif text in ('currentOrdinal', 'currentOrd', 'curOrdinal', 'curOrd'):
             result = checkedMenu().getLastEntryOrdinal()
+        elif text in ('nextOrdinal', 'nextOrd'):
+            result = checkedMenu().getLastEntryOrdinal() + 1
         elif text == 'kScreenWidth':
             result = 320
         elif text == 'kScreenHeight':

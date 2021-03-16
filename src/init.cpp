@@ -6,6 +6,7 @@
 #include "options.h"
 #include "replays.h"
 #include "controls.h"
+#include "menuControls.h"
 
 #ifdef NDEBUG
 constexpr int kSentinelSize = 0;
@@ -22,10 +23,10 @@ constexpr int kPitchPatternsBufferSize = (42 * 53 + 42) * 256 + kSentinelSize;
 static SDL_RWops *m_soccerBinHandle;
 static char *m_soccerBinPtr;
 
-#ifdef DEBUG
 constexpr int kExtendedMemoryBufferSize = 393'216 + kSentinelSize;
-constexpr int kTotalExtraMemorySize = kDosMemBufferSize + kPitchPatternsBufferSize + kExtendedMemoryBufferSize;
+SDL_UNUSED constexpr int kTotalExtraMemorySize = kDosMemBufferSize + kPitchPatternsBufferSize + kExtendedMemoryBufferSize;
 
+#ifdef DEBUG
 void verifyBlock(const char *array, size_t size)
 {
     assert(!memcmp(array + size - kSentinelSize, kSentinelMagic, kSentinelSize));
@@ -372,7 +373,7 @@ __declspec(naked) void SWOS::IntroDrawFrame()
 #endif
 }
 
-static void showImageReelsAndIntro()
+static void SDL_UNUSED showImageReelsAndIntro()
 {
     bool aborted = false;
     if (!disableImageReels()) {
@@ -402,17 +403,18 @@ void SWOS::SWOS()
 //initIntroAnimation();
 //PlayIntroAnimation();
 
-    swos.controlWord = 0;
-    swos.g_pl2Status = 0;
-    swos.g_pl1Status = 0;
-    swos.pl1FinalStatus = -1;
-    swos.pl2FinalStatus = -1;
+    swos.g_pl1ControlFlags = 0;
+    swos.g_pl2ControlFlags = 0;
+    swos.pl1Direction = -1;
+    swos.pl2Direction = -1;
+
+    resetControls();
 
     logInfo("Loading title and menu music");
     SAFE_INVOKE(LoadTitleAndStartMusic);
     initRandomSeed();
 
-    swos.someColorConversionFlag = 1;    // not sure what this is
+    swos.doSpriteColorConversion = 1;    // not sure what this is
 
     swos.goalBasePtr = swos.currentHilBuffer;
     swos.nextGoalPtr = reinterpret_cast<dword *>(swos.hilFileBuffer);

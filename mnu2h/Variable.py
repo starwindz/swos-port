@@ -14,4 +14,20 @@ class Variable:
         self.referenced = False
 
     def __repr__(self):
-        return f'<{self.name} = {self.value}, referenced: {self.referenced}, {self.token}>'
+        return (f'<{self.name} = "{self.value}", type: {"int" if isinstance(self.value, int) else "str"}, '
+            f'referenced: {self.referenced}, {self.token}>')
+
+    @staticmethod
+    def isSwos(var):
+        assert isinstance(var, str)
+        return var.startswith('$')
+
+    @staticmethod
+    def makeSwos(var):
+        assert isinstance(var, str)
+        return '$' + var
+
+    @staticmethod
+    def extractSwosVar(var):
+        assert isinstance(var, str) and Variable.isSwos(var)
+        return var[1:]

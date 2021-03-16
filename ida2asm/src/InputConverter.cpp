@@ -323,7 +323,7 @@ void InputConverter::checkForUnusedSymbols()
                 return refs.hasReference(sym) || refs.hasPublic(sym);
             });
 
-            if (it == m_workers.end())
+            if (it == m_workers.end() && !m_symFileParser.isImport(sym))
                 unusedSymbols.push_back(sym);
         }
 

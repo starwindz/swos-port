@@ -23,17 +23,37 @@ DrawTeamNameSprites
 QuitToDosPromptLoop - SWOSMainMenuInit
 
 # menus
+UnpackMenu
 RestorePreviousMenu
+DrawSelected
+DrawChar
+cseg_1E1A6
 g_currentMenuPtr
+menuStatus
+menuTextBlinkCounter
+dseg_1666DE
+charTables - shirtColorTable
+DrawMenuText - GetTextSize
+controlsHeldTimer
+lastControls
 
 # CD ROM routines
 CDROM_GetInfo - Text2Sprite
 # remove select files menu functions as well
 FindFirstFile - SelectFileToSaveDialog
 
-# joypads
+# controls/joypads
 Joy1SetStatus - TryRestartingMusic
 VerifyJoypadControls
+#pl1LastFired - pl2ShortFireCounter
+pl1LastFired - pl1Fire
+pl1UpRight - pl1ShortFire
+pl2LastFired - pl2Fire
+pl2UpRight - pl2ShortFire
+# this currently only lives as write only, to be removed when possible
+#keyboardControlFlags
+keyCount
+keyBuffer
 
 # commentary & sfx
 PlayCommentarySample
@@ -164,14 +184,13 @@ importTacticsFilename, 256 dup(0)
 #
 # these functions destroy registers C++ assumes will not change with a function call,
 # so inject the code to save and restore them
-# warning! do not to list procs with multiple exit points (e.g. they can jump to other procs)
+# warning! do not to list procs with multiple exit points (i.e. that can jump to other procs)
 # note:
 #   always include or exclude both DrawSprite and DrawSpriteCentered, since later jumps into former
 #
 
 @save-regs
 DrawSpriteInColor
-DrawMenu
 MainKeysCheck
 HandleInstantReplayStateSwitch
 RestoreCameraPosition
@@ -184,13 +203,10 @@ FadeAndSaveReplay
 SortSprites
 DarkenRectangle
 CommonMenuExit
-DrawMenuItem
 CalcMenuEntryAddress
-DrawMenuText
 SetCurrentEntry
 SavePixelsBehindSprite
 FilterKeys
-GetTextSize
 ZeroOutStars
 SetDefaultNameAndSurname
 InitHighestScorersTable
@@ -210,17 +226,14 @@ StartFirstExtraTime
 # list of symbols to export to header so they can be accessible from C++
 # inside ASM files they will be prefixed with underscore, and made public
 # syntax for generating SWOS C++ header files is:
-# <symbol> [, function |, (array | pointer | ptr | functionPointer) <type>['['<size>']'] |, <type>]
+# <symbol> [, function |, (array | pointer | ptr | functionPointer) <type>['['<size>']'] |, <type>] [(align: <n>)]
 #
 
 @export
 
 # controls
-CheckControls, function
-pl1ShortFire, byte
-pl2ShortFire, byte
-finalControlsStatus, int16_t
-lastControls, word
+menuControlsDirection, int16_t
+menuControlsDirection2, int16_t
 fire, word
 shortFire, word
 longFireTime, word
@@ -229,47 +242,47 @@ up, byte
 down, byte
 left, byte
 right, byte
-pl1LastFired, byte
-pl2LastFired, byte
-pl2ShortFireCounter, word
-pl1FinalStatus, word
-pl2FinalStatus, word
-g_pl2Status, word
-g_pl1Status, word
+pl1Fire, byte
+pl2Fire, byte
+pl1ShortFire, byte
+pl2ShortFire, byte
+pl1SecondaryFire, byte
+pl2SecondaryFire, byte
+pl1Direction, word
+pl2Direction, word
+pl1FireCounter, int16_t
+pl2FireCounter, int16_t
+g_pl1ControlFlags, word
+g_pl2ControlFlags, word
 g_joy1X, word
 g_joy1Y, word
 g_joy2X, word
 g_joy2Y, word
 g_scanCode, word
-keyCount, word
-keyBuffer, array char[10]
 lastKey, word
 convertedKey, byte
 convertKeysTable, array const char[110]
-pl1Fire, byte
-pl2Fire, byte
 statsFireExit, word
-controlWord, word
+fireCounter, int16_t
+skipFireEveryOtherFrame, word
+pl1SkipFireCounter, word
+leaveFireFlag, word
+pl2SkipFireCounter, word
 
 # menus
-DrawMenu, function
-DrawMenuItem, function
-DrawMenuText, function
-DrawInnerFrame, function
-DrawMenuTextCentered, function
+DrawMenuItemBackground, function
+DrawMenuItemOuterFrame, function
+DrawMenuItemInnerFrame, function
 CommonMenuExit, function
 SetExitMenuFlag, function
 CalcMenuEntryAddress, function
 ShowErrorMenu, function
 DoContinueAbortMenu, function
 # enforce dword alignment
-g_currentMenu, array dword[1625]
+g_currentMenu, array char[6500] (align: 4)
 previousMenuItem, MenuEntry *
 g_exitMenu, word
-player1ClearFlag, word
-player2ClearFlag, word
 menuFade, word
-menuStatus, word
 menuCycleTimer, word
 kColorTableShine, array word[8]
 menuCursorFrame, word
@@ -292,6 +305,13 @@ StartContest, function
 SaveContest, function
 LoadOldCompetitionMenu, function
 EditCustomTeamMenu, function
+ExitSelectTeams, function
+abortSelectTeams, word
+teamsType, word
+choosingPreset, word
+chosenTactics, word
+diySelected, word
+diyCompetitionMenu, PackedMenu
 
 aEditTactics, array const char
 aEditCustomTeam, array const char
@@ -346,7 +366,7 @@ TryRestartingMusic, function
 aOptions, array const char
 aExit, array const char
 aReplay, array const char
-controlsStatus, word
+controlMask, word
 showPrereleaseCounter, word
 aFriendlyDiyGam, array const char
 aFixPitchType, array const char
@@ -368,6 +388,8 @@ aMinus, array const char
 menuMusicStrTable, void *
 commentaryStrTable, void *
 aCustom, array const char
+aOk, array const char
+aCancel, array const char
 
 # intro
 PlayIntroAnimation, function
@@ -398,6 +420,8 @@ DrawSpriteInColor, function
 SavePixelsBehindSprite, function
 SortSprites, function
 InitSavedSprites, function
+CopyWholeSprite, function
+ConvertSpriteColors, function
 numSpritesToRender, word
 spritesIndex, array SpriteGraphics *
 sortedSprites, array Sprite * [79]
@@ -569,7 +593,6 @@ InitBackground, function
 DrawAnimatedPatterns, function
 DarkenRectangle, function
 GameLoop, function
-GetTextSize, function
 ZeroOutStars, function
 CopyTeamsAndHeader, function
 LoadFillAndSwtitle, function
@@ -582,7 +605,7 @@ selTeamsPtr, dword
 partOneImages, array const char *
 partTwoImages, array const char *
 g_videoSpeedIndex, word
-someColorConversionFlag, word
+doSpriteColorConversion, word
 aCharset_dat, array const char
 randomSeed, word
 vsPtr, char *
@@ -605,7 +628,7 @@ g_gotExtraMemoryForSamples, word
 g_midiPlaying, word
 animPatternsState, word
 normalReplayRunning, word
-deltaColor, byte
+g_deltaColor, byte
 gameAborted, word
 teamDataPtr, TeamGeneralInfo *
 big_S_Sprite, Sprite
@@ -631,13 +654,12 @@ dseg_11F41C, word
 coachOrPlayer, word
 plNationality, byte
 competitionOver, word
-g_numSelectedTeams, word
 teamsLoaded, word
 poolplyrLoaded, word
 importTacticsFilename, array char[256]
 chooseTacticsTeamPtr, void *
-leftTeamIngame, TeamGame
-rightTeamIngame, TeamGame
+topTeamIngame, TeamGame
+bottomTeamIngame, TeamGame
 topTeamData, TeamGeneralInfo
 bottomTeamData, TeamGeneralInfo
 lastTeamPlayed, TeamGeneralInfo *
@@ -647,16 +669,15 @@ team2GoalsDigit2, word
 animatedPatterns, array int16_t[8]
 
 g_exitGameFlag, word
-useColorTable, word
 isCareer, word
-playMatchTeam1Ptr, char *
-playMatchTeam2Ptr, char *
 careerTeam, array char[1292]
 replaySelected, word
 
-PlayMatchSelected, function
 playerNumThatStarted, word
-pl1IsntPlayer, word
+careerTeamSetupDone, word
+isFirstPlayerChoosingTeam, word
+playMatchTeam1Ptr, TeamFile *
+playMatchTeam2Ptr, TeamFile *
 
 BumpAllPlayersLastPlayedHalfAtGameStart, function
 BumpAllPlayersLastPlayedHalfPostGame, function
@@ -685,9 +706,6 @@ endGameCounter, int16_t
 secondsSwitchAccumulator, int16_t
 gameTime, array byte[4]
 
-### tester
-chosenTactics, word
-
 ### debug dump
 AI_attackHalf, word
 
@@ -698,7 +716,7 @@ AI_attackHalf, word
 
 @on-enter
 DoUnchainSpriteInMenus
-InitGame
+InitGameSaveTeams
 ClearBackground
 FadeOutToBlack
 HandleInstantReplayStateSwitch
@@ -731,7 +749,6 @@ InputTextKeyLoop, 3, AbortTextInputOnEscapeAndRightMouseClick
 PlayerDoingHeader, 161, PlayHeaderComment
 PlayerTackled, 59, PlayInjuryComment
 RunStoppageEventsAndSetAnimationTables, 339, EnqueueCrowdChantsReload
-SetupPlayers, 161, PreventPlayer1FireLockout
 
 
 #
@@ -757,9 +774,10 @@ InitMainMenuStuff
 
 # menus
 MenuProc
+MenuCheckControls
 ShowMenu
-DrawSelected
-UnpackMenu
+DrawMenu
+DrawMenuItem
 ActivateMenu
 SetCurrentEntry
 FlipInMenu
@@ -769,6 +787,9 @@ SetPalette
 DrawSpriteInCameraView
 DrawSprite16Pixels
 CopySprite
+
+# strings
+GetTextSize
 
 ReadPitchFile
 WaitRetrace
@@ -794,6 +815,7 @@ ViewHighlightsWrapper
 
 DrawSprites
 OptionsMenuSelected
+PlayMatchSelected
 
 # commentary/sfx
 LoadCommentary
@@ -850,7 +872,6 @@ ResetAnimatedPatternsForBothTeams
 Player1StatusProc
 Player2StatusProc
 StartMainGameLoop
-ExitPlayMatch
 ReplayExitMenuAfterFriendly
 Int2Ascii
 ExitEuropeanChampionshipMenu

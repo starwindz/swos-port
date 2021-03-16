@@ -1,0 +1,439 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|ARM">
+      <Configuration>Debug</Configuration>
+      <Platform>ARM</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|ARM">
+      <Configuration>Release</Configuration>
+      <Platform>ARM</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|ARM64">
+      <Configuration>Debug</Configuration>
+      <Platform>ARM64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|ARM64">
+      <Configuration>Release</Configuration>
+      <Platform>ARM64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x86">
+      <Configuration>Debug</Configuration>
+      <Platform>x86</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x86">
+      <Configuration>Release</Configuration>
+      <Platform>x86</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{eda40257-4c8b-4d5b-b563-030704ab64a1}</ProjectGuid>
+    <Keyword>Android</Keyword>
+    <RootNamespace>android</RootNamespace>
+    <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>
+    <ApplicationType>Android</ApplicationType>
+    <ApplicationTypeRevision>3.0</ApplicationTypeRevision>
+    <ProjectName>android-shared-library</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>Clang_5_0</PlatformToolset>
+    <UseOfStl>c++_shared</UseOfStl>
+    <AndroidAPILevel>android-21</AndroidAPILevel>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>Clang_5_0</PlatformToolset>
+    <UseOfStl>c++_shared</UseOfStl>
+    <AndroidAPILevel>android-21</AndroidAPILevel>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>Clang_5_0</PlatformToolset>
+    <AndroidAPILevel>android-21</AndroidAPILevel>
+    <UseOfStl>c++_shared</UseOfStl>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>Clang_5_0</PlatformToolset>
+    <AndroidAPILevel>android-21</AndroidAPILevel>
+    <UseOfStl>c++_shared</UseOfStl>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>Clang_5_0</PlatformToolset>
+    <AndroidAPILevel>android-21</AndroidAPILevel>
+    <UseOfStl>c++_shared</UseOfStl>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>Clang_5_0</PlatformToolset>
+    <AndroidAPILevel>android-21</AndroidAPILevel>
+    <UseOfStl>c++_shared</UseOfStl>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>Clang_5_0</PlatformToolset>
+    <AndroidAPILevel>android-21</AndroidAPILevel>
+    <UseOfStl>c++_shared</UseOfStl>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>Clang_5_0</PlatformToolset>
+    <AndroidAPILevel>android-21</AndroidAPILevel>
+    <UseOfStl>c++_shared</UseOfStl>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings" />
+  <ImportGroup Label="Shared" />
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IntDir>$(SolutionDir)..\..\tmp\$(ProjectName)-$(Platform)-$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)..\..\bin\android\$(Platform)\</OutDir>
+    <TargetName>libmain</TargetName>
+    <LibraryPath>..\..\..\lib\android\debug\symbolized\$(TargetArchAbi);$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IntDir>$(SolutionDir)..\..\tmp\$(ProjectName)-$(Platform)-$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)..\..\bin\android\$(Platform)\</OutDir>
+    <TargetName>libmain</TargetName>
+    <LibraryPath>
+    </LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
+    <IntDir>$(SolutionDir)..\..\tmp\$(ProjectName)-$(Platform)-$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)..\..\bin\android\$(Platform)\</OutDir>
+    <TargetName>libmain</TargetName>
+    <LibraryPath>..\..\..\lib\android\debug\symbolized\$(TargetArchAbi);$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'">
+    <IntDir>$(SolutionDir)..\..\tmp\$(ProjectName)-$(Platform)-$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)..\..\bin\android\$(Platform)\</OutDir>
+    <TargetName>libmain</TargetName>
+    <LibraryPath>
+    </LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
+    <IntDir>$(SolutionDir)..\..\tmp\$(ProjectName)-$(Platform)-$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)..\..\bin\android\$(Platform)\</OutDir>
+    <TargetName>libmain</TargetName>
+    <LibraryPath>..\..\..\lib\android\debug\symbolized\$(TargetArchAbi);$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
+    <IntDir>$(SolutionDir)..\..\tmp\$(ProjectName)-$(Platform)-$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)..\..\bin\android\$(Platform)\</OutDir>
+    <TargetName>libmain</TargetName>
+    <LibraryPath>
+    </LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
+    <IntDir>$(SolutionDir)..\..\tmp\$(ProjectName)-$(Platform)-$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)..\..\bin\android\$(Platform)\</OutDir>
+    <TargetName>libmain</TargetName>
+    <LibraryPath>..\..\..\lib\android\debug\symbolized\$(TargetArchAbi);$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
+    <IntDir>$(SolutionDir)..\..\tmp\$(ProjectName)-$(Platform)-$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)..\..\bin\android\$(Platform)\</OutDir>
+    <TargetName>libmain</TargetName>
+    <LibraryPath>
+    </LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>..\..\..\src\android\pch.h</PrecompiledHeaderFile>
+      <CppLanguageStandard>c++1z</CppLanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\..\tmp\mnu2h;..\..\..\include;..\..\..\include\SDL2;..\..\..\include\SDL2_image;..\..\..\include\SDL_net;..\..\..\include\adlmidi;..\..\..\include\crashrpt;..\..\..\include\simpleini;$(SolutionDir)..\..\src;$(SolutionDir)..\..\src\audio;$(SolutionDir)..\..\src\controls;$(SolutionDir)..\..\src\debug;$(SolutionDir)..\..\src\files;$(SolutionDir)..\..\src\menus;$(SolutionDir)..\..\src\replays;$(SolutionDir)..\..\src\sprites;$(SolutionDir)..\..\src\text;$(SolutionDir)..\..\src\video;$(SolutionDir)..\..\src\util;$(SolutionDir)..\..\src\controls\joypads;$(SolutionDir)..\..\src\controls\joypads\ui;$(SolutionDir)..\..\src\controls\keyboard;$(SolutionDir)..\..\src\controls\mouse;$(SolutionDir)..\..\tmp\swos-cpp-gen-64;$(SolutionDir)..\..\lib\src\ConvertUTF;$(IncludePath);$(StlIncludeDirectories);$(Sysroot)\usr\include;$(Sysroot)\usr\include\$(AndroidHeaderTriple);$(VS_NdkRoot)\sources\android\support\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>SWOS_VM;DEBUG;_DEBUG;__ANDROID_API__=$(AndroidAPILevelNumber);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalOptions>-Wno-unused-private-field -Wno-undefined-inline -Wno-parentheses -Wno-missing-braces -Wno-switch %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <IgnoreSpecificDefaultLibraries>
+      </IgnoreSpecificDefaultLibraries>
+      <LibraryDependencies>SDL2;SDL2_image;SDL2_mixer;ADLMIDI;$(StlLibraryName);$(StlLibraryName);%(LibraryDependencies)</LibraryDependencies>
+      <AdditionalLibraryDirectories>..\..\..\lib\android\debug\symbolized\$(TargetArchAbi);..\..\..\lib\android\debug\static\$(TargetArchAbi);%(AdditionalLibraryDirectories);$(ToolchainPrebuiltPath)\lib\gcc\x86_64-linux-android\$(ToolchainFullVersionName);$(StlLibraryPath)</AdditionalLibraryDirectories>
+      <AdditionalOptions>-lm %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>..\..\..\src\android\pch.h</PrecompiledHeaderFile>
+      <CppLanguageStandard>c++1z</CppLanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\..\tmp\mnu2h;..\..\..\include;..\..\..\include\SDL2;..\..\..\include\SDL2_image;..\..\..\include\SDL_net;..\..\..\include\adlmidi;..\..\..\include\crashrpt;..\..\..\include\simpleini;$(SolutionDir)..\..\src;$(SolutionDir)..\..\src\audio;$(SolutionDir)..\..\src\controls;$(SolutionDir)..\..\src\debug;$(SolutionDir)..\..\src\files;$(SolutionDir)..\..\src\menus;$(SolutionDir)..\..\src\replays;$(SolutionDir)..\..\src\sprites;$(SolutionDir)..\..\src\text;$(SolutionDir)..\..\src\video;$(SolutionDir)..\..\src\util;$(SolutionDir)..\..\src\controls\joypads;$(SolutionDir)..\..\src\controls\joypads\ui;$(SolutionDir)..\..\src\controls\keyboard;$(SolutionDir)..\..\src\controls\mouse;$(SolutionDir)..\..\tmp\swos-cpp-gen-64;$(SolutionDir)..\..\lib\src\ConvertUTF;$(IncludePath);$(StlIncludeDirectories);$(Sysroot)\usr\include;$(Sysroot)\usr\include\$(AndroidHeaderTriple);$(VS_NdkRoot)\sources\android\support\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>SWOS_VM;NDEBUG;__ANDROID_API__=$(AndroidAPILevelNumber);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalOptions>-Wno-unused-private-field -Wno-undefined-inline -Wno-parentheses -Wno-missing-braces -Wno-switch %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <IgnoreSpecificDefaultLibraries>
+      </IgnoreSpecificDefaultLibraries>
+      <LibraryDependencies>SDL2;SDL2_image;SDL2_mixer;ADLMIDI;$(StlLibraryName);%(LibraryDependencies)</LibraryDependencies>
+      <AdditionalLibraryDirectories>..\..\..\lib\android\release\stripped\$(TargetArchAbi);..\..\..\lib\android\release\static\$(TargetArchAbi);%(AdditionalLibraryDirectories);$(ToolchainPrebuiltPath)\lib\gcc\x86_64-linux-android\$(ToolchainFullVersionName);$(StlLibraryPath)</AdditionalLibraryDirectories>
+      <AdditionalOptions>-lm %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>..\..\..\src\android\pch.h</PrecompiledHeaderFile>
+      <CppLanguageStandard>c++1z</CppLanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\..\tmp\mnu2h;..\..\..\include;..\..\..\include\SDL2;..\..\..\include\SDL2_image;..\..\..\include\SDL_net;..\..\..\include\adlmidi;..\..\..\include\crashrpt;..\..\..\include\simpleini;$(SolutionDir)..\..\src;$(SolutionDir)..\..\src\audio;$(SolutionDir)..\..\src\controls;$(SolutionDir)..\..\src\debug;$(SolutionDir)..\..\src\files;$(SolutionDir)..\..\src\menus;$(SolutionDir)..\..\src\replays;$(SolutionDir)..\..\src\sprites;$(SolutionDir)..\..\src\text;$(SolutionDir)..\..\src\video;$(SolutionDir)..\..\src\util;$(SolutionDir)..\..\src\controls\joypads;$(SolutionDir)..\..\src\controls\joypads\ui;$(SolutionDir)..\..\src\controls\keyboard;$(SolutionDir)..\..\src\controls\mouse;$(SolutionDir)..\..\tmp\swos-cpp-gen-32;$(SolutionDir)..\..\lib\src\ConvertUTF;$(IncludePath);$(StlIncludeDirectories);$(Sysroot)\usr\include;$(Sysroot)\usr\include\$(AndroidHeaderTriple);$(VS_NdkRoot)\sources\android\support\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>SWOS_VM;DEBUG;_DEBUG;__ANDROID_API__=$(AndroidAPILevelNumber);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalOptions>-Wno-unused-private-field -Wno-undefined-inline -Wno-parentheses -Wno-missing-braces -Wno-switch %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <LibraryDependencies>SDL2;SDL2_image;SDL2_mixer;ADLMIDI;$(StlLibraryName);$(StlLibraryName);%(LibraryDependencies)</LibraryDependencies>
+      <AdditionalLibraryDirectories>..\..\..\lib\android\debug\symbolized\$(TargetArchAbi);..\..\..\lib\android\debug\static\$(TargetArchAbi);%(AdditionalLibraryDirectories);$(ToolchainPrebuiltPath)\lib\gcc\i686-linux-android\$(ToolchainFullVersionName);$(StlLibraryPath)</AdditionalLibraryDirectories>
+      <AdditionalOptions>-lm %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>..\..\..\src\android\pch.h</PrecompiledHeaderFile>
+      <CppLanguageStandard>c++1z</CppLanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\..\tmp\mnu2h;..\..\..\include;..\..\..\include\SDL2;..\..\..\include\SDL2_image;..\..\..\include\SDL_net;..\..\..\include\adlmidi;..\..\..\include\crashrpt;..\..\..\include\simpleini;$(SolutionDir)..\..\src;$(SolutionDir)..\..\src\audio;$(SolutionDir)..\..\src\controls;$(SolutionDir)..\..\src\debug;$(SolutionDir)..\..\src\files;$(SolutionDir)..\..\src\menus;$(SolutionDir)..\..\src\replays;$(SolutionDir)..\..\src\sprites;$(SolutionDir)..\..\src\text;$(SolutionDir)..\..\src\video;$(SolutionDir)..\..\src\util;$(SolutionDir)..\..\src\controls\joypads;$(SolutionDir)..\..\src\controls\joypads\ui;$(SolutionDir)..\..\src\controls\keyboard;$(SolutionDir)..\..\src\controls\mouse;$(SolutionDir)..\..\tmp\swos-cpp-gen-32;$(SolutionDir)..\..\lib\src\ConvertUTF;$(IncludePath);$(StlIncludeDirectories);$(Sysroot)\usr\include;$(Sysroot)\usr\include\$(AndroidHeaderTriple);$(VS_NdkRoot)\sources\android\support\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>SWOS_VM;NDEBUG;__ANDROID_API__=$(AndroidAPILevelNumber);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalOptions>-Wno-unused-private-field -Wno-undefined-inline -Wno-parentheses -Wno-missing-braces -Wno-switch %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <LibraryDependencies>SDL2;SDL2_image;SDL2_mixer;ADLMIDI;$(StlLibraryName);%(LibraryDependencies)</LibraryDependencies>
+      <AdditionalLibraryDirectories>..\..\..\lib\android\release\stripped\$(TargetArchAbi);..\..\..\lib\android\release\static\$(TargetArchAbi);%(AdditionalLibraryDirectories);$(ToolchainPrebuiltPath)\lib\gcc\i686-linux-android\$(ToolchainFullVersionName);$(StlLibraryPath)</AdditionalLibraryDirectories>
+      <AdditionalOptions>-lm %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>..\..\..\src\android\pch.h</PrecompiledHeaderFile>
+      <CppLanguageStandard>c++1z</CppLanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\..\tmp\mnu2h;..\..\..\include;..\..\..\include\SDL2;..\..\..\include\SDL2_image;..\..\..\include\SDL_net;..\..\..\include\adlmidi;..\..\..\include\crashrpt;..\..\..\include\simpleini;$(SolutionDir)..\..\src;$(SolutionDir)..\..\src\audio;$(SolutionDir)..\..\src\controls;$(SolutionDir)..\..\src\debug;$(SolutionDir)..\..\src\files;$(SolutionDir)..\..\src\menus;$(SolutionDir)..\..\src\replays;$(SolutionDir)..\..\src\sprites;$(SolutionDir)..\..\src\text;$(SolutionDir)..\..\src\video;$(SolutionDir)..\..\src\util;$(SolutionDir)..\..\src\controls\joypads;$(SolutionDir)..\..\src\controls\joypads\ui;$(SolutionDir)..\..\src\controls\mouse;$(SolutionDir)..\..\src\controls\keyboard;$(SolutionDir)..\..\tmp\swos-cpp-gen-64;$(SolutionDir)..\..\lib\src\ConvertUTF;$(IncludePath);$(StlIncludeDirectories);$(Sysroot)\usr\include;$(Sysroot)\usr\include\$(AndroidHeaderTriple);$(VS_NdkRoot)\sources\android\support\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>SWOS_VM;DEBUG;_DEBUG;__ANDROID_API__=$(AndroidAPILevelNumber);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalOptions>-Wno-unused-private-field -Wno-undefined-inline -Wno-parentheses -Wno-missing-braces -Wno-switch %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <LibraryDependencies>SDL2;SDL2_image;SDL2_mixer;ADLMIDI;$(StlLibraryName);$(StlLibraryName);%(LibraryDependencies)</LibraryDependencies>
+      <AdditionalLibraryDirectories>..\..\..\lib\android\debug\symbolized\$(TargetArchAbi);..\..\..\lib\android\debug\static\$(TargetArchAbi);%(AdditionalLibraryDirectories);$(ToolchainPrebuiltPath)\lib\gcc\$(ToolchainName)\$(ToolchainFullVersionName);$(StlLibraryPath)</AdditionalLibraryDirectories>
+      <AdditionalOptions>-lm %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>..\..\..\src\android\pch.h</PrecompiledHeaderFile>
+      <CppLanguageStandard>c++1z</CppLanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\..\tmp\mnu2h;..\..\..\include;..\..\..\include\SDL2;..\..\..\include\SDL2_image;..\..\..\include\SDL_net;..\..\..\include\adlmidi;..\..\..\include\crashrpt;..\..\..\include\simpleini;$(SolutionDir)..\..\src;$(SolutionDir)..\..\src\audio;$(SolutionDir)..\..\src\controls;$(SolutionDir)..\..\src\debug;$(SolutionDir)..\..\src\files;$(SolutionDir)..\..\src\menus;$(SolutionDir)..\..\src\replays;$(SolutionDir)..\..\src\sprites;$(SolutionDir)..\..\src\text;$(SolutionDir)..\..\src\video;$(SolutionDir)..\..\src\util;$(SolutionDir)..\..\src\controls\joypads;$(SolutionDir)..\..\src\controls\joypads\ui;$(SolutionDir)..\..\src\controls\mouse;$(SolutionDir)..\..\src\controls\keyboard;$(SolutionDir)..\..\tmp\swos-cpp-gen-64;$(SolutionDir)..\..\lib\src\ConvertUTF;$(IncludePath);$(StlIncludeDirectories);$(Sysroot)\usr\include;$(Sysroot)\usr\include\$(AndroidHeaderTriple);$(VS_NdkRoot)\sources\android\support\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>SWOS_VM;NDEBUG;__ANDROID_API__=$(AndroidAPILevelNumber);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalOptions>-Wno-unused-private-field -Wno-undefined-inline -Wno-parentheses -Wno-missing-braces -Wno-switch %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <LibraryDependencies>SDL2;SDL2_image;SDL2_mixer;ADLMIDI;$(StlLibraryName);%(LibraryDependencies)</LibraryDependencies>
+      <AdditionalLibraryDirectories>..\..\..\lib\android\release\stripped\$(TargetArchAbi);..\..\..\lib\android\release\static\$(TargetArchAbi);%(AdditionalLibraryDirectories);$(ToolchainPrebuiltPath)\lib\gcc\$(ToolchainName)\$(ToolchainFullVersionName);$(StlLibraryPath)</AdditionalLibraryDirectories>
+      <AdditionalOptions>-lm %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>..\..\..\src\android\pch.h</PrecompiledHeaderFile>
+      <CppLanguageStandard>c++1z</CppLanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\..\tmp\mnu2h;..\..\..\include;..\..\..\include\SDL2;..\..\..\include\SDL2_image;..\..\..\include\SDL_net;..\..\..\include\adlmidi;..\..\..\include\crashrpt;..\..\..\include\simpleini;$(SolutionDir)..\..\src;$(SolutionDir)..\..\src\audio;$(SolutionDir)..\..\src\controls;$(SolutionDir)..\..\src\debug;$(SolutionDir)..\..\src\files;$(SolutionDir)..\..\src\menus;$(SolutionDir)..\..\src\replays;$(SolutionDir)..\..\src\sprites;$(SolutionDir)..\..\src\text;$(SolutionDir)..\..\src\video;$(SolutionDir)..\..\src\util;$(SolutionDir)..\..\src\controls\joypads;$(SolutionDir)..\..\src\controls\joypads\ui;$(SolutionDir)..\..\src\controls\keyboard;$(SolutionDir)..\..\src\controls\mouse;$(SolutionDir)..\..\tmp\swos-cpp-gen-32;$(SolutionDir)..\..\lib\src\ConvertUTF;$(IncludePath);$(StlIncludeDirectories);$(Sysroot)\usr\include;$(Sysroot)\usr\include\$(AndroidHeaderTriple);$(VS_NdkRoot)\sources\android\support\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>SWOS_VM;DEBUG;_DEBUG;__ANDROID_API__=$(AndroidAPILevelNumber);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalOptions>-Wno-unused-private-field -Wno-undefined-inline -Wno-parentheses -Wno-missing-braces -Wno-switch %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <LibraryDependencies>SDL2;SDL2_image;SDL2_mixer;ADLMIDI;$(StlLibraryName);$(StlLibraryName);%(LibraryDependencies)</LibraryDependencies>
+      <AdditionalLibraryDirectories>..\..\..\lib\android\debug\symbolized\$(TargetArchAbi);..\..\..\lib\android\debug\static\$(TargetArchAbi);%(AdditionalLibraryDirectories);$(ToolchainPrebuiltPath)\lib\gcc\$(ToolchainName)\$(ToolchainFullVersionName)\$(PlatformShortName);$(StlLibraryPath)</AdditionalLibraryDirectories>
+      <AdditionalOptions>-lm %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>..\..\..\src\android\pch.h</PrecompiledHeaderFile>
+      <CppLanguageStandard>c++1z</CppLanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\..\tmp\mnu2h;..\..\..\include;..\..\..\include\SDL2;..\..\..\include\SDL2_image;..\..\..\include\SDL_net;..\..\..\include\adlmidi;..\..\..\include\crashrpt;..\..\..\include\simpleini;$(SolutionDir)..\..\src;$(SolutionDir)..\..\src\audio;$(SolutionDir)..\..\src\controls;$(SolutionDir)..\..\src\debug;$(SolutionDir)..\..\src\files;$(SolutionDir)..\..\src\menus;$(SolutionDir)..\..\src\replays;$(SolutionDir)..\..\src\sprites;$(SolutionDir)..\..\src\text;$(SolutionDir)..\..\src\video;$(SolutionDir)..\..\src\util;$(SolutionDir)..\..\src\controls\joypads;$(SolutionDir)..\..\src\controls\joypads\ui;$(SolutionDir)..\..\src\controls\keyboard;$(SolutionDir)..\..\src\controls\mouse;$(SolutionDir)..\..\tmp\swos-cpp-gen-32;$(SolutionDir)..\..\lib\src\ConvertUTF;$(IncludePath);$(StlIncludeDirectories);$(Sysroot)\usr\include;$(Sysroot)\usr\include\$(AndroidHeaderTriple);$(VS_NdkRoot)\sources\android\support\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>SWOS_VM;NDEBUG;__ANDROID_API__=$(AndroidAPILevelNumber);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalOptions>-Wno-unused-private-field -Wno-undefined-inline -Wno-parentheses -Wno-missing-braces -Wno-switch %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <LibraryDependencies>SDL2;SDL2_image;SDL2_mixer;ADLMIDI;$(StlLibraryName);%(LibraryDependencies)</LibraryDependencies>
+      <AdditionalLibraryDirectories>..\..\..\lib\android\release\stripped\$(TargetArchAbi);..\..\..\lib\android\release\static\$(TargetArchAbi);%(AdditionalLibraryDirectories);$(ToolchainPrebuiltPath)\lib\gcc\$(ToolchainName)\$(ToolchainFullVersionName)\$(PlatformShortName);$(StlLibraryPath)</AdditionalLibraryDirectories>
+      <AdditionalOptions>-lm %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\src\android\pch.h" />
+    <ClInclude Include="..\..\..\src\assert.h" />
+    <ClInclude Include="..\..\..\src\audio\audio.h" />
+    <ClInclude Include="..\..\..\src\audio\chants.h" />
+    <ClInclude Include="..\..\..\src\audio\comments.h" />
+    <ClInclude Include="..\..\..\src\audio\music.h" />
+    <ClInclude Include="..\..\..\src\audio\sfx.h" />
+    <ClInclude Include="..\..\..\src\audio\SoundSample.h" />
+    <ClInclude Include="..\..\..\src\audio\wavFormat.h" />
+    <ClInclude Include="..\..\..\src\controls\controlOptionsMenu.h" />
+    <ClInclude Include="..\..\..\src\controls\controls.h" />
+    <ClInclude Include="..\..\..\src\controls\gameControlEvents.h" />
+    <ClInclude Include="..\..\..\src\controls\gameControls.h" />
+    <ClInclude Include="..\..\..\src\controls\joypads\JoypadElementValue.h" />
+    <ClInclude Include="..\..\..\src\controls\joypads\ui\configureAxisMenu.h" />
+    <ClInclude Include="..\..\..\src\controls\joypads\ui\configureHatMenu.h" />
+    <ClInclude Include="..\..\..\src\controls\joypads\Joypad.h" />
+    <ClInclude Include="..\..\..\src\controls\joypads\JoypadConfig.h" />
+    <ClInclude Include="..\..\..\src\controls\joypads\ui\configureTrackballMenu.h" />
+    <ClInclude Include="..\..\..\src\controls\joypads\ui\joypadConfigMenu.h" />
+    <ClInclude Include="..\..\..\src\controls\joypads\JoypadConfigRegister.h" />
+    <ClInclude Include="..\..\..\src\controls\joypads\JoypadGuidConfig.h" />
+    <ClInclude Include="..\..\..\src\controls\joypads\joypads.h" />
+    <ClInclude Include="..\..\..\src\controls\joypads\SdlMappingParser.h" />
+    <ClInclude Include="..\..\..\src\controls\joypads\ui\joypadQuickConfigMenu.h" />
+    <ClInclude Include="..\..\..\src\controls\joypads\ui\testJoypadMenu.h" />
+    <ClInclude Include="..\..\..\src\controls\joypads\VirtualJoypad.h" />
+    <ClInclude Include="..\..\..\src\controls\keyboard\keyboard.h" />
+    <ClInclude Include="..\..\..\src\controls\keyboard\keyBuffer.h" />
+    <ClInclude Include="..\..\..\src\controls\keyboard\KeyConfig.h" />
+    <ClInclude Include="..\..\..\src\controls\keyboard\redefineKeysMenu.h" />
+    <ClInclude Include="..\..\..\src\controls\keyboard\scanCodes.h" />
+    <ClInclude Include="..\..\..\src\controls\keyboard\setupKeyboardMenu.h" />
+    <ClInclude Include="..\..\..\src\controls\keyboard\testKeyboardMenu.h" />
+    <ClInclude Include="..\..\..\src\controls\menuControls.h" />
+    <ClInclude Include="..\..\..\src\controls\mouse\mouse.h" />
+    <ClInclude Include="..\..\..\src\controls\quickConfigMenu.h" />
+    <ClInclude Include="..\..\..\src\controls\selectGameControlEventsMenu.h" />
+    <ClInclude Include="..\..\..\src\controls\selectMatchControls.h" />
+    <ClInclude Include="..\..\..\src\controls\testControlsMenu.h" />
+    <ClInclude Include="..\..\..\src\crash.h" />
+    <ClInclude Include="..\..\..\src\debug\dump.h" />
+    <ClInclude Include="..\..\..\src\files\file.h" />
+    <ClInclude Include="..\..\..\src\files\selectFilesMenu.h" />
+    <ClInclude Include="..\..\..\src\game.h" />
+    <ClInclude Include="..\..\..\src\log.h" />
+    <ClInclude Include="..\..\..\src\menus\drawMenu.h" />
+    <ClInclude Include="..\..\..\src\menus\mainMenu.h" />
+    <ClInclude Include="..\..\..\src\menus\menus.h" />
+    <ClInclude Include="..\..\..\src\menus\menuCodes.h" />
+    <ClInclude Include="..\..\..\src\menus\menuMouse.h" />
+    <ClInclude Include="..\..\..\src\options.h" />
+    <ClInclude Include="..\..\..\src\replays\ReplayData.h" />
+    <ClInclude Include="..\..\..\src\replays\replayOptions.h" />
+    <ClInclude Include="..\..\..\src\replays\replays.h" />
+    <ClInclude Include="..\..\..\src\replays\replaysMenu.h" />
+    <ClInclude Include="..\..\..\src\stdinc.h" />
+    <ClInclude Include="..\..\..\src\swos.h" />
+    <ClInclude Include="..\..\..\src\text\text.h" />
+    <ClInclude Include="..\..\..\src\util\fetch.h" />
+    <ClInclude Include="..\..\..\src\util\util.h" />
+    <ClInclude Include="..\..\..\src\video\render.h" />
+    <ClInclude Include="..\..\..\src\video\sprites.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\lib\src\ConvertUTF\ConvertUTF.cpp" />
+    <ClCompile Include="..\..\..\src\audio\audio.cpp" />
+    <ClCompile Include="..\..\..\src\audio\chants.cpp" />
+    <ClCompile Include="..\..\..\src\audio\comments.cpp" />
+    <ClCompile Include="..\..\..\src\audio\music.cpp" />
+    <ClCompile Include="..\..\..\src\audio\sfx.cpp" />
+    <ClCompile Include="..\..\..\src\audio\SoundSample.cpp" />
+    <ClCompile Include="..\..\..\src\controls\controlOptionsMenu.cpp" />
+    <ClCompile Include="..\..\..\src\controls\controls.cpp" />
+    <ClCompile Include="..\..\..\src\controls\gameControlEvents.cpp" />
+    <ClCompile Include="..\..\..\src\controls\gameControls.cpp" />
+    <ClCompile Include="..\..\..\src\controls\joypads\JoypadElementValue.cpp" />
+    <ClCompile Include="..\..\..\src\controls\joypads\ui\configureAxisMenu.cpp" />
+    <ClCompile Include="..\..\..\src\controls\joypads\ui\configureHatMenu.cpp" />
+    <ClCompile Include="..\..\..\src\controls\joypads\Joypad.cpp" />
+    <ClCompile Include="..\..\..\src\controls\joypads\JoypadConfig.cpp" />
+    <ClCompile Include="..\..\..\src\controls\joypads\ui\configureTrackballMenu.cpp" />
+    <ClCompile Include="..\..\..\src\controls\joypads\ui\joypadConfigMenu.cpp" />
+    <ClCompile Include="..\..\..\src\controls\joypads\JoypadConfigRegister.cpp" />
+    <ClCompile Include="..\..\..\src\controls\joypads\JoypadGuidConfig.cpp" />
+    <ClCompile Include="..\..\..\src\controls\joypads\joypads.cpp" />
+    <ClCompile Include="..\..\..\src\controls\joypads\SdlMappingParser.cpp" />
+    <ClCompile Include="..\..\..\src\controls\joypads\ui\joypadQuickConfigMenu.cpp" />
+    <ClCompile Include="..\..\..\src\controls\joypads\ui\testJoypadMenu.cpp" />
+    <ClCompile Include="..\..\..\src\controls\joypads\VirtualJoypad.cpp" />
+    <ClCompile Include="..\..\..\src\controls\keyboard\keyboard.cpp" />
+    <ClCompile Include="..\..\..\src\controls\keyboard\keyBuffer.cpp" />
+    <ClCompile Include="..\..\..\src\controls\keyboard\KeyConfig.cpp" />
+    <ClCompile Include="..\..\..\src\controls\keyboard\redefineKeysMenu.cpp" />
+    <ClCompile Include="..\..\..\src\controls\keyboard\scanCodes.cpp" />
+    <ClCompile Include="..\..\..\src\controls\keyboard\setupKeyboardMenu.cpp" />
+    <ClCompile Include="..\..\..\src\controls\keyboard\testKeyboardMenu.cpp" />
+    <ClCompile Include="..\..\..\src\controls\menuControls.cpp" />
+    <ClCompile Include="..\..\..\src\controls\mouse\mouse.cpp" />
+    <ClCompile Include="..\..\..\src\controls\quickConfigMenu.cpp" />
+    <ClCompile Include="..\..\..\src\controls\selectGameControlEventsMenu.cpp" />
+    <ClCompile Include="..\..\..\src\controls\selectMatchControls.cpp" />
+    <ClCompile Include="..\..\..\src\controls\testControlsMenu.cpp" />
+    <ClCompile Include="..\..\..\src\crash.cpp" />
+    <ClCompile Include="..\..\..\src\debug\dump.cpp" />
+    <ClCompile Include="..\..\..\src\files\file.cpp" />
+    <ClCompile Include="..\..\..\src\files\selectFilesMenu.cpp" />
+    <ClCompile Include="..\..\..\src\game.cpp" />
+    <ClCompile Include="..\..\..\src\init.cpp" />
+    <ClCompile Include="..\..\..\src\log.cpp" />
+    <ClCompile Include="..\..\..\src\main.cpp" />
+    <ClCompile Include="..\..\..\src\menus\drawMenu.cpp" />
+    <ClCompile Include="..\..\..\src\menus\mainMenu.cpp" />
+    <ClCompile Include="..\..\..\src\menus\menuProc.cpp" />
+    <ClCompile Include="..\..\..\src\menus\menus.cpp" />
+    <ClCompile Include="..\..\..\src\menus\menuMouse.cpp" />
+    <ClCompile Include="..\..\..\src\menus\unpackMenu.cpp" />
+    <ClCompile Include="..\..\..\src\options.cpp" />
+    <ClCompile Include="..\..\..\src\pitch.cpp" />
+    <ClCompile Include="..\..\..\src\replays\ReplayData.cpp" />
+    <ClCompile Include="..\..\..\src\replays\replayOptions.cpp" />
+    <ClCompile Include="..\..\..\src\replays\replays.cpp" />
+    <ClCompile Include="..\..\..\src\replays\replaysMenu.cpp" />
+    <ClCompile Include="..\..\..\src\substitutes\substitutes.cpp" />
+    <ClCompile Include="..\..\..\src\text\text.cpp" />
+    <ClCompile Include="..\..\..\src\util\util.cpp" />
+    <ClCompile Include="..\..\..\src\video\render.cpp" />
+    <ClCompile Include="..\..\..\src\video\sprites.cpp" />
+    <ClCompile Include="..\..\..\src\video\videoOptionsMenu.cpp" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(Platform)' == 'ARM' Or '$(Platform)' == 'x86'">
+    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-32\swos-01.cpp" />
+    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-32\swos-02.cpp" />
+    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-32\swos-03.cpp" />
+    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-32\swos-04.cpp" />
+    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-32\swos-05.cpp" />
+    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-32\swos-06.cpp" />
+    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-32\swos-07.cpp" />
+    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-32\swos-08.cpp" />
+    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-32\vm.cpp" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(Platform)' == 'ARM64' Or '$(Platform)' == 'x64'">
+    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-64\swos-01.cpp" />
+    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-64\swos-02.cpp" />
+    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-64\swos-03.cpp" />
+    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-64\swos-04.cpp" />
+    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-64\swos-05.cpp" />
+    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-64\swos-06.cpp" />
+    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-64\swos-07.cpp" />
+    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-64\swos-08.cpp" />
+    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-64\vm.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets" />
+</Project>

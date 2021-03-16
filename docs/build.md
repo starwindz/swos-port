@@ -13,10 +13,10 @@ available in the system path:
 
 Required libraries (as *.lib files in lib dir):
 - SDL2
-- SDL2_image \[currently unused\]
+- SDL2_image (currently only PNG's used, for screenshots)
 - SDL2_net \[currently unused\]
 - SDL_Mixer
-- libADLMIDI (to play menu.xmi)
+- ADLMIDI (to play menu.xmi)
 - CrashRpt (crash reporter)
 
 Include only libraries:

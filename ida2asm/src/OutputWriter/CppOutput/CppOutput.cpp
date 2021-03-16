@@ -411,17 +411,17 @@ void CppOutput::outputOriginalInstructionComment(const Instruction *instruction,
     for (size_t i = 0; i < instruction->numOperands(); i++) {
         const auto& operands = instruction->operands();
         const auto& operand = operands[i];
-        const String *prev = nullptr;
+        String prev;
         bool prevIsId = false;
 
         for (const auto& it : operand) {
             auto first = it.text().first();
-            if (prev && Util::isId(prev->last()) && !prevIsId && (first == '@' || first == '[' || Util::isId(first)))
+            if (prev && Util::isId(prev.last()) && !prevIsId && (first == '@' || first == '[' || Util::isId(first)))
                 out(' ');
 
             out(it.text());
 
-            prev = &it.text();
+            prev = it.text();
             prevIsId = it.type() == Token::T_ID;
         }
 

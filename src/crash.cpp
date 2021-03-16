@@ -5,29 +5,28 @@
 
 #include "CrashRpt.h"
 
-int CALLBACK crashCallback(CR_CRASH_CALLBACK_INFO *info)
+static void save68kRegisters()
 {
-    logError("Great Scott! We've crashed!");
-    finishLog();
-
     char buf[64];
     buf[0] = '0';
     buf[1] = 'x';
 
     char regName[3];
     regName[2] = '\0';
-    auto registers = reinterpret_cast<dword *>(&D0);
 
-    for (uint8_t i = 0; i < &A6 - &D0 + 1; i++) {
-        if (i < 8) {
-            regName[0] = 'D';
+    SwosVM::RegisterSet68k registers;
+    SwosVM::store68kRegistersTo(registers);
+
+    for (size_t i = 0; i < registers.size(); i++) {
+        if (i < 7) {
+            regName[0] = 'A';
             regName[1] = '0' + i;
         } else {
-            regName[0] = 'A';
-            regName[1] = '0' + i - 8;
+            regName[0] = 'D';
+            regName[1] = '0' + i - 7;
         }
 
-        auto value = registers[i];
+        auto value = registers[i].asDword();
         int ofs = 2;
 
         for (auto mask = 0xf0000000; mask > 0xf; mask >>= 4) {
@@ -36,9 +35,17 @@ int CALLBACK crashCallback(CR_CRASH_CALLBACK_INFO *info)
             buf[ofs++] = '0';
         }
 
-        _itoa(registers[i], buf + ofs, 16);
+        SDL_itoa(value, buf + ofs, 16);
         crAddProperty(regName, buf);
     }
+}
+
+int CALLBACK crashCallback(CR_CRASH_CALLBACK_INFO *info)
+{
+    logError("Great Scott! We've crashed!");
+    finishLog();
+
+    save68kRegisters();
 
     return CR_CB_DODEFAULT;
 }

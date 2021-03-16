@@ -11,11 +11,13 @@ kPreprocValueDirectives = ( 'eval', '{', 'textWidth', 'textHeight' )
 kMenuFunctions = (kOnInit, kOnReturn, kOnDraw)
 
 kMenuDefaults = (   # expansion of these is delayed, so that they can have different values for different entries
-    'defWidth', 'defaultWidth', 'defHeight', 'defaultHeight',
-    'defX', 'defaultX', 'defY', 'defaultY', 'defaultColor', 'defaultTextFlags',
+    'x', 'y', 'width', 'height', 'color', 'textFlags', 'leftEntry', 'rightEntry', 'upEntry', 'downEntry',
 )
+kDefaultPropertyAliases = {
+    'topEntry': 'upEntry', 'bottomEntry': 'downEntry'
+}
 
-kMenuProperties = kMenuFunctions + (kInitialEntry, 'x', 'y') + kMenuDefaults
+kMenuProperties = kMenuFunctions + (kInitialEntry, 'x', 'y')
 
 kNextEntryProperties = ('leftEntry', 'rightEntry', 'upEntry', 'downEntry', 'skipLeft', 'skipRight', 'skipUp', 'skipDown')
 kEntryTypeProperties = ('text', 'stringTable', 'number', 'sprite', 'customDrawForeground')
@@ -40,9 +42,15 @@ kConstants = {
     'kLightBrownText': 5, 'kOrangeText': 6, 'kGrayText': 7, 'kNearBlackText': 8,
     'kVeryDarkGreenText': 9, 'kRedText': 10, 'kBlueText': 11, 'kPurpleText': 12,
     'kSoftBlueText': 13, 'kGreenText': 14, 'kYellowText': 15,
+
+    # text flags
     'kCenterAligned': 0,
     'kLeftAligned': 1 << 15, 'kRightAligned': 1 << 14, 'kShowText': 1 << 9, 'kBlinkText': 1 << 13,
     'kBigText': 1 << 4, 'kBigFont': 1 << 4,
+
+    # controls mask values
+    'kControlFire': 0x01, 'kControlShortFire': 0x20,
+    'kControlLeft': 0x02, 'kControlRight': 0x04, 'kControlUp': 0x08, 'kControlDown': 0x10,
 
     # entry directions
     'kNoEntry': -1, 'kLeft': 0, 'kRight': 1, 'kUp': 2, 'kDown': 3,

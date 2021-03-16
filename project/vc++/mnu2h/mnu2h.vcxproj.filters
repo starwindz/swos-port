@@ -1,0 +1,157 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="mnu">
+      <UniqueIdentifier>{f03a8660-2f1b-4a98-9a6f-738ed25df35d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="py">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="py\Parser">
+      <UniqueIdentifier>{675ddc66-9022-4ca6-afbe-9ab14d373e04}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="py\Preprocessor">
+      <UniqueIdentifier>{f1a3f55d-63c3-4c51-99db-da13caae9199}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="py\tests">
+      <UniqueIdentifier>{382b117b-653b-4807-a0bd-83c44c0f4519}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\mnu2h\Parser\Common.py">
+      <Filter>py\Parser</Filter>
+    </None>
+    <None Include="..\..\..\mnu2h\Parser\EntryParser.py">
+      <Filter>py\Parser</Filter>
+    </None>
+    <None Include="..\..\..\mnu2h\Parser\ExpressionParser.py">
+      <Filter>py\Parser</Filter>
+    </None>
+    <None Include="..\..\..\mnu2h\Parser\MenuParser.py">
+      <Filter>py\Parser</Filter>
+    </None>
+    <None Include="..\..\..\mnu2h\Parser\Parser.py">
+      <Filter>py\Parser</Filter>
+    </None>
+    <None Include="..\..\..\mnu2h\Preprocessor\ExpressionEvaluator.py">
+      <Filter>py\Preprocessor</Filter>
+    </None>
+    <None Include="..\..\..\mnu2h\Preprocessor\ExpressionHandler.py">
+      <Filter>py\Preprocessor</Filter>
+    </None>
+    <None Include="..\..\..\mnu2h\Preprocessor\ExpressionParser.py">
+      <Filter>py\Preprocessor</Filter>
+    </None>
+    <None Include="..\..\..\mnu2h\Preprocessor\OperandNode.py">
+      <Filter>py\Preprocessor</Filter>
+    </None>
+    <None Include="..\..\..\mnu2h\Preprocessor\Operator.py">
+      <Filter>py\Preprocessor</Filter>
+    </None>
+    <None Include="..\..\..\mnu2h\Preprocessor\OperatorNode.py">
+      <Filter>py\Preprocessor</Filter>
+    </None>
+    <None Include="..\..\..\mnu2h\Preprocessor\Preprocessor.py">
+      <Filter>py\Preprocessor</Filter>
+    </None>
+    <None Include="..\..\..\mnu2h\tests\TestCodeGenerator.py">
+      <Filter>py\tests</Filter>
+    </None>
+    <None Include="..\..\..\mnu2h\tests\TestHelper.py">
+      <Filter>py\tests</Filter>
+    </None>
+    <None Include="..\..\..\mnu2h\tests\TestParser.py">
+      <Filter>py\tests</Filter>
+    </None>
+    <None Include="..\..\..\mnu2h\tests\TestPreprocessor.py">
+      <Filter>py\tests</Filter>
+    </None>
+    <None Include="..\..\..\mnu2h\tests\TestTokenizer.py">
+      <Filter>py\tests</Filter>
+    </None>
+    <None Include="..\..\..\mnu2h\tests\TestUtil.py">
+      <Filter>py\tests</Filter>
+    </None>
+    <None Include="..\..\..\mnu2h\CodeGenerator.py">
+      <Filter>py</Filter>
+    </None>
+    <None Include="..\..\..\mnu2h\Constants.py">
+      <Filter>py</Filter>
+    </None>
+    <None Include="..\..\..\mnu2h\Entry.py">
+      <Filter>py</Filter>
+    </None>
+    <None Include="..\..\..\mnu2h\Menu.py">
+      <Filter>py</Filter>
+    </None>
+    <None Include="..\..\..\mnu2h\mnu2h.py">
+      <Filter>py</Filter>
+    </None>
+    <None Include="..\..\..\mnu2h\StringTable.py">
+      <Filter>py</Filter>
+    </None>
+    <None Include="..\..\..\mnu2h\Token.py">
+      <Filter>py</Filter>
+    </None>
+    <None Include="..\..\..\mnu2h\Tokenizer.py">
+      <Filter>py</Filter>
+    </None>
+    <None Include="..\..\..\mnu2h\Util.py">
+      <Filter>py</Filter>
+    </None>
+    <None Include="..\..\..\mnu2h\Variable.py">
+      <Filter>py</Filter>
+    </None>
+    <None Include="..\..\..\mnu2h\VariableStorage.py">
+      <Filter>py</Filter>
+    </None>
+    <None Include="..\..\..\src\menus\mnu\common.mh">
+      <Filter>mnu</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="..\..\..\src\menus\mnu\audioOptions.mnu">
+      <Filter>mnu</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\..\src\menus\mnu\controlOptions.mnu">
+      <Filter>mnu</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\..\src\menus\mnu\joypadConfig.mnu">
+      <Filter>mnu</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\..\src\menus\mnu\main.mnu">
+      <Filter>mnu</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\..\src\menus\mnu\options.mnu">
+      <Filter>mnu</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\..\src\menus\mnu\quit.mnu">
+      <Filter>mnu</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\..\src\menus\mnu\replayExit.mnu">
+      <Filter>mnu</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\..\src\menus\mnu\replays.mnu">
+      <Filter>mnu</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\..\src\menus\mnu\selectFiles.mnu">
+      <Filter>mnu</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\..\src\menus\mnu\selectGameControlEvents.mnu">
+      <Filter>mnu</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\..\src\menus\mnu\setupKeyboard.mnu">
+      <Filter>mnu</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\..\src\menus\mnu\videoOptions.mnu">
+      <Filter>mnu</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\..\src\menus\mnu\configureHat.mnu" />
+    <CustomBuild Include="..\..\..\src\menus\mnu\configureAxis.mnu" />
+    <CustomBuild Include="..\..\..\src\menus\mnu\configureTrackball.mnu" />
+    <CustomBuild Include="..\..\..\src\menus\mnu\selectMatchControls.mnu">
+      <Filter>mnu</Filter>
+    </CustomBuild>
+  </ItemGroup>
+</Project>

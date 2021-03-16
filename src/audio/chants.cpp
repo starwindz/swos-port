@@ -102,7 +102,7 @@ void SWOS::LoadIntroChant()
     if (swos.g_soundOff)
         return;
 
-    auto color = swos.leftTeamIngame.prShirtCol;
+    auto color = swos.topTeamIngame.prShirtCol;
     assert(color < 16);
 
     static const int8_t kIntroTeamChantIndices[16] = {

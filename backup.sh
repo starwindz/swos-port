@@ -79,9 +79,13 @@ echo "Creating archive: $destPath"
     'project/vc++/*.vcxproj' \
     'project/vc++/*.user' \
     'project/vc++/*.filters' \
+    'project/vc++/*.tmLanguage' \
     'project/vc++/Types.natvis' \
     tests/meson.build \
     tests/sdl-address-table-fetcher/meson.build \
     backup.sh \
     README.md \
     meson.build
+
+# make it read-only
+attrib +R "$destPath"

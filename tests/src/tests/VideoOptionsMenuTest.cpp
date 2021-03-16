@@ -7,6 +7,7 @@
 #include "menuMouse.h"
 
 #define SWOS_STUB_MENU_DATA
+static int16_t m_windowResizable = 1;
 #include "videoOptions.mnu.h"
 
 using namespace VideoOptionsMenu;
@@ -287,13 +288,13 @@ void VideoOptionsMenuTest::scrollResolutionListOneLine(int direction, ScrollMeth
         break;
     }
 
-    updateControls();
+    processControlEvents();
     SWOS::MenuProc();
     SWOS::MenuProc();   // twice to get around too-fast-clicking protection ;)
-    DrawMenu();
+    SWOS::DrawMenu();
     resetSdlInput();
     updateMouse();      // to register mouse button up and go out of scrolling mode
-    pl1LastFired = 0;   // don't allow any fire from this cycle to turn into long fire
+//    pl1LastFired = 0;   // don't allow any fire from this cycle to turn into long fire
 }
 
 void VideoOptionsMenuTest::verifyResolutionListStrings(const DisplayModeList& displayModes, int scrollOffset /* = 0 */)
@@ -311,6 +312,9 @@ void VideoOptionsMenuTest::verifyResolutionListStrings(const DisplayModeList& di
 
 void VideoOptionsMenuTest::setupCustomWindowSizeTest()
 {
+    LogSilencer logSilencer;
+    showVideoOptionsMenu();
+
     auto [startingWidth, startingHeight, widthKeys, heightKeys, endingWidth, endingHeight] = kTestCustomSizeData[m_currentDataIndex];
 
     setNumericItemValue(customWidth, startingWidth);
@@ -318,6 +322,7 @@ void VideoOptionsMenuTest::setupCustomWindowSizeTest()
 
     setUpWindowedMode();
     setWindowSize(startingWidth, startingHeight);
+
 }
 
 void VideoOptionsMenuTest::testCustomWindowSize()
@@ -337,7 +342,7 @@ void VideoOptionsMenuTest::testCustomWindowSize()
     SWOS_UnitTest::queueKeys(heightKeys);
     selectItem(customHeight);
 
-    DrawMenu();
+    SWOS::DrawMenu();
 
     assertItemIsNumber(customWidth, endingWidth);
     assertItemIsNumber(customHeight, endingHeight);
@@ -349,9 +354,9 @@ void VideoOptionsMenuTest::testCustomWindowSize()
 
 void VideoOptionsMenuTest::testExitButton()
 {
-    assertEqual(g_exitMenu, 0);
+    assertEqual(swos.g_exitMenu, 0);
     selectItem(VideoOptionsMenu::exit);
-    assertEqual(g_exitMenu, 1);
+    assertEqual(swos.g_exitMenu, 1);
 }
 
 void VideoOptionsMenuTest::setupResolutionSwitchFailureTest()
@@ -367,7 +372,7 @@ void VideoOptionsMenuTest::testResolutionSwitchFailure()
     LogSilencer logSilencer;
 
     selectItem(resolutionField4);
-    DrawMenu();
+    SWOS::DrawMenu();
 
     assertEqual(getCurrentMenu()->numEntries, 2);
     assertItemIsString(1, "CONTINUE");
@@ -408,11 +413,11 @@ void VideoOptionsMenuTest::testResolutionListRebuildWhenChangingScreen()
 
     DisplayModeList secondHalf(kDisplayModes.begin() + kDisplayModes.size() / 2, kDisplayModes.end());
     setFakeDisplayModes(secondHalf);
-    DrawMenu();
+    SWOS::DrawMenu();
     verifyResolutionListStrings(kDisplayModes);
 
     setFakeDisplayModesForced(secondHalf);
-    DrawMenu();
+    SWOS::DrawMenu();
     verifyResolutionListStrings(secondHalf);
 }
 
@@ -427,7 +432,7 @@ void VideoOptionsMenuTest::setFakeDisplayModesForced(const DisplayModeList& disp
 void VideoOptionsMenuTest::verifyYellowPleaseWaitTextPresence()
 {
     if (m_verifyYellowText) {
-        auto numYellowPixels = std::count(linAdr384k, linAdr384k + kVgaScreenSize, kYellowText);
+        auto numYellowPixels = std::count(swos.linAdr384k.asCharPtr(), swos.linAdr384k + kVgaScreenSize, kYellowText);
         assertEqual(m_displayModeList.size() > kSlowResolutionsListSize, numYellowPixels > 300);
     }
 
@@ -568,7 +573,7 @@ void VideoOptionsMenuTest::verifyResolutionListColors(const char *current /* = n
             visible = 0;
         assertEqual(visible, !entry->invisible);
 
-        if (current && !strcmp(current, entry->u2.string))
+        if (current && !strcmp(current, entry->fg.string))
             assertItemHasColor(resolutionField0 + i, kPurple);
         else
             assertItemHasColor(resolutionField0 + i, kLightBlue);
@@ -592,7 +597,7 @@ void VideoOptionsMenuTest::switchToMode(size_t mode)
             auto resolutionString = getResolutionString(width, height);
 
             int item = resolutionField0;
-            if (!strcmp(getMenuEntry(resolutionField0)->u2.string, resolutionString))
+            if (!strcmp(getMenuEntry(resolutionField0)->fg.string, resolutionString))
                 item++;
 
             assertItemIsVisible(item);
@@ -601,12 +606,12 @@ void VideoOptionsMenuTest::switchToMode(size_t mode)
         break;
     }
 
-    DrawMenu();
+    SWOS::DrawMenu();
 }
 
 const char *VideoOptionsMenuTest::getResolutionString(int width, int height)
 {
     static char resolutionString[32];
-    sprintf_s(resolutionString, "%d X %d", width, height);
+    snprintf(resolutionString, sizeof(resolutionString),  "%d X %d", width, height);
     return resolutionString;
 }

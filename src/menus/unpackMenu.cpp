@@ -1,8 +1,13 @@
-#include "menu.h"
+#include "menus.h"
 #include "menuCodes.h"
+#include "menuMouse.h"
+#include "menuControls.h"
 
 // last menu sent here for unpacking
 static const void *m_currentMenu;
+
+constexpr int kMenuMemorySize = 1024;
+static char *m_menuMemory;
 
 static void initMenuEntry(MenuEntry& entry);
 static void finalizeMenu(Menu *dstMenu, char *menuEnd, int numEntries);
@@ -10,36 +15,27 @@ static void handleSkip(MenuEntry *dstEntry, size_t index, const int16_t *& data)
 #ifdef SWOS_VM
 static dword fetchAndTranslateProc(const int16_t *& data);
 static dword translateStringTable(const StringTableNative& strTable);
-static dword translateMultiLineTable(const MultiLineTextNative& text);
+static dword translateMultilineTable(const MultilineTextNative& text);
 #endif
+static void resetMenuAllocator();
+static dword menuAllocString(const char *str);
+static char *menuAllocStringTable(size_t size);
+static char *menuAllocMultilineText(size_t numLines);
 
 const void *getCurrentPackedMenu()
 {
     return m_currentMenu;
 }
 
-// UnpackMenu
-//
-// in:
-//      A1 -> pointer to destination buffer that will take converted menu
-//            (usually g_currentMenu)
-//      A0 -> static menu for conversion
-//
-// Unpacks static menu in A0 to screen menu (held in g_currentMenu).
-// Doesn't execute any of the menu functions, only does the unpacking.
-//
-void SWOS::UnpackMenu()
-{
-    upackMenu(A0.asPtr());
-}
-
+// Unpacks static menu in src to screen menu at dst.
 // Doesn't execute any of the menu functions, only does the conversion.
-void upackMenu(const void *src, char *dst)
+void unpackMenu(const void *src, char *dst)
 {
     using namespace SWOS_Menu;
 
-    assert(dst >= reinterpret_cast<char *>(swos.g_currentMenu) &&
-        dst < reinterpret_cast<char *>(swos.g_currentMenu + sizeof(swos.g_currentMenu)));
+    assert(dst >= swos.g_currentMenu && dst < swos.g_currentMenu + sizeof(swos.g_currentMenu));
+
+    resetMenuAllocator();
 
     m_currentMenu = src;
 
@@ -134,76 +130,76 @@ void upackMenu(const void *src, char *dst)
                 break;
 
             case kCustomBackgroundFunc:
-                dstEntry->type1 = kEntryFunc1;
-                dstEntry->u1.entryFunc.loadFrom(data);
+                dstEntry->background = kEntryBackgroundFunction;
+                dstEntry->bg.entryFunc.loadFrom(data);
                 data += 2;
                 break;
 
             case kColor:
-                dstEntry->type1 = kEntryFrameAndBackColor;
-                dstEntry->u1.entryFunc.clearAligned();
-                dstEntry->u1.entryColor = *data++;
+                dstEntry->background = kEntryFrameAndBackColor;
+                dstEntry->bg.entryFunc.clearAligned();
+                dstEntry->bg.entryColor = *data++;
                 break;
 
             case kBackgroundSprite:
-                dstEntry->type1 = kEntrySprite1;
-                dstEntry->u1.entryFunc.clearAligned();
-                dstEntry->u1.spriteIndex = *data++;
+                dstEntry->background = kEntrySprite1;
+                dstEntry->bg.entryFunc.clearAligned();
+                dstEntry->bg.spriteIndex = *data++;
                 break;
 
             case kInvalid:
                 // no idea what this is, seems it was removed from the game
                 assert(false);
-                dstEntry->type1 = static_cast<MenuEntryBackgroundType>(4);
-                dstEntry->u1.entryFunc.clearAligned();
-                dstEntry->u1.spriteIndex = *data++;
+                dstEntry->background = static_cast<MenuEntryBackground>(4);
+                dstEntry->bg.entryFunc.clearAligned();
+                dstEntry->bg.spriteIndex = *data++;
                 break;
 
             case kCustomForegroundFunc:
-                dstEntry->type2 = kEntryFunc2;
+                dstEntry->type = kEntryContentFunction;
                 dstEntry->stringFlags = 0;
-                dstEntry->u2.entryFunc2.loadFrom(data);
+                dstEntry->fg.contentFunction.loadFrom(data);
                 data += 2;
                 break;
 
             case kString:
                 {
-                    dstEntry->type2 = kEntryString;
+                    dstEntry->type = kEntryString;
                     dstEntry->stringFlags = *data++;
-                    dstEntry->u2.string.loadFrom(data);
-                    auto ptrValue = dstEntry->u2.string.asAligned<uintptr_t>();
+                    dstEntry->fg.string.loadFrom(data);
+                    auto ptrValue = dstEntry->fg.string.asAligned<uintptr_t>();
                     if (ptrValue && ptrValue < 256)
-                        dstEntry->u2.string.set(kSentinel);
+                        dstEntry->fg.string.set(kSentinel);
                     data += 2;
                 }
                 break;
 
             case kForegroundSprite:
-                dstEntry->type2 = kEntrySprite2;
+                dstEntry->type = kEntrySprite2;
                 dstEntry->stringFlags = 0;
-                dstEntry->u2.entryFunc2.clearAligned();
-                dstEntry->u2.spriteIndex = *data++;
+                dstEntry->fg.contentFunction.clearAligned();
+                dstEntry->fg.spriteIndex = *data++;
                 break;
 
             case kStringTable:
-                dstEntry->type2 = kEntryStringTable;
+                dstEntry->type = kEntryStringTable;
                 dstEntry->stringFlags = *data++;
-                dstEntry->u2.stringTable.loadFrom(data);
+                dstEntry->fg.stringTable.loadFrom(data);
                 data += 2;
                 break;
 
-            case kMultiLineText:
-                dstEntry->type2 = kEntryMultiLineText;
+            case kMultilineText:
+                dstEntry->type = kEntryMultilineText;
                 dstEntry->stringFlags = *data++;
-                dstEntry->u2.multiLineText.loadFrom(data);
+                dstEntry->fg.multiLineText.loadFrom(data);
                 data += 2;
                 break;
 
             case kInteger:
-                dstEntry->type2 = kEntryNumber;
+                dstEntry->type = kEntryNumber;
                 dstEntry->stringFlags = *data++;
-                dstEntry->u2.entryFunc2.clearAligned();
-                dstEntry->u2.number = *data++;
+                dstEntry->fg.contentFunction.clearAligned();
+                dstEntry->fg.number = *data++;
                 break;
 
             case kOnSelect:
@@ -223,8 +219,8 @@ void upackMenu(const void *src, char *dst)
                 data += 2;
                 break;
 
-            case kOnReturn:
-                dstEntry->onReturn.loadFrom(data);
+            case kAfterDraw:
+                dstEntry->afterDraw.loadFrom(data);
                 data += 2;
                 break;
 
@@ -245,36 +241,36 @@ void upackMenu(const void *src, char *dst)
                 break;
 
             case kColorConvertedSprite:
-                dstEntry->type2 = kEntrySpriteCopy;
+                dstEntry->type = kEntryColorConvertedSprite;
                 dstEntry->stringFlags = 0;
-                dstEntry->u2.spriteCopy.loadFrom(data);
+                dstEntry->fg.spriteCopy.loadFrom(data);
                 data += 2;
                 break;
 
 #ifdef SWOS_VM
             case kCustomBackgroundFuncNative:
-                dstEntry->type1 = kEntryFunc1;
-                dstEntry->u1.entryFunc.set(fetchAndTranslateProc(data));
+                dstEntry->background = kEntryBackgroundFunction;
+                dstEntry->bg.entryFunc.set(fetchAndTranslateProc(data));
                 break;
 
             case kCustomForegroundFuncNative:
-                dstEntry->type2 = kEntryFunc2;
+                dstEntry->type = kEntryContentFunction;
                 dstEntry->stringFlags = 0;
-                dstEntry->u2.entryFunc2.set(fetchAndTranslateProc(data));
+                dstEntry->fg.contentFunction.set(fetchAndTranslateProc(data));
                 break;
 
             case kStringNative:
                 {
-                    dstEntry->type2 = kEntryString;
+                    dstEntry->type = kEntryString;
                     dstEntry->stringFlags = *data++;
 
                     const auto str = fetch<const char *>(data);
                     assert(str != kSentinel);
                     if (str && str != kSentinel) {
-                        auto ofs = SwosVM::allocateString(str);
-                        dstEntry->u2.string.set(ofs);
+                        auto ofs = menuAllocString(str);
+                        dstEntry->fg.string.setRaw(ofs);
                     } else {
-                        dstEntry->u2.string.set(nullptr);
+                        dstEntry->fg.string.set(nullptr);
                     }
 
                     data += sizeof(char *) / 2;
@@ -283,21 +279,21 @@ void upackMenu(const void *src, char *dst)
 
             case kStringTableNative:
                 {
-                    dstEntry->type2 = kEntryStringTable;
+                    dstEntry->type = kEntryStringTable;
                     dstEntry->stringFlags = *data++;
                     const auto strTable = fetch<const StringTableNative *>(data);
-                    dstEntry->u2.stringTable = translateStringTable(*strTable);
+                    dstEntry->fg.stringTable = translateStringTable(*strTable);
                     data += sizeof(StringTableNative *) / 2;
                 }
                 break;
 
-            case kMultiLineTextNative:
+            case kMultilineTextNative:
                 {
-                    dstEntry->type2 = kEntryMultiLineText;
+                    dstEntry->type = kEntryMultilineText;
                     dstEntry->stringFlags = *data++;
-                    auto multiLine = fetch<const MultiLineTextNative *>(data);
-                    dstEntry->u2.multiLineText = translateMultiLineTable(*multiLine);
-                    data += sizeof(MultiLineTextNative *) / 2;
+                    auto multiLine = fetch<const MultilineTextNative *>(data);
+                    dstEntry->fg.multiLineText = translateMultilineTable(*multiLine);
+                    data += sizeof(MultilineTextNative *) / 2;
                 }
                 break;
 
@@ -315,15 +311,15 @@ void upackMenu(const void *src, char *dst)
                 dstEntry->beforeDraw = fetchAndTranslateProc(data);
                 break;
 
-            case kOnReturnNative:
-                dstEntry->onReturn = fetchAndTranslateProc(data);
+            case kAfterDrawNative:
+                dstEntry->afterDraw = fetchAndTranslateProc(data);
                 break;
 
             case kColorConvertedSpriteNative:
                 {
-                    dstEntry->type2 = kEntrySpriteCopy;
+                    dstEntry->type = kEntryColorConvertedSprite;
                     auto ptr = fetch<void *>(data);
-                    dstEntry->u2.spriteCopy = SwosVM::registerPointer(ptr);
+                    dstEntry->fg.spriteCopy = SwosVM::registerPointer(ptr);
                     data += sizeof(void *) / 2;
                 }
                 break;
@@ -339,7 +335,7 @@ void upackMenu(const void *src, char *dst)
         } else {
             dstEntry->ordinal = numEntries++;
             dstEntry++;
-            assert(reinterpret_cast<char *>(dstEntry) < reinterpret_cast<char *>(swos.g_currentMenu) + sizeof(swos.g_currentMenu));
+            assert(reinterpret_cast<char *>(dstEntry) < swos.g_currentMenu + sizeof(swos.g_currentMenu));
         }
         data++;
     }
@@ -355,27 +351,38 @@ void upackMenu(const void *src, char *dst)
 
 void restoreMenu(const void *menu, int selectedEntry)
 {
+    if (!menu)
+        return;
+
     swos.g_scanCode = 0;
-    swos.controlWord = 0;
     m_currentMenu = menu;
 
-    upackMenu(menu);
+    resetControls();
+
+    unpackMenu(menu);
 
     auto currentMenu = getCurrentMenu();
     assert(selectedEntry < currentMenu->numEntries);
     currentMenu->selectedEntry = &currentMenu->entries()[selectedEntry];
 
-    if (currentMenu->onReturn)
+    if (currentMenu->onReturn) {
+        SDL_UNUSED auto markAll = SwosVM::getMemoryMark();
+
         currentMenu->onReturn();
+
+        assert(markAll == SwosVM::getMemoryMark());
+    }
+
+    resetMenuMouseData();
 }
 
 void initMenuEntry(MenuEntry& entry)
 {
-    entry.type1 = kEntryNoBackground;
-    entry.u1.entryFunc.clearAligned();
+    entry.background = kEntryNoBackground;
+    entry.bg.entryFunc.clearAligned();
 
-    entry.type2 = kEntryNoForeground;
-    entry.u2.entryFunc2.clearAligned();
+    entry.type = kEntryNoForeground;
+    entry.fg.contentFunction.clearAligned();
 
     entry.invisible = 0;
     entry.disabled = 0;
@@ -398,7 +405,7 @@ void initMenuEntry(MenuEntry& entry)
     entry.onSelect.clearAligned();
     entry.controlMask = 0;
     entry.beforeDraw = nullptr;
-    entry.onReturn = nullptr;
+    entry.afterDraw = nullptr;
 }
 
 void finalizeMenu(Menu *dstMenu, char *menuEnd, int numEntries)
@@ -406,11 +413,11 @@ void finalizeMenu(Menu *dstMenu, char *menuEnd, int numEntries)
     dstMenu->numEntries = numEntries;
     MenuEntry *entries = getMenuEntry(0);
     for (int i = 0; i < numEntries; i++) {
-        if (entries[i].type2 == kEntryString && entries[i].u2.string == kSentinel) {
+        if (entries[i].type == kEntryString && entries[i].fg.string == kSentinel) {
             strcpy(menuEnd, "STDMENUTXT");
-            entries[i].u2.string = menuEnd;
+            entries[i].fg.string = menuEnd;
             menuEnd += kStdMenuTextSize;
-            assert(menuEnd < reinterpret_cast<char *>(swos.g_currentMenu) + sizeof(swos.g_currentMenu));
+            assert(menuEnd < swos.g_currentMenu + sizeof(swos.g_currentMenu));
         }
     }
     dstMenu->endOfMenuPtr.set(menuEnd);
@@ -438,45 +445,111 @@ dword fetchAndTranslateProc(const int16_t *& data)
 dword translateStringTable(const StringTableNative& strTable)
 {
     auto size = sizeof(StringTable) + strTable.numPointers * 4;
-    auto swosMem = SwosVM::allocateMemory(size);
+    auto swosMem = menuAllocStringTable(size);
+    assert(reinterpret_cast<uintptr_t>(swosMem) % 4 == 0);
 
     dword indexOfs;
     if (strTable.isIndexPointerNative())
-        indexOfs = SwosVM::registerPointer(fetch<int16_t *>(&strTable.nativeIndex));
+        indexOfs = SwosVM::registerPointer(strTable.nativeIndex);
     else
-        indexOfs = fetch(reinterpret_cast<const dword *>(&strTable.index));
+        indexOfs = strTable.index.getRaw();
 
-    memcpy(swosMem, &indexOfs, 4);
-    memcpy(swosMem + 4, &strTable.initialValue, 2);
+    reinterpret_cast<dword *>(swosMem)[0] = indexOfs;
+    reinterpret_cast<int16_t *>(swosMem + 4)[0] = strTable.initialValue;
 
     for (int i = 0; i < strTable.numPointers; i++) {
         auto str = strTable[i];
         dword strOfs;
 
-        if (strTable.isNativeString(i))
-            strOfs = SwosVM::allocateString(str).getRaw();
-        else
+        if (strTable.isNativeString(i)) {
+            strOfs = menuAllocString(str);
+        } else {
+            assert(reinterpret_cast<uintptr_t>(str) <= std::numeric_limits<dword>::max());
             strOfs = reinterpret_cast<uintptr_t>(str);
+        }
 
         memcpy(swosMem + 6 + i * 4, &strOfs, 4);
     }
 
-    return swosMem.getRaw();
+    return SwosVM::ptrToOffset(swosMem);
 }
 
-dword translateMultiLineTable(const MultiLineTextNative& text)
+dword translateMultilineTable(const MultilineTextNative& text)
 {
-    auto size = sizeof(MultiLineTextNative) + text.numLines * 4;
-    auto swosMem = SwosVM::allocateMemory(size);
+    auto swosMem = menuAllocMultilineText(text.numLines);
+    assert(reinterpret_cast<uintptr_t>(swosMem) % 4 == 3);
 
     *swosMem = text.numLines;
+    auto strings = reinterpret_cast<dword *>(swosMem + 1);
 
     for (size_t i = 0; i < text.numLines; i++) {
         auto str = text[i];
-        auto ofs = SwosVM::allocateString(str);
-        memcpy(swosMem + 1 + i * 4, &ofs, 4);
+        auto ofs = menuAllocString(str);
+        strings[i] = ofs;
     }
 
-    return swosMem.getRaw();
+    return SwosVM::ptrToOffset(swosMem);
 }
 #endif
+
+//
+// Menu allocation routines
+//
+// These routines allocate memory from the unused space in the menu buffer.
+// This memory is only valid for the duration of the current menu.
+//
+
+inline static void verifyMenuMemoryPtr()
+{
+    assert(m_menuMemory >= swos.g_currentMenu + sizeof(swos.g_currentMenu) - kMenuMemorySize &&
+        m_menuMemory < swos.g_currentMenu + sizeof(swos.g_currentMenu));
+}
+
+void resetMenuAllocator()
+{
+    m_menuMemory = swos.g_currentMenu + sizeof(swos.g_currentMenu) - kMenuMemorySize;
+}
+
+char *menuAlloc(size_t size)
+{
+    auto buf = m_menuMemory;
+    m_menuMemory += size;
+
+    verifyMenuMemoryPtr();
+    return buf;
+}
+
+dword menuAllocString(const char *str)
+{
+    auto buf = m_menuMemory;
+
+    int len = 0;
+    while (*str)
+        buf[len++] = *str++;
+
+    buf[len] = '\0';
+    m_menuMemory += len + 1;
+
+    verifyMenuMemoryPtr();
+    return SwosVM::ptrToOffset(buf);
+}
+
+char *menuAllocStringTable(size_t size)
+{
+    auto buf = m_menuMemory;
+    auto alignment = (~reinterpret_cast<uintptr_t>(buf) + 1) & 3;
+    m_menuMemory += alignment + size;
+
+    verifyMenuMemoryPtr();
+    return buf + alignment;
+}
+
+char *menuAllocMultilineText(size_t numLines)
+{
+    auto buf = m_menuMemory;
+    auto alignment = ~reinterpret_cast<uintptr_t>(buf) & 3;
+
+    m_menuMemory += alignment + numLines * 4 + 1;
+    verifyMenuMemoryPtr();
+    return buf + alignment;
+}

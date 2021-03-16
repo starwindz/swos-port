@@ -45,3 +45,9 @@ using namespace std::string_literals;
 # define PTR32
 static_assert(sizeof(void *) == 4, "Define pointer size");
 #endif
+
+#define strncpy_s(strDest, strSource, size) strncpy_s(strDest, size, strSource, _TRUNCATE)
+
+#ifndef SWOS_TEST
+# define sprintf_s(...) static_assert(false, "sprintf_s detected, use snprintf instead!")
+#endif

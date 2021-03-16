@@ -21,7 +21,7 @@ kTestData = (
         'menus': [ 'HanSolo' ],
         'menuElements': {
             'HanSolo': [
-                {'id': 'header',  'type': 'MenuHeader', 'params': ['nullptr', 'nullptr', 'nullptr', '0']},
+                {'id': 'header',  'type': 'MenuHeader', 'params': ['0', '0', '0', '0']},
                 {'id': 'menuEnd','type': 'MenuEnd', 'params': []},
             ],
         },
@@ -46,11 +46,11 @@ kTestData = (
                 x: 49
                 y: 158
                 color: 11
-                stringTable: [ $.start, "HOLD", 'ME', "NOW" ]
+                stringTable: [ swos.start, "HOLD", 'ME', "NOW" ]
             }
             Entry {
                 customDrawForeground: drawYellow
-                customDrawBackground: drawRed
+                customDrawBackground: swos.drawRed
                 downEntry: >
                 upEntry: <
             }
@@ -58,7 +58,7 @@ kTestData = (
                 invisible: true
                 onReturn: returnOfThePhantom
                 beforeDraw: prepareWell
-                controlsMask: 0x15
+                controlMask: #{@kControlDown | @kControlRight | @kControlFire}:#x
                 onSelect: pumpItUp
                 textFlags: @kBigText
                 text: @kAlloc
@@ -68,12 +68,17 @@ kTestData = (
                 upEntry: CasaNostra
             }
             Entry MoreThanMeetsTheEye {
-                text: $.aMenuMusic
+                text: swos.aMenuMusic
             }
         }
         Menu Bravo {
-            onInit: someCoolInit
+            onInit: swos.someCoolInit
             initialEntry: MoonLander
+
+            defaultLeftEntry: 12
+            defaultRightEntry: 15
+            defaultTopEntry: Spacy
+
             Entry {
                 width: 25
                 height: 36
@@ -84,6 +89,12 @@ kTestData = (
             Entry MoonLander {
                 number: 1969
             }
+            Entry Secret {
+                text: Admirer
+            }
+            Entry Spacy {
+                stringTable: ~Video
+            }
         }
         Menu Tango {
             onInit: ~specialForces
@@ -92,13 +103,17 @@ kTestData = (
             y: 55
 
             TemplateEntry {
-                stringTable: [ Indianapolis, 2002, "1" ]
+                stringTable: [ ~Indianapolis, 2002, "1", swos.aWinners ]
                 color: @kLightBrownWithYellowFrame
                 beforeDraw: aperitif
             }
 
             Entry Madera {
+                color: @kNoBackground
                 sprite: 1001
+            }
+            Entry Durmitor {
+                color: @kRed
             }
 
             ResetTemplate {}
@@ -107,31 +122,41 @@ kTestData = (
             y: 35
 
             Entry Avalanche {
+                color: @kNoBackground
                 skipLeft: 2
                 directionRight: 1
                 skipRight: 0
             }
 
+            entryAlias Landslide = Avalanche
+            entryAlias Lovac = Madera
+
             Entry {
-                stringTable: $.SmoothJazz101DaPierre
+                stringTable: swos.SmoothJazz101DaPierre
+            }
+            Entry {
+                stringTable: [ extern flannel, 0, "WOOPTEE", "DOO" ]
             }
         }
         Menu Delta {}
+        Menu mali {}
     ''', {
         'functions': (
-            'someCoolInit', 'hereIAm', 'danceSnake', 'uncleSamNeedsYOU', 'drawYellow', 'drawRed',
+            'someCoolInit', 'hereIAm', 'danceSnake', 'uncleSamNeedsYOU', 'drawYellow',
             'returnOfThePhantom', 'prepareWell', 'pumpItUp', 'aperitif',
         ),
-        'menus': ['Charlie', 'Bravo', 'Tango', 'Delta'],
-        'stringTables': ((1, 3), (
-            ('Charlie_CasaNostra', 'swos.start', '0', '"HOLD"', '"ME"', '"NOW"'),
-            ('Bravo_00', 'mirror', '0', '"WARM"', 'MY', '"HEART"'),
-            ('Tango_30000', 'Indianapolis', '2002', '"1"'),
+        'menus': ['Charlie', 'Bravo', 'Tango', 'Delta', 'mali'],
+        'stringTables': ((2, 3), (  # lengths when declared
+            # declared / extern / elements
+            (False, False, 'Charlie_CasaNostra', 'reinterpret_cast<int16_t *>(SwosVM::Offsets::start)', '0', "'HOLD'", '"ME"', '"NOW"'),
+            (True, False, 'Bravo_00', '&mirror', '0', '"WARM"', 'MY', '"HEART"'),
+            (False, False, 'Tango_30000', '&Indianapolis', '2002', '"1"', 'reinterpret_cast<const char *>(SwosVM::Offsets::aWinners)'),
+            (False, True, 'Tango_04', '&flannel', 0, '"WOOPTEE"', '"DOO"'),
         )),
         'namedEntries': {
-            'Charlie': (('CasaNostra', 0), ('CasaBrava', 2),),
+            'Charlie': (('CasaNostra', 0), ('CasaBrava', 2), ('MoreThanMeetsTheEye', 3)),
             'Bravo': (('MoonLander', 1),),
-            'Tango': (('Madera', 0), ('Avalanche', 1),),
+            'Tango': (('Madera', 0), ('Durmitor', 1), ('Avalanche', 2), ('Lovac', 0), ('Landslide', 2),),
         },
         'exportedVariables': {
             'Charlie': (('kBlazeOfGlory', '1990'), ('SantaFe', '2194'),),
@@ -139,82 +164,106 @@ kTestData = (
         },
         'menuElements': {
             'Bravo': [
-                {'id': 'header', 'type': 'MenuHeader',  'params': ['someCoolInit', 'nullptr', 'nullptr', '1']},
+                {'id': 'header', 'type': 'MenuHeader',  'params': ['SwosVM::Procs::someCoolInit', '0', '0', '1']},
 
                 {'id': 'eb00',   'type': 'Entry',       'params': ['0', '0', '25', '36']},
-                {'id': 'est00',  'type': 'EntryStringTable', 'params': ['0', '&Bravo_00_stringTable']},
+                {'id': 'est00',  'type': 'EntryStringTableNative', 'params': ['0', '&Bravo_00_stringTable']},
                 {'id': 'ec00',   'type': 'EntryColor',  'params': ['10']},
-                {'id': 'eosf00', 'type': 'EntryOnSelectFunction', 'params': ['uncleSamNeedsYOU']},
+                {'id': 'ep00',   'type': 'EntryNextPositions', 'params': ['12', '15', '3', '255']},
+                {'id': 'eosf00', 'type': 'EntryOnSelectFunctionNative', 'params': ['uncleSamNeedsYOU']},
                 {'id': 'ee00',   'type': 'EntryEnd',    'params': []},
 
                 {'id': 'eb01',   'type': 'Entry',       'params': ['0', '0', '0', '0']},
                 {'id': 'en01',   'type': 'EntryNumber', 'params': ['0', '1969']},
+                {'id': 'ep01',   'type': 'EntryNextPositions', 'params': ['12', '15', '3', '255']},
                 {'id': 'ee01',   'type': 'EntryEnd',    'params': []},
+
+                {'id': 'eb02',   'type': 'Entry',       'params': ['0', '0', '0', '0']},
+                {'id': 'et02',   'type': 'EntryTextNative', 'params': ['0', 'Admirer']},
+                {'id': 'ep02',   'type': 'EntryNextPositions', 'params': ['12', '15', '3', '255']},
+                {'id': 'ee02',   'type': 'EntryEnd',    'params': []},
+
+                {'id': 'eb03',   'type': 'Entry',       'params': ['0', '0', '0', '0']},
+                {'id': 'est03',  'type': 'EntryStringTableNative', 'params': ['0', 'reinterpret_cast<StringTable *>(&Video)']},
+                {'id': 'ep03',   'type': 'EntryNextPositions', 'params': ['12', '15', '3', '255']},
+                {'id': 'ee03',   'type': 'EntryEnd',    'params': []},
 
                 {'id': 'menuEnd', 'type': 'MenuEnd',    'params': []},
             ],
             'Charlie': [
-                {'id': 'header', 'type': 'MenuHeader',  'params': ['someCoolInit', 'hereIAm', 'danceSnake', '2']},
+                {'id': 'header', 'type': 'MenuHeaderV2', 'params': ['kMenuHeaderV2Mark', 'someCoolInit', 'hereIAm', 'danceSnake', '2', 'true', 'true', 'true']},
 
                 {'id': 'eb00',   'type': 'Entry',       'params': ['49', '158', '99', '17']},
-                {'id': 'est00',  'type': 'EntryStringTable', 'params': ['0', '&Charlie_CasaNostra_stringTable']},
+                {'id': 'est00',  'type': 'EntryStringTableNative', 'params': ['0', '&Charlie_CasaNostra_stringTable']},
                 {'id': 'ec00',   'type': 'EntryColor',  'params': ['11']},
                 {'id': 'ee00',   'type': 'EntryEnd',    'params': []},
 
                 {'id': 'eb01',   'type': 'Entry',       'params': ['59', '168', '99', '17']},
-                {'id': 'ecff01', 'type': 'EntryCustomForegroundFunction', 'params': ['drawYellow']},
-                {'id': 'ecbf01', 'type': 'EntryCustomBackgroundFunction', 'params': ['drawRed']},
-                {'id': 'ep01',   'type': 'EntryNextPositions', 'params': ['-1', '-1', '0', '2']},
+                {'id': 'ecff01', 'type': 'EntryCustomForegroundFunctionNative', 'params': ['drawYellow']},
+                {'id': 'ecbf01', 'type': 'EntryCustomBackgroundFunction', 'params': ['SwosVM::Procs::drawRed']},
+                {'id': 'ep01',   'type': 'EntryNextPositions', 'params': ['255', '255', '0', '2']},
                 {'id': 'ee01',   'type': 'EntryEnd',    'params': []},
 
                 {'id': 'eb02',   'type': 'Entry',       'params': ['69', '178', '99', '17']},
-                {'id': 'et02',   'type': 'EntryText',   'params': ['16', 'reinterpret_cast<const char *>(-1)']},
+                {'id': 'et02',   'type': 'EntryText',   'params': ['16', '-1']},
                 {'id': 'ei02',   'type': 'EntryInvisible', 'params': []},
                 {'id': 'ep02',   'type': 'EntryNextPositions', 'params': ['1', '0', '0', '0']},
-                {'id': 'eosfm02', 'type': 'EntryOnSelectFunctionWithMask', 'params': ['pumpItUp', '0x15']},
-                {'id': 'ebdf02', 'type': 'EntryBeforeDrawFunction', 'params': ['prepareWell']},
-                {'id': 'eadf02', 'type': 'EntryOnReturnFunction', 'params': ['returnOfThePhantom']},
+                {'id': 'eosfm02', 'type': 'EntryOnSelectFunctionWithMaskNative', 'params': ['pumpItUp', '0x15']},
+                {'id': 'ebdf02', 'type': 'EntryBeforeDrawFunctionNative', 'params': ['prepareWell']},
+                {'id': 'eadf02', 'type': 'EntryOnReturnFunctionNative', 'params': ['returnOfThePhantom']},
                 {'id': 'ee02',   'type': 'EntryEnd',              'params': [], },
 
                 {'id': 'eb03',   'type': 'Entry',       'params': ['79', '188', '99', '17']},
-                {'id': 'et03',   'type': 'EntryText',   'params': ['0', 'swos.aMenuMusic']},
+                {'id': 'et03',   'type': 'EntryText',   'params': ['0', 'SwosVM::Offsets::aMenuMusic']},
                 {'id': 'ee03',   'type': 'EntryEnd',    'params': []},
 
                 {'id': 'menuEnd', 'type': 'MenuEnd',    'params': []},
             ],
             'Tango': [
-                {'id': 'header',  'type': 'MenuHeader', 'params': ['specialForces', 'nullptr', 'nullptr', '0']},
+                {'id': 'header',  'type': 'MenuHeaderV2', 'params': ['kMenuHeaderV2Mark', 'specialForces', '0', '0', '0', 'true', 'false', 'false']},
                 {'id': 'menuXY00', 'type': 'MenuXY',    'params': ['123', '55'],},
 
                 {'id': 'te00',    'type': 'TemplateEntry', 'params': []},
                 {'id': 'eb30000', 'type': 'Entry',      'params': ['0', '0', '1', '1']},
-                {'id': 'est30000', 'type': 'EntryStringTable', 'params': ['0', '&Tango_30000_stringTable']},
+                {'id': 'est30000', 'type': 'EntryStringTableNative', 'params': ['0', '&Tango_30000_stringTable']},
                 {'id': 'ec30000', 'type': 'EntryColor', 'params': ['6']},
-                {'id': 'ebdf30000', 'type': 'EntryBeforeDrawFunction', 'params': ['aperitif']},
+                {'id': 'ebdf30000', 'type': 'EntryBeforeDrawFunctionNative', 'params': ['aperitif']},
                 {'id': 'ee30000', 'type': 'EntryEnd',   'params': []},
 
                 {'id': 'eb00',    'type': 'Entry',      'params': ['0', '0', '0', '0']},
                 {'id': 'efs00',   'type': 'EntryForegroundSprite', 'params': ['1001']},
+                {'id': 'ec00',    'type': 'EntryColor', 'params': ['0']},
                 {'id': 'ee00',    'type': 'EntryEnd',   'params': []},
+
+                {'id': 'eb01',    'type': 'Entry',      'params': ['0', '0', '0', '0']},
+                {'id': 'ec01',    'type': 'EntryColor', 'params': ['10']},
+                {'id': 'ee01',    'type': 'EntryEnd',   'params': []},
 
                 {'id': 'rte00',   'type': 'ResetTemplateEntry', 'params': []},
 
-                {'id': 'menuXY01', 'type': 'MenuXY',    'params': ['125', '35']},
-
-                {'id': 'eb01',    'type': 'Entry',      'params': ['0', '0', '0', '0']},
-                {'id': 'els01',   'type': 'EntryLeftSkip', 'params': ['2', '0']},
-                {'id': 'ers01',   'type': 'EntryRightSkip', 'params': ['0', '1']},
-                {'id': 'ee01',    'type': 'EntryEnd',   'params': []},
+                {'id': 'menuXY02', 'type': 'MenuXY',    'params': ['125', '35']},
 
                 {'id': 'eb02',    'type': 'Entry',      'params': ['0', '0', '0', '0']},
-                {'id': 'est02',   'type': 'EntryStringTable', 'params': [
-                    '0', 'reinterpret_cast<StringTable *>(&swos.SmoothJazz101DaPierre)']},
+                {'id': 'els02',   'type': 'EntryLeftSkip', 'params': ['2', '0']},
+                {'id': 'ers02',   'type': 'EntryRightSkip', 'params': ['0', '1']},
                 {'id': 'ee02',    'type': 'EntryEnd',   'params': []},
+
+                {'id': 'eb03',    'type': 'Entry',      'params': ['0', '0', '0', '0']},
+                {'id': 'est03',   'type': 'EntryStringTable', 'params': ['0', 'SwosVM::Offsets::SmoothJazz101DaPierre']},
+                {'id': 'ee03',    'type': 'EntryEnd',   'params': []},
+
+                {'id': 'eb04',    'type': 'Entry',      'params': ['0', '0', '0', '0']},
+                {'id': 'est04',   'type': 'EntryStringTableNative', 'params': ['0', '&Tango_04_stringTable']},
+                {'id': 'ee04',    'type': 'EntryEnd',   'params': []},
 
                 {'id': 'menuEnd', 'type': 'MenuEnd',    'params': []},
             ],
             'Delta': [
-                {'id': 'header',  'type': 'MenuHeader', 'params': ['nullptr', 'nullptr', 'nullptr', '0']},
+                {'id': 'header',  'type': 'MenuHeader', 'params': ['0', '0', '0', '0']},
+                {'id': 'menuEnd', 'type': 'MenuEnd',    'params': []},
+            ],
+            'mali': [
+                {'id': 'header',  'type': 'MenuHeader', 'params': ['0', '0', '0', '0']},
                 {'id': 'menuEnd', 'type': 'MenuEnd',    'params': []},
             ],
         },
@@ -226,24 +275,26 @@ kOutputFile = 'Khaldun'
 
 kMenuRegex = re.compile(r'''
     struct\s+SWOS_Menu_(?P<name>\w+)\s* : \s*public\s+BaseMenu\b\s*
-    (?P<contents>{.*?}[^;]).*?
+    (?P<contents>{[^#]+(?=\#ifndef\s*SWOS_STUB_MENU_DATA)).*?
     \#ifndef\s+SWOS_STUB_MENU_DATA
     \s*static\s+const\s+(?P<declarationName>\w+)\n
     \#endif\n;\n
-    \s*namespace\s+(?P<enumName>\w+)NS\s*{\s*
+    \s*namespace\s+(?P<enumName>\w+?)\s*{\s*
     enum\s+Entries\s*{
     (?P<enumEntries>[^}]+)}\s*;
+    (?P<entryPointers>\s*\/\/[^#]+\#define\s+makeEntryPointer(.*?)undef\s+makeEntryPointer)?
     (?P<constants>([^}]+))?
     ''',
-    re.MULTILINE | re.DOTALL | re.VERBOSE)
+    re.DOTALL | re.VERBOSE)
 kFuncRegex = re.compile(r'static void (\w+)\s*\(\s*\)\s*;')
-kStringTableDeclarationPattern = r'struct\s+StringTable{length}\s*:\s*public\s+StringTable\s*{{(.*?)}};'
+kStringTableDeclarationPattern = r'struct\s+StringTableNative{length}\s*:\s*public\s+StringTableNative\s*{{(.*?)}};'
 kEnumEntryRegex = re.compile(r'(\w+)\s*=\s*(\d+)\s*,')
+kEntryPointerRegex = re.compile(r'makeEntryPointer\((\w+)\s*,\s*(\d+)')
 kConstantsRegex = re.compile(r'constexpr\s+int\s+(\w+)\s*=\s*(\d+)')
 kMenuElementsRegex = re.compile(r'''
     (?P<type>\w+)\s+(?P<id>\w+)\s*{\s*
     (?P<params>[^}]+\s*)?
-    }\s*;\s*
+    }?}\s*;\s*
     ''', re.MULTILINE | re.DOTALL | re.VERBOSE)
 kStubDefineRegex = re.compile(r'#ifdef SWOS_STUB_MENU_DATA([^#]+)#endif')
 
@@ -363,20 +414,23 @@ class TestCodeGenerator(unittest.TestCase):
             for i, length in enumerate(expectedStringTables[0]):
                 stringTableRegex = re.compile(kStringTableDeclarationPattern.format(length=length), re.DOTALL | re.MULTILINE)
                 self.assertRegex(output, stringTableRegex)
-                self.verifyPragmaPackAroundStringTable(stringTableRegex, output, i);
-            for stringTableContent in expectedStringTables[1]:
+                self.verifyPragmaPackAroundStringTable(stringTableRegex, output, i)
+            for declared, extern, *stringTableContent in expectedStringTables[1]:
                 name = stringTableContent[0]
                 controlVar = stringTableContent[1]
                 initialValue = stringTableContent[2]
                 strings = stringTableContent[3:]
                 length = len(stringTableContent) - 3
 
-                if not controlVar.startswith('swos.'):
-                    self.assertNotEqual(output.find(f'extern int16_t {controlVar}'), -1)
+                if declared or extern:
+                    storageClass = 'static' if declared else 'extern'
+                    self.assertNotEqual(output.find(f'{storageClass} int16_t {controlVar.replace("&", "")}'), -1)
 
-                stringTablePattern = rf'StringTable{length}\s+{name}_stringTable\s+{{\s*&\s*{controlVar}\s*,\s*{initialValue}\s*,\s*'
+                stringTablePattern = rf'StringTableNative{length}\s+{name}_stringTable\s+{{\s*{re.escape(controlVar)}\s*,\s*{initialValue}\s*,\s*'
                 for string in strings:
-                    stringTablePattern += rf'{string}\s*,\s*'
+                    if string[0] == string[-1] == "'":
+                        string = f'"{string[1:-1]}"'
+                    stringTablePattern += rf'{re.escape(string)}\s*,\s*'
                 stringTablePattern += r'[^}]*};'
 
                 self.assertRegex(output, stringTablePattern)
@@ -406,14 +460,17 @@ class TestCodeGenerator(unittest.TestCase):
 
             for menuName, entryIndices in expectedNamedEntries.items():
                 self.assertIn(menuName, menusWithNamedEntries)
-                enumValues = menusWithNamedEntries[menuName]
+                enumValues, entryPointerValues = menusWithNamedEntries[menuName]
 
                 for entryName, expectedIndex in entryIndices:
                     enumEntryNames = list(map(operator.itemgetter(0), enumValues))
+                    self.assertEqual(enumEntryNames, list(map(operator.itemgetter(0), entryPointerValues)))
                     self.assertIn(entryName, enumEntryNames)
+
                     index = enumEntryNames.index(entryName)
                     actualEntryIndex = enumValues[index][1]
                     self.assertEqual(int(actualEntryIndex), expectedIndex)
+                    self.assertEqual(actualEntryIndex, entryPointerValues[index][1])
         else:
             self.assertFalse(menusWithNamedEntries)
 
@@ -426,13 +483,23 @@ class TestCodeGenerator(unittest.TestCase):
         for match in matches:
             menuName = match['name']
             self.assertEqual(menuName, match['declarationName'])
-            self.assertEqual(menuName, match['enumName'])
+
+            enumName = match['enumName']
+            if menuName[0].isupper():
+                enumName = enumName[:-2]
+            else:
+                enumName = enumName[0].lower() + enumName[1:]
+
+            self.assertEqual(menuName, enumName)
 
             enumEntries = match['enumEntries']
             enumValues = kEnumEntryRegex.findall(enumEntries)
 
+            entryPointers = match['entryPointers']
+            entryPointerValues = kEntryPointerRegex.findall(entryPointers) if entryPointers else []
+
             if enumValues:
-                menusWithNamedEntries[menuName] = enumValues
+                menusWithNamedEntries[menuName] = (enumValues, entryPointerValues)
 
         return menusWithNamedEntries
 
@@ -512,7 +579,11 @@ class TestCodeGenerator(unittest.TestCase):
                 element['params'] = []
 
                 if match['params']:
-                    element['params'] = list(map(str.strip, match['params'].split(',')))
+                    paramList = match['params'].replace('{', '').split(',')
+                    paramList = map(str.strip, paramList)
+                    paramList = filter(None, paramList)
+
+                    element['params'] = list(paramList)
                     if type == 'Entry':
                         element['params'] = list(str(eval(expr)) for expr in element['params'])
 
@@ -564,29 +635,13 @@ class TestCodeGenerator(unittest.TestCase):
     def testStubs(self, index):
         output = self.outputs[index]
 
-        expectedStringTables = kTestData[index][1].get('stringTables')
         expectedFunctions = kTestData[index][1].get('functions')
 
-        numExpectedStubDefs = 0
-        if expectedStringTables:
-            numExpectedStubDefs += len(expectedStringTables[1])
         if expectedFunctions:
-            numExpectedStubDefs += 1
-
-        matches = kStubDefineRegex.findall(output)
-
-        self.assertEqual(len(matches), numExpectedStubDefs)
-
-        currentMatch = 0
-        if expectedStringTables:
-            for stringTable in expectedStringTables[1]:
-                controlVar = stringTable[1]
-                self.assertIn(controlVar, matches[currentMatch])
-                currentMatch += 1
-
-        if expectedFunctions:
+            match = kStubDefineRegex.search(output)
+            self.assertTrue(match)
             for expectedFunction in expectedFunctions:
-                self.assertIn(expectedFunction, matches[currentMatch])
+                self.assertIn(expectedFunction, match[0])
 
     @data(*kTestIndices)
     def testSingleNewLineAtTheEndOfTheFile(self, index):
@@ -605,8 +660,9 @@ class TestCodeGenerator(unittest.TestCase):
 
         output = ''
         for call in mockPrint.call_args_list:
-            for arg in call[0]:
+            for arg in call.args:
                 output += arg
-            output += '\n'
+            end = call.kwargs.get('end', '\n')
+            output += end
 
         return parser, output

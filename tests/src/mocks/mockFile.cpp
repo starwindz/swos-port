@@ -15,10 +15,11 @@ struct Node
     bool isDirectory() const { return type == kDirectory; };
     bool isFile() const { return type == kFile; };
     bool filenameEqual(const char *otherName, size_t len) const {
-        if (isFileSystemCaseInsensitive())
+#ifdef _WIN32
             return _strnicmp(name.c_str(), otherName, len) == 0;
-        else
+#else
             return strncmp(name.c_str(), otherName, len) == 0;
+#endif
     }
 
     std::string name;
@@ -285,6 +286,13 @@ const char *getFakeFileData(const char *path, size_t& size, size_t& numWrites)
     return node.data;
 }
 
+size_t getFakeFileSize(const char *path)
+{
+    size_t size = 0, numWrites;
+    getFakeFileData(path, size, numWrites);
+    return size;
+}
+
 DIR *opendir(const char *dirName)
 {
     auto nodeIndex = findNode(dirName);
@@ -338,21 +346,35 @@ namespace SWOS {
     int WriteFile_REAL();
 }
 
+#define createDir createDir_REAL
 #define dirExists dirExists_REAL
 std::string pathInRootDir_REAL(const char *filename);
 #define pathInRootDir pathInRootDir_REAL
 int loadFile_REAL(const char *path, void *buffer, int maxSize = -1, size_t skipBytes = 0, bool required = true);
 #define loadFile loadFile_REAL
-FILE *openFile_REAL(const char *path, const char *mode = "rb");
+SDL_RWops *openFile_REAL(const char *path, const char *mode = "rb");
 #define openFile openFile_REAL
 #include "file.cpp"
 #include "mockFile.h"
+#undef createDir
 #undef dirExists
 #undef loadFile
 #undef openFile
 #undef pathInRootDir
 #undef WriteFile
 #undef LoadFile
+
+bool createDir(const char *path)
+{
+    if (m_enableMocking) {
+        if (findNode(path))
+            return false;
+        addFakeDirectory(path);
+        return true;
+    } else {
+        return createDir_REAL(path);
+    }
+}
 
 bool dirExists(const char *path)
 {
@@ -364,7 +386,7 @@ bool dirExists(const char *path)
     }
 }
 
-FILE *openFile(const char *, const char *)
+SDL_RWops *openFile(const char *, const char *)
 {
     assert(false);
     return nullptr;
@@ -422,11 +444,9 @@ static void writeFakeFile()
 
 int __declspec(naked) SWOS::WriteFile()
 {
-    _asm {
-        call writeFakeFile
-        xor eax, eax
-        retn
-    }
+    writeFakeFile();
+    SwosVM::flags.zero = 1;
+    return D0 = 0;
 }
 
 static int loadFakeFile()
@@ -445,18 +465,16 @@ static int loadFakeFile()
 
     const auto& node = m_nodes[nodeIndex];
 
-    volatile auto savedSelTeamsPtr = selTeamsPtr;    // unreal... and also optimizer was eliminating it X_X
+    volatile auto savedSelTeamsPtr = swos.selTeamsPtr;  // unreal... and also optimizer was eliminating it X_X
     memcpy(buffer, node.data, node.size);
-    selTeamsPtr = savedSelTeamsPtr;
+    swos.selTeamsPtr = savedSelTeamsPtr;
 
     return 0;
 }
 
 int __declspec(naked) SWOS::LoadFile()
 {
-    _asm {
-        call loadFakeFile
-        xor eax, eax
-        retn
-    }
+    loadFakeFile();
+    SwosVM::flags.zero = 1;
+    return D0 = 0;
 }

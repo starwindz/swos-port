@@ -1,5 +1,5 @@
 #include "mainMenu.h"
-#include "menu.h"
+#include "menus.h"
 #include "replays.h"
 #include "main.mnu.h"
 
@@ -62,7 +62,6 @@ static void drawExitIcon()
     }
 }
 
-
 constexpr char kQuitToOS[] = "QUIT TO "
 #ifdef _WIN32
 "WINDOWS";
@@ -83,7 +82,7 @@ static void showQuitMenu()
 static void quitMenuOnInit()
 {
     FadeOutToBlack();
-    DrawMenu();     // redraw menu so it's ready for the fade-in
+    SWOS::DrawMenu();   // redraw menu so it's ready for the fade-in
     FadeIn();
     swos.skipFade = -1;
 }

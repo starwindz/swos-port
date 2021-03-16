@@ -329,7 +329,7 @@ std::tuple<RegisterEnum, size_t, size_t> InstructionOperandsInfoExtractor::token
             if (regIndex >= 0)
                 return { static_cast<RegisterEnum>(kAmigaRegsStart + regIndex), 0, 0 };
         }
-        // fall-through
+        [[fallthrough]];
     default:
         return { kNoReg, 0, 0 };
     }

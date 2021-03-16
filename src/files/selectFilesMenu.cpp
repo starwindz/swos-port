@@ -1,7 +1,8 @@
 #include "selectFilesMenu.h"
-#include "sprites.h"
+#include "text.h"
 #include "selectFiles.mnu.h"
 #include "menuMouse.h"
+#include "drawMenu.h"
 
 using namespace SelectFilesMenu;
 
@@ -59,17 +60,19 @@ static int extensionToCode(const std::string& selectedFilename)
 
 static const char *codeToExtension(dword packedExt)
 {
-    union {
-        char ext[5];
-        dword d;
-    } static u;
+    union Ext {
+        char str[5];
+        dword packed;
+    };
 
-    u.d = D0;
-    std::swap(u.ext[0], u.ext[3]);
-    std::swap(u.ext[1], u.ext[2]);
-    u.ext[4] = '\0';
+    auto ext = reinterpret_cast<Ext *>(swos.animatedPatterns);
+    ext->packed = packedExt;
 
-    return u.ext;
+    std::swap(ext->str[0], ext->str[3]);
+    std::swap(ext->str[1], ext->str[2]);
+    ext->str[4] = '\0';
+
+    return ext->str;
 }
 
 FoundFileList findFiles(dword packedExtension)
@@ -86,8 +89,7 @@ FoundFileList findFiles(dword packedExtension)
 
 static char *getFilenameBuffer(const std::string& selectedFilename)
 {
-    strncpy_s(m_filenameBuffer, kMaxPath, selectedFilename.c_str(), _TRUNCATE);
-
+    strncpy_s(m_filenameBuffer, selectedFilename.c_str(), kMaxPath);
     return m_filenameBuffer;
 }
 
@@ -137,8 +139,7 @@ __declspec(naked) int SWOS::GetFilenameAndExtension()
 #ifdef SWOS_VM
     auto result = getFilenameAndExtension();
     SwosVM::flags.zero = result;
-    D0 = !result;
-    return 0;
+    return D0 = !result;
 #else
     __asm {
         call getFilenameAndExtension
@@ -525,7 +526,7 @@ static void selectFilesOnInit()
 
     using namespace SwosVM;
 
-    kReplays = allocateString("REPLAYS");
+    kReplays = allocateString("REPLAY");
     m_filenameBuffer = allocateMemory(kMaxPath);
 }
 
@@ -533,19 +534,19 @@ static SwosDataPointer<const char> getFileTypeFromExtension(const char *ext)
 {
     auto type = swos.aHigh;
 
-    if (!strcmp(ext, "PRE"))
+    if (!_stricmp(ext, "PRE"))
         type = swos.aPreset;
-    else if (!strcmp(ext, "SEA"))
+    else if (!_stricmp(ext, "SEA"))
         type = swos.aSeason;
-    else if (!strcmp(ext, "CAR"))
+    else if (!_stricmp(ext, "CAR"))
         type = swos.aCareer;
-    else if (!strcmp(ext, "TAC"))
+    else if (!_stricmp(ext, "TAC"))
         type = swos.aTact;
-    else if (!strcmp(ext, "RPL"))
+    else if (!_stricmp(ext, "RPL"))
         type = kReplays;
-    else if (!strcmp(ext, "DIY"))
+    else if (!_stricmp(ext, "DIY"))
         type = swos.aDiy;
-    else if (strcmp(ext, "HIL"))
+    else if (_stricmp(ext, "HIL"))
         assert(false);
 
     return type;
@@ -564,10 +565,7 @@ static int getFileIndex(const MenuEntry *entry)
 static void drawDescription()
 {
     auto entry = A5.asMenuEntry();
-
     auto fileIndex = getFileIndex(entry);
-    if (fileIndex < 0)
-        return;
 
     if (fileIndex >= 0 && fileIndex < static_cast<int>(m_filenames.size())) {
         const auto& file = m_filenames[fileIndex];
@@ -575,7 +573,7 @@ static void drawDescription()
         auto fileType = getFileTypeFromExtension(ext);
 
         auto descEntry = getMenuEntry(description);
-        descEntry->u2.constString = fileType;
+        descEntry->fg.constString = fileType;
 
         descEntry->x = entry->x + entry->width + kTypeFieldMargin;
         descEntry->y = entry->y;

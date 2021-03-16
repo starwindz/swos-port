@@ -233,7 +233,7 @@ static void toggleMasterSound()
             restartMusic();
     }
 
-    DrawMenuItem();
+    SWOS::DrawMenuItem();
 }
 
 static void toggleMenuMusic()
@@ -246,14 +246,14 @@ static void toggleMenuMusic()
     else
         finishMusic();
 
-    DrawMenuItem();
+    SWOS::DrawMenuItem();
 }
 
 static void increaseVolume()
 {
     if (m_volume < kMaxVolume) {
         setMasterVolume(m_volume + 1);
-        DrawMenuItem();
+        SWOS::DrawMenuItem();
     }
 }
 
@@ -261,21 +261,21 @@ static void decreaseVolume()
 {
     if (m_volume > 0) {
         setMasterVolume(m_volume - 1);
-        DrawMenuItem();
+        SWOS::DrawMenuItem();
     }
 }
 
 static void volumeBeforeDraw()
 {
     auto entry = A5.as<MenuEntry *>();
-    entry->u2.number = m_volume;
+    entry->fg.number = m_volume;
 }
 
 static void increaseMusicVolume()
 {
     if (m_musicVolume < kMaxVolume) {
         setMusicVolume(getMusicVolume() + 1);
-        DrawMenuItem();
+        SWOS::DrawMenuItem();
     }
 }
 
@@ -283,14 +283,14 @@ static void decreaseMusicVolume()
 {
     if (getMusicVolume() > kMinVolume) {
         setMusicVolume(getMusicVolume() - 1);
-        DrawMenuItem();
+        SWOS::DrawMenuItem();
     }
 }
 
 static void musicVolumeBeforeDraw()
 {
     auto entry = A5.as<MenuEntry *>();
-    entry->u2.number = getMusicVolume();
+    entry->fg.number = getMusicVolume();
 }
 
 static void toggleCrowdChants()

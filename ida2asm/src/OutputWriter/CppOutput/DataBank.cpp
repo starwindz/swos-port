@@ -71,7 +71,7 @@ void DataBank::consolidateVariables(const StructStream& structs)
         for (auto& var : varList) {
             if (amigaRegisterToIndex(var.name) < 0) {
                 if (var.name) {
-                    m_memoryByteSize += extractVarAlignment(var, m_memoryByteSize, structs);
+                    m_memoryByteSize += extractVarEffectiveAlignment(var, m_memoryByteSize, structs);
                     var.offset = m_memoryByteSize;
                     m_varToAddress.add(var.name, m_memoryByteSize);
 
@@ -366,11 +366,40 @@ void DataBank::consolidateOffsetVariables()
     fillProcIndicesAndFixupVars();
 }
 
-size_t DataBank::extractVarAlignment(Var& var, size_t address, const StructStream& structs)
+int DataBank::extractVarAlignment(Var& var, const StructStream& structs)
+{
+    int alignment = var.type == kStruct ? 4 : var.size;
+
+    // we need the real type to determine alignment
+    if (var.exportedBaseType) {
+        var.exportedSize = getElementSize(var.exportedBaseType);
+        if (var.exportedSize < 0) {
+            if (!structs.findStruct(var.exportedBaseType))
+                Util::exit("Unknown structure encountered: `%.*s', variable: `%.*s'", EXIT_FAILURE,
+                    var.exportedBaseType.length(), var.exportedBaseType.data(), var.name.length(), var.name.data());
+            alignment = 4;  // it's a known struct
+        } else if (var.size != var.exportedSize) {
+            alignment = var.exportedSize;
+            if (var.exportedArraySize > 1) {
+                var.size = var.exportedSize;
+                var.dup = var.exportedArraySize;
+            } else if (var.dup > 1 && var.exportedSize > static_cast<int>(var.size)) {
+                assert(var.dup % var.exportedSize == 0);
+                var.size = var.exportedSize;
+                var.dup /= var.exportedSize;
+            }
+            alignment = std::min(alignment, 4);
+        }
+    }
+
+    return alignment;
+}
+
+size_t DataBank::extractVarEffectiveAlignment(Var& var, size_t address, const StructStream& structs)
 {
     assert(!var.alignment);
 
-    auto [exportedDecl, baseType, arraySize] = m_symFileParser.exportedDeclaration(var.name);
+    auto [exportedDecl, baseType, arraySize, alignment] = m_symFileParser.exportedDeclaration(var.name);
     if (exportedDecl) {
         var.exportedDecl = exportedDecl;
         var.exportedBaseType = baseType;
@@ -378,29 +407,8 @@ size_t DataBank::extractVarAlignment(Var& var, size_t address, const StructStrea
         var.exportedSize = var.size;
 
         if (var.type != kString) {
-            int alignment = var.type == kStruct ? 4 : var.size;
-
-            // we need the real type to determine alignment
-            if (var.exportedBaseType) {
-                var.exportedSize = getElementSize(var.exportedBaseType);
-                if (var.exportedSize < 0) {
-                    if (!structs.findStruct(var.exportedBaseType))
-                        Util::exit("Unknown structure encountered: `%.*s', variable: `%.*s'", EXIT_FAILURE,
-                            var.exportedBaseType.length(), var.exportedBaseType.data(), var.name.length(), var.name.data());
-                    alignment = 4;  // it's a known struct
-                } else if (var.size != var.exportedSize) {
-                    alignment = var.exportedSize;
-                    if (var.exportedArraySize > 1) {
-                        var.size = var.exportedSize;
-                        var.dup = var.exportedArraySize;
-                    } else if (var.dup > 1 && var.exportedSize > static_cast<int>(var.size)) {
-                        assert(var.dup % var.exportedSize == 0);
-                        var.size = var.exportedSize;
-                        var.dup /= var.exportedSize;
-                    }
-                    alignment = std::min(alignment, 4);
-                }
-            }
+            if (alignment < 1)
+                alignment = extractVarAlignment(var, structs);
 
             assert(alignment <= 4);
 

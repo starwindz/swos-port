@@ -631,7 +631,7 @@ void makeScreenshot()
 
 void SWOS::Flip()
 {
-    updateControls();
+    processControlEvents();
     frameDelay();
     updateScreen();
 }

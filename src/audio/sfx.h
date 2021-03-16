@@ -9,6 +9,7 @@ enum SfxSampleIndex {
 
 using SfxSamplesArray = std::array<SoundSample, kNumSoundEffects>;
 
+void clearSfxSamplesCache();
 void initSfxBeforeTheGame();
 SfxSamplesArray& sfxSamples();
 void playCrowdNoiseSample();

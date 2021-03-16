@@ -60,7 +60,7 @@ static int doLoadFile(SDL_RWops *f, const char *path, void *buffer, size_t buffe
     }
 
     bool plural = bufferSize != 1;
-    logInfo("Loading `%s' [%s byte%s]", path, formatNumberWithCommas(bufferSize).c_str(), plural ? "s" : "");
+    logInfo("Loading \"%s\" [%s byte%s]", path, formatNumberWithCommas(bufferSize).c_str(), plural ? "s" : "");
 
     bool readOk = SDL_RWread(f, buffer, bufferSize, 1) == 1;
     SDL_RWclose(f);
@@ -272,7 +272,7 @@ bool createDir(const char *path)
     if (!result)
         return dirExists(path);
 
-    return false;
+    return result;
 }
 
 // Returns pointer to last dot in the string, if found, or to the last string character otherwise.
@@ -362,10 +362,8 @@ FoundFileList findFiles(const char *extension, const char *dirName /* = nullptr 
         if (!isAnyExtensionAllowed(dot + 1, allowedExtensions, numAllowedExtensions))
             continue;
 
-        // must make it upper case or SWOS will reject it like a cruel mother
-        toUpper(entry->d_name);
-
-        result.emplace_back(entry->d_name, dot - entry->d_name + 1);
+        size_t extensionOffset = dot - entry->d_name + 1;
+        result.emplace_back(entry->d_name, extensionOffset);
     }
 
     closedir(dir);

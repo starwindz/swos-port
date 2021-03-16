@@ -481,13 +481,13 @@ void OpWriter::writeToConstantAddress(const OpInfo& op, DestMemoryData source)
             outMemAccess(op.constantAddress + 1, 4);
             if (isConstZero()) {
                 out(" = ");
-                outMemAccess(op.constantAddress + 3);
+                outMemAccess(op.constantAddress + 4);
                 out(" << 24");
             } else {
                 out(" = (");
                 outputData();
                 out(" >> 8) | (");
-                outMemAccess(op.constantAddress + 3);
+                outMemAccess(op.constantAddress + 4);
                 out(" << 24)");
             }
 

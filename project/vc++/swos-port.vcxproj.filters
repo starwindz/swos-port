@@ -43,31 +43,31 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="..\..\src\menus\options.mnu">
+    <CustomBuild Include="..\..\src\menus\mnu\options.mnu">
       <Filter>Source Files\menus</Filter>
     </CustomBuild>
-    <CustomBuild Include="..\..\src\menus\videoOptions.mnu">
+    <CustomBuild Include="..\..\src\menus\mnu\videoOptions.mnu">
       <Filter>Source Files\menus</Filter>
     </CustomBuild>
-    <CustomBuild Include="..\..\src\menus\audioOptions.mnu">
+    <CustomBuild Include="..\..\src\menus\mnu\audioOptions.mnu">
       <Filter>Source Files\menus</Filter>
     </CustomBuild>
-    <CustomBuild Include="..\..\src\menus\controlOptions.mnu">
+    <CustomBuild Include="..\..\src\menus\mnu\controlOptions.mnu">
       <Filter>Source Files\menus</Filter>
     </CustomBuild>
-    <CustomBuild Include="..\..\src\menus\replayExit.mnu">
+    <CustomBuild Include="..\..\src\menus\mnu\replayExit.mnu">
       <Filter>Source Files\menus</Filter>
     </CustomBuild>
-    <CustomBuild Include="..\..\src\menus\joypadConfig.mnu">
+    <CustomBuild Include="..\..\src\menus\mnu\joypadConfig.mnu">
       <Filter>Source Files\menus</Filter>
     </CustomBuild>
-    <CustomBuild Include="..\..\src\menus\main.mnu">
+    <CustomBuild Include="..\..\src\menus\mnu\main.mnu">
       <Filter>Source Files\menus</Filter>
     </CustomBuild>
-    <CustomBuild Include="..\..\src\menus\quit.mnu">
+    <CustomBuild Include="..\..\src\menus\mnu\quit.mnu">
       <Filter>Source Files\menus</Filter>
     </CustomBuild>
-    <CustomBuild Include="..\..\src\menus\selectFiles.mnu">
+    <CustomBuild Include="..\..\src\menus\mnu\selectFiles.mnu">
       <Filter>Source Files\menus</Filter>
     </CustomBuild>
     <CustomBuild Include="..\..\tmp\swos-asm\swos-01.asm">
@@ -94,7 +94,7 @@
     <CustomBuild Include="..\..\tmp\swos-asm\swos-08.asm">
       <Filter>Source Files\swos-asm</Filter>
     </CustomBuild>
-    <CustomBuild Include="..\..\src\menus\replays.mnu">
+    <CustomBuild Include="..\..\src\menus\mnu\replays.mnu">
       <Filter>Source Files\menus</Filter>
     </CustomBuild>
   </ItemGroup>
@@ -132,16 +132,16 @@
     <ClCompile Include="..\..\src\controls\controls.cpp">
       <Filter>Source Files\controls</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\controls\scanCodes.cpp">
+    <ClCompile Include="..\..\src\controls\keyboard\scanCodes.cpp">
       <Filter>Source Files\controls</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\controls\controlOptionsMenu.cpp">
       <Filter>Source Files\controls</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\controls\joypads.cpp">
+    <ClCompile Include="..\..\src\controls\joypads\joypads.cpp">
       <Filter>Source Files\controls</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\controls\joypadConfigMenu.cpp">
+    <ClCompile Include="..\..\src\controls\joypads\joypadConfigMenu.cpp">
       <Filter>Source Files\controls</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\video\render.cpp">
@@ -168,7 +168,7 @@
     <ClCompile Include="..\..\src\audio\SoundSample.cpp">
       <Filter>Source Files\audio</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\menus\menu.cpp">
+    <ClCompile Include="..\..\src\menus\menus.cpp">
       <Filter>Source Files\menus</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\game.cpp">
@@ -212,7 +212,7 @@
     <ClInclude Include="..\..\src\options.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\menus\menu.h">
+    <ClInclude Include="..\..\src\menus\menus.h">
       <Filter>Source Files\menus</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\debug\dump.h">
@@ -227,13 +227,13 @@
     <ClInclude Include="..\..\src\audio\music.h">
       <Filter>Source Files\audio</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\controls\scanCodes.h">
+    <ClInclude Include="..\..\src\controls\keyboard\scanCodes.h">
       <Filter>Source Files\controls</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\controls\joypads.h">
+    <ClInclude Include="..\..\src\controls\joypads\joypads.h">
       <Filter>Source Files\controls</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\controls\joypadConfigMenu.h">
+    <ClInclude Include="..\..\src\controls\joypads\joypadConfigMenu.h">
       <Filter>Source Files\controls</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\controls\controlOptionsMenu.h">
@@ -301,7 +301,7 @@
     <Natvis Include="Types.natvis" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\src\menus\common.mh">
+    <None Include="..\..\src\menus\mnu\common.mh">
       <Filter>Source Files\menus</Filter>
     </None>
     <None Include="..\..\mnu2h\CodeGenerator.py">

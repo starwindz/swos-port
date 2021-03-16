@@ -449,8 +449,13 @@ void OrphanedAssignmentChainRemover::handleShiftRotate(InstructionNode& node)
     }
 
     assert(dst.size());
-    auto count = src.constValue() / 8 % dst.size();
+    size_t count = src.constValue() / 8;
     auto size = dst.size();
+
+    if (node.instruction->type() == Token::T_ROL || node.instruction->type() == Token::T_ROR)
+        count %= size;
+    else
+        count = std::min(count, size);
 
     switch (node.instruction->type()) {
     case Token::T_SHR:
@@ -461,7 +466,7 @@ void OrphanedAssignmentChainRemover::handleShiftRotate(InstructionNode& node)
             unlinkChain(dst.base.reg, dst.base.offset + size - count, count);
         } else if (dst.type == OperandInfo::kFixedMem) {
             decreaseReferenceCountMem(dst.address(), count);
-            for (auto i = size - count; i != 0; i--)
+            for (size_t i = 0; i < size - count; i++)
                 m_mem[dst.address() + i] = m_mem[dst.address() + count + i];
             for (size_t i = 0; i < count; i++)
                 unlinkChain(m_mem[dst.address() + size - i - 1]);
@@ -474,7 +479,7 @@ void OrphanedAssignmentChainRemover::handleShiftRotate(InstructionNode& node)
             unlinkChain(dst.base.reg, dst.base.offset, count);
         } else if (dst.type == OperandInfo::kFixedMem) {
             decreaseReferenceCountMem(dst.address() + size - count, count);
-            for (size_t i = 0; i < count; i--)
+            for (int i = size - count - 1; i >= 0; i--)
                 m_mem[dst.address() + count + i] = m_mem[dst.address() + i];
             for (size_t i = 0; i < count; i++)
                 unlinkChain(m_mem[dst.address() + i]);
@@ -482,20 +487,18 @@ void OrphanedAssignmentChainRemover::handleShiftRotate(InstructionNode& node)
         break;
     case Token::T_ROR:
         if (dst.type == OperandInfo::kReg) {
-            while (count--)
-                for (size_t i = 0; i < size - 1; i--)
-                    std::swap(m_regs[dst.base.reg][dst.base.offset + i], m_regs[dst.base.reg][dst.base.offset + i + 1]);
+            auto begin = m_regs[dst.base.reg].begin() + dst.base.offset;
+            std::rotate(begin, begin + count, begin + size);
         } else if (dst.type == OperandInfo::kFixedMem) {
             while (count--)
-                for (size_t i = 0; i < size - 1; i--)
+                for (size_t i = 0; i < size - 1; i++)
                     std::swap(m_mem[dst.address() + i], m_mem[dst.address() + i + 1]);
         }
         break;
     case Token::T_ROL:
         if (dst.type == OperandInfo::kReg) {
-            while (count--)
-                for (size_t i = size - 1; i != 0; i--)
-                    std::swap(m_regs[dst.base.reg][dst.base.offset + i], m_regs[dst.base.reg][dst.base.offset + i - 1]);
+            auto rbegin = m_regs[dst.base.reg].rbegin() + dst.base.offset;
+            std::rotate(rbegin, rbegin + count, rbegin + size);
         } else if (dst.type == OperandInfo::kFixedMem) {
             while (count--)
                 for (size_t i = size - 1; i != 0; i--)
@@ -660,7 +663,7 @@ void OrphanedAssignmentChainRemover::appendSourceNodesToDestination(const Instru
 
     case OperandInfo::kDynamicMem:
         assert(dst.type == OperandInfo::kReg);
-        for (auto op : { src.base, src.scale }) {
+        for (const auto& op : { src.base, src.scale }) {
             if (!op.empty()) {
                 for (size_t i = 0; i < dst.base.size; i++) {
                     auto& dstNode = m_regs[dst.base.reg][dst.base.offset + i];
@@ -884,6 +887,8 @@ void OrphanedAssignmentChainRemover::appendNodes(int& dst, int src)
 
 auto OrphanedAssignmentChainRemover::memoryToRegister(size_t address, size_t size) const -> Register
 {
+    assert(size);
+
     Register reg;
 
     for (size_t i = 0; i < size; i++) {

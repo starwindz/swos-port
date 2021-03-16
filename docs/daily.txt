@@ -2982,7 +2982,7 @@ earlier:
 - fixed control options menu
 - added a system for caching constant strings from SwosVM
 - changed "QUIT TO WINDOWS" to "QUIT TO ANDROID" on Android ;)
-- found out that I actually have a 32-bit ARM CPU - a Cortex-A9, that will come handy later
+- found out that I actually have a 32-bit ARM CPU - a Cortex-A9, that will come in handy later
 17.10.2020.
 - managed to run it on the real phone (it does take a while!), but it crashes when opening league to pick
   teams; and that is because annoying Linux case-sensitive file system is creating problems, converted all
@@ -2993,7 +2993,644 @@ earlier:
   flashing on/off so the code doesn't go to waste ;)
 - fixed a highlighting current entry bug in menus which only now became visible after some unrelated changes
 - "played" a game on the emulator :) it's nearly impossible to control with "mouse" controls, and arrows get
-   rotated (up/down becomes left/right and vice versa) since the phone is in landscape mode :P
+  rotated (up/down becomes left/right and vice versa) since the phone is in landscape mode :P
 - played it on two phones too :) performance was OK on the good phone, but the game runs a bit slow on the
   worse phone, fluid but just slower than it's supposed to (I was testing debug version will see how release
   is doing)
+18.10.2020.
+/
+19.10.2020.
+/
+20.10.2020.
+/
+21.10.2020.
+/
+22.10.2020.
+/
+23.10.2020.
+- started modifying controls code in order to have menus controlled by any controller simultaneously; that
+  will require removal of pl1 & 2 controls, and changing game controls into just controls; also controls
+  module should be responsible for maintaining and returning a list of potential controllers; will need to find
+  a way to detect keyboard on Android/iOS too
+24.10.2020.
+- converted MenuCheckControls(), for now as original, without additional code for handling all the
+  controllers (but partially, since I'll delete a lot of code, no need to bother to be super precise)
+- removed too many variables, will have to fix it tomorrow (or remove/convert some more functions if
+  possible)
+25.10.2020.
+- rewriting the controls code, making any controller control the menus; there's a lot of code here that is
+  assuming the wrong thing(s), and I kind of forgot how it all worked, so this might take a while
+26.10.2020.
+- continuing with controls, it's going slow
+27.10.2020.
+- removed internal handling of keys via PC scan codes, now SDL scan codes are used and the game should be
+  able to use all the keys SDL supports
+- removed control flags, as it was nothing but an unnecessary layer; code is simpler now and some
+  nanoseconds faster ;)
+- removed more controls stuff, hope this will work :P
+28.10.2020.
+/
+29.10.2020.
+/
+30.10.2020.
+/
+31.10.2020.
+- writing/updating old SWOS++ document about the inner workings of SWOS controls (so I don't forget it for
+  the umpteenth time)
+01.11.2020.
+- finally finished the document, it was exhausting for some reason; but I have a good base now if anything
+  needs to be looked in more details
+02.11.2020.
+- noticed that there's been one unpleasant copyright notice in the source all this time; probably not a big
+  deal, but removed it to be on the safe side + created a git pre-commit hook to stop the commit if it's
+  detected
+- trying to get things to compile again, and then get the combined menu controls running
+03.11.2020.
+- started writing a little documentation on the mnu2h, and realized there are some bugs, fixed them + fixed
+  most of the failures in tests (will fix the rest on some other occasion)
+- finally compiled and ran, and nothing is working... great...
+04.11.2020.
+- somewhat fixed it, but too tired to continue; seems keyboard navigation is slower now, will have to look
+  what's with that; also fire is very unresponsive but when it finally responds it shoots like crazy and
+  opens a bunch of menus
+05.11.2020.
+/
+06.11.2020.
+/
+07.11.2020.
+- I though I solved fire key spam problem, but I didn't, argh
+- almost there ;) works, but it's slow to register the first press, something must be improperly initialized
+08.11.2020.
+- was fixing some left-over stuff after switch to SDL key codes and somehow got entangled into making strings
+  work for any input (like names of the keys from SDL, names of joypads...)
+- converted menu-time functions: GetTextSize() and DrawMenuText(), they can now handle lower-case text
+  without spitting out a slew of x's (which should simplify things a bit and relieve menu functions from
+  drudgery of converting text to upper case)
+- things are a bit better but still not working correctly; also had to delete saved key codes from ini file
+  since they were mapped to wrong integers (old PC scan codes, while the game now expects SDL ones)
+09.11.2020.
+- menus are now controlled by both keyboard keys-sets but the fire still feels a bit weird
+10.11.2020.
+- didn't really do much today, just one small intervention and the controls seem to be working just fine :)
+  now got to hook up & test joypad menu code and universal menu controls should be done
+11.11.2020.
+/
+12.11.2020.
+- all right, fixed joypads (there was a silly mistake), now controlling the menu works except it ignores
+  first couple of movement commands; will try updating SDL to see if it will help
+13.11.2020.
+- updated the SDL but the same thing is still happening, damn :)
+14.11.2020.
+- seems like a movement on left/right and up/down axis only starts after the d-pad was moved and released
+  once, afterwards it works fine, and the SDL doesn't send an event for it; trying out SDL joystick test
+  sample and it seems to detect the first movement but only via loop, not with events
+- disabled accelerometer showing up as joypad on Android (needs to be tested though)
+15.11.2020.
+- bought a cheap knock-off Xbox/PS3 controller; woops, now I see what I've been doing wrong, will need to
+  rewrite some code here
+- trying to address problem of saving configuration for multiple joypads of the same model by adding a player
+  number to go with it, so there can be at least 2 configurations; also transitioning joypad reading to state
+  functions instead of events (to avoid the weird behaviour with the first movement which fortunately doesn't
+  seem to happen on the new controller)
+16.11.2020.
+/
+17.11.2020.
+/
+18.11.2020.
+/
+19.11.2020.
+/
+20.11.2020.
+/
+21.11.2020.
+/
+22.11.2020.
+/
+23.11.2020.
+/
+24.11.2020.
+/
+25.11.2020.
+/
+26.11.2020.
+- decided to use last selected timestamps for joypad list, so most recently used joypads will be preferred
+  when reconnecting; then I realized I haven't been saving timestamps to files in C/C++ before (only to
+  SQLite), it turned out to be an interesting problem, had some interesting reads, especially about the year
+  2038 problem
+- trying to put everything back in order, but it's pretty smashed atm; need to find a way to access joystick
+  axis mapping (hope SDL has it), so I can tell which one is x and which one is y
+27.11.2020.
+- exploring joystick test sample; seems it considers even axis as x and odd as y, even though that may not
+  necessarily be true
+- analyzed SDL Game Controller API, mappings are pretty cool thing and they could be used for our purposes,
+  I just need to figure out how to actually map joypad controls through SWOS UI in some acceptable way
+28.11.2020.
+- figured out some more how this works, it's gonna be tough
+29.11.2020.
+/
+30.11.2020.
+/
+01.12.2020.
+/
+02.12.2020.
+/
+03.12.2020.
+/
+04.12.2020.
+/
+05.12.2020.
+/
+06.12.2020.
+/
+07.12.2020.
+/
+08.12.2020.
+/
+09.12.2020.
+/
+10.12.2020.
+/
+11.12.2020.
+/
+12.12.2020.
+/
+13.12.2020.
+- drew some rough sketches of new screens for configuring joypad elements
+14.12.2020.
+/
+15.12.2020.
+/
+16.12.2020.
+/
+17.12.2020.
+/
+18.12.2020.
+/
+19.12.2020.
+/
+20.12.2020.
+/
+21.12.2020.
+/
+22.12.2020.
+/
+23.12.2020.
+/
+24.12.2020.
+/
+25.12.2020.
+/
+26.12.2020.
+- randomly took to reversing AI routine, and had quite some success, learned a lot
+27.12.2020.
+- had some results but completely analyze it as I hoped, so putting it back on ice for now, it's not so
+  important at this moment
+28.12.2020.
+- been trying to determine where the routine for calculating "VIEW RESULT" is, it's been pretty difficult
+  I've finally located it (at least I'm pretty sure of it), however it's quite a mess, can't tell a thing,
+  there are lots and lots of tables, indexed by some random values + some player related values; I think
+  I've seen some average price calculations; note:
+  cseg_2C47D <-- this should be explored, it loops for each player, and increases unknown field in TeamFile
+  struct
+29.12.2020.
+/
+30.12.2020.
+- my vacation begins! finished with joypad configure screen design (I hope!)
+- found out that I don't need to create a VS add-in in order to have custom syntax highlighting, only a
+  TextMate language file, which is great
+31.12.2020.
+- after a long fight managed to get some coloring to the mnu files :) it's still crappy and needs a lot of
+  fixing but it's a good start, I was already doubting if the whole thing works at all
+01.01.2021.
+- read a guide for writing TextMate grammars, and some (semi)official documentation
+- starting to get the hang of it, made some nice progress; still need to finish preprocessor expressions and
+  tie up some loose ends, but it's looking good
+02.01.2021.
+- finished with tmLanguage file! it's not perfect, since I couldn't access the colors directly, but it's way
+  better than nothing ;) also quite content that I avoided the bullet with not having to mess with language
+  services, now that'd take forever...
+- wrote some more mnu2h documentation, now that I've refreshed my knowledge of it
+03.01.2021.
+- having a lot of unknown elements in entries of control menus is complicated, I've decided to embed
+  automatic string elision into menus, and that requires getting control of menu rendering; this will also
+  allow for creation of lists with automatic scroll arrows, and the interaction with SWOS VM address space
+  can be improved
+- [ida2asm] fixed incorrectly reporting an error about unused symbol when the symbol has been eliminated by
+  a range and at the same time marked for import from C++
+- converted DrawMenu
+04.01.2021.
+- decided to delete old controls code for now, it's just too messed up, we'll go from scratch
+- converting DrawMenuItem, at approximately more than a half
+05.01.2021.
+- DrawMenuItem converted!
+- somehow managed to compile it, debugged it, and it seems the conversion went without too many crashes ;)
+  now ~80% menu code is converted, it's almost VGA graphics free ;)
+06.01.2021.
+- planning out new controls code flow & data structures
+07.01.2021.
+- started the initial coding
+08.01.2021.
+- did a bit, but it's harder than I thought, got an unpleasant case of multiple joypads of the same model, in
+  which case the GUIDs are all the same, and then what to do?
+09.01.2021.
+- finished addJoypad() and some minor things
+10.01.2021.
+- been analyzing SDL's controller code in order to use their mapping database for defaults; it seemed like I
+  wouldn't have to parse the mapping text format and could just fetch the already computed bindings from the
+  controller API, but it turns out the API doesn't give enough information... ARGH, we'll just have to do
+  this the hard way; will also have to figure out some way to test it, since there are ~200 controllers in
+  the database
+11.01.2021.
+- finished mappings parser, mapping from SDL -> SWOS defaults in progress, going well
+- did much needed refactoring of joypad code, put each class into a separate file
+12.01.2021.
+- finished default mapping, whew, that was tiresome, will have to find some way to test it well
+- debugged it a bit, multi-joypad menu control works great ;) d-pad also works on Xbox-type of joypad; added
+  default mapping for my retarded MediaTech USB controller so it also works out of the box (with the phantom
+  axis disabled)
+- fixed joypad input clearing (repeat button prevention when navigating new menus)
+13.01.2021.
+- extracted keyboard handling and belonging classes from controls; slowly unifying all controller types to
+  return events mapping, and then further processing it on a higher layer to get the input for the menus
+14.01.2021.
+- didn't get much done today, but extracted mouse code, converted it to return events and added some special
+  handling for right-click long kick (not sure if it works at all)
+15.01.2021.
+- fixed too fast fire on joypads
+- fixed clicking with mouse
+- fixed player keys getting precedence over function keys (stats, etc.)
+- fixed options never applying default values if not present in ini file (oops, this was here for a long long
+  time)
+16.01.2021.
+- made mouse clicks trigger on button up, as is true and righteous
+- fixed blocking the cursor from flashing while mouse button is down
+- fixed mouse click issue when going to friendly and click holding OK, it would select choose teams menu
+  after a while
+- fixed +/- entries not changing faster when holding mouse button
+- unfortunately, there's still some stuff broken in mouse handling, but have to end here
+17.01.2021.
+- fixed arrows not working when an entry is selected with mouse
+- fixed +/- entries not responding to a single click
+- fixed still selecting old, now invisible entry when returning to previous menu
+- fixed mouse wheel scrolling
+18.01.2021.
+- while looking how to fix name appearing in career menu exit entry after entering text, I found a bug (or
+  maybe some way too clever programming): SetName() takes entry point in A5, but over the course of action
+  invokes DrawMenu() [which trashes A5], and afterwards DrawSelected() to draw a frame around the selected
+  entry -- now this only happens to set A5 to the selected entry, which was the original entry sent in via
+  A5 (you gotta select it and press fire for SWOS to start the input sequence)... SetName() is only called
+  from this one place, and therefore the entire thing worked by accident, and failed as soon as I converted
+  DrawMenu(); simply saving and restoring A5 in DrawMenu() did the trick
+- made backup script set archives to read-only, after I accidentally destroyed one :(
+- ran static analysis and fixed a few nasty potential memory overwrites (e.g. when saving and restoring
+  virtual 68k registers x_x)
+- found a nasty bug manifesting in friendly menu, when choosing teams and then exiting all the way to the
+  last menu before main, it seems to have been there for quite a while, most likely introduced with SwosVM
+19.01.2021.
+- fixed the damn thing!! it was actually a bug in the constant memory write generation routine in ida2asm,
+  the case when address % 4 == 3 :/ took me whole day and good part of the night to trace the bloody thing,
+  at least I've reversed some more around select teams routine
+20.01.2021.
+- fixed right button click in all the menus reachable from the main menu; it seems very menu-specific so
+  it's quite possible it won't work with some or many of the untested menus, so for now let's call it an
+  experimental feature
+- fixed an assertion in load competition menu
+- made mouse select only the entry that was clicked upon releasing the button (so it's possible for a user
+  to change their mind and give up the click by dragging away)
+- added caching to determineReachableEntires(), based on the last converted menu
+- fixed an annoying warning in the token tester about "register" keyword usage
+- added an option to disable joypads controlling the menus
+21.01.2021.
+- started with joypad info screen
+- improved mnu2h tests a bit
+- reviving tests project and converting it to 64-bit and SwosVM, fixed tons of errors but still not there
+22.01.2021.
+- made tests compile again (but haven't yet got around to see if they really work)
+23.01.2021.
+- they added an annoying message box in SDL that pops up whenever load of redirected DLL from environment
+  fails (which it must to so I can grab the juicy function pointers), so I had to write a window hook to kill
+  the first window that's created that contains some keywords
+- fixed silly logic error when null testing SWOS proc
+- fixed plenty of tests + some bug, but tests still not fully operational
+24.01.2021.
+- [ida2asm] added new directive for exports: (align: <n>)
+- tests are back with vengeance!
+- thanks to tests, fixed a couple of bugs:
+    - typed keys weren't properly stacked (LIFO instead FIFO) and were registered twice (releases instead
+      presses only)
+    - invalid use of menu buffer when inputting a number
+    - crash when showing error menu in video options menu
+    - saving DIY file 1 byte longer due to 1 byte alignment added to the variable that follows the buffer
+- fixed mnu syntax highlighting file, even though I believed it was perfect ;)
+- fixed description for replay files, "REPLAYS" -> "REPLAY", that "S" made it overflow the box, no idea how
+  that came to be
+25.01.2021.
+- started converting menu text routines, with the goal of adding automatic elision (seems lower-case handling
+  and skipping of unknown characters was already done, sweet!)
+26.01.2021.
+- finished with menu text routines conversion, non-elided strings seem to work fine, haven't had a chance to
+  test elision in action since SWOS strings fit well; it'll have to wait for controls menu and crazy big
+  joypad names
+27.01.2021.
+- implemented enough stuff to make control options menu show properly again and started adding virtual
+  joypad support
+- [mnu2h] fixed a bug in expression evaluator where a parenthesized sub-result would overwrite current
+  expression value
+28.01.2021.
+- [mnu2h] fixed a bug in expression evaluator where an expanded variable comprising of several operands would
+  not be parenthesized and might be calculated incorrectly if a higher precedence operator precedes it
+- [mnu2h] fixed a few smaller issues
+- [mnu2h] tests are fixed! also expanded them and increased code coverage to 99% :)
+29.01.2021.
+- [mnu2h] fixed a few minor issues and covered a few more smaller cases with the tests; I'm quite satisfied
+  now and think that it can be left like this, hopefully for a while
+- came up with and drew a sketch of the setup keyboard menu
+30.01.2021.
+- started implementing setup keyboard menu & belonging code
+31.01.2021.
+- [mnu2h] disabled lower case strings warning, makes no sense anymore with improved menu text rendering;
+  still, I let it live via a warning switch #lowerCaseStringsWarning[On|Off] which is off by default, in the
+  case it's needed for something in the future
+- [mnu2h] fixed a bug when a result of join wasn't re-parsed as an expression member, causing dot expressions
+  to go unevaluated (e.g. y: #join(some, Previous, Entry).endY + 2)
+- [mnu2h] added "endX" entry dot property
+- [mnu2h] added "entryAlias" command to define aliases for entries, so I don't have to write things like
+  #join(key, #{kMaxKeysShown - 1}:02) every couple of lines
+- implemented a rough initial look of the setup keyboard menu
+01.02.2021.
+- discovered a memory leak in the menus; unpackMenu() uses VM memory for unpacking, and when returning to the
+  previous menu we have to unpack the last menu again, and all that memory goes to waste; to address it some
+  ground rules had to be established:
+    - unpackMenu() will tap memory from menu buffer (no VM)
+    - onInit() function must only use VM memory, never menu
+    - onReturn() function must only use menu memory, never VM
+  hopefully this will sort it; also realized that clearing string cache after menu goes down is not correct
+  with regard how it's currently used, but too tired to fix it now
+02.02.2021.
+- fixed string cache management (the thing from yesterday)
+- fixed a mistake with index pointer in native string tables
+- fixed a bug where an invisible entry would get selected by mouse when returning from setup keyboard menu
+  to control options menu (player1, when there are no joypads); the issue was that we were updating mouse
+  before onDraw() was executed, and in that first frame before onDraw() runs the entry is actually selectable
+  (onDraw() hides it); moved updateMouse() after DrawMenu() and it doesn't happen anymore
+- [mnu2h] disallowed top-level export (why? because I'm too lazy ;) and not to have it pollute the global
+  namespace)
+- [mnu2h] added menu entry aliases to C++ Entries enum as well
+- got the keyboard setup menu to print keys and associated actions, finally got to implement a little bit of
+  actual game code
+03.02.2021.
+- simplified setting up of mouse scrolling entries, and implemented it for setup keyboard menu
+- disabled scrolling if the associated entry is hidden/disabled
+- started refactoring mnu2h, trying to add string types in preprocessor expressions in order to create
+  tokens conditionally (need this capability to assign top scroll arrow as a left entry to the first half
+  of the scrolling entries, and right one to the second)
+04.02.2021.
+- [mnu2h] a grand refactoring is in progress
+05.02.2021.
+- [mnu2h] lowered number of failures and errors from gazillion to 36
+06.02.2021.
+- [mnu2h] woah, added the string type to the preprocessor expressions and the tests are passing!
+- [mnu2h] added string indexing and Ruby-like symbols, :abc -> "abc", but some of the newly added tests are
+  failing, no strength left to fix those
+07.02.2021.
+- [mnu2h] added int and str conversion operators to preprocessor expressions
+- [mnu2h] apostrophe ' is now ignored among digits, just like in C++, so it can be used as decimal separator
+- [mnu2h] finished writing and fixing tests for all the new stuff, it's working like a charm now!
+08.02.2021.
+- [mnu2h] added a warning if preprocessor expression uses empty global/menu variables (which is quite
+  suspicious, possibly an error)
+- [mnu2h] added missing unary + operator
+- [mnu2h] went through all the source code, fixed some small issues and updated documentation a bit
+- updated C++ project with changes in mnu2h dependencies
+- added support for preprocessor symbols to syntax highlighting (regex doesn't actually capture only inside
+  of preprocessor expressions, but what can ya do)
+- finally set up the arrow movement in setup keyboard menu, the expression is working flawlessly ;)
+09.02.2021.
+- fixed scrolling of key/action entries
+- fixed wrong size ellipsis in elision routine
+- fixed slow scrolling when clicking on arrows (due to error in heuristics for recognizing scroller entries)
+10.02.2021.
+- fixed improper text elision for centered and right-aligned strings (needed to get the width the 2nd time,
+  after elision and reposition the string)
+- fixed a bug where a mouse click that brings focus to the window wasn't registered
+- fixed not displaying "PLEASE WAIT..." message properly when enumerating video modes take too long
+- implemented key deletion, added instruction labels, started writing a menu for getting game control events
+  for a key (and other forms of controls later)
+11.02.2021.
+- fixed Python polluting the source tree with __pycache__ directories by setting env. var PYTHONPYCACHEPREFIX
+- moved mnu2h into its own project
+- moved VC++ projects into their own directories to clean up the mess in project dir a bit, I only left two
+  old projects (swos-port and swos-asm), until I decide what to do with them (merge them to main one or not)
+- [mnu2h] added support for having default next entries
+12.02.2021.
+- [mnu2h] added alias "onRestore" for "onReturn" function
+- fleshed out select events menu, but realized it's confusing (and also ugly :P), so redesigned it
+- fleshed out second version, and it's looking good, but realized it has a flaw from UX standpoint (big area
+  that is not clickable), so going to improve there and hopefully that'll be the final version
+- also fixed menu header in options that wasn't exactly in the middle, whoops!
+13.02.2021.
+- OK, the third menu version is done, and will leave it for now; I'm using gray for clickable entries which
+  is inconsistent with options, and also having two columns doing the same thing, but it's the visually most
+  pleasing version so far
+- fixed click from canceling keyboard input clicking item in the previous menu
+- fixed printing of key names with characters SWOS can't handle; actually I didn't do anything, just
+  improved a little a function I already wrote no idea when, it's so cool when you can just cross an item
+  of the TODO list ;)
+- "fixed" assertion in draw text routine when given 255 (cursor block), turned out the assertion was wrong
+  (treated char as signed), another item crossed :)
+- fixed a bug where an entry would remained selected after it got hidden/disabled by its on-click handler
+- finally finished with adding keyboard mapping, I think I've covered all the edge cases
+- both adding and updating keys operational
+- realized I've been using MS sprintf_s function which doesn't truncate too long strings but kills them
+  completely; added a macro that will cause an error if it's ever detected in the source again, and switched
+  to snprintf, it does the right thing
+- implemented quick config, the old style of keyboard configuration
+14.02.2021.
+- fixed assigning keys from other player when adding key mapping and refactored common code so it's used by
+  setup keyboard menu and redefine keys menu
+- just realized I don't need to go through VM when using drawText routines (they're converted), woot,
+  things just got simpler
+- finished the keyboard tester, now the keyboard setup is functionally complete!
+- [mnu2h] added apostrophe digit separator for hexadecimal numbers too
+15.02.2021.
+- realized it's too easy to delete a key accidentally, so added a confirmation dialog
+- managed to sneak in some refactoring
+- started joypad infrastructure restoration
+16.02.2021.
+- it's possible to select joypads again, though separate configs for player 1 & 2 aren't implemented yet
+- designed configure joypad menu and started implementing it
+17.02.2021.
+- added whitespace removal to elision to cope with retarded joypad names like 'USB JOYPAD '
+- configure joypad menu looking mostly good, still need to add dynamic behaviour
+18.02.2021.
+- moved update of power level to on draw since it can potentially change
+- fixed a silly mistake when creating replays dir, it would report an error even if it succeeded
+- hid non-existing joypad elements and centered the remaining ones vertically
+19.02.2021.
+- configure joypad menu:
+    - movement between entries implemented
+    - max and current elements field filled
+    - elements are interactive now, current index can be incremented, decremented and typed in directly
+    - fields resized based on content and whole row horizontally centered
+    - selected entry is correct now
+    - disconnection check added
+- now need to extend select game control events menu for these new joypad elements (and create some specific)
+20.02.2021.
+- [mnu2h] fixed errors in expressions containing < and > (had to hack expression parser a bit to keep
+  supporting these operators as previous/next entry shortcuts)
+- did modifications for select game control events menu, now it can move to previous/next button or whatever
+  it's given (only implemented and tested on keyboard caller so far, joypads are next)
+21.02.2021.
+- added config type to joypad info
+- added inverted option to select game events menu (was more complicated than anticipated + is untested),
+  but only for setup keyboard menu
+22.02.2021.
+- added inverted option for configure joypad buttons menu
+- changed joypad menu controls a bit: a button will only trigger as fire if it wasn't assigned (it may have
+  been assigned as say down, and then it will be triggering both down and fire, making the joypad unfit for
+  use)
+- realized humans find indexing from 0 awkward, changed joypad elements to start from 1
+- button config for joypads _almost_ works :/ somehow the current button UI gets desynced from the variable,
+  no strength left to fix it
+23.02.2021.
+- refactored joypad config menu code a bit, separated one-time init from refreshing the menu entries from
+  data
+- fixed all the bugs in the menu, I hope :)
+- replaced "PREVIOUS" and "NEXT" text with arrows, I think it looks nicer
+- added quitting/accepting state by pressing escape/enter to select game control events menu
+- kicked out that awful red color from audio options menu
+- added entries with left/right arrow sprites to the quick clicking list
+24.02.2021.
+- fixed selecting invalid menu item when returning to joypad config menu
+- used better resizing on boxes for numbers of joypad elements, they have to have width of maximum possible
+  number up to and including max, not just max (it could be something slim, like '11')
+- fixed invalid entry order in joypad config menu
+- fixed mouse wheel scrolling behaving awfully in controls menu (the reason was invoking
+  processControlEvents() inside onDraw function, it resets the mouse wheel amount, wonder if this should be
+  handled in some other way...)
+- [mnu2h] fixed color entry for no color not being emitted when template entry is active and has non-zero
+  color
+- designed configure hat menu and fleshed it out
+25.02.2021.
+- fixed string centering, it was off by a pixel or two in some places, now it should be pixel-perfect
+- fixed prompt menu, it wasn't vertically centering the strings properly (mistake in conversion, forgot to
+  add text height to y for each line), and also improved it, distributed remainder pixels among the lines
+  when free space wasn't equally divisible
+- did positioning and navigation in configure hat menu, interactions remain to be done
+26.02.2021.
+- added a small delay before scrolling starts for entries with sped up click-scrolling (to make it easier to
+  just do a single click transition)
+- finished configure hat menu! had a different idea for creating new binding that saved me a ton of time
+  compared to the original one
+27.02.2021.
+- finished entire configure axis menu! it was a bit simpler, and had everything laid out by the configure hat
+  menu so it went faster
+28.02.2021.
+- fixed an improper layout in joypad config menu when all 4 joypad elements were present
+- implemented configure balls menu + infrastructure (it's crucial that our joypads have balls!), but no way
+  to test it, none of my sorry-ass chicken-shit joypads got any balls
+01.03.2021.
+- working on quick config menu for joypads; refactoring so it can be used by both keyboard and joypad, tried
+  hard but couldn't finish it today
+02.03.2021.
+- gah, finished the menu, trying to debug it, and I realize there are axes triggering non-stop on the Xbox
+  type joypad... that means I can't wait for the user to trigger an event from the controller; thinking how
+  to get around this, maybe checking if there are any events coming in immediately, and if so, ask the user
+  to leave the joypad idle and press a button -- this way I can eliminate those that trigger all the time,
+  but I will also need to account for dead zones on a non-configured joypad...
+- phew, overcame the problems; went with the initial idea, now the menu's finished but still debugging it,
+  there are still some minor glitches but it's not that bad
+03.03.2021.
+- fixed stuff in quick joypad configure menu: warnings, closing app clicking x, prevented assigning opposite
+  axis direction if it's marked to be ignored during the calibration, hat assignment; seems to work pretty
+  nice now
+- fixed invalid entry order in select game events menu when selecting events for a new key
+- removed key buffering when selecting them, because the behaviour was really strange: pressing many already
+  selected keys rapidly would make warning shuffle for a while even when nothing was pressed on the keyboard
+- turned out quick config can skip some keys if pressing too fast without buffering, so I compromised: buffer
+  was flushed only if there are more than 3 keys waiting, and this seems to work fine in both cases
+- refactored quick key config to use generic quick config menu; few hundred lines of code shaved!
+- only test menu remaining to finish config joypad menu!
+04.03.2021.
+- implemented joypad test! it's a quite awesome feature
+- did some refactoring here and there, improved code quality a bit
+- fixed invalid player number display in joypad quick config menu
+- disabled global keyboard shortcuts while testing keyboard (a bit annoying that alt-F1 doesn't work, but
+  it's probably better that way)
+05.03.2021.
+- added ability to change current axis to axis configure menu
+- fixed not changing interval box width when changing current interval (max. number of digits might change)
+- fixed joypad selection by button press in control options menu
+- started restoration of joypad load/save system from/to ini file
+06.03.2021.
+- it looked like nothing would be done today, but in a final furious effort saving of joypad config to ini
+  was finished (untested though!)
+07.03.2021.
+- after a little bit of fixing, joypad config ini saving seems to work fine
+- fixed some code in joypads (or broke it, time will tell)
+- implemented mechanism for handling two joypads having same GUIDs being selected at the same time, using
+  alternative configuration for one (still untested)
+- refined config loading scheme, but haven't completed it yet
+08.03.2021.
+- finished with joypad config loading, tested basic case and it seems to work fine, but needs more thorough
+  testing
+09.03.2021.
+- had to remove cleanUp() routine for joypad configuration that removes anything that physical joypad doesn't
+  have since there might be different joypads with the same GUID (e.g. connected via USB adapter)
+- fixed handling of empty/missing joypad config elements in ini file
+- discovered that atexit() order was wrong: finishRendering() would run first, and kill all SDL subsystems
+  (including joysticks); only then saveOptions() would run, causing it to pick up wrong joypad GUIDs (since
+  they are all closed and deallocated at this point SDL returns null-GUID for any of them)
+- enlarged mouse pointer area for wheel scrolling to 4x4 pixels so annoying situations when the mouse pointer
+  parks on a pixel just between entries causing mouse wheel scrolling not to work won't happen anymore
+- fixed selection of joypad by button press in control options menu
+- fixed assigned joypad buttons not triggering joypad selection; separated into two routines since we need
+  unassigned buttons to run the menus (unassigned because assigned ones will trigger their own event anyway
+  -- and it might be say a movement in which case we trigger fire wrongly)... it was a previous change, daily
+  archives ftw ;)
+10.03.2021.
+- sketched out select match controls menu
+- removed player1[2]ClearFlag -- it was only used to block player 1 controls while player 2 is setting up
+  team, we'll just go all in
+- I think I've figured out how to glue in the select match control menu inside play match menu without
+  breaking (too much) stuff
+11.03.2021.
+- play match menu infiltration seems to have been successful
+- seems I left global shortcuts turned off by default, oops
+- [mnu2h] added #assert preprocessor directive
+- [mnu2h] added @nextOrdinal/@nextOrd pseudo-constant to refer to the next entry's ordinal
+- finished basic select match controls menu looks + navigation; it doesn't look particularly attractive,
+  maybe that will be improved later
+- [mnu2h] added constants for on select mask control values
+12.03.2021.
+- fixed showing select controls menu when match is only viewed
+- [mnu2h] predeclared entry reference variables mirroring Entries enum, like headerEntry etc. so I don't need
+  to call getMenuEntry() all the time
+- [mnu2h] fixed code generator test regexes, they weren't actually working x_x
+- [mnu2h] fixed '#x' format specifier for preprocessor expressions
+- fixed invalid logic for blinking drawing entries without the background
+- testing with two entries blinking showed that SWOS blinking code wasn't satisfactory: second blinking entry
+  would make blink counter increment twice in a single frame, making it blink too fast, and also those two
+  entries were slightly out of sync which made everything even more annoying; rewrote the blinking condition
+  to use actual milliseconds, and now it's all fine and dandy
+- implementing select match controls dynamics, these menus are going slower than anticipated (and are a bit
+  boring, good thing this is the last one for now)
+13.03.2021.
+- fixed a bunch of small bugs in select match controls menu, now it works surprisingly well; still need to
+  implement control dragging via mouse, that will be difficult (but will hopefully fix edit tactics too)
+- ha, after a long battle the mouse dragging seems to work pretty good, even the trigonometry is spot on ;)
+- while select controls is in great shape, edit tactics is utterly broken :( I might have to rewrite it
+  completely
+14.03.2021.
+- fixed a bug where a new joypad configuration would be assigned only after trying to auto-select it (whoops)
+- implemented single player version of select match controls menu
+- implemented scrolling when there are many joypads
+- implemented current game events, and the game seems to work just fine ;)
+15.03.2021.
+- fixed mouse click selecting wrong entry immediately after moving to a new menu and while the pointer is
+  inside an entry which isn't selected
+- implemented keyboard config saving and loading to/from ini file
+- [ida2asm] fixed a bug in optimizer, when shifting constant memory address values nodes weren't copied
+  correctly, also optimized rotate routines a bit; fortune in misfortune: the code wasn't even been executed
+- [ida2asm] fixed possible overflow when generating 32-bit multiplication instruction
+- added opposite direction events cancelling, with new event having precedence

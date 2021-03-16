@@ -30,7 +30,6 @@ class Entry:
 
         self.textFlags = 0
 
-        self.func1 = 0
         self.color = 0
         self.invisible = 0
         self.disabled = 0
@@ -46,7 +45,7 @@ class Entry:
         self.skipRight = -1
         self.skipUp = -1
         self.skipDown = -1
-        self.controlsMask = 0
+        self.controlMask = 0
         self.onSelect = 0
         self.beforeDraw = 0
         self.onReturn = 0

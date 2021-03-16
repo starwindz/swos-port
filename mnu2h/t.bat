@@ -1,3 +1,4 @@
+@set PYTHONPYCACHEPREFIX=%~dp0..\tmp\pycache
 @python -m coverage run -m unittest discover tests
 @if %errorlevel% == 0 (
     @python -m coverage report
@@ -9,7 +10,7 @@
 :report
 @python -m coverage html
 @move .coverage ..\tmp
-@rd /S /Q ..\tmp\htmlcov
+@rd /S /Q ..\tmp\htmlcov 2>nul
 @move /Y htmlcov ..\tmp\
 
 :exit

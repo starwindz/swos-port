@@ -367,7 +367,7 @@ offset:  size:  desc.
                 goalkeepers are exception, they are updated each frame
   32       4    pointer to sprite structure of controlled player
                 (ofs12 of that sprite has to be zero)
-  36       4    seems to be pointer to the player that's receiving a pass
+  36       4    seems to be a pointer to the player that's receiving a pass
   40       2    is our player controlling the ball?
   42       2    something about turn flags (some bit number)
                 camera direction gets written here
@@ -414,21 +414,20 @@ offset:  size:  desc.
   68       1    true if ball z > 17
   69       1    copy ofs61 here
   70       2    ??? something when goalkeeper dives
-  72       2    ??? 4 bajta pointer na nekog igraca?!
-                reko bih pointer na poslednjeg igraca koji je igrao glavom
-  74       2    udaljenost od lopte
+  72       2    ??? 4 bytes pointer to a player
+                I'd say pointer to a last player hitting the ball with the head
+  74       2    distance from the ball
   76       2    ??? 5, -5 (timer)
-                ako je pozitivno smanji za jedan, ako je negativno povecaj za
-                jedan
-                ako je negativno, stavi -1 u ofs118
-                ima veze sa komentarom goalkeeper saved...
+                if positive decrease, if negative increase
+                if negative put -1 to ofs118
+                has something to do with the goalkeeper saved comment...
   78       2    ???
-  80       2    true - golman se baca udesno
-  82       2    true - golman se baca ulevo
-  84       2    255 ako je lopta van igre (ili kod golmana); nula inace
-  86       2    255 ako je lopta van igre (ili kod golmana)
-                1 ako golman vodi loptu
-                0 inace
+  80       2    true - goalkeeper diving right
+  82       2    true - goalkeeper diving left
+  84       2    255 if the ball is out of play (or at the goalkeeper); zero otherwise
+  86       2    255 if the ball is out of play (or at the goalkeeper)
+                1 if goalkeeper is controlling the ball (with feet)
+                0 otherwise
   88       2    1 ako je dodavanje zapoceto; ostaje jedan dok lopta ne dodirne
                 svog igraca (i to verovatno onog kome je pas upucen)
   90       2    true samo kada se vrsi precizno dodavanje, tj. kada je igrac
@@ -441,9 +440,10 @@ offset:  size:  desc.
                 (npr. izvodi aut)
   98       2    x koordinata lopte
  100       2    y koordinata lopte
- 102       2    brojac, incijalno 25, otkucava kad se igrac otarasi lopte
-                sutem ili dodavanjem (ali nikako drugacije), inace nula
-                ako je razlicito od nule, oduzmi jedan
+ 102       2    counter, initially 25, ticks down once the player gets rid of
+                the ball by kicking or passing (but not otherwise), else zero
+                decremented until zero
+                AI compares it to 13
  104       4    pointer na nekakav sprajt (koji jos ne znam)
                 menja se prilikom dodavanja lopte i suta
  108       2    ???
@@ -487,9 +487,17 @@ offset:  size:  desc.
  130       2    AI tajmer; inkrementuje se u svakom frejmu ako kompjuter
                 kontrolise tim; ne resetuje se nikad
  132       2    AI; tajmer, init na 4; setuje se random
- 134       2    ??? index into some table, could be 0,1,2 (could it be kick
-                strength? :))
- 136       2    ???
+ 134       2    AI; strength of ball after-touch to apply to the ball after
+                kick/pass; possible values are 0, 1, 2 and it will be used as
+                an index into a 3-element table which will decide the
+                direction; value fetched from the table gets added to the
+                current controls direction
+ 136       2    AI; ball after-touch direction & long kick; decides which table
+                will be indexed by the offset 134 value:
+                < 0:  -1, -2, -3                    ; left spin
+                != 0:  1, 2, 3                      ; right spin
+                == 0 && offset 134 != 1: 0, -999, 4 ; normal, standard or
+                                                    ; strong kick
  138       2    ??? (tajmer)
                 nula za vreme utakmice
                 possibly timer, while active ball can't be won over from the

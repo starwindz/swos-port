@@ -22,3 +22,4 @@ size_t getNumFakeFiles();
 bool setFileAsCorrupted(const char *path, bool corrupted = true);
 bool fakeFilesEqualByContent(const char *path1, const char *path2);
 const char *getFakeFileData(const char *path, size_t& size, size_t& numWrites);
+size_t getFakeFileSize(const char *path);

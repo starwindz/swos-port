@@ -1,4 +1,5 @@
 #include "menuMouse.h"
+#include "text.h"
 
 constexpr auto kSelectedColor = kSoftBlueText;
 constexpr int kPleaseWaitLimitMs = 333;
@@ -29,10 +30,10 @@ static void updateDisplayedWindowSize()
     std::tie(width, height) = getWindowSize();
 
     auto widthEntry = getMenuEntry(customWidth);
-    widthEntry->u2.number = width;
+    widthEntry->fg.number = width;
 
     auto heightEntry = getMenuEntry(customHeight);
-    heightEntry->u2.number = height;
+    heightEntry->fg.number = height;
 
     m_windowResizable = getWindowResizable();
 }
@@ -62,7 +63,7 @@ static DisplayModeList getDisplayModes(int displayIndex)
             if (!shownWarning && SDL_GetTicks() > startTicks + kPleaseWaitLimitMs) {
                 if (!kPleaseWaitText)
                     kPleaseWaitText = SwosVM::allocateString("PLEASE WAIT, ENUMERATING GRAPHICS MODES...");
-                drawMenuText(55, 80, kPleaseWaitText, kYellowText);
+                drawMenuText(55, 80, kPleaseWaitText, -1, kYellowText);
                 updateScreen();
                 shownWarning = true;
             }
@@ -112,9 +113,9 @@ static void fillResolutionListUi()
         auto height = m_resolutions[i].second;
         snprintf(entry->string(), 30, "%d X %d", width, height);
 
-        entry->u1.entryColor = kLightBlue;
+        entry->bg.entryColor = kLightBlue;
         if (isInFullScreenMode() && getFullScreenDimensions() == std::make_pair(width, height))
-            entry->u1.entryColor = kPurple;
+            entry->bg.entryColor = kPurple;
     }
 
     for (int i = resolutionField0; i < resolutionField0 + kNumResolutionFields; i++)
@@ -180,10 +181,11 @@ static void changeResolutionSelected()
             return;
     }
 
-    char buffer[64];
+    constexpr int kBufferSize = 64;
+    auto buffer = SwosVM::allocateMemory(kBufferSize).asCharPtr();
 
     if (setFullScreenResolution(m_resolutions[i].first, m_resolutions[i].second)) {
-        strcpy_s(buffer, entry->string());
+        strncpy_s(buffer, entry->string(), kBufferSize);
         if (auto space = strchr(buffer, ' ')) {
             *space = 'x';
 
@@ -196,7 +198,7 @@ static void changeResolutionSelected()
         logInfo("Successfully switched to %s", buffer);
     } else {
         logWarn("Failed to switch to %s", entry->string());
-        snprintf(buffer, sizeof(buffer), "FAILED TO SWITCH TO %s", entry->string());
+        snprintf(buffer, kBufferSize, "FAILED TO SWITCH TO %s", entry->string());
         showError(buffer);
     }
 }
@@ -210,7 +212,7 @@ static void inputWindowWidthOrHeight(Dimension dimension)
         auto numberEntered = inputNumber(entry, 5, 0, 99999);
 
         if (numberEntered) {
-            int widthOrHeight = entry->u2.number;
+            int widthOrHeight = entry->fg.number;
 
             int windowWidth, windowHeight;
             std::tie(windowWidth, windowHeight) = getWindowSize();

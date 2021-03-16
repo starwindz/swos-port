@@ -1,6 +1,6 @@
 #include "EditTacticsMenuTest.h"
 #include "unitTest.h"
-#include "menu.h"
+#include "menus.h"
 
 enum MenuEntries {
     kHeader, kUserA, kUserB, kUserC, kUserD, kUserE, kUserF, kExit, kNumItems,
@@ -38,7 +38,7 @@ auto EditTacticsMenuTest::getCases() -> CaseList
 void EditTacticsMenuTest::setupShowTacticsMenuTest()
 {
     // simple test, but here to cover crash at menu start
-    chosenTactics = kTacticsData[m_currentDataIndex].first;
+    swos.chosenTactics = kTacticsData[m_currentDataIndex].first;
     SAFE_INVOKE(EditTacticsMenu);
 }
 
@@ -49,6 +49,6 @@ void EditTacticsMenuTest::showTacticsMenu()
     char expectedMenuName[32];
     snprintf(expectedMenuName, sizeof(expectedMenuName), "EDIT TACTICS (%s)", tacticName);
 
-    auto actualMenuName = getMenuEntry(1)->u2.string;
+    auto actualMenuName = getMenuEntry(1)->fg.string.asCharPtr();
     assertEqual(actualMenuName, expectedMenuName);
 }

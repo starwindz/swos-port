@@ -131,7 +131,7 @@
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="..\..\src\menus\options.mnu">
+    <CustomBuild Include="..\..\src\menus\mnu\options.mnu">
       <FileType>Document</FileType>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compiling %(Filename) menu...</Message>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</LinkObjects>
@@ -141,8 +141,8 @@
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">python $(ProjectDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename)%(Extension).h</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename)%(Extension).h</Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)..\..\mnu2h\CodeGenerator.py;$(ProjectDir)..\..\mnu2h\Constants.py;$(ProjectDir)..\..\mnu2h\Entry.py;$(ProjectDir)..\..\mnu2h\Menu.py;$(ProjectDir)..\..\mnu2h\mnu2h.py;$(ProjectDir)..\..\mnu2h\Parser.py;$(ProjectDir)..\..\mnu2h\Preprocessor.py;$(ProjectDir)..\..\mnu2h\PreprocExpression.py;$(ProjectDir)..\..\mnu2h\StringTable.py;$(ProjectDir)..\..\mnu2h\Token.py;$(ProjectDir)..\..\mnu2h\Tokenizer.py;$(ProjectDir)..\..\mnu2h\Util.py;$(ProjectDir)..\..\mnu2h\Variable.py;$(ProjectDir)..\..\mnu2h\VariableStorage.py;$(ProjectDir)..\..\src\menus\common.mh</AdditionalInputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)..\..\mnu2h\CodeGenerator.py;$(ProjectDir)..\..\mnu2h\Constants.py;$(ProjectDir)..\..\mnu2h\Entry.py;$(ProjectDir)..\..\mnu2h\Menu.py;$(ProjectDir)..\..\mnu2h\mnu2h.py;$(ProjectDir)..\..\mnu2h\Parser.py;$(ProjectDir)..\..\mnu2h\Preprocessor.py;$(ProjectDir)..\..\mnu2h\PreprocExpression.py;$(ProjectDir)..\..\mnu2h\StringTable.py;$(ProjectDir)..\..\mnu2h\Token.py;$(ProjectDir)..\..\mnu2h\Tokenizer.py;$(ProjectDir)..\..\mnu2h\Util.py;$(ProjectDir)..\..\mnu2h\Variable.py;$(ProjectDir)..\..\mnu2h\VariableStorage.py;$(ProjectDir)..\..\src\menus\common.mh</AdditionalInputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)..\..\mnu2h\CodeGenerator.py;$(ProjectDir)..\..\mnu2h\Constants.py;$(ProjectDir)..\..\mnu2h\Entry.py;$(ProjectDir)..\..\mnu2h\Menu.py;$(ProjectDir)..\..\mnu2h\mnu2h.py;$(ProjectDir)..\..\mnu2h\Parser.py;$(ProjectDir)..\..\mnu2h\Preprocessor.py;$(ProjectDir)..\..\mnu2h\PreprocExpression.py;$(ProjectDir)..\..\mnu2h\StringTable.py;$(ProjectDir)..\..\mnu2h\Token.py;$(ProjectDir)..\..\mnu2h\Tokenizer.py;$(ProjectDir)..\..\mnu2h\Util.py;$(ProjectDir)..\..\mnu2h\Variable.py;$(ProjectDir)..\..\mnu2h\VariableStorage.py;$(ProjectDir)..\..\src\menus\mnu\common.mh</AdditionalInputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)..\..\mnu2h\CodeGenerator.py;$(ProjectDir)..\..\mnu2h\Constants.py;$(ProjectDir)..\..\mnu2h\Entry.py;$(ProjectDir)..\..\mnu2h\Menu.py;$(ProjectDir)..\..\mnu2h\mnu2h.py;$(ProjectDir)..\..\mnu2h\Parser.py;$(ProjectDir)..\..\mnu2h\Preprocessor.py;$(ProjectDir)..\..\mnu2h\PreprocExpression.py;$(ProjectDir)..\..\mnu2h\StringTable.py;$(ProjectDir)..\..\mnu2h\Token.py;$(ProjectDir)..\..\mnu2h\Tokenizer.py;$(ProjectDir)..\..\mnu2h\Util.py;$(ProjectDir)..\..\mnu2h\Variable.py;$(ProjectDir)..\..\mnu2h\VariableStorage.py;$(ProjectDir)..\..\src\menus\mnu\common.mh</AdditionalInputs>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
@@ -154,9 +154,9 @@
     <ClCompile Include="..\..\src\audio\sfx.cpp" />
     <ClCompile Include="..\..\src\controls\controlOptionsMenu.cpp" />
     <ClCompile Include="..\..\src\controls\controls.cpp" />
-    <ClCompile Include="..\..\src\controls\joypadConfigMenu.cpp" />
-    <ClCompile Include="..\..\src\controls\joypads.cpp" />
-    <ClCompile Include="..\..\src\controls\scanCodes.cpp" />
+    <ClCompile Include="..\..\src\controls\joypads\joypadConfigMenu.cpp" />
+    <ClCompile Include="..\..\src\controls\joypads\joypads.cpp" />
+    <ClCompile Include="..\..\src\controls\keyboard\scanCodes.cpp" />
     <ClCompile Include="..\..\src\crash.cpp" />
     <ClCompile Include="..\..\src\debug\dump.cpp" />
     <ClCompile Include="..\..\src\files\file.cpp" />
@@ -165,7 +165,7 @@
     <ClCompile Include="..\..\src\init.cpp" />
     <ClCompile Include="..\..\src\log.cpp" />
     <ClCompile Include="..\..\src\main.cpp" />
-    <ClCompile Include="..\..\src\menus\menu.cpp" />
+    <ClCompile Include="..\..\src\menus\menus.cpp" />
     <ClCompile Include="..\..\src\menus\menuMouse.cpp" />
     <ClCompile Include="..\..\src\options.cpp" />
     <ClCompile Include="..\..\src\pitch.cpp" />
@@ -196,16 +196,16 @@
     <ClInclude Include="..\..\src\audio\wavFormat.h" />
     <ClInclude Include="..\..\src\controls\controlOptionsMenu.h" />
     <ClInclude Include="..\..\src\controls\controls.h" />
-    <ClInclude Include="..\..\src\controls\joypadConfigMenu.h" />
-    <ClInclude Include="..\..\src\controls\joypads.h" />
-    <ClInclude Include="..\..\src\controls\scanCodes.h" />
+    <ClInclude Include="..\..\src\controls\joypads\joypadConfigMenu.h" />
+    <ClInclude Include="..\..\src\controls\joypads\joypads.h" />
+    <ClInclude Include="..\..\src\controls\keyboard\scanCodes.h" />
     <ClInclude Include="..\..\src\crash.h" />
     <ClInclude Include="..\..\src\debug\dump.h" />
     <ClInclude Include="..\..\src\files\file.h" />
     <ClInclude Include="..\..\src\files\selectFilesMenu.h" />
     <ClInclude Include="..\..\src\game.h" />
     <ClInclude Include="..\..\src\log.h" />
-    <ClInclude Include="..\..\src\menus\menu.h" />
+    <ClInclude Include="..\..\src\menus\menus.h" />
     <ClInclude Include="..\..\src\menus\menuCodes.h" />
     <ClInclude Include="..\..\src\menus\menuMouse.h" />
     <ClInclude Include="..\..\src\options.h" />
@@ -223,7 +223,7 @@
     <Natvis Include="Types.natvis" />
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="..\..\src\menus\videoOptions.mnu">
+    <CustomBuild Include="..\..\src\menus\mnu\videoOptions.mnu">
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">python $(ProjectDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">python $(ProjectDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
@@ -231,14 +231,14 @@
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compiling %(Filename) menu...</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename)%(Extension).h</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename)%(Extension).h</Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)..\..\mnu2h\CodeGenerator.py;$(ProjectDir)..\..\mnu2h\Constants.py;$(ProjectDir)..\..\mnu2h\Entry.py;$(ProjectDir)..\..\mnu2h\Menu.py;$(ProjectDir)..\..\mnu2h\mnu2h.py;$(ProjectDir)..\..\mnu2h\Parser.py;$(ProjectDir)..\..\mnu2h\Preprocessor.py;$(ProjectDir)..\..\mnu2h\PreprocExpression.py;$(ProjectDir)..\..\mnu2h\StringTable.py;$(ProjectDir)..\..\mnu2h\Token.py;$(ProjectDir)..\..\mnu2h\Tokenizer.py;$(ProjectDir)..\..\mnu2h\Util.py;$(ProjectDir)..\..\mnu2h\Variable.py;$(ProjectDir)..\..\mnu2h\VariableStorage.py;$(ProjectDir)..\..\src\menus\common.mh</AdditionalInputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)..\..\mnu2h\CodeGenerator.py;$(ProjectDir)..\..\mnu2h\Constants.py;$(ProjectDir)..\..\mnu2h\Entry.py;$(ProjectDir)..\..\mnu2h\Menu.py;$(ProjectDir)..\..\mnu2h\mnu2h.py;$(ProjectDir)..\..\mnu2h\Parser.py;$(ProjectDir)..\..\mnu2h\Preprocessor.py;$(ProjectDir)..\..\mnu2h\PreprocExpression.py;$(ProjectDir)..\..\mnu2h\StringTable.py;$(ProjectDir)..\..\mnu2h\Token.py;$(ProjectDir)..\..\mnu2h\Tokenizer.py;$(ProjectDir)..\..\mnu2h\Util.py;$(ProjectDir)..\..\mnu2h\Variable.py;$(ProjectDir)..\..\mnu2h\VariableStorage.py;$(ProjectDir)..\..\src\menus\mnu\common.mh</AdditionalInputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</LinkObjects>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)..\..\mnu2h\CodeGenerator.py;$(ProjectDir)..\..\mnu2h\Constants.py;$(ProjectDir)..\..\mnu2h\Entry.py;$(ProjectDir)..\..\mnu2h\Menu.py;$(ProjectDir)..\..\mnu2h\mnu2h.py;$(ProjectDir)..\..\mnu2h\Parser.py;$(ProjectDir)..\..\mnu2h\Preprocessor.py;$(ProjectDir)..\..\mnu2h\PreprocExpression.py;$(ProjectDir)..\..\mnu2h\StringTable.py;$(ProjectDir)..\..\mnu2h\Token.py;$(ProjectDir)..\..\mnu2h\Tokenizer.py;$(ProjectDir)..\..\mnu2h\Util.py;$(ProjectDir)..\..\mnu2h\Variable.py;$(ProjectDir)..\..\mnu2h\VariableStorage.py;$(ProjectDir)..\..\src\menus\common.mh</AdditionalInputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)..\..\mnu2h\CodeGenerator.py;$(ProjectDir)..\..\mnu2h\Constants.py;$(ProjectDir)..\..\mnu2h\Entry.py;$(ProjectDir)..\..\mnu2h\Menu.py;$(ProjectDir)..\..\mnu2h\mnu2h.py;$(ProjectDir)..\..\mnu2h\Parser.py;$(ProjectDir)..\..\mnu2h\Preprocessor.py;$(ProjectDir)..\..\mnu2h\PreprocExpression.py;$(ProjectDir)..\..\mnu2h\StringTable.py;$(ProjectDir)..\..\mnu2h\Token.py;$(ProjectDir)..\..\mnu2h\Tokenizer.py;$(ProjectDir)..\..\mnu2h\Util.py;$(ProjectDir)..\..\mnu2h\Variable.py;$(ProjectDir)..\..\mnu2h\VariableStorage.py;$(ProjectDir)..\..\src\menus\mnu\common.mh</AdditionalInputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkObjects>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="..\..\src\menus\audioOptions.mnu">
+    <CustomBuild Include="..\..\src\menus\mnu\audioOptions.mnu">
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">python $(ProjectDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">python $(ProjectDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
@@ -246,40 +246,40 @@
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compiling %(Filename) menu...</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename)%(Extension).h</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename)%(Extension).h</Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)..\..\mnu2h\CodeGenerator.py;$(ProjectDir)..\..\mnu2h\Constants.py;$(ProjectDir)..\..\mnu2h\Entry.py;$(ProjectDir)..\..\mnu2h\Menu.py;$(ProjectDir)..\..\mnu2h\mnu2h.py;$(ProjectDir)..\..\mnu2h\Parser.py;$(ProjectDir)..\..\mnu2h\Preprocessor.py;$(ProjectDir)..\..\mnu2h\PreprocExpression.py;$(ProjectDir)..\..\mnu2h\StringTable.py;$(ProjectDir)..\..\mnu2h\Token.py;$(ProjectDir)..\..\mnu2h\Tokenizer.py;$(ProjectDir)..\..\mnu2h\Util.py;$(ProjectDir)..\..\mnu2h\Variable.py;$(ProjectDir)..\..\mnu2h\VariableStorage.py;$(ProjectDir)..\..\src\menus\common.mh</AdditionalInputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)..\..\mnu2h\CodeGenerator.py;$(ProjectDir)..\..\mnu2h\Constants.py;$(ProjectDir)..\..\mnu2h\Entry.py;$(ProjectDir)..\..\mnu2h\Menu.py;$(ProjectDir)..\..\mnu2h\mnu2h.py;$(ProjectDir)..\..\mnu2h\Parser.py;$(ProjectDir)..\..\mnu2h\Preprocessor.py;$(ProjectDir)..\..\mnu2h\PreprocExpression.py;$(ProjectDir)..\..\mnu2h\StringTable.py;$(ProjectDir)..\..\mnu2h\Token.py;$(ProjectDir)..\..\mnu2h\Tokenizer.py;$(ProjectDir)..\..\mnu2h\Util.py;$(ProjectDir)..\..\mnu2h\Variable.py;$(ProjectDir)..\..\mnu2h\VariableStorage.py;$(ProjectDir)..\..\src\menus\mnu\common.mh</AdditionalInputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</LinkObjects>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)..\..\mnu2h\CodeGenerator.py;$(ProjectDir)..\..\mnu2h\Constants.py;$(ProjectDir)..\..\mnu2h\Entry.py;$(ProjectDir)..\..\mnu2h\Menu.py;$(ProjectDir)..\..\mnu2h\mnu2h.py;$(ProjectDir)..\..\mnu2h\Parser.py;$(ProjectDir)..\..\mnu2h\Preprocessor.py;$(ProjectDir)..\..\mnu2h\PreprocExpression.py;$(ProjectDir)..\..\mnu2h\StringTable.py;$(ProjectDir)..\..\mnu2h\Token.py;$(ProjectDir)..\..\mnu2h\Tokenizer.py;$(ProjectDir)..\..\mnu2h\Util.py;$(ProjectDir)..\..\mnu2h\Variable.py;$(ProjectDir)..\..\mnu2h\VariableStorage.py;$(ProjectDir)..\..\src\menus\common.mh</AdditionalInputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)..\..\mnu2h\CodeGenerator.py;$(ProjectDir)..\..\mnu2h\Constants.py;$(ProjectDir)..\..\mnu2h\Entry.py;$(ProjectDir)..\..\mnu2h\Menu.py;$(ProjectDir)..\..\mnu2h\mnu2h.py;$(ProjectDir)..\..\mnu2h\Parser.py;$(ProjectDir)..\..\mnu2h\Preprocessor.py;$(ProjectDir)..\..\mnu2h\PreprocExpression.py;$(ProjectDir)..\..\mnu2h\StringTable.py;$(ProjectDir)..\..\mnu2h\Token.py;$(ProjectDir)..\..\mnu2h\Tokenizer.py;$(ProjectDir)..\..\mnu2h\Util.py;$(ProjectDir)..\..\mnu2h\Variable.py;$(ProjectDir)..\..\mnu2h\VariableStorage.py;$(ProjectDir)..\..\src\menus\mnu\common.mh</AdditionalInputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkObjects>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="..\..\src\menus\controlOptions.mnu">
+    <CustomBuild Include="..\..\src\menus\mnu\controlOptions.mnu">
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">python $(ProjectDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compiling %(Filename) menu...</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename)%(Extension).h</Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)..\..\mnu2h\CodeGenerator.py;$(ProjectDir)..\..\mnu2h\Constants.py;$(ProjectDir)..\..\mnu2h\Entry.py;$(ProjectDir)..\..\mnu2h\Menu.py;$(ProjectDir)..\..\mnu2h\mnu2h.py;$(ProjectDir)..\..\mnu2h\Parser.py;$(ProjectDir)..\..\mnu2h\Preprocessor.py;$(ProjectDir)..\..\mnu2h\PreprocExpression.py;$(ProjectDir)..\..\mnu2h\StringTable.py;$(ProjectDir)..\..\mnu2h\Token.py;$(ProjectDir)..\..\mnu2h\Tokenizer.py;$(ProjectDir)..\..\mnu2h\Util.py;$(ProjectDir)..\..\mnu2h\Variable.py;$(ProjectDir)..\..\mnu2h\VariableStorage.py;$(ProjectDir)..\..\src\menus\common.mh</AdditionalInputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)..\..\mnu2h\CodeGenerator.py;$(ProjectDir)..\..\mnu2h\Constants.py;$(ProjectDir)..\..\mnu2h\Entry.py;$(ProjectDir)..\..\mnu2h\Menu.py;$(ProjectDir)..\..\mnu2h\mnu2h.py;$(ProjectDir)..\..\mnu2h\Parser.py;$(ProjectDir)..\..\mnu2h\Preprocessor.py;$(ProjectDir)..\..\mnu2h\PreprocExpression.py;$(ProjectDir)..\..\mnu2h\StringTable.py;$(ProjectDir)..\..\mnu2h\Token.py;$(ProjectDir)..\..\mnu2h\Tokenizer.py;$(ProjectDir)..\..\mnu2h\Util.py;$(ProjectDir)..\..\mnu2h\Variable.py;$(ProjectDir)..\..\mnu2h\VariableStorage.py;$(ProjectDir)..\..\src\menus\mnu\common.mh</AdditionalInputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</LinkObjects>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)..\..\mnu2h\CodeGenerator.py;$(ProjectDir)..\..\mnu2h\Constants.py;$(ProjectDir)..\..\mnu2h\Entry.py;$(ProjectDir)..\..\mnu2h\Menu.py;$(ProjectDir)..\..\mnu2h\mnu2h.py;$(ProjectDir)..\..\mnu2h\Parser.py;$(ProjectDir)..\..\mnu2h\Preprocessor.py;$(ProjectDir)..\..\mnu2h\PreprocExpression.py;$(ProjectDir)..\..\mnu2h\StringTable.py;$(ProjectDir)..\..\mnu2h\Token.py;$(ProjectDir)..\..\mnu2h\Tokenizer.py;$(ProjectDir)..\..\mnu2h\Util.py;$(ProjectDir)..\..\mnu2h\Variable.py;$(ProjectDir)..\..\mnu2h\VariableStorage.py;$(ProjectDir)..\..\src\menus\common.mh</AdditionalInputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)..\..\mnu2h\CodeGenerator.py;$(ProjectDir)..\..\mnu2h\Constants.py;$(ProjectDir)..\..\mnu2h\Entry.py;$(ProjectDir)..\..\mnu2h\Menu.py;$(ProjectDir)..\..\mnu2h\mnu2h.py;$(ProjectDir)..\..\mnu2h\Parser.py;$(ProjectDir)..\..\mnu2h\Preprocessor.py;$(ProjectDir)..\..\mnu2h\PreprocExpression.py;$(ProjectDir)..\..\mnu2h\StringTable.py;$(ProjectDir)..\..\mnu2h\Token.py;$(ProjectDir)..\..\mnu2h\Tokenizer.py;$(ProjectDir)..\..\mnu2h\Util.py;$(ProjectDir)..\..\mnu2h\Variable.py;$(ProjectDir)..\..\mnu2h\VariableStorage.py;$(ProjectDir)..\..\src\menus\mnu\common.mh</AdditionalInputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkObjects>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">python $(ProjectDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compiling %(Filename) menu...</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename)%(Extension).h</Outputs>
     </CustomBuild>
-    <CustomBuild Include="..\..\src\menus\joypadConfig.mnu">
+    <CustomBuild Include="..\..\src\menus\mnu\joypadConfig.mnu">
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">python $(ProjectDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compiling %(Filename) menu...</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename)%(Extension).h</Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)..\..\mnu2h\CodeGenerator.py;$(ProjectDir)..\..\mnu2h\Constants.py;$(ProjectDir)..\..\mnu2h\Entry.py;$(ProjectDir)..\..\mnu2h\Menu.py;$(ProjectDir)..\..\mnu2h\mnu2h.py;$(ProjectDir)..\..\mnu2h\Parser.py;$(ProjectDir)..\..\mnu2h\Preprocessor.py;$(ProjectDir)..\..\mnu2h\PreprocExpression.py;$(ProjectDir)..\..\mnu2h\StringTable.py;$(ProjectDir)..\..\mnu2h\Token.py;$(ProjectDir)..\..\mnu2h\Tokenizer.py;$(ProjectDir)..\..\mnu2h\Util.py;$(ProjectDir)..\..\mnu2h\Variable.py;$(ProjectDir)..\..\mnu2h\VariableStorage.py;$(ProjectDir)..\..\src\menus\common.mh</AdditionalInputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)..\..\mnu2h\CodeGenerator.py;$(ProjectDir)..\..\mnu2h\Constants.py;$(ProjectDir)..\..\mnu2h\Entry.py;$(ProjectDir)..\..\mnu2h\Menu.py;$(ProjectDir)..\..\mnu2h\mnu2h.py;$(ProjectDir)..\..\mnu2h\Parser.py;$(ProjectDir)..\..\mnu2h\Preprocessor.py;$(ProjectDir)..\..\mnu2h\PreprocExpression.py;$(ProjectDir)..\..\mnu2h\StringTable.py;$(ProjectDir)..\..\mnu2h\Token.py;$(ProjectDir)..\..\mnu2h\Tokenizer.py;$(ProjectDir)..\..\mnu2h\Util.py;$(ProjectDir)..\..\mnu2h\Variable.py;$(ProjectDir)..\..\mnu2h\VariableStorage.py;$(ProjectDir)..\..\src\menus\mnu\common.mh</AdditionalInputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</LinkObjects>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">python $(ProjectDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compiling %(Filename) menu...</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename)%(Extension).h</Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)..\..\mnu2h\CodeGenerator.py;$(ProjectDir)..\..\mnu2h\Constants.py;$(ProjectDir)..\..\mnu2h\Entry.py;$(ProjectDir)..\..\mnu2h\Menu.py;$(ProjectDir)..\..\mnu2h\mnu2h.py;$(ProjectDir)..\..\mnu2h\Parser.py;$(ProjectDir)..\..\mnu2h\Preprocessor.py;$(ProjectDir)..\..\mnu2h\PreprocExpression.py;$(ProjectDir)..\..\mnu2h\StringTable.py;$(ProjectDir)..\..\mnu2h\Token.py;$(ProjectDir)..\..\mnu2h\Tokenizer.py;$(ProjectDir)..\..\mnu2h\Util.py;$(ProjectDir)..\..\mnu2h\Variable.py;$(ProjectDir)..\..\mnu2h\VariableStorage.py;$(ProjectDir)..\..\src\menus\common.mh</AdditionalInputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)..\..\mnu2h\CodeGenerator.py;$(ProjectDir)..\..\mnu2h\Constants.py;$(ProjectDir)..\..\mnu2h\Entry.py;$(ProjectDir)..\..\mnu2h\Menu.py;$(ProjectDir)..\..\mnu2h\mnu2h.py;$(ProjectDir)..\..\mnu2h\Parser.py;$(ProjectDir)..\..\mnu2h\Preprocessor.py;$(ProjectDir)..\..\mnu2h\PreprocExpression.py;$(ProjectDir)..\..\mnu2h\StringTable.py;$(ProjectDir)..\..\mnu2h\Token.py;$(ProjectDir)..\..\mnu2h\Tokenizer.py;$(ProjectDir)..\..\mnu2h\Util.py;$(ProjectDir)..\..\mnu2h\Variable.py;$(ProjectDir)..\..\mnu2h\VariableStorage.py;$(ProjectDir)..\..\src\menus\mnu\common.mh</AdditionalInputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkObjects>
     </CustomBuild>
-    <CustomBuild Include="..\..\src\menus\main.mnu">
+    <CustomBuild Include="..\..\src\menus\mnu\main.mnu">
       <FileType>Document</FileType>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compiling %(Filename) menu...</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compiling %(Filename) menu...</Message>
@@ -312,21 +312,21 @@
     <None Include="..\..\mnu2h\Util.py" />
     <None Include="..\..\mnu2h\Variable.py" />
     <None Include="..\..\mnu2h\VariableStorage.py" />
-    <None Include="..\..\src\menus\common.mh" />
-    <CustomBuild Include="..\..\src\menus\replayExit.mnu">
+    <None Include="..\..\src\menus\mnu\common.mh" />
+    <CustomBuild Include="..\..\src\menus\mnu\replayExit.mnu">
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">python $(ProjectDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compiling %(Filename) menu...</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename)%(Extension).h</Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)..\..\mnu2h\CodeGenerator.py;$(ProjectDir)..\..\mnu2h\Constants.py;$(ProjectDir)..\..\mnu2h\Entry.py;$(ProjectDir)..\..\mnu2h\Menu.py;$(ProjectDir)..\..\mnu2h\mnu2h.py;$(ProjectDir)..\..\mnu2h\Parser.py;$(ProjectDir)..\..\mnu2h\Preprocessor.py;$(ProjectDir)..\..\mnu2h\PreprocExpression.py;$(ProjectDir)..\..\mnu2h\StringTable.py;$(ProjectDir)..\..\mnu2h\Token.py;$(ProjectDir)..\..\mnu2h\Tokenizer.py;$(ProjectDir)..\..\mnu2h\Util.py;$(ProjectDir)..\..\mnu2h\Variable.py;$(ProjectDir)..\..\mnu2h\VariableStorage.py;$(ProjectDir)..\..\src\menus\common.mh</AdditionalInputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)..\..\mnu2h\CodeGenerator.py;$(ProjectDir)..\..\mnu2h\Constants.py;$(ProjectDir)..\..\mnu2h\Entry.py;$(ProjectDir)..\..\mnu2h\Menu.py;$(ProjectDir)..\..\mnu2h\mnu2h.py;$(ProjectDir)..\..\mnu2h\Parser.py;$(ProjectDir)..\..\mnu2h\Preprocessor.py;$(ProjectDir)..\..\mnu2h\PreprocExpression.py;$(ProjectDir)..\..\mnu2h\StringTable.py;$(ProjectDir)..\..\mnu2h\Token.py;$(ProjectDir)..\..\mnu2h\Tokenizer.py;$(ProjectDir)..\..\mnu2h\Util.py;$(ProjectDir)..\..\mnu2h\Variable.py;$(ProjectDir)..\..\mnu2h\VariableStorage.py;$(ProjectDir)..\..\src\menus\mnu\common.mh</AdditionalInputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</LinkObjects>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">python $(ProjectDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compiling %(Filename) menu...</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename)%(Extension).h</Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)..\..\mnu2h\CodeGenerator.py;$(ProjectDir)..\..\mnu2h\Constants.py;$(ProjectDir)..\..\mnu2h\Entry.py;$(ProjectDir)..\..\mnu2h\Menu.py;$(ProjectDir)..\..\mnu2h\mnu2h.py;$(ProjectDir)..\..\mnu2h\Parser.py;$(ProjectDir)..\..\mnu2h\Preprocessor.py;$(ProjectDir)..\..\mnu2h\PreprocExpression.py;$(ProjectDir)..\..\mnu2h\StringTable.py;$(ProjectDir)..\..\mnu2h\Token.py;$(ProjectDir)..\..\mnu2h\Tokenizer.py;$(ProjectDir)..\..\mnu2h\Util.py;$(ProjectDir)..\..\mnu2h\Variable.py;$(ProjectDir)..\..\mnu2h\VariableStorage.py;$(ProjectDir)..\..\src\menus\common.mh</AdditionalInputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)..\..\mnu2h\CodeGenerator.py;$(ProjectDir)..\..\mnu2h\Constants.py;$(ProjectDir)..\..\mnu2h\Entry.py;$(ProjectDir)..\..\mnu2h\Menu.py;$(ProjectDir)..\..\mnu2h\mnu2h.py;$(ProjectDir)..\..\mnu2h\Parser.py;$(ProjectDir)..\..\mnu2h\Preprocessor.py;$(ProjectDir)..\..\mnu2h\PreprocExpression.py;$(ProjectDir)..\..\mnu2h\StringTable.py;$(ProjectDir)..\..\mnu2h\Token.py;$(ProjectDir)..\..\mnu2h\Tokenizer.py;$(ProjectDir)..\..\mnu2h\Util.py;$(ProjectDir)..\..\mnu2h\Variable.py;$(ProjectDir)..\..\mnu2h\VariableStorage.py;$(ProjectDir)..\..\src\menus\mnu\common.mh</AdditionalInputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkObjects>
     </CustomBuild>
-    <CustomBuild Include="..\..\src\menus\quit.mnu">
+    <CustomBuild Include="..\..\src\menus\mnu\quit.mnu">
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">python $(ProjectDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">python $(ProjectDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
@@ -334,12 +334,12 @@
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compiling %(Filename) menu...</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename)%(Extension).h</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename)%(Extension).h</Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)..\..\mnu2h\CodeGenerator.py;$(ProjectDir)..\..\mnu2h\Constants.py;$(ProjectDir)..\..\mnu2h\Entry.py;$(ProjectDir)..\..\mnu2h\Menu.py;$(ProjectDir)..\..\mnu2h\mnu2h.py;$(ProjectDir)..\..\mnu2h\Parser.py;$(ProjectDir)..\..\mnu2h\Preprocessor.py;$(ProjectDir)..\..\mnu2h\PreprocExpression.py;$(ProjectDir)..\..\mnu2h\StringTable.py;$(ProjectDir)..\..\mnu2h\Token.py;$(ProjectDir)..\..\mnu2h\Tokenizer.py;$(ProjectDir)..\..\mnu2h\Util.py;$(ProjectDir)..\..\mnu2h\Variable.py;$(ProjectDir)..\..\mnu2h\VariableStorage.py;$(ProjectDir)..\..\src\menus\common.mh</AdditionalInputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)..\..\mnu2h\CodeGenerator.py;$(ProjectDir)..\..\mnu2h\Constants.py;$(ProjectDir)..\..\mnu2h\Entry.py;$(ProjectDir)..\..\mnu2h\Menu.py;$(ProjectDir)..\..\mnu2h\mnu2h.py;$(ProjectDir)..\..\mnu2h\Parser.py;$(ProjectDir)..\..\mnu2h\Preprocessor.py;$(ProjectDir)..\..\mnu2h\PreprocExpression.py;$(ProjectDir)..\..\mnu2h\StringTable.py;$(ProjectDir)..\..\mnu2h\Token.py;$(ProjectDir)..\..\mnu2h\Tokenizer.py;$(ProjectDir)..\..\mnu2h\Util.py;$(ProjectDir)..\..\mnu2h\Variable.py;$(ProjectDir)..\..\mnu2h\VariableStorage.py;$(ProjectDir)..\..\src\menus\mnu\common.mh</AdditionalInputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</LinkObjects>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)..\..\mnu2h\CodeGenerator.py;$(ProjectDir)..\..\mnu2h\Constants.py;$(ProjectDir)..\..\mnu2h\Entry.py;$(ProjectDir)..\..\mnu2h\Menu.py;$(ProjectDir)..\..\mnu2h\mnu2h.py;$(ProjectDir)..\..\mnu2h\Parser.py;$(ProjectDir)..\..\mnu2h\Preprocessor.py;$(ProjectDir)..\..\mnu2h\PreprocExpression.py;$(ProjectDir)..\..\mnu2h\StringTable.py;$(ProjectDir)..\..\mnu2h\Token.py;$(ProjectDir)..\..\mnu2h\Tokenizer.py;$(ProjectDir)..\..\mnu2h\Util.py;$(ProjectDir)..\..\mnu2h\Variable.py;$(ProjectDir)..\..\mnu2h\VariableStorage.py;$(ProjectDir)..\..\src\menus\common.mh</AdditionalInputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)..\..\mnu2h\CodeGenerator.py;$(ProjectDir)..\..\mnu2h\Constants.py;$(ProjectDir)..\..\mnu2h\Entry.py;$(ProjectDir)..\..\mnu2h\Menu.py;$(ProjectDir)..\..\mnu2h\mnu2h.py;$(ProjectDir)..\..\mnu2h\Parser.py;$(ProjectDir)..\..\mnu2h\Preprocessor.py;$(ProjectDir)..\..\mnu2h\PreprocExpression.py;$(ProjectDir)..\..\mnu2h\StringTable.py;$(ProjectDir)..\..\mnu2h\Token.py;$(ProjectDir)..\..\mnu2h\Tokenizer.py;$(ProjectDir)..\..\mnu2h\Util.py;$(ProjectDir)..\..\mnu2h\Variable.py;$(ProjectDir)..\..\mnu2h\VariableStorage.py;$(ProjectDir)..\..\src\menus\mnu\common.mh</AdditionalInputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkObjects>
     </CustomBuild>
-    <CustomBuild Include="..\..\src\menus\selectFiles.mnu">
+    <CustomBuild Include="..\..\src\menus\mnu\selectFiles.mnu">
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">python $(ProjectDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">python $(ProjectDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
@@ -347,12 +347,12 @@
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compiling %(Filename) menu...</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename)%(Extension).h</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename)%(Extension).h</Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)..\..\mnu2h\CodeGenerator.py;$(ProjectDir)..\..\mnu2h\Constants.py;$(ProjectDir)..\..\mnu2h\Entry.py;$(ProjectDir)..\..\mnu2h\Menu.py;$(ProjectDir)..\..\mnu2h\mnu2h.py;$(ProjectDir)..\..\mnu2h\Parser.py;$(ProjectDir)..\..\mnu2h\Preprocessor.py;$(ProjectDir)..\..\mnu2h\PreprocExpression.py;$(ProjectDir)..\..\mnu2h\StringTable.py;$(ProjectDir)..\..\mnu2h\Token.py;$(ProjectDir)..\..\mnu2h\Tokenizer.py;$(ProjectDir)..\..\mnu2h\Util.py;$(ProjectDir)..\..\mnu2h\Variable.py;$(ProjectDir)..\..\mnu2h\VariableStorage.py;$(ProjectDir)..\..\src\menus\common.mh</AdditionalInputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)..\..\mnu2h\CodeGenerator.py;$(ProjectDir)..\..\mnu2h\Constants.py;$(ProjectDir)..\..\mnu2h\Entry.py;$(ProjectDir)..\..\mnu2h\Menu.py;$(ProjectDir)..\..\mnu2h\mnu2h.py;$(ProjectDir)..\..\mnu2h\Parser.py;$(ProjectDir)..\..\mnu2h\Preprocessor.py;$(ProjectDir)..\..\mnu2h\PreprocExpression.py;$(ProjectDir)..\..\mnu2h\StringTable.py;$(ProjectDir)..\..\mnu2h\Token.py;$(ProjectDir)..\..\mnu2h\Tokenizer.py;$(ProjectDir)..\..\mnu2h\Util.py;$(ProjectDir)..\..\mnu2h\Variable.py;$(ProjectDir)..\..\mnu2h\VariableStorage.py;$(ProjectDir)..\..\src\menus\mnu\common.mh</AdditionalInputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</LinkObjects>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)..\..\mnu2h\CodeGenerator.py;$(ProjectDir)..\..\mnu2h\Constants.py;$(ProjectDir)..\..\mnu2h\Entry.py;$(ProjectDir)..\..\mnu2h\Menu.py;$(ProjectDir)..\..\mnu2h\mnu2h.py;$(ProjectDir)..\..\mnu2h\Parser.py;$(ProjectDir)..\..\mnu2h\Preprocessor.py;$(ProjectDir)..\..\mnu2h\PreprocExpression.py;$(ProjectDir)..\..\mnu2h\StringTable.py;$(ProjectDir)..\..\mnu2h\Token.py;$(ProjectDir)..\..\mnu2h\Tokenizer.py;$(ProjectDir)..\..\mnu2h\Util.py;$(ProjectDir)..\..\mnu2h\Variable.py;$(ProjectDir)..\..\mnu2h\VariableStorage.py;$(ProjectDir)..\..\src\menus\common.mh</AdditionalInputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)..\..\mnu2h\CodeGenerator.py;$(ProjectDir)..\..\mnu2h\Constants.py;$(ProjectDir)..\..\mnu2h\Entry.py;$(ProjectDir)..\..\mnu2h\Menu.py;$(ProjectDir)..\..\mnu2h\mnu2h.py;$(ProjectDir)..\..\mnu2h\Parser.py;$(ProjectDir)..\..\mnu2h\Preprocessor.py;$(ProjectDir)..\..\mnu2h\PreprocExpression.py;$(ProjectDir)..\..\mnu2h\StringTable.py;$(ProjectDir)..\..\mnu2h\Token.py;$(ProjectDir)..\..\mnu2h\Tokenizer.py;$(ProjectDir)..\..\mnu2h\Util.py;$(ProjectDir)..\..\mnu2h\Variable.py;$(ProjectDir)..\..\mnu2h\VariableStorage.py;$(ProjectDir)..\..\src\menus\mnu\common.mh</AdditionalInputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkObjects>
     </CustomBuild>
-    <CustomBuild Include="..\..\src\menus\replays.mnu">
+    <CustomBuild Include="..\..\src\menus\mnu\replays.mnu">
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">python $(ProjectDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compiling %(Filename) menu...</Message>
@@ -360,9 +360,9 @@
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compiling %(Filename) menu...</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename)%(Extension).h</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename)%(Extension).h</Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)..\..\mnu2h\CodeGenerator.py;$(ProjectDir)..\..\mnu2h\Constants.py;$(ProjectDir)..\..\mnu2h\Entry.py;$(ProjectDir)..\..\mnu2h\Menu.py;$(ProjectDir)..\..\mnu2h\mnu2h.py;$(ProjectDir)..\..\mnu2h\Parser.py;$(ProjectDir)..\..\mnu2h\Preprocessor.py;$(ProjectDir)..\..\mnu2h\PreprocExpression.py;$(ProjectDir)..\..\mnu2h\StringTable.py;$(ProjectDir)..\..\mnu2h\Token.py;$(ProjectDir)..\..\mnu2h\Tokenizer.py;$(ProjectDir)..\..\mnu2h\Util.py;$(ProjectDir)..\..\mnu2h\Variable.py;$(ProjectDir)..\..\mnu2h\VariableStorage.py;$(ProjectDir)..\..\src\menus\common.mh</AdditionalInputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)..\..\mnu2h\CodeGenerator.py;$(ProjectDir)..\..\mnu2h\Constants.py;$(ProjectDir)..\..\mnu2h\Entry.py;$(ProjectDir)..\..\mnu2h\Menu.py;$(ProjectDir)..\..\mnu2h\mnu2h.py;$(ProjectDir)..\..\mnu2h\Parser.py;$(ProjectDir)..\..\mnu2h\Preprocessor.py;$(ProjectDir)..\..\mnu2h\PreprocExpression.py;$(ProjectDir)..\..\mnu2h\StringTable.py;$(ProjectDir)..\..\mnu2h\Token.py;$(ProjectDir)..\..\mnu2h\Tokenizer.py;$(ProjectDir)..\..\mnu2h\Util.py;$(ProjectDir)..\..\mnu2h\Variable.py;$(ProjectDir)..\..\mnu2h\VariableStorage.py;$(ProjectDir)..\..\src\menus\mnu\common.mh</AdditionalInputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</LinkObjects>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)..\..\mnu2h\CodeGenerator.py;$(ProjectDir)..\..\mnu2h\Constants.py;$(ProjectDir)..\..\mnu2h\Entry.py;$(ProjectDir)..\..\mnu2h\Menu.py;$(ProjectDir)..\..\mnu2h\mnu2h.py;$(ProjectDir)..\..\mnu2h\Parser.py;$(ProjectDir)..\..\mnu2h\Preprocessor.py;$(ProjectDir)..\..\mnu2h\PreprocExpression.py;$(ProjectDir)..\..\mnu2h\StringTable.py;$(ProjectDir)..\..\mnu2h\Token.py;$(ProjectDir)..\..\mnu2h\Tokenizer.py;$(ProjectDir)..\..\mnu2h\Util.py;$(ProjectDir)..\..\mnu2h\Variable.py;$(ProjectDir)..\..\mnu2h\VariableStorage.py;$(ProjectDir)..\..\src\menus\common.mh</AdditionalInputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)..\..\mnu2h\CodeGenerator.py;$(ProjectDir)..\..\mnu2h\Constants.py;$(ProjectDir)..\..\mnu2h\Entry.py;$(ProjectDir)..\..\mnu2h\Menu.py;$(ProjectDir)..\..\mnu2h\mnu2h.py;$(ProjectDir)..\..\mnu2h\Parser.py;$(ProjectDir)..\..\mnu2h\Preprocessor.py;$(ProjectDir)..\..\mnu2h\PreprocExpression.py;$(ProjectDir)..\..\mnu2h\StringTable.py;$(ProjectDir)..\..\mnu2h\Token.py;$(ProjectDir)..\..\mnu2h\Tokenizer.py;$(ProjectDir)..\..\mnu2h\Util.py;$(ProjectDir)..\..\mnu2h\Variable.py;$(ProjectDir)..\..\mnu2h\VariableStorage.py;$(ProjectDir)..\..\src\menus\mnu\common.mh</AdditionalInputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkObjects>
     </CustomBuild>
     <None Include="cpp.hint" />

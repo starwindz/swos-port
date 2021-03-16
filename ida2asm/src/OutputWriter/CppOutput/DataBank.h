@@ -90,7 +90,8 @@ private:
     void addStructVariables(const StructVarsMap& localStructVars);
     void addOffsetVariables(const OffsetMap& offsetVarsMap);
     void consolidateOffsetVariables();
-    size_t extractVarAlignment(Var& var, size_t address, const StructStream& structs);
+    int extractVarAlignment(Var& var, const StructStream& structs);
+    size_t extractVarEffectiveAlignment(Var& var, size_t address, const StructStream& structs);
     int getElementSize(const String& type);
     void filterPotentialProcOffsetList();
     void fillExportedProcs();

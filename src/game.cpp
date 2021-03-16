@@ -4,7 +4,7 @@
 #include "render.h"
 #include "options.h"
 #include "controls.h"
-#include "menu.h"
+#include "menus.h"
 #include "dump.h"
 #include "replays.h"
 #include "sprites.h"
@@ -51,7 +51,7 @@ void checkKeyboardShortcuts(SDL_Scancode scanCode, bool pressed)
     }
 }
 
-void SWOS::InitGame_OnEnter()
+void SWOS::InitGameSaveTeams_OnEnter()
 {
     // soon after this SWOS will load the game palette, trashing old screen contents in the process
     // unlike the original game, which only changes palette register on the VGA card, we need those bytes
@@ -133,7 +133,7 @@ static void drawSprites(bool saveHihglightCoordinates = true)
             player->beenDrawn = 1;
 
             if (player == &swos.big_S_Sprite)
-                swos.deltaColor = 0x70;
+                swos.g_deltaColor = 0x70;
 
             if (player->spriteIndex == kSquareGridForResultSprite)
                 darkenRectangle(kSquareGridForResultSprite, x, y);
@@ -144,7 +144,7 @@ static void drawSprites(bool saveHihglightCoordinates = true)
             player->beenDrawn = 0;
         }
 
-        swos.deltaColor = 0;
+        swos.g_deltaColor = 0;
     }
 }
 
@@ -171,7 +171,7 @@ void SWOS::GameOver_OnEnter()
 static void swosSetPalette(const char *palette)
 {
     setPalette(palette);
-    updateControls();
+    processControlEvents();
     frameDelay(0.5);
 
     // if the game is running, we have to redraw the sprites explicitly
@@ -238,8 +238,8 @@ void SWOS::StartMainGameLoop()
     initNewReplay();
     updateCursor(true);
 
-    A5 = &swos.leftTeamIngame;
-    A6 = &swos.rightTeamIngame;
+    A5 = &swos.topTeamIngame;
+    A6 = &swos.bottomTeamIngame;
 
     swos.EGA_graphics = 0;
 
@@ -247,7 +247,6 @@ void SWOS::StartMainGameLoop()
 
     swos.vsPtr = swos.linAdr384k;
 
-    finishGameControls();
     updateCursor(false);
 }
 
@@ -329,7 +328,7 @@ static void endSecondHalf()
         }
     }
 
-    swos.winningTeamPtr = totalTeam1Goals > totalTeam2Goals ? &swos.leftTeamIngame : &swos.rightTeamIngame;
+    swos.winningTeamPtr = totalTeam1Goals > totalTeam2Goals ? &swos.topTeamIngame : &swos.bottomTeamIngame;
     EndOfGame();
 }
 
@@ -377,7 +376,7 @@ static void endSecondExtraTime()
         }
     }
 
-    swos.winningTeamPtr = totalTeam1Goals > totalTeam2Goals ? &swos.leftTeamIngame : &swos.rightTeamIngame;
+    swos.winningTeamPtr = totalTeam1Goals > totalTeam2Goals ? &swos.topTeamIngame : &swos.bottomTeamIngame;
     EndOfGame();
 }
 
@@ -547,7 +546,7 @@ static void replayExitMenuOnInit()
 {
     swos.replaySelected = 0;
 
-    DrawMenu();     // redraw menu so it's ready for the fade-in
+    SWOS::DrawMenu();   // redraw menu so it's ready for the fade-in
     fadeIfNeeded();
 
     swos.g_cameraX = 0;

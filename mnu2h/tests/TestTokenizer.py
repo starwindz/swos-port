@@ -109,8 +109,11 @@ class TestTokenizer(unittest.TestCase):
         ('"NO"\nWARNINGS\n\'WHATSOEVER\'\n', ()),
         ('#print "IcanHAVEmixedCASE"\n', ()),
         ('~"MeeToo"\n', ()),
-        ('what: "ohNoes!"\n', ((1, 'non upper case string detected'),)),
-        ('SpeLLinGLeSzOnZ:\n"mIgHtYhaxxxORZ"', ((2, 'non upper case string detected'), (2, 'new line missing'))),
+        ('#lowerCaseStringsWarningOn what: "ohNoes!"\n', ((1, 'non upper case string detected'),)),
+        ('what: "ohNoes!"\n', ()),
+        ('#lowerCaseStringsWarningOff what: "ohNoes!"\n', ()),
+        ('#lowerCaseStringsWarningOn SpeLLinGLeSzOnZ:\n"mIgHtYhaxxxORZ"',
+            ((2, 'non upper case string detected'), (2, 'new line missing'))),
     )
     def testWarnings(self, testData, mockPrint):
         filename = 'HerrFlick'
@@ -146,7 +149,7 @@ class TestTokenizer(unittest.TestCase):
             errorMessage)
 
     @mock.patch('builtins.print')
-    def testStringEscapes(self, mockPrint):
+    def testStringEscapes(self, _mockPrint):
         inputData = r'''
             'What\'s this? He asked.'
             "It's \"them\"."
@@ -230,8 +233,8 @@ class TestTokenizer(unittest.TestCase):
         input, function, numParams, expectedError = testData
 
         tokenizer = self.getTokenizerWithData(input)
-
         token = tokenizer.getNextToken()
+
         self.assertEqual(token.string, input[0])
 
         params = [tokenizer, token]
@@ -337,6 +340,18 @@ class TestTokenizer(unittest.TestCase):
         tokenizer.setTokenTextAt(0, 'yosh')
         modifiedToken = tokenizer.getNextToken()
         self.assertNotEqual(token, modifiedToken)
+
+    @data(
+        ("'Crunch' was the name, 2'000 miles apart",
+            ["'Crunch'", 'was', 'the', 'name', ',', '2000', 'miles', 'apart']),
+        ("10'000 + 10'000 + 0x56 + -0x33 * @kVars",
+            ['10000', '+', '10000', '+', '0x56', '+', '-', '0x33', '*', '@kVars']),
+        ('25_33', ['25', '_33']),
+    )
+    def testSplitLine(self, inputData):
+        line, expectedResult = inputData
+        actualResult = Tokenizer.splitLine(line)
+        self.assertEqual(actualResult, expectedResult)
 
     @staticmethod
     def getTokenizerWithData(data='', ensureNewLine=True, filePath=TestHelper.kTestFilename):

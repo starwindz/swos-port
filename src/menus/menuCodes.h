@@ -19,12 +19,12 @@ enum EntryElementCode : int16_t
     kString,
     kForegroundSprite,
     kStringTable,
-    kMultiLineText,
+    kMultilineText,
     kInteger,
     kOnSelect,
     kOnSelectWithMask,
     kBeforeDraw,
-    kOnReturn,
+    kAfterDraw,
     kLeftSkip,
     kRightSkip,
     kUpSkip,
@@ -35,22 +35,22 @@ enum EntryElementCode : int16_t
     kCustomForegroundFuncNative,
     kStringNative,
     kStringTableNative,
-    kMultiLineTextNative,
+    kMultilineTextNative,
     kOnSelectNative,
     kOnSelectWithMaskNative,
     kBeforeDrawNative,
-    kOnReturnNative,
+    kAfterDrawNative,
     kColorConvertedSpriteNative,
 #else
     kCustomBackgroundFuncNative = kCustomBackgroundFunc,
     kCustomForegroundFuncNative = kCustomForegroundFunc,
     kStringNative = kString,
     kStringTableNative = kStringTable,
-    kMultiLineTextNative = kMultiLineText,
+    kMultilineTextNative = kMultilineText,
     kOnSelectNative = kOnSelect,
     kOnSelectWithMaskNative = kOnSelectWithMask,
     kBeforeDrawNative = kBeforeDraw,
-    kOnReturnNative = kOnReturn,
+    kAfterDrawNative = kAfterDraw,
     kColorConvertedSpriteNative = kColorConvertedSprite,
 #endif
 };
@@ -228,18 +228,18 @@ public:
     constexpr EntryStringTableNative(word flags, const StringTableNative *stringTable) : EntryElementNative(kStringTableNative), flags(flags), stringTable(stringTable) {}
 };
 
-class EntryMultiLineTextNative : EntryElementNative {
+class EntryMultilineTextNative : EntryElementNative {
     word flags;
     void *stringList;
 public:
-    constexpr EntryMultiLineTextNative(word flags, void *stringList) : EntryElementNative(kMultiLineText), flags(flags), stringList(stringList) {}
+    constexpr EntryMultilineTextNative(word flags, void *stringList) : EntryElementNative(kMultilineText), flags(flags), stringList(stringList) {}
 };
 
-class EntryMultiLineText : EntryElement {
+class EntryMultilineText : EntryElement {
     word flags;
     void *stringList;
 public:
-    constexpr EntryMultiLineText(word flags, void *stringList) : EntryElement(kMultiLineText), flags(flags), stringList(stringList) {}
+    constexpr EntryMultilineText(word flags, void *stringList) : EntryElement(kMultilineText), flags(flags), stringList(stringList) {}
 };
 
 class EntryNumber : EntryElement {
@@ -277,11 +277,11 @@ struct EntryBeforeDrawFunctionNative : EntryFunctionNative {
     constexpr EntryBeforeDrawFunctionNative(Func func) : EntryFunctionNative(func, kBeforeDrawNative) {}
 };
 
-struct EntryOnReturnFunction : EntryFunctionSwos {
-    constexpr EntryOnReturnFunction(Func func) : EntryFunctionSwos(func, kOnReturn) {}
+struct EntryAfterDrawFunction : EntryFunctionSwos {
+    constexpr EntryAfterDrawFunction(Func func) : EntryFunctionSwos(func, kAfterDraw) {}
 };
-struct EntryOnReturnFunctionNative : EntryFunctionNative {
-    constexpr EntryOnReturnFunctionNative(Func func) : EntryFunctionNative(func, kOnReturnNative) {}
+struct EntryAfterDrawFunctionNative : EntryFunctionNative {
+    constexpr EntryAfterDrawFunctionNative(Func func) : EntryFunctionNative(func, kAfterDrawNative) {}
 };
 
 class EntryLeftSkip : EntryElement {

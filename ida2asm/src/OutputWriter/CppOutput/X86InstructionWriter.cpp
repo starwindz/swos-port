@@ -615,7 +615,7 @@ void X86InstructionWriter::outputMul(const InstructionNode& node)
         break;
     case 4:
         out('{'); op.startNewLine(false, +1);
-        out("uint64_t res = eax * "); op.outputDestVar(); op.startNewLine();
+        out("uint64_t res = (uint64_t)eax * "); op.outputDestVar(); op.startNewLine();
         out("eax = res & 0xffffffff"); op.startNewLine();
         out("edx = res >> 32"); op.startNewLine();
         op.setCarryFlag("edx != 0");

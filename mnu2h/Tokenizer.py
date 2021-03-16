@@ -25,14 +25,15 @@ class Tokenizer:
 
     @staticmethod
     def empty():
-        return Tokenizer(None)
+        return Tokenizer()
 
-    def __init__(self, inputPath):
+    def __init__(self, inputPath=None):
         assert isinstance(inputPath, (str, type(None)))
 
         self.inputPath = inputPath
 
         self.showWarnings = True
+        self.warnAboutLowerCaseStrings = False
         self.currentTokenIndex = 0
         self.tokens = []
 
@@ -42,17 +43,17 @@ class Tokenizer:
         self.updateEofFlag()
 
     def __repr__(self):
-        repr = f'Tokenizer input file: "{self.inputPath}", current token index: {self.currentTokenIndex}, '
-        repr += f'at EOF: {self.atEof}, tokens:\n'
+        r = f'Tokenizer input file: "{self.inputPath}", current token index: {self.currentTokenIndex}, '
+        r += f'at EOF: {self.atEof}, tokens:\n'
         if self.tokens:
             for i, token in enumerate(self.tokens):
                 newLine = '\n' if i < len(self.tokens) - 1 else ''
                 marker = '->' if i == self.currentTokenIndex else '  '
-                repr += f' {marker} {i:3d}: {token}{newLine}'
+                r += f' {marker} {i:3d}: {token}{newLine}'
         else:
-            repr += '  <empty>'
+            r += '  <empty>'
 
-        return repr
+        return r
 
     # resetToString
     #
@@ -100,6 +101,10 @@ class Tokenizer:
 
     def setCurrentTokenIndex(self, newTokenIndex):
         self.currentTokenIndex = newTokenIndex
+        self.updateEofFlag()
+
+    def ungetToken(self):
+        self.currentTokenIndex = max(0, self.currentTokenIndex - 1)
         self.updateEofFlag()
 
     def getTokenRange(self, start, end):
@@ -223,7 +228,7 @@ class Tokenizer:
 
             tokenLen = 0
 
-            if line[i] == '"' or line[i] == "'":
+            if line[i] == '"' or (line[i] == "'" and (i == 0 or not line[i - 1].isnumeric())):
                 tokenLen = len(line) - i
                 quote = line[i]
 
@@ -238,18 +243,22 @@ class Tokenizer:
                         break
 
             if not tokenLen:
-                match = re.search(r'(?:@)?[\w]+|[{},():]|[-+]*\d+|[^\s\w]', line[i:])
-                if match:
-                    tokenLen = match.end() if match.start() == 0 else match.start()
-                else:
-                    # don't think this can ever be reached
-                    tokenLen = len(line) - i
+                match = re.search(r"0x[\da-fA-F']+|[-+]*[\d']+|(?:@)?[\w]+|[{},():]|[^\s\w]", line[i:])
+                assert match
+                tokenLen = match.end() if match.start() == 0 else match.start()
 
             assert tokenLen > 0
             tokens.append(line[i : i + tokenLen])
+            Tokenizer.removeApostrophesFromNumbers(tokens)
             i += tokenLen
 
         return tokens
+
+    @staticmethod
+    def removeApostrophesFromNumbers(tokens):
+        kAllowedIndecimal = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', "'"}
+        if tokens[-1].startswith('0x') or kAllowedIndecimal.issuperset(tokens[-1]):
+            tokens[-1] = tokens[-1].replace("'", '')
 
     # expect
     #
@@ -260,7 +269,8 @@ class Tokenizer:
     #     fetchNextToken  - return next token if this is true and we got the expected string
     #     customErrorText - custom text to show on error (if overriding)
     #
-    # Makes sure that the token contains the expected string. If not, complains and quits. Returns next token.
+    # Makes sure that the token contains the expected string. If not, complains and quits.
+    # Returns next token if requested.
     #
     def expect(self, text, token, customErrorText='', fetchNextToken=False, quote=True):
         assert isinstance(text, str)
@@ -295,7 +305,7 @@ class Tokenizer:
     #     fetchNextToken - flag whether to fetch next token if this one is identifier
     #
     # Checks if the given token is a valid C++ identifier, if not displays an error and ends the program.
-    # Returns the token following the identifier.
+    # Returns the token following the identifier if so specified.
     #
     def expectIdentifier(self, token, expectedNext=None, fetchNextToken=False):
         assert isinstance(token, Token)
@@ -303,8 +313,7 @@ class Tokenizer:
 
         id = token.string[1:] if token.string.startswith('$') else token.string
 
-        if not id.isidentifier():
-            Util.error(f"`{id}' is not a valid identifier", token)
+        Util.verifyIdentifier(id, token)
 
         if fetchNextToken:
             token = self.getNextToken(expectedNext)
@@ -316,7 +325,7 @@ class Tokenizer:
     # in:
     #     path - path of the file to tokenize
     #
-    # Opens the given file, tokenizes it and returns produced tokens.
+    # Opens the given file, tokenizes it and returns the produced tokens.
     #
     def tokenizeFile(self, path):
         assert path and isinstance(path, str)
@@ -338,12 +347,16 @@ class Tokenizer:
                             if isQuoteOpened:
                                 if len(string) < 2 or string[0] != string[-1]:
                                     Util.error('unterminated string', path, lineNo)
-                                if prev not in ('include', '~', 'print', '#') and string != string.upper():
+                                if self.warnAboutLowerCaseStrings and prev not in ('include', '~', 'print', '#') and string != string.upper():
                                     upperCaseWarning = True
                             elif string == 'warningsOff' and prev == '#':
                                 self.showWarnings = False
                             elif string == 'warningsOn' and prev == '#':
                                 self.showWarnings = True
+                            elif string == 'lowerCaseStringsWarningOn' and prev == '#':
+                                self.warnAboutLowerCaseStrings = True
+                            elif string == 'lowerCaseStringsWarningOff' and prev == '#':
+                                self.warnAboutLowerCaseStrings = False
 
                         prev = string
 

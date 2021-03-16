@@ -63,15 +63,17 @@ Menu entries, following the header:
             3: sprite -- at offset 30 is its index into sprite.dat (word)
 
        30 ; switch(ofs28) {
+            case 0:
+                do not draw
             case 1:
                 ofs30 = pointer to a function getting x and y as parameters
+                        (in D0 and D1)
             case 2:
                 ofs30 = lo nibble: entry background color
                         hi nibble: frame color
             case 3:
                 ofs30 = sprite index
             }
-            0 - do not draw
 
        34 ; type2 [0,1,2,3,4,5,6,7] -- something of a foreground type
 
@@ -79,7 +81,7 @@ Menu entries, following the header:
             1: ofs38 contains a function pointer, invoke it with x and y
                parameters (D0 and D1)
             2: ofs38 contains pointer to string.
-               If this pointer has value -1 then additional 70 bytes is
+               If this pointer has value -1 then additional 70 bytes are
                allocated after the menu end and string "STDMENUTEXT" is written
                there; this will be filled later by some of the entry functions
             3: ofs38 is index of a sprite that will be drawn
@@ -92,7 +94,7 @@ Menu entries, following the header:
                many null-terminated strings (not pointers). Ofs36, low nibble,
                represents color of the text
             6: ofs38 is a number (word). It's converted into string and
-               displayed (code for type 2 is used).
+               displayed (same code as for type 2 is executed).
             7: sprite copy with color conversion. offset 38 is a pointer to the
                following structure:
                  0 - source sprite index
@@ -104,8 +106,8 @@ Menu entries, following the header:
        36 ; Low nibble of offset 36 represents color of the text. If it's zero
             then use color 2 (white). Nibble 1 represents font size -- small or
             big (bit 4 that is, bits 5,6,7 must be zero since we only have two
-            possibilities). If bit 14 is set string is left-aligned, and if bit
-            15 is set string is right-aligned. If neither of these bits is on,
+            possibilities). If bit 15 is set string is left-aligned, and if bit
+            14 is set string is right-aligned. If neither of these bits is on,
             string is centered across the entry. If bit 9 isn't set and offset
             34 is not zero, entry is drawn without text. If bit 13 is set text
             will blink gently.
@@ -113,16 +115,16 @@ Menu entries, following the header:
        42 ; onSelect function
        46 ; controls mask (gets AND-ed with control word)
        48 ; beforeDraw function, on entry esi = A5 -> entry that's drawn
-       52 ; onReturn function
+       52 ; afterDraw function,            -//-
 
     sizeof(MenuItem) = 56
 
 x coordinates of menu entries are shifted right by 8 pixels. Therefore entry
-with x coordinate zero is in fact begins at eight pixel of the screen.
+with x coordinate zero in fact begins at pixel eight of the screen.
 
 beforeDraw function executes first, before anything has been drawn. onReturn
 is executed after all the entry drawing has been done, but before flip so it's
-still possible to alter looks of the entry.
+still possible to alter the looks of the entry.
 
 If type1 or type2 fall out of prescribed range, int3 is issued and endless loop
 is entered. int3 will terminate the program if debugger isn't attached.
@@ -253,75 +255,75 @@ ofs34 = 2 (word)
 ofs36 = word (string flags)
 ofs38 = dword (text ptr)
 ---------------------------
-TIP 9:  (sprite 2 (foreground))
+TYPE 9:  (sprite 2 (foreground))
 
 ofs34 = 3
 ofs36 = 0
 ofs38 = word (sprite index)
 ofs40 = 0 (fill up to a dword)
 ---------------------------
-TIP 10: (string table)
+TYPE 10: (string table)
 
 ofs34 = 4
 ofs36 = word (string flags)
 ofs38 = dword (pointer to string table)
 ---------------------------
-TIP 11: (multi-line text)
+TYPE 11: (multi-line text)
 
 ofs34 = 5
 ofs36 = word (string flags)
 ofs38 = dword (pointer to a byte - number of strings, followed by the strings)
 ---------------------------
-TIP 12: (number)
+TYPE 12: (number)
 
 ofs34 = 6
 ofs36 = word (string flags)
 ofs38 = word (number to print)
 ofs40 = 0 (filler to a dword)
 ---------------------------
-TIP 13: (on select function - fire only)
+TYPE 13: (on select function - fire only)
 
 ofs46 = 32
 ofs42 = dword (on select function)
 ---------------------------
-TIP 14: (on select function with mask)
+TYPE 14: (on select function with mask)
 
 ofs46 = word (mask)
 ofs42 = dword (on select function)
 ---------------------------
-TIP 15: (before draw function)
+TYPE 15: (before draw function)
 
 ofs48 = dword (before draw function)
 ---------------------------
-TIP 16: (after draw function)
+TYPE 16: (after draw function)
 
 ofs52 = dword (after draw function)
 ---------------------------
-TIP 17: (left skip)
+TYPE 17: (left skip)
 
 ofs16 = byte (next entry if this one is disabled or invisible)
 ofs12 = byte (next direction of search, controls direction)
 ---------------------------
-TIP 18: (right skip)
+TYPE 18: (right skip)
 
 ofs17 = byte
 ofs13 = byte
 ---------------------------
-TIP 19: (up skip)
+TYPE 19: (up skip)
 
 ofs18 = byte
 ofs14 = byte
 ---------------------------
-TIP 20: (down skip)
+TYPE 20: (down skip)
 
 ofs19 = byte
 ofs15 = byte
 ---------------------------
-TIP 21: (color converted sprite)
+TYPE 21: (color converted sprite)
 
 ofs34 = 7
 ofs36 = 0
-ofs38 = dword (pointer na strukturu, videti opis ofs34)
+ofs38 = dword (struct pointer, see description for entry offset 34, value 7)
 
 ======
 Colors
@@ -338,65 +340,66 @@ Shade groups:
 
 (lower index colors are darker)
 
-32 ..63   - plava prelazi u crnu
-64 ..95   - narandzasta prelazi u smedju
-96 ..127  - rozikasta prelazi u braon
-128..159  - svetlo crvena u jarko crvenu (skoro da i nema razlike)
-160..191  - plava u ljubicastu
-192..223  - svetlo plava u plavu
-224..255  - zuta-zelena-crna
+32 ..63   - blue to black
+64 ..95   - orange to light brown
+96 ..127  - pinkish to brown
+128..159  - light red to bright red (almost no difference)
+160..191  - blue to purple
+192..223  - light blue to blue
+224..255  - yellow-green-black
 
-Boje od 0 do 31 (da budemo kompletni):
+Colors from 0 to 31 (for completeness):
 
-16..31 - prelaz iz bele u smedju
+16..31 - gradient from white to light brown
 
-0  - skoro crna       <  0,   0,  36>
-1  - siva             <180, 180, 180>
-2  - bela             <252, 252, 252>
-3  - prava crna       <  0,   0,   0>
-4  - vrlo tamna braon <108,  36,   0>
-5  - smedja           <180,  72,   0>
-6  - narandzasta      <252, 108,   0>
-7  - tamnija siva     <108, 108, 108>
-8  - svetlija crna    < 36,  36,  36>
-9  - vrlo tamna siva  < 72,  72,  72>
-10 - crvena           <252,   0,   0>
-11 - plava            <  0,   0, 252>
-12 - nesto vrlo tamno <108,   0,  36>
-13 - bledo plava      <144, 144, 252>
-14 - zelena           < 36, 144,   0>
-15 - zuta             <252, 252,   0>
+0  - nearly black     <  0,   0,  36>
+1  - gray             <180, 180, 180>
+2  - white            <252, 252, 252>
+3  - true black       <  0,   0,   0>
+4  - very dark brown  <108,  36,   0>
+5  - light brown      <180,  72,   0>
+6  - orange           <252, 108,   0>
+7  - darker gray      <108, 108, 108>
+8  - lighter gray     < 36,  36,  36>
+9  - very dark gray   < 72,  72,  72>
+10 - red              <252,   0,   0>
+11 - blue             <  0,   0, 252>
+12 - very dark color  <108,   0,  36>
+13 - pale blue        <144, 144, 252>
+14 - green            < 36, 144,   0>
+15 - yellow           <252, 252,   0>
 
-Uzvesi sve ovo u obzir, boje koje se koriste u crtanju pozadine menija su:
-                                      spoljnji okvir:
-0  - rozikasta u braon              [bez pozadine i okvira]
-1  -          -||-                  [sivi]
-2  -          -||-                  [-||-]
-3  - plava u crnu                   [-||-]
-4  - narandzasta u smedju           [narandzasti]
-5  -        -||-                    [   -||-    ]
-6  -        -||-                    [zuti]
-7  - rozikasta u braon              [sivi]
-8  - plava u crnu                   [-||-]
-9  - rozikasta u braon              [-||-]
-10 - svetlo crvena u jarko crvenu   [-||-]
-11 - plava u ljubicastu (roze)      [bledo plavi]
-12 - narandzasta u smedju           [crveni]
-13 - svetlo plava u plavu           [sivi]
-14 - zuta-zelena-crna               [-||-]
-15 -      -||-                      [-||-]
+Having taken all this in consideration, the colors used in menu background
+drawing are:
+#    color:                         outer frame:
+0  - pinkish to brown               [no background and frame]
+1  -      -||-                      [gray]
+2  -      -||-                      [-||-]
+3  - blue to black                  [-||-]
+4  - orange to brown                [orange]
+5  -     -||-                       [ -||- ]
+6  -     -||-                       [yellow]
+7  - pinkish to brown               [gray]
+8  - blue to black                  [-||-]
+9  - pinkish to brown               [-||-]
+10 - light red to bright red        [-||-]
+11 - blue to purplish (pink)        [pale blue]
+12 - orange to brown                [red]
+13 - pale blue to blue              [gray]
+14 - yellow-green-black             [-||-]
+15 -       -||-                     [-||-]
 
-Odavde sledi da se za crtanje pozadine stavki efektivno koristi samo 7 boja
-(nijansi).
+From this follows that only 7 colors (shades) are effectively used for menu
+item backgrounds.
 
-Ukoliko DrawEmptyMenu dobije da crta stavku sirine ili visine 1 (linija, od
-frejma verovatno), onda se ne koristi fill.256, jedino se na boju dodaje
-vrednosti delta_color.
+If DrawEmptyMenuItem() is ordered to draw an entry of width or height 1 (single
+line, most likely a frame), then fill.256 isn't used. Only thing added to a
+color is g_deltaColor value.
 
 --------------
 DrawThickFrame(int color, int x, int y, int width, int height);
 
-Parametri:
+Parameters:
      D0 - color
      D1 - x
      D2 - y
@@ -406,7 +409,7 @@ Parametri:
 frameColorsTable db 1, 9, 1, 9, 1, 9, 1, 9, 6, 9, 6, 4, 15, 4, 1, 9, 1, 9, 1,
                  db 3, 1, 9, 13, 8, 10, 9, 1, 9, 1, 9, 1, 9
 
-- prvo konvertuj boju uz pomoc gornje tablice
+- first convert the color with the help of the above table
 - na x i y koordinatama nacrtaj vertikalnu liniju duzine width
 - zatim na istim koordinatama iscrtaj horizontalnu liniju duzine height
 - horizontalna linija na x, y + height - 1, duzine width

@@ -37,11 +37,20 @@ void errorExit(const char *format, ...)
     std::exit(EXIT_FAILURE);
 }
 
+static_assert(sizeof(uint64_t) >= sizeof(time_t), "Timestamp type too big");
+
+uint64_t getMillisecondsSinceEpoch()
+{
+    using namespace std::chrono;
+
+    return duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
+}
+
 TimeInfo getCurrentTime()
 {
     using namespace std::chrono;
 
-    auto timeSinceEpochMs = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
+    auto timeSinceEpochMs = getMillisecondsSinceEpoch();
 
     time_t time = timeSinceEpochMs / 1000;
     auto tm = std::localtime(&time);
@@ -79,14 +88,33 @@ std::string formatNumberWithCommas(int64_t num)
     return result;
 }
 
-void toUpper(char *str)
+int numDigits(int num)
 {
-    while (*str++)
-        str[-1] = toupper(str[-1]);
+    assert(num >= 0);
+
+    if (num < 10)
+        return 1;
+    else if (num < 100)
+        return 2;
+    else if (num < 1'000)
+        return 3;
+    else if (num < 10'000)
+        return 4;
+    else {
+        int numDigits = 4;
+        num /= 10'000;
+
+        do {
+            numDigits++;
+            num /= 10;
+        } while (num);
+
+        return numDigits;
+    }
 }
 
 constexpr int kMaxRegStorageCapacity = 10;
-static std::array<char[k68kRegisterTotalSize], kMaxRegStorageCapacity> m_savedRegisters;
+static std::array<SwosVM::RegisterSet68k, kMaxRegStorageCapacity> m_savedRegisters;
 static int m_regStorageIndex;
 
 void save68kRegisters()
@@ -94,7 +122,7 @@ void save68kRegisters()
     if (m_regStorageIndex >= static_cast<int>(m_savedRegisters.size()))
         errorExit("Capacity for saving 68k registers exceeded (%d spots)", m_savedRegisters.size());
 
-    memcpy(m_savedRegisters[m_regStorageIndex++], &D0, k68kRegisterTotalSize);
+    SwosVM::store68kRegistersTo(m_savedRegisters[m_regStorageIndex++]);
 }
 
 void restore68kRegisters()
@@ -102,12 +130,12 @@ void restore68kRegisters()
     if (m_regStorageIndex <= 0)
         errorExit("Saved 68k registers stack underflow");
 
-    memcpy(&D0, m_savedRegisters[--m_regStorageIndex], k68kRegisterTotalSize);
+    SwosVM::load68kRegistersFrom(m_savedRegisters[--m_regStorageIndex]);
 }
 
 constexpr size_t kInitialHashValue = 1021;
 
-size_t hash(const void *buffer, size_t length)
+unsigned hash(const void *buffer, size_t length)
 {
     size_t hash = kInitialHashValue;
     auto p = reinterpret_cast<const char *>(buffer);
@@ -127,9 +155,9 @@ int getRandomInRange(int min, int max)
     return dist(m_mt);
 }
 
+#ifndef SWOS_VM
 __declspec(naked) int setZeroFlagAndD0FromAl()
 {
-#ifndef SWOS_VM
     // SWOS expects 0 for success, 1 for error
     __asm {
         and  eax, 0xff
@@ -146,10 +174,8 @@ done:
         mov  D0, eax
         retn
     }
-#else
-    return 0;
-#endif
 }
+#endif
 
 bool isMatchRunning()
 {
@@ -164,6 +190,41 @@ void beep()
     // not working on Android, need something better, maybe some JNI calls
     putchar('\a');
 #endif
+}
+
+// in:
+//      D0 -  word to convert
+//      A1 -> buffer
+// out:
+//      A1 -> points to terminating zero in the buffer
+//
+void SWOS::Int2Ascii()
+{
+    int num = D0.asInt16();
+    auto dest = A1.asPtr();
+
+    if (num < 0) {
+        num = -num;
+        *dest++ = '-';
+    } else if (!num) {
+        dest[0] = '0';
+        dest[1] = '\0';
+        A1++;
+        return;
+    }
+
+    auto end = dest;
+    while (num) {
+        auto quotRem = std::div(num, 10);
+        num = quotRem.quot;
+        *end++ = quotRem.rem + '0';
+    }
+
+    *end = '\0';
+    A1 = end;
+
+    for (end--; dest < end; dest++, end--)
+        std::swap(*dest, *end);
 }
 
 bool isDebuggerPresent()

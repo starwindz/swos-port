@@ -16,13 +16,21 @@ static void turnOnDebugHeap()
 #endif
 }
 
+static void setSdlHints()
+{
+#ifdef __ANDROID__
+    SDL_SetHint(SDL_HINT_ACCELEROMETER_AS_JOYSTICK, "0");
+#endif
+    SDL_SetHint(SDL_HINT_MOUSE_FOCUS_CLICKTHROUGH, "1");
+}
+
 int main(int argc, char **argv)
 {
     turnOnDebugHeap();
 
     auto commandLineWarnings = parseCommandLine(argc, argv);
 
-    atexit(finishLog);
+    atexit(finishLog);          // dispose log last
     initLog();
 
     logInfo("SWOS port compiled at %s, %s", __DATE__, __TIME__);
@@ -31,18 +39,15 @@ int main(int argc, char **argv)
         log(logItem.category, "%s", logItem.text.c_str());
 
     installCrashHandler();
-
-    atexit(saveOptions);
     loadOptions();
+    setSdlHints();
+    initRendering();
+    normalizeOptions();
+    assignJoypadsToPlayers();
 
     atexit(finishRendering);
-    initRendering();
-
-    normalizeOptions();
-
+    atexit(saveOptions);        // must be set after finishRendering
     atexit(finishAudio);
-
-    initJoypads();
 
     SWOS::SWOS();
 

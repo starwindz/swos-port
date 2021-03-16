@@ -2,7 +2,7 @@
 #include "unitTest.h"
 #include "util.h"
 #include "render.h"
-#include "menu.h"
+#include "menus.h"
 #include "bmpWriter.h"
 #include <iomanip>
 #include <future>
@@ -205,7 +205,7 @@ void BaseTest::initTestCase(BaseTest *test, const Case& testCase)
         test->defaultCaseInit();
 
     // somebody better set that darn menu!
-    assert(g_currentMenu);
+    assert(swos.g_currentMenu);
 }
 
 template<typename F>
@@ -214,11 +214,15 @@ void BaseTest::runTestCase(BaseTest *test, const Case& testCase, size_t i, const
     using namespace SWOS_UnitTest;
 
     try {
+        auto mark = SwosVM::markAllMemory();
+
         initTestCase(test, testCase);
         testCase.proc();
         if (testCase.finalize)
             testCase.finalize();
         std::cout << '.';
+
+        SwosVM::releaseAllMemory(mark);
     } catch (const BaseException& e) {
         auto errorMessage = e.error();
         addFailureMessage(errorMessage);
@@ -287,7 +291,7 @@ void BaseTest::outputStats(std::chrono::time_point<std::chrono::steady_clock> st
 
 static RgbQuad *getMenuPalette()
 {
-    auto pal = linAdr384k + 129'536;
+    auto pal = swos.linAdr384k + 129'536;
 
     static RgbQuad s_menuPalette[256];
 
@@ -313,11 +317,11 @@ void BaseTest::takeSnapshot(const char *snapshotDir, const char *caseId, int cas
     static std::vector<std::future<void>> forgottenFutures; // it's not stupid if it works ;)
 
     // skip tests that don't show menus, currently no better way to check since main menu always gets shown at start
-    if (std::count(linAdr384k, linAdr384k + kVgaScreenSize, 0) == kVgaScreenSize)
+    if (std::count(swos.linAdr384k.asCharPtr(), swos.linAdr384k + kVgaScreenSize, 0) == kVgaScreenSize)
         return;
 
     auto screen = new char[kVgaScreenSize];
-    memcpy(screen, linAdr384k, kVgaScreenSize);
+    memcpy(screen, swos.linAdr384k, kVgaScreenSize);
 
     char buf[16];
     snprintf(buf, sizeof(buf), "%03d", caseInstanceIndex);

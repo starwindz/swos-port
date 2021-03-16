@@ -3,7 +3,8 @@
 #include "unitTest.h"
 #include "mockFile.h"
 #include "file.h"
-#include "menu.h"
+#include "menus.h"
+#include "text.h"
 #include "controls.h"
 #include "sdlProcs.h"
 #include "data/canada.diy.h"
@@ -20,25 +21,30 @@ static std::string m_swosDir;
 
 static void drawSpriteToBuffer(int spriteIndex, char *buf)
 {
-    auto savedVsPtr = vsPtr;
-    auto savedScreenWidth = screenWidth;
-    auto savedDeltaColor = deltaColor;
+    auto savedVsPtr = swos.vsPtr;
+    auto savedScreenWidth = swos.screenWidth;
+    auto savedDeltaColor = swos.g_deltaColor;
 
-    vsPtr = buf;
-    screenWidth = spritesIndex[spriteIndex]->width;
+    auto vmBuffer = reinterpret_cast<char *>(swos.g_currentMenu);
+    auto sprite = swos.spritesIndex[spriteIndex];
+
+    swos.vsPtr = vmBuffer;
+    swos.screenWidth = sprite->width;
 
     D0 = spriteIndex;
     D1 = D2 = 0;
     SAFE_INVOKE(DrawSprite);
 
-    deltaColor = savedDeltaColor;
-    screenWidth = savedScreenWidth;
-    vsPtr = savedVsPtr;
+    memcpy(buf, vmBuffer, sprite->width * sprite->height);
+
+    swos.g_deltaColor = savedDeltaColor;
+    swos.screenWidth = savedScreenWidth;
+    swos.vsPtr = savedVsPtr;
 }
 
 void SelectFilesMenuTest::init()
 {
-    assert(spritesIndex[kUpArrowSprite]->width == kArrowWidth && spritesIndex[kUpArrowSprite]->height == kArrowHeight);
+    assert(swos.spritesIndex[kUpArrowSprite]->width == kArrowWidth && swos.spritesIndex[kUpArrowSprite]->height == kArrowHeight);
 
     drawSpriteToBuffer(kUpArrowSprite, upArrowBuffer);
     drawSpriteToBuffer(kDownArrowSprite, downArrowBuffer);
@@ -203,9 +209,12 @@ void SelectFilesMenuTest::setupLoadCompetitionTest()
         if (kFakeFiles[i].name)
             addFakeFile(joinPaths(root.c_str(), kFakeFiles[i].name).c_str());
 
+    memset(swos.g_currentMenu, 0, sizeof(Menu));
+
     D0 = 0;
-    A0 = A1 = "LOAD OLD COMPETITION";
-    g_skipNonCompetitionFiles = m_currentDataIndex & 1;
+    A0 = A1 = swos.g_pitchDatBuffer;
+    strcpy(A0.asPtr(), "LOAD OLD COMPETITION");
+    swos.g_skipNonCompetitionFiles = m_currentDataIndex & 1;
 
     auto result = SWOS::GetFilenameAndExtension();
 
@@ -226,7 +235,7 @@ void SelectFilesMenuTest::testLoadCompetition()
         }
 
         int index = m_currentDataIndex >> 1;
-        int expectedColumnLength = g_skipNonCompetitionFiles ?
+        int expectedColumnLength = swos.g_skipNonCompetitionFiles ?
             kFakeFiles[index].expectedColumnCompetitionsOnly[i] :
             kFakeFiles[index].expectedColumnLength[i];
 
@@ -333,6 +342,8 @@ void SelectFilesMenuTest::testLayout()
     constexpr int kNumFiles = kNumFilenameItems + 10;
     constexpr int kNumCases = 1 << 2;
 
+    auto mark = SwosVM::markAllMemory();
+
     for (int i = 0; i < kNumCases; i++) {
         bool useLongNames = i & 1;
         bool save = (i >> 1) & 1;
@@ -340,6 +351,7 @@ void SelectFilesMenuTest::testLayout()
         for (int numFiles = 0; numFiles < kNumFiles; numFiles++) {
             auto filenames = generateFilenames(numFiles, useLongNames);
 
+            SwosVM::releaseAllMemory(mark);
             showSelectFilesMenu("LAYOUT TEST", filenames, save ? ".CAR" : nullptr, nullptr);
 
             ColumnInfo columnInfo(numFiles, useLongNames);
@@ -377,7 +389,6 @@ void SelectFilesMenuTest::testLayout()
 static void simulateKey(SDL_Scancode keyCode)
 {
     queueSdlKeyDown(keyCode);
-    lastControls = -1;  // prevent CheckControls() from thinking it's a repeat key
     SWOS::MenuProc();
     queueSdlKeyUp(keyCode);
 }
@@ -466,14 +477,14 @@ void SelectFilesMenuTest::testArrowBackground(const MenuEntry *arrowEntry)
     int y = arrowEntry->y + arrowEntry->height / 2 - kArrowHeight / 2;
 
     auto pixels = arrowEntry->ordinal == arrowUp ? upArrowBuffer : downArrowBuffer;
-    auto screenPtr = linAdr384k + screenWidth * y + x;
+    auto screenPtr = swos.linAdr384k + swos.screenWidth * y + x;
     auto backgroundPtr = screenPtr + 2 * kVirtualScreenSize;
 
     for (int i = 0; i < kArrowHeight; i++) {
         for (int j = 0; j < kArrowWidth; j++) {
             if (!pixels[i * kArrowWidth + j]) {
-                auto screenPixel = screenPtr[i * screenWidth + j];
-                auto backgroundPixel = backgroundPtr[i * screenWidth + j];
+                auto screenPixel = screenPtr[i * swos.screenWidth + j];
+                auto backgroundPixel = backgroundPtr[i * swos.screenWidth + j];
                 assertEqual(screenPixel, backgroundPixel);
             }
         }
@@ -642,7 +653,10 @@ void SelectFilesMenuTest::testSelectingFiles()
             return false;
         });
 
+        auto mark = SwosVM::markAllMemory();
+
         for (selectedFileIndex = 0; selectedFileIndex < kNumFiles; selectedFileIndex++) {
+            SwosVM::releaseAllMemory(mark);
             auto selectedFilename = showSelectFilesMenu("TEST SELECTING FILES", filenames, save ? ".CAR" : nullptr, saveFilenameBuf);
             auto expectedFilename = filenames[selectedFileIndex].name;
             assertEqual(selectedFilename, expectedFilename);
@@ -659,7 +673,7 @@ static void scrollList(int direction, bool useWheel)
 
     if (useWheel) {
         queueSdlMouseWheelEvent(direction);
-        updateControls();
+        processControlEvents();
         SWOS::MenuProc();
     } else {
         auto entryIndex = direction < 0 ? arrowDown : arrowUp;
@@ -711,6 +725,7 @@ static void verifyScrolling(const FoundFileList& filenames, const ColumnInfo& co
 
 void SelectFilesMenuTest::testScrolling()
 {
+    auto mark = SwosVM::markAllMemory();
     constexpr int kNumCases = 1 << 6;
 
     for (int i = 0; i < kNumCases; i++) {
@@ -724,6 +739,7 @@ void SelectFilesMenuTest::testScrolling()
         if (!empty)
             numFiles = kNumFilenameItems + ColumnInfo::getNumColumns(useLongNames) + overflowItems;
 
+        SwosVM::releaseAllMemory(mark);
         auto filenames = generateFilenames(numFiles, useLongNames);
         showSelectFilesMenu("TEST SELECTING FILES", filenames, save ? ".CAR" : nullptr);
 
@@ -753,18 +769,18 @@ void SelectFilesMenuTest::testAbortSave()
 
     setupFakeFiles({ "bomb.hil", "tomb.hil", "romb.hil", "zomb.hil" });
 
-    constexpr char kSaveFilename[] = "MALI MIKA";
-    char saveFilenameBuf[32];
-    strcpy(saveFilenameBuf, kSaveFilename);
+    auto saveFilenameBuf = swos.g_pitchDatBuffer;
+    memcpy(saveFilenameBuf, "MALI MIKA\0SAVE HIGHLIGHTS", 26);
+    memset(swos.g_currentMenu, 0, sizeof(Menu));
 
     A0 = saveFilenameBuf;
     D0 = *(dword *)"LIH.";
-    A1 = "SAVE HIGHLIGHTS";
+    A1 = saveFilenameBuf + 10;
 
     SWOS::SelectFileToSaveDialog();
 
     assertTrue(D0);
-    assertTrue(!strcmp(saveFilenameBuf, kSaveFilename));
+    assertTrue(!strcmp(saveFilenameBuf, "MALI MIKA"));
 
     SWOS_UnitTest::setMenuCallback(nullptr);
 }
@@ -792,9 +808,11 @@ void SelectFilesMenuTest::testLongExtensions()
 {
     setupFakeFiles({ "grak.diy", "grak.diyu", "grak.di", "grak.diyuuuu", "krak.diy" });
 
-    A0 = "HUMBUG";
     D0 = *(dword *)"YID.";
-    A1 = "PROWNING THE SHENNANS";
+    A0 = swos.g_pitchDatBuffer;
+    memcpy(A0, "HUMBUG\0PROWNING THE SHENNANS", 28);
+    A1 = A0 + 7;
+    memset(swos.g_currentMenu, 0, sizeof(Menu));
 
     SWOS::SelectFileToSaveDialog();
 
@@ -805,12 +823,12 @@ void SelectFilesMenuTest::testLongExtensions()
     });
 
     assertTrue(firstFileEntry != endEntry);
-    assertItemIsString(firstFileEntry, "GRAK");
+    assertItemIsStringCaseInsensitive(firstFileEntry, "GRAK");
 
     auto secondFileEntry = firstFileEntry + 1;
 
     assertTrue(secondFileEntry != endEntry);
-    assertItemIsString(secondFileEntry, "KRAK");
+    assertItemIsStringCaseInsensitive(secondFileEntry, "KRAK");
 
     auto noMoreFiles = std::all_of(secondFileEntry + 1, endEntry, [](const auto& entry) {
         return entry.invisible;
@@ -819,18 +837,33 @@ void SelectFilesMenuTest::testLongExtensions()
     assertTrue(noMoreFiles);
 }
 
-static MenuEntry *findEntry(const char *text)
+static MenuEntry *findEntry(const char *text, bool caseInsensitive = false)
 {
     auto menu = getCurrentMenu();
     auto entry = getMenuEntry(0);
     auto entrySentinel = entry + menu->numEntries;
+    auto cmp = caseInsensitive ? _stricmp : strcmp;
 
     for (; entry < entrySentinel; entry++)
-        if (entry->isString() && !strcmp(entry->string(), text))
+        if (entry->isString() && !cmp(entry->string(), text))
             return entry;
 
     assertFalse("Failed to find entry with given text");
     return entry - 1;
+}
+
+static void verifyDiyFilesEqual(const char *path1, const char *path2)
+{
+    size_t size1, size2, numWrites;
+    auto data1 = getFakeFileData(path1, size1, numWrites);
+    auto data2 = getFakeFileData(path2, size2, numWrites);
+    assertTrue(data1 && data2);
+
+    for (const auto& chunk : { std::make_pair(0, 2'906), std::make_pair(2'908, 5'170), std::make_pair(5'174, int(size1)) }) {
+        int from = chunk.first;
+        int to = chunk.second;
+        assertTrue(!memcmp(data1 + from, data2 + from, to - from));
+    }
 }
 
 void SelectFilesMenuTest::testSaveCompetition()
@@ -852,7 +885,7 @@ void SelectFilesMenuTest::testSaveCompetition()
         auto menu = getCurrentMenu();
         auto entry = menu->selectedEntry;
 
-        assertItemIsString(entry, "CANADA");
+        assertItemIsStringCaseInsensitive(entry, "CANADA");
         selectItem(entry);
 
         SWOS_UnitTest::setMenuCallback([] {
@@ -870,11 +903,11 @@ void SelectFilesMenuTest::testSaveCompetition()
 
     SWOS_UnitTest::setMenuCallback([] {
         auto entry = getMenuEntry(inputSaveFilename);
-        assertItemIsString(entry, "CANADA");
+        assertItemIsStringCaseInsensitive(entry, "CANADA");
 
         queueSdlKeyDown(SDL_SCANCODE_Z);
         queueSdlKeyDown(SDL_SCANCODE_RETURN);
-        menuCycleTimer = 2;
+        swos.menuCycleTimer = 2;
         selectItem(entry);
 
         return false;
@@ -885,7 +918,8 @@ void SelectFilesMenuTest::testSaveCompetition()
     selectItem(entry);
 
     auto savedDiyPath = joinPaths(root.c_str(), "CANADAZ.DIY");
-    assertTrue(fakeFilesEqualByContent(path.c_str(), savedDiyPath.c_str()));
+
+    verifyDiyFilesEqual(path.c_str(), savedDiyPath.c_str());
 }
 
 void SelectFilesMenuTest::testSaveCompetitionByClick()
@@ -911,7 +945,7 @@ void SelectFilesMenuTest::testSaveCompetitionByClick()
         auto menu = getCurrentMenu();
         auto entry = menu->selectedEntry;
 
-        assertItemIsString(entry, "CANADA");
+        assertItemIsStringCaseInsensitive(entry, "CANADA");
         selectItem(entry);
 
         SWOS_UnitTest::setMenuCallback([] {
@@ -928,7 +962,7 @@ void SelectFilesMenuTest::testSaveCompetitionByClick()
     SAFE_INVOKE(LoadOldCompetitionMenu);
 
     SWOS_UnitTest::setMenuCallback([] {
-        auto exitEntry = findEntry("CANADA");
+        auto exitEntry = findEntry("CANADA", true);
         selectItem(exitEntry);
 
         return false;

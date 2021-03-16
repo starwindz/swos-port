@@ -15,7 +15,7 @@
 #endif
 
 #ifdef SWOS_TEST
-# define assert(e) SWOS_UnitTest::assertImp(e, #e, __FILE__, __LINE__)
+# define assert(e) SWOS_UnitTest::assertImp(!!(e), #e, __FILE__, __LINE__)
 namespace SWOS_UnitTest {
     void assertImp(bool expr, const char *exprStr, const char *file, int line);
 }

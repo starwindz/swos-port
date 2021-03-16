@@ -866,7 +866,7 @@ struct GperfToken { const char *name; Token::Type type; Token::Category category
 
     proc = subprocess.run('gperf', shell=True, input=gperfInput, stdout=subprocess.PIPE, encoding='utf-8', check=True)
     out()
-    out(proc.stdout)
+    out(proc.stdout.replace('register ', ''))
 
     out('static const char *lookupTokenGperf(Token& token, const char *p)\n{')
     out(lookupTokenPrologue())

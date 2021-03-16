@@ -1,3 +1,116 @@
+Controls v2.0
+=============
+
+Controls were redesigned, and made more general. Concepts of "controller event" and "game control event" were
+introduced. Controller events are specific to game controllers and they could be a movement of axis to a
+certain value, hat or button triggering and so on. Game control events are instructions to the game coming
+from controllers, e.g. "left", or "kick", or "bench". The game maintains a mapping from controller events to
+game control events. Game control events are implemented as bit-fields so a single controller event may
+trigger multiple game events.
+
+Game controller elements
+------------------------
+
+From the perspective of the game, game controllers have a certain number of event-producing elements, which
+can be one of the following types: buttons, axis, hats and trackballs.
+
+Buttons can only be pressed or not pressed, and they can be inverted -- meaning producing events when the game
+controller reports they aren't pressed, and vice versa.
+
+Axes can return a value in a full 16-bit range -32,768 to 32,767. It is possible to define arbitrary number of
+associated intervals which will trigger events once the axis value is in range. Some controllers have axes
+that only have positive or negative range, or return inverted values, but defining proper intervals allows for
+all the variations to be handled.
+
+Hats are similar to buttons, except they can have four states which can be OR-ed. They can have arbitrary
+numbers of bindings, and each binding has a mask and inverted flag. If mask matches current state the event is
+triggered. If inverted, hat value must not contain any bit in the mask for the event to trigger.
+
+Trackballs are mysterious elements that seem quite similar to mice in operation. Their handling is pretty
+similar to mice as well, and they can have events associated with positive and negative x and y axis
+movements. I couldn't get any actual controllers with trackballs, so everything is untested, and probably
+doesn't work.
+
+In all of the configure menus an empty element will always be shown if there are none (e.g. one axis with one
+interval even if there are none configured). It's for simplicity, and those empty elements will simply be
+skipped during the save.
+
+Keyboard
+--------
+
+Keyboard key-sets were extended to hold arbitrary number of key -> event mappings, instead of being fixed to
+just 6 (directions + kick + bench). Also PC scancodes are ditched in favour of SDL scancodes which should
+allow for more keys to be used (all or nearly all available to the OS).
+
+Quick config
+------------
+
+All this is pretty much advanced for a casual player, and the hope is that the auto-detection will cover most
+of cases. Then comes in the quick config menu which should set up the controller in a quick and simple way.
+Advanced configuration will be available for trouble-shooting and for advanced users looking to sharpen their
+weapons to the maximum ;).
+
+Sometimes a controller will have certain events firing non-stop (such as axes being off-center). If that is
+detected, before the quick config user will be asked to leave controller idle and press a button. That will
+enable the game to filter out those noise events.
+
+Default config
+--------------
+
+If there is no saved data about the newly connected game controller in the ini file, the game will try to
+check if it is in the SDL's game controller database. If so, SDL configuration will be used. It maps game
+controller elements onto X-Box compatible joypad. SWOS will use A as kick, B as bench and D-Pad and left/right
+sticks as directional controls.
+
+If the controller is not in the SDL database, a simple default configuration will be created: button 0 - kick,
+button 1 - bench, axis 0 - left/right, axis 1 - up/down, hat 0 and trackball 0 as directions. If the
+controller doesn't support some of the configured elements they will simply be ignored.
+
+Default dead zone of 8,000 is used. Any of the aforementioned default configurations can be edited later.
+
+Primary and secondary controller configuration
+----------------------------------------------
+
+In case both selected controllers have the same GUID we must attach an alternative configuration to one of
+them so that each player could configure their controller separately. So one will have primary and the other
+secondary configuration.
+
+There are problems with this setup, since the controllers having same GUIDs are practically indistinguishable.
+Game might wrongly recognize one as the other at start-up, but currently there is no known way to handle it
+properly.
+
+Menus
+-----
+
+Instead of menus being controllable by just keyboard + selected controllers, now keyboard + any connected
+controller simultaneously control them. This simplifies the code quite a bit and makes life easier for the
+players too (no need to select a menu controller explicitly before the game starts). The process of selecting
+a controller for a player will now merely select it as a default controller for the game (it will be
+preselected on the select controls screen before the game).
+
+Selecting controller by pressing fire on "PLAY MATCH" entry is abandoned, as it was too confusing and
+unintuitive. Instead, an additional screen will open.
+
+Say you have a defective game controller that could still be used after it's configured properly. But while
+not configured it could render menus unusable by sending invalid data. In order to be able to configure it
+an option to disable controllers in menus was added. It can be set directly in ini file if disconnecting the
+offending controller isn't viable.
+
+Play Match menu
+---------------
+
+It is the menu that pops up right before the game and after the players have set up their teams. It allows
+change of controls for any player. All available controls are listed in the middle. To select a control for
+the player select the control and press left/right while holding the fire. Left assigns it to the player 1,
+right to the player 2 (if 2 player game). It is also possible to drag with mouse. Currently selected controls
+for the players are on the left (player 1) and right (player 2). When satisfied with choice choose "PLAY"
+item. There's also a "BACK" button to return to set up team menu.
+
+
+
+Controls v1.0
+=============
+
 There are several available options to control the menu and the team during
 the game:
 - keyboard (2 simultaneous players can use it with separate key configurations)
@@ -17,8 +130,8 @@ Controls Menu
 - configure controls buttons should only be enabled for joysticks/keyboards
 - selecting mouse controls should unselect other player's mouse, if selected
 - redefine keys menu should be exitable by clicking a mouse
-- at the end of redefining keys prompt is controlled by keys: y - accepts choice, n - clears the choice and starts
-  over, q - quits to previous menu without changing anything
+- at the end of redefining keys prompt is controlled by keys: y - accepts choice, n - clears the choice and
+  starts over, q - quits to previous menu without changing anything
 - q is an additional option compared to SWOS++
 - if the keyboard isn't properly configured (some of the keys are null), redefine keys dialog will
   be automatically shown -- in this keys user is not allowed to quit
@@ -40,8 +153,8 @@ Joysticks
 
 Play Match
 
-- when starting a game, controls for the team will be determined by the controller that pressed fire on "PLAY MATCH"
-  menu entry
+- when starting a game, controls for the team will be determined by the controller that pressed fire on
+  "PLAY MATCH" menu entry
 - if a controller has already been selected for the previous team, nothing should happen (it should be quietly
   ignored)
 - fire from any joypad connected to the system is accepted (any button really)

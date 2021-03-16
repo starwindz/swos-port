@@ -22,6 +22,9 @@ class TestPreprocessor(unittest.TestCase):
         ('i=13,j=17,(i,j)=29,j', 29),   # comma expression as lvalue
         ('(5,10,15,i)=125,i', 125),     # comma expression as lvalue (rvalues first)
         ('i=0,j=23,k=i&&j||i+1,k', 1),
+        ('"don\'t"&&"stop"||"me"&&"now"', 1),
+        ('"elevator">"elephant"', 1),
+        ('"100"<9', 1),
         ('i=15,j=0,k=i&&j||j,k', 0),
         ('i=15,j=0,k=i&&j||3*j,k', 0),
         ('3|5', 7),
@@ -51,6 +54,7 @@ class TestPreprocessor(unittest.TestCase):
         ('i=42,i++', 42),
         ('i=41,++i', 42),
         ('i=-1,z=5+i--,z+i', 2),
+        ('a=4,b=a++,b+a', 9),
         ('~5', -6),
         ('!45', 0),
         ('!0', 1),
@@ -62,6 +66,27 @@ class TestPreprocessor(unittest.TestCase):
         ('i=0x80000000,i<<=|1', 1),
         ('i=0,i^=1,i|=3,-i', -3),
         ('@kScreenWidth-@kScreenHeight', 120),
+        ('"KAZAAM"', 'KAZAAM'),
+        (':bomb', 'bomb'),
+        (':bomb[0]', 'b'),
+        ('"bomb"[2]', 'm'),
+        ('"bombs"[3-4]', 's'),
+        ("'abc' + 'def'", 'abcdef'),
+        ('153[2]', '3'),
+        ('"Back to the Future " + 3', 'Back to the Future 3'),
+        ("'a' + 'ha' * 4", 'ahahahaha'),
+        ("'a' + 4 * 'ha'", 'ahahahaha'),
+        ("10'000 + 100'000", 110_000),
+        ("0x1'000 + 0x1'0'0'a", 0x2_00a),
+        ("int'900'", 900),
+        ("int(str(int'900')+10)-45'000-40'000-5'000", 10),
+        ('a="string",a+=a[0],a*=2,a+="0xbabe"', 'stringsstrings0xbabe'),
+        ('"Don\'t give up"<<6', 'give up'),
+        ('"it\'ll be done maybe tomorrow, but probably next week">>39', "it'll be done"),
+        ('"brate"|>>2', 'tebra'),
+        ('"munze"<<|3', 'zemun'),
+        ('2 > 1 ? :wood::steel', 'wood'),
+        ('""', ''),
     )
     def testExpressions(self, testData, mockPrint):
         rawInput, expectedOutput = testData
@@ -81,6 +106,9 @@ class TestPreprocessor(unittest.TestCase):
         ('a = #{3 * 221}', None, 'a=663'),
         ('a = "abc".left(#{10 / 5})', None, 'a="ab"'),
         ('#repeat 2`#print #join(hip, #{i}, hop)`#endRepeat', ((2, "hip0hop"), (2, "hip1hop")), ''),
+        ("#print #{'\"Miyawaki forest\"'}:q", ((1, '"Miyawaki forest"'),), None),
+        ('a=5 ` b=10 ` c=15 ` d=b+c ` e=d+a ` #print #{2 * e - 3}', ((6, '57'),), None),
+        ('#{g="bombsz"[1945]}', None, 'g=""'),
     )
     def testPreprocessorExpressionContexts(self, testData, mockPrint):
         input, printOutput, properties = testData
@@ -109,8 +137,7 @@ class TestPreprocessor(unittest.TestCase):
         if printOutput:
             for call, (line, text) in zip(calls, printOutput):
                 expectedOutput = Util.formatMessage(f"`{text}'", TestHelper.kTestFilename, line)
-                args, _ = call
-                actualOutput = ' '.join(args)
+                actualOutput = ' '.join(call.args)
                 self.assertEqual(actualOutput, expectedOutput)
         else:
             mockPrint.assert_not_called()
@@ -226,8 +253,8 @@ class TestPreprocessor(unittest.TestCase):
         )),
         ('''Menu GeorgyPorgy
             {
-                export kMaxColumns = 3
-                export kMaxEntriesPerColumn = 2
+                export kMaxColumns = 0x3
+                export kMaxEntriesPerColumn = #{5*6+int("-10")-2*9}
 
                 #repeat kMaxColumns
                     #repeat kMaxEntriesPerColumn
@@ -287,3 +314,57 @@ class TestPreprocessor(unittest.TestCase):
         for dimension, expectedDimension in zip(kDimensions, expectedDimensions):
             self.assertIn(dimension, parser.varStorage.globals)
             self.assertEqual(parser.varStorage.globals[dimension].value, str(expectedDimension))
+
+    @data(
+        ('w', '"C8"', 'true', 16),
+        ('w', '"PFOA"', 'false', 24),
+        ('h', '"PFOS"', 'false', 6),
+        ('h', 'false', '', 6),
+        ('h', 1, '', 8),
+        ('h', '', '', 6),
+    )
+    def testTextWidthHeightParsing(self, testData):
+        dimension, param1, param2, result = testData
+        if param2:
+            param2 = ', ' + param2
+        dimension = 'width' if dimension == 'w' else 'height'
+
+        input = f'#warningsOff\na = #text{dimension.title()}({param1}{param2})\n'
+        parser = getParserWithData(input)
+
+        self.assertIn('a', parser.varStorage.globals)
+        self.assertEqual(parser.varStorage.globals['a'].value, str(result))
+
+    @data(
+        ('1', True),
+        ('0', False),
+        ('6 * 5 - 31', True),
+        ('6 * 5 - 30', False),
+        ("'nuahahah'", True),
+        ('nuahahah', False),
+        ('4+$', "`$' is not a valid operand"),
+        ('4==2+2', True),
+        ('(4==2+2)', True),
+        ('gak=+1`kruger = -gak`#assert kruger+3', True),
+        ('#{i=1}`#assert --i', False),
+        ('#{i=1}`#assert --i+1', True),
+    )
+    def testAssert(self, testData):
+        input, expected = testData
+        line = 1
+
+        if '`' in input:
+            line += input.count('`')
+            input = input.replace('`', '\n')
+        else:
+            input = f'#assert {input}'
+
+        input = '#warningsOff ' + input
+
+        if isinstance(expected, str) or not expected:
+            if not expected:
+                expected = 'assertion failed'
+            expected = TestHelper.formatError(TestHelper.kTestFilename, line, expected)
+            TestHelper.assertExitWithError(self, lambda: getParserWithData(input), expected)
+        else:
+            getParserWithData(input)

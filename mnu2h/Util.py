@@ -7,9 +7,9 @@ from Token import Token
 
 # formatMessage
 #
-# Internal routine for having consistent output between error and warning reporting functions.
+# Internal routine for having a consistent output between error and warning reporting functions.
 #
-def formatMessage(text, pathOrToken, line, isWarning=False):
+def formatMessage(text, pathOrToken=None, line=None, isWarning=False):
     assert isinstance(text, str) and text
     assert isinstance(pathOrToken, (str, Token, type(None)))
     assert isinstance(line, (int, type(None)))
@@ -40,9 +40,13 @@ def formatMessage(text, pathOrToken, line, isWarning=False):
 #     pathOrToken - path of the file we were processing, or token to get the info from (not present if tokenizing string)
 #     line        - line number where error occurred (can be omitted if using token)
 #
-# Prints formatted error to stdout, with input filename and offending line, and exits the program.
+# Prints a formatted error string to stdout, with input filename and offending line, and exits the program.
 #
 def error(text, pathOrToken=None, line=None):
+    assert isinstance(text, str) and text
+    assert isinstance(pathOrToken, (str, Token, type(None)))
+    assert isinstance(line, (int, type(None)))
+
     errorMessage = formatMessage(text, pathOrToken, line)
     sys.exit(errorMessage)
 
@@ -51,13 +55,63 @@ def error(text, pathOrToken=None, line=None):
 # in:
 #     text  - warning text
 #     token - token associated with the warning
-#     line     - line number of the warning
+#     line  - line number of the warning
 #
 # Issues a warning to stdout, with input filename and line number.
 #
 def warning(text, tokenOrPath, line=None):
     warningMessage = formatMessage(text, tokenOrPath, line, True)
     print(warningMessage)
+
+# verifyIdentifier
+#
+# in:
+#     id    - string to be verified (is it a valid identifier or not)
+#     token - token of the string for error-reporting purposes
+#
+# Checks if the given string is an identifier, and if not reports and error and exits the program.
+#
+def verifyIdentifier(id, token):
+    assert isinstance(id, str)
+    assert isinstance(token, Token)
+
+    if not id.isidentifier():
+        error(f"`{id}' is not a valid identifier", token)
+
+# verifyNonCppKeyword
+#
+# in:
+#     id      - string that's being checked for C++ keyword
+#     token   - token for error-reporting purposes
+#     context - optional context string, it is what this token represents (e.g. menu name, entry name...)
+#
+# Makes sure that the given token isn't a C++ keyword. If it is, displays an error and ends the program.
+#
+def verifyNonCppKeyword(id, token, context=None):
+    assert isinstance(id, str)
+    assert isinstance(token, Token)
+    assert context is None or isinstance(context, str) and context
+
+    kCppKeywords = {
+        'alignas', 'alignof', 'and', 'and_eq', 'asm', 'auto', 'bitand', 'bitor', 'bool', 'break', 'case',
+        'catch', 'char', 'char8_t', 'char16_t', 'char32_t', 'class', 'compl', 'concept', 'const', 'consteval',
+        'constexpr', 'const_cast', 'continue', 'decltype', 'default', 'delete', 'do', 'double', 'dynamic_cast',
+        'else', 'enum', 'explicit', 'export', 'extern', 'false', 'float', 'for', 'friend', 'goto', 'if',
+        'import', 'inline', 'int', 'long', 'module', 'mutable', 'namespace', 'new', 'noexcept', 'not', 'not_eq',
+        'nullptr', 'operator', 'or', 'or_eq', 'private', 'protected', 'public', 'register', 'reinterpret_cast',
+        'requires', 'return', 'short', 'signed', 'sizeof', 'static', 'static_assert', 'static_cast', 'struct',
+        'switch', 'template', 'this', 'thread_local', 'throw', 'true', 'try', 'typedef', 'typeid', 'typename',
+        'union', 'unsigned', 'using', 'virtual', 'void', 'volatile', 'wchar_t', 'while', 'xor', 'xor_eq'
+    }
+
+    if id in kCppKeywords:
+        errorStr = f"can't use a C++ keyword `{id}'"
+
+        if context:
+            context = withArticle(context)
+            errorStr += f' as {context}'
+
+        error(errorStr, token)
 
 # isString
 #
@@ -67,9 +121,9 @@ def warning(text, tokenOrPath, line=None):
 # Returns true if the given string looks like a quoted string.
 #
 def isString(string):
-    assert string and isinstance(string, str)
+    assert isinstance(string, str)
 
-    return string[0] == '"' and string[-1] == '"' or string[0] == "'" and string[-1] == "'"
+    return len(string) > 1 and (string[0] == string[-1] == '"' or string[0] == string[-1] == "'")
 
 # unquotedString
 #
@@ -79,7 +133,7 @@ def isString(string):
 # Returns new string with quotes removed.
 #
 def unquotedString(string):
-    assert string and isinstance(string, str)
+    assert isinstance(string, str)
 
     if isString(string):
         string = string[1:-1]
@@ -92,6 +146,7 @@ def unquotedString(string):
 #    string - a string to remove enclosing parentheses from
 #
 # Returns a string with balanced, enclosing parentheses removed.
+# Doesn't parse! Only removes opening-closing pairs.
 #
 def removeEnclosingParentheses(string):
     while string and string[0] == '(' and string[-1] == ')':
@@ -198,10 +253,45 @@ def rotateRight(n, r):
     rotatedBits = n & mask
     return (n >> r) | (rotatedBits << (32 - r))
 
+def shiftStringLeft(string, count):
+    assert isinstance(string, str)
+    assert isinstance(count, int)
+
+    count = min(count, len(string))
+    return string[count:]
+
+def shiftStringRight(string, count):
+    assert isinstance(string, str)
+    assert isinstance(count, int)
+
+    count = min(count, len(string))
+    return string[:-count]
+
+def rotateStringLeft(string, count):
+    assert isinstance(string, str)
+    assert isinstance(count, int)
+
+    count = min(count, len(string))
+    return string[count:] + string[0:count]
+
+def rotateStringRight(string, count):
+    assert isinstance(string, str)
+    assert isinstance(count, int)
+
+    count = min(count, len(string))
+    return string[-count:] + string[:-count]
+
+# withArticle
+#
+# in:
+#     word - a word to try to determine an article for
+#
+# Tries to determine a correct article for the word, prefixes it with it and returns it.
+#
 def withArticle(word):
     assert isinstance(word, str)
 
-    if not word or not word[0].isalpha() or word[-1].lower() == 's':
+    if len(word) < 2 or not word[0].isalpha() or word[-1].lower() == 's' and word[-2] != 'a':
         return word
 
     for article in ('a', 'an', 'the'):
@@ -234,9 +324,9 @@ def getNumericValue(text, token):
 # getBoolValue
 #
 # in:
-#     token - input token to get bool value from
+#     token - input token to get the boolean value from
 #
-# Extracts a boolean value from the given token and returns it
+# Extracts a boolean value from the given token and returns it.
 #
 def getBoolValue(token):
     assert isinstance(token, Token)

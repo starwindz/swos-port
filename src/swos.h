@@ -37,7 +37,7 @@ public:
     }
     template<typename PtrType, std::enable_if_t<std::is_pointer<PtrType>::value, int> = 0>
     void loadFrom(PtrType ptr) {
-        auto offset = fetch((dword *)ptr);
+        auto offset = ::fetch((dword *)ptr);
         assert(offset == -1 || (SwosVM::offsetToPtr(offset), true));
         store(&m_offset, offset);
     }
@@ -65,7 +65,7 @@ public:
     SwosDataPointer operator++() {
         return operator+=(sizeof(Type));
     }
-    SwosDataPointer& operator--(int) {
+    SwosDataPointer operator--(int) {
         auto tmp(*this);
         m_offset -= sizeof(Type);
         assert((SwosVM::offsetToPtr(m_offset), true));
@@ -83,10 +83,13 @@ public:
         return operator+=(-inc);
     }
     template <typename T> T as() { return reinterpret_cast<T>(get()); }
-    template <typename T> T asAligned() const {
-        auto offset = fetch(&m_offset);
+    template <typename T = Type *> T asAligned() const {
+        auto offset = ::fetch(&m_offset);
         assert((SwosVM::offsetToPtr(offset), true));
         return reinterpret_cast<T>(SwosVM::offsetToPtr(offset));
+    }
+    std::decay_t<Type> fetch() const {
+        return ::fetch(asAligned());
     }
     const Type *asConst() const { return get(); }
     Type *asPtr() const { return (Type *)get(); }
@@ -94,6 +97,7 @@ public:
     const char *asAlignedConstCharPtr() const { return asAligned<const char *>(); }
     char *asAlignedCharPtr() { return asAligned<char *>(); }
     char *asCharPtr() { return (char *)get(); }
+    const char *asConstCharPtr() const { return (char *)get(); }
     dword getRaw() const { return m_offset; }
 
 private:
@@ -134,7 +138,8 @@ public:
     void clearAligned() {
         store(&m_index, 0);
     }
-    explicit operator bool() { return m_index && m_index != -1; }
+    explicit operator bool() const { return !empty(); }
+    bool empty() const { return !SwosVM::fetchProc(m_index); }
     void operator()() { SwosVM::invokeProc(m_index); }
     bool operator==(SwosVM::VoidFunction proc) const {
         return SwosVM::fetchProc(m_index) == proc;
@@ -174,24 +179,46 @@ struct Menu
     }
 };
 
-enum MenuEntryBackgroundType : word
+enum MenuEntryBackground : word
 {
     kEntryNoBackground = 0,
-    kEntryFunc1 = 1,
+    kEntryBackgroundFunction = 1,
     kEntryFrameAndBackColor = 2,
     kEntrySprite1 = 3,
 };
 
-enum MenuEntryContentType : word
+enum MenuEntryContent : word
 {
     kEntryNoForeground = 0,
-    kEntryFunc2 = 1,
+    kEntryContentFunction = 1,
     kEntryString = 2,
     kEntrySprite2 = 3,
     kEntryStringTable = 4,
-    kEntryMultiLineText = 5,
+    kEntryMultilineText = 5,
     kEntryNumber = 6,
-    kEntrySpriteCopy = 7,
+    kEntryColorConvertedSprite = 7,
+};
+
+enum TextColors
+{
+    kWhiteText = 0,
+    kDarkGrayText = 1,
+    kWhiteText2 = 2,
+    kBlackText = 3,
+    kBrownText = 4,
+    kLightBrownText = 5,
+    kOrangeText = 6,
+    kGrayText = 7,
+    kNearBlackText = 8,
+    kVeryDarkGreenText = 9,
+    kRedText = 10,
+    kBlueText = 11,
+    kPurpleText = 12,
+    kSoftBlueText = 13,
+    kGreenText = 14,
+    kYellowText = 15,
+    kTextLeftAligned = 1 << 15, kTextRightAligned = 1 << 14, kShowText = 1 << 9, kBlinkText = 1 << 13,
+    kBigText = 1 << 4, kBigFont = 1 << 4,
 };
 
 template<typename T>
@@ -207,6 +234,18 @@ struct StringTable
     // followed by char pointers
 
     StringTable(int16_t *index, int16_t initialValue) : index(index), initialValue(initialValue) {}
+
+    char *operator[](size_t index) const {
+        auto stringOffset = fetch((dword *)(this + 1) + index);
+        return SwosVM::offsetToPtr(stringOffset);
+    }
+
+    char *currentString() const {
+        if (!index || *index < 0)
+            return nullptr;
+        else
+            return (*this)[*index];
+    }
 };
 
 struct StringTableNative
@@ -242,14 +281,16 @@ struct StringTableNative
     }
 };
 
-struct MultiLineTextNative
+struct MultilineTextNative
 {
     byte numLines;
     // followed by char pointers
 
     const char *operator[](size_t index) const {
         assert(index < numLines);
-        return fetch<char *>(getTrailingStrings(this) + index);
+        assert(reinterpret_cast<uintptr_t>(this) % sizeof(void *) == 0);
+
+        return getTrailingStrings(this)[index];
     }
 };
 
@@ -286,18 +327,18 @@ struct MenuEntry
     int16_t y;
     word width;
     word height;
-    MenuEntryBackgroundType type1;
+    MenuEntryBackground background;
     union BackgroundData {
         BackgroundData() {}
         SwosProcPointer entryFunc;
         word entryColor;
         word spriteIndex;
-    } u1;
-    MenuEntryContentType type2;
+    } bg;
+    MenuEntryContent type;
     word stringFlags;
     union ContentData {
         ContentData() {}
-        SwosProcPointer entryFunc2;
+        SwosProcPointer contentFunction;
         SwosDataPointer<char> string;
         SwosDataPointer<const char> constString;
         word spriteIndex;
@@ -305,13 +346,23 @@ struct MenuEntry
         SwosDataPointer<void> multiLineText;
         word number;
         SwosDataPointer<void> spriteCopy;
-    } u2;
+    } fg;
     SwosProcPointer onSelect;
     int16_t controlMask;
     SwosProcPointer beforeDraw;
-    SwosProcPointer onReturn;
+    SwosProcPointer afterDraw;
 
     MenuEntry() {}
+
+    int centerX() const {
+        return x + width / 2;
+    }
+    int endX() const {
+        return x + width;
+    }
+    int endY() const {
+        return y + height;
+    }
 
     enum Direction {
         kInitialDirection,
@@ -322,16 +373,16 @@ struct MenuEntry
         kNumDirections,
     };
 
-    const char *typeToString() const {
-        switch (type2) {
+    inline const char *typeToString() const {
+        switch (type) {
         case kEntryNoForeground: return "empty";
-        case kEntryFunc2: return "function";
+        case kEntryContentFunction: return "function";
         case kEntryString: return "string";
         case kEntrySprite2: return "sprite";
         case kEntryStringTable: return "string table";
-        case kEntryMultiLineText: return "multi-line string";
+        case kEntryMultilineText: return "multi-line string";
         case kEntryNumber: return "number";
-        case kEntrySpriteCopy: return "sprite copy";
+        case kEntryColorConvertedSprite: return "color converted sprite";
         default: assert(false); return "";
         }
     }
@@ -361,22 +412,47 @@ struct MenuEntry
         return !invisible && !disabled;
     }
     bool isString() const {
-        return type2 == kEntryString;
+        return type == kEntryString;
     }
     char *string() {
-        assert(type2 == kEntryString);
-        return u2.string.asAlignedCharPtr();
+        assert(type == kEntryString);
+        return fg.string.asAlignedCharPtr();
     }
     const char *string() const {
-        assert(type2 == kEntryString);
-        return u2.string.asAlignedConstCharPtr();
+        assert(type == kEntryString);
+        return fg.string.asAlignedConstCharPtr();
     }
     void setString(char *str) {
-        assert(type2 == kEntryString);
-        u2.string.set(str);
+        assert(type == kEntryString);
+        fg.string.set(str);
+    }
+    void setString(const char *str) {
+        assert(type == kEntryString);
+        fg.string.set(const_cast<char *>(str));
+    }
+    void copyString(const char *str);
+    void setNumber(int number) {
+        assert(type == kEntryNumber);
+        fg.number = number;
     }
     void setBackgroundColor(int color) {
-        u1.entryColor = color;
+        bg.entryColor = color;
+    }
+    void setFrameColor(int color) {
+        bg.entryColor = (bg.entryColor & 0x0f) | (color << 4);
+    }
+    word backgroundColor() const {
+        assert(background == kEntryFrameAndBackColor);
+        return bg.entryColor & 0x0f;
+    }
+    word frameColor() const {
+        assert(background == kEntryFrameAndBackColor);
+        return (bg.entryColor >> 4) & 0x0f;
+    }
+    int solidTextColor() const {
+        assert(type == kEntryString || type == kEntryStringTable || type == kEntryMultilineText || type == kEntryNumber);
+        int color = stringFlags & 0xf;
+        return color ? color : kWhiteText2;
     }
 };
 
@@ -384,9 +460,9 @@ constexpr int kStdMenuTextSize = 70;
 
 /* sprite graphics structure - from *.dat files */
 struct SpriteGraphics {
-    SwosDataPointer<char> data; /* pointer to actual graphics                       */
+    SwosDataPointer<unsigned char> data; /* pointer to actual graphics              */
     char unk1[6];               /* unknown                                          */
-    int16_t width;              /* width                                            */
+    int16_t width;              /* width (in pixels)                                */
     int16_t height;             /* height                                           */
     int16_t wquads;             /* (number of bytes / 8) in one line                */
     int16_t centerX;            /* center x coordinate                              */
@@ -514,7 +590,7 @@ struct TeamFile
     byte teamOrdinal;
     word globalTeamNumber;
     TeamControls teamControls;
-    byte teamName [17];
+    char teamName[17];
     byte writesZeroHere;
     byte andWith0xFE;
     byte tactics;
@@ -669,6 +745,9 @@ static_assert(sizeof(TeamGeneralInfo) == 145, "TeamGeneralInfo is invalid");
 
 enum SpriteIndices
 {
+    kBlockSpriteIndex = 44,
+    kLeftArrowSprite = 179,
+    kRightArrowSprite = 175,
     kUpArrowSprite = 183,
     kDownArrowSprite = 184,
     kMaxMenuSprite = 226,
@@ -686,6 +765,9 @@ enum SpriteIndices
     kNumSprites = 1334,
 };
 
+constexpr int kSmallDigitMaxWidth = 6;
+constexpr int kSmallCursorWidth = 6;
+
 enum GameTypes
 {
     kGameTypeNoGame = 0,
@@ -695,26 +777,28 @@ enum GameTypes
     kGameTypeSeason = 3,
 };
 
-enum TextColors
+enum SwosControls
 {
-    kWhiteText = 0,
-    kDarkGrayText = 1,
-    kWhiteText2 = 2,
-    kBlackText = 3,
-    kBrownText = 4,
-    kLightBrownText = 5,
-    kOrangeText = 6,
-    kGrayText = 7,
-    kNearBlackText = 8,
-    kVeryDarkGreenText = 9,
-    kRedText = 10,
-    kBlueText = 11,
-    kPurpleText = 12,
-    kSoftBlueText = 13,
-    kGreenText = 14,
-    kYellowText = 15,
-    kLeftAligned = 1 << 15, kRightAligned = 1 << 14, kShowText = 1 << 9, kBlinkText = 1 << 13,
-    kBigText = 1 << 4, kBigFont = 1 << 4,
+    kSwosKeyboardOnly = 1,
+    kSwosJoypadOnly,
+    kSwosJoypadAndKeyboard,
+    kSwosKeyboardAndJoypad,
+    kSwosTwoJoypads,
+    kSwosMouse,
+};
+
+enum MenuControlMask
+{
+    kFireMask = 0x01,
+    kLeftMask = 0x02,
+    kRightMask = 0x04,
+    kUpMask = 0x08,
+    kDownMask = 0x10,
+    kShortFireMask = 0x20,
+    kUpLeftMask = 0x40,
+    kDownRightMask = 0x80,
+    kUpRightMask = 0x100,
+    kDownLeftMask = 0x200,
 };
 
 enum MenuEntryBackgrounds
@@ -729,6 +813,7 @@ enum MenuEntryBackgrounds
     kPurple = 11,
     kLightBlue = 13,
     kGreen = 14,
+    kYellow = 15,
 };
 
 enum PCKeys
@@ -827,9 +912,11 @@ enum class GameState : word
 };
 
 constexpr int kMenuScreenWidth = 320;
+constexpr int kMenuScreenHeight = 200;
 constexpr int kGameScreenWidth = 384;
 
 constexpr int kVirtualScreenSize = 65'536;
+constexpr int kMenuBackgroundOffset = 131'072;
 
 static constexpr int kHilHeaderSize = 3'626;
 constexpr int kSingleHighlightBufferSize = 19'000;

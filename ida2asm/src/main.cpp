@@ -1,6 +1,7 @@
-// Simplified parser for transforming IDA Pro ASM output into one or more files that can actually be assembled.
-// Experimenting with using data-flow based programming paradigm. With the previous parser being a flop
-// (~2 minutes to process the SWOS ASM file), this one being blazing fast is simply a must!
+// Simplified parser for transforming IDA Pro ASM output into one or more files that can actually be
+// assembled or compiled. Experimenting with using data-flow based programming paradigm. With the
+// previous parser being a flop // (~2 minutes to process the SWOS ASM file), this one being blazing
+// fast is simply a must!
 
 #include "Util.h"
 #include "InputSymbols/SymbolFileParser.h"

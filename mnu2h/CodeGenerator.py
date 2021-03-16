@@ -6,7 +6,9 @@ import Constants
 from Entry import Entry
 from Entry import ResetTemplateEntry
 from Menu import Menu
-from Parser import Parser
+from Variable import Variable
+
+from Parser.Parser import Parser
 
 kStubIfdef =  'SWOS_STUB_MENU_DATA'
 kPackPragmaOn = '#pragma pack(push, 1)'
@@ -39,7 +41,7 @@ class CodeGenerator:
                 inputFilename = os.path.basename(self.inputPath)
                 out(f'// automatically generated from {inputFilename}, do not edit')
                 out('#pragma once\n')
-                out('#include "menu.h"')
+                out('#include "menus.h"')
                 out('#include "swossym.h"\n')
                 out('using namespace SWOS_Menu;\n')
 
@@ -96,7 +98,7 @@ class CodeGenerator:
 
         stringTableLengths = self.parser.getStringTableLengths()
 
-        # don't forget to pack string tables structs as well!
+        # don't forget to pack string table structs as well!
         if stringTableLengths:
             out(kPackPragmaOn)
 
@@ -115,7 +117,7 @@ class CodeGenerator:
         assert callable(out)
 
         for numStrings in stringTableLengths:
-            out(f'struct StringTableNative{numStrings} : public StringTableNative{{')
+            out(f'struct StringTableNative{numStrings} : public StringTableNative {{')
             out(f'    const char *strings[{numStrings}];')
             out(f'    const bool nativeFlags[{numStrings + 1}];')
             out(f'    constexpr StringTableNative{numStrings}(int16_t *index, int16_t initialValue,')
@@ -148,21 +150,21 @@ class CodeGenerator:
                     if numStrings:
                         name = Util.getStringTableName(menuName, entry)
                         output = ''
-                        variable = f'&{st.variable}'
+                        nativeIndexVariable = st.nativeFlags[0]
+
+                        outIndexVariable = f'&{st.variable}'
 
                         if st.declareIndexVariable:
-                            assert st.nativeFlags[0]
+                            assert nativeIndexVariable
                             specifier = 'extern' if st.externIndexVariable else 'static'
                             output += f'{specifier} int16_t {st.variable};\n'
-                        elif not st.nativeFlags[0]:
+                        elif not nativeIndexVariable:
                             assert not st.externIndexVariable
-                            variable = f'reinterpret_cast<int16_t *>(SwosVM::Offsets::{st.variable})'
+                            outIndexVariable = f'reinterpret_cast<int16_t *>(SwosVM::Offsets::{st.variable})'
 
-                        output += f'const StringTableNative{numStrings} {name} {{\n    {variable}, {st.initialValue}, '
+                        output += f'const StringTableNative{numStrings} {name} {{\n    {outIndexVariable}, {st.initialValue}, '
 
                         for value, native in zip(st.values, st.nativeFlags[1:]):
-                            if value[0] == value[-1] == "'":
-                                value = f'"{value[1:-1]}"'
                             if not native:
                                 output += f'reinterpret_cast<const char *>(SwosVM::Offsets::{value}), '
                             else:
@@ -170,12 +172,6 @@ class CodeGenerator:
 
                         output = output[:-1] + '\n    ' + ', '.join(map(lambda flag: 'true' if flag else 'false', st.nativeFlags))
                         output += '\n};\n'
-
-#TODO: fixme when fixing tests; no need for static but what to do with externs?
-#                        if st.externIndexVariable:
-#                            output += f'#ifdef {kStubIfdef}\n'
-#                            output += f'static int16_t {st.variable};\n'
-#                            output += '#endif'
 
                         out(output)
 
@@ -201,7 +197,7 @@ class CodeGenerator:
 
             if not func in menu.properties:
                 menu.properties[func] = 0
-            elif menu.properties[func].startswith('$'):
+            elif Variable.isSwos(menu.properties[func]):
                 menu.properties[func] = f'SwosVM::Procs::{menu.properties[func][1:]}'
             else:
                 menuHeaderV2 = True
@@ -220,7 +216,7 @@ class CodeGenerator:
         if menuHeaderV2:
             out(', { ' + ''.join(map(lambda val: f'{("false", "true")[val]}, ', nativeFunction)) + '}', end='')
         else:
-            out(' ')
+            out(' ', end='')
 
         out('};')
 
@@ -239,7 +235,8 @@ class CodeGenerator:
                 out(f'\n    ResetTemplateEntry rte{resetTemplateIndex:02}{{}};')
                 resetTemplateIndex += 1
                 continue
-            elif entry.isTemplate():
+
+            if entry.isTemplate():
                 out(f'\n    TemplateEntry te{templateIndex:02}{{}};')
                 templateIndex += 1
 
@@ -285,17 +282,33 @@ class CodeGenerator:
         out('    enum Entries {')
 
         exportedOrdinals = False
+        entries = []
+
         for entry in menu.entries.values():
             if not entry.isTemplate() and entry.name:
                 out(f'        {entry.name} = {entry.ordinal},')
+                entries.append((entry.name, entry.ordinal))
                 exportedOrdinals = True
 
+        for alias, entryName in menu.entryAliases.items():
+            entryOrdinal = menu.entries[entryName].ordinal
+            entries.append((alias, entryOrdinal))
+            out(f'        {alias} = {entryOrdinal},')
+
         out('    };')
+
+        if len(entries):
+            out('\n    // entry pointers')
+            out(('#define makeEntryPointer(entryName, ord) static auto& entryName##Entry = '
+                '*reinterpret_cast<MenuEntry *>(swos.g_currentMenu + sizeof(Menu) + ord * sizeof(MenuEntry))'))
+            for entryName, ordinal in entries:
+                out(f'    makeEntryPointer({entryName}, {ordinal});')
+            out('#undef makeEntryPointer')
 
         if menu.exportedVariables and exportedOrdinals:
             out()
 
-        for property, (value, token) in menu.exportedVariables.items():
+        for property, (value, _) in menu.exportedVariables.items():
             out(f'    constexpr int {property} = {value};')
 
         out('}')
@@ -309,7 +322,7 @@ class CodeGenerator:
         for func in Constants.kEntryFunctions:
             value = getattr(entry, func)
             if value:
-                if value.startswith('$'):
+                if Variable.isSwos(value):
                     setattr(entry, func, f'SwosVM::Procs::{value[1:]}')
                 else:
                     entry.native.add(func)
@@ -318,7 +331,7 @@ class CodeGenerator:
             entry.native.add('stringTable')
 
         if entry.text:
-            if entry.text.startswith('$'):
+            if Variable.isSwos(entry.text):
                 entry.text = f'SwosVM::Offsets::{entry.text[1:]}'
             elif entry.text not in ('-1', '(-1)'):
                 entry.native.add('text')
@@ -375,7 +388,7 @@ class CodeGenerator:
             native = 'Native' if 'customDrawBackground' in entry.native else ''
             result.append(f'EntryCustomBackgroundFunction{native} ecbf{ord}{{ {entry.customDrawBackground} }};')
 
-        if entry.color and entry.color != '0':
+        if entry.forceColor or entry.color and entry.color != '0':
             result.append(f'EntryColor ec{ord}{{ {entry.color} }};')
 
         if entry.invisible:
@@ -396,9 +409,9 @@ class CodeGenerator:
 
                 result.append(f'Entry{direction}Skip e{direction[0].lower()}s{ord}{{ {skip}, {newDirection} }};')
 
-        if entry.controlsMask:
+        if entry.controlMask:
             native = 'Native' if 'onSelect' in entry.native else ''
-            result.append(f'EntryOnSelectFunctionWithMask{native} eosfm{ord}{{ {entry.onSelect}, {entry.controlsMask} }};')
+            result.append(f'EntryOnSelectFunctionWithMask{native} eosfm{ord}{{ {entry.onSelect}, {entry.controlMask} }};')
         elif entry.onSelect:
             native = 'Native' if 'onSelect' in entry.native else ''
             result.append(f'EntryOnSelectFunction{native} eosf{ord}{{ {entry.onSelect} }};')

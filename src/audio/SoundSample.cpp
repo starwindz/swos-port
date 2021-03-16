@@ -61,7 +61,7 @@ int SoundSample::getMaxAudioExensionLength()
 
     if (maxLength < 0)
         for (auto ext : kSupportedAudioExtensions)
-            maxLength = std::max<int>(maxLength, strlen(ext));
+            maxLength = std::max(maxLength, static_cast<int>(strlen(ext)));
 
     return maxLength;
 }
@@ -78,7 +78,7 @@ bool SoundSample::loadFromFile(const char *path)
 
     if (!data.first) {
         // we will try to load the initial given extension twice, but it's fine, with retry maybe it will succeed
-        auto baseNameLength = ext - path;
+        auto baseNameLength = static_cast<unsigned>(ext - path);
         std::tie(data.first, data.second, isRaw) = loadWithAnyAudioExtension(path, baseNameLength, ext);
 
         if (!data.first) {
@@ -124,7 +124,7 @@ void SoundSample::setChanceModifier(int chanceModifier)
     m_chanceModifier = chanceModifier;
 }
 
-size_t SoundSample::hash() const
+unsigned SoundSample::hash() const
 {
     return m_hash;
 }
@@ -186,7 +186,7 @@ void SoundSample::loadChunk()
     assert(m_chunk);
 }
 
-std::tuple<char *, size_t, bool> SoundSample::loadWithAnyAudioExtension(const char *path, size_t baseNameLength, const char *ext)
+std::tuple<char *, unsigned, bool> SoundSample::loadWithAnyAudioExtension(const char *path, unsigned baseNameLength, const char *ext)
 {
     char buf[kMaxFilenameLength];
 
@@ -206,13 +206,13 @@ std::tuple<char *, size_t, bool> SoundSample::loadWithAnyAudioExtension(const ch
         auto data = loadFile(buf, offset);
 
         if (data.first)
-            return { data.first, data.second, isRaw };
+            return { data.first, static_cast<unsigned>(data.second), isRaw };
     }
 
     return {};
 }
 
-size_t SoundSample::getAudioFileOffset(const char *ext, bool isRaw)
+unsigned SoundSample::getAudioFileOffset(const char *ext, bool isRaw)
 {
     return isRaw ? kSizeofWaveHeader : 0;
 }

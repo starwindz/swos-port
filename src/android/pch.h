@@ -47,29 +47,13 @@ static_assert(sizeof(void *) == 4, "Define pointer size");
 
 #define _stricmp strcasecmp
 
-template <size_t size>
-int sprintf_s(char(&buffer)[size], const char *format, ...)
-{
-    va_list ap;
-    va_start(ap, format);
-    int result = vsnprintf(buffer, size, format, ap);
-    va_end(ap);
-    return result;
-}
-
 template <size_t size> size_t strcpy_s(char (&dst)[size], const char *src)
 {
     return strlcpy(dst, src, size);
 }
 
 #define _TRUNCATE ((size_t)-1)
-#define strncpy_s(dst, dmax, src, slen) strlcpy(dst, src, dmax)
-
-static inline char *_itoa(int val, char *buf, int)
-{
-    sprintf(buf, "%d", val);
-    return buf;
-}
+#define strncpy_s(dst, src, dmax) strlcpy(dst, src, dmax)
 
 template <size_t size> char *itoa_s(int val, char (&buf)[size], int)
 {
@@ -77,6 +61,7 @@ template <size_t size> char *itoa_s(int val, char (&buf)[size], int)
     return buf;
 }
 
+#define stricmp strcasecmp
 #define _itoa_s itoa_s
 
 static inline unsigned int _rotl(unsigned int val, int shift)

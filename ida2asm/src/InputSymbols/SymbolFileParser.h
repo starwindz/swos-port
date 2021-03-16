@@ -35,7 +35,7 @@ public:
     void traverseExportedArrays(std::function<void(const String&, const String&, int)> process) const;
 
     bool cppOutput() const;
-    std::tuple<String, String, int> exportedDeclaration(const String& var) const;
+    std::tuple<String, String, int, int> exportedDeclaration(const String& var) const;
 
 private:
     struct ExportEntry {
@@ -46,6 +46,7 @@ private:
         bool functionPointer = false;
         bool array = false;
         bool trailingArray = false;
+        int8_t alignment = -1;
     };
 
     void output68kRegisters();
@@ -60,6 +61,7 @@ private:
     std::tuple<const char *, const char *, SymbolAction> parseSectionName(const char *p) const;
     static SymbolAction getSectionName(const char *begin, const char *end);
     const char *handlePotentialArray(const char *start, const char *p, ExportEntry& e);
+    const char *handlePotentialAlignment(const char *start, const char *p, ExportEntry& e);
     void parseHookProcLine(const char *symStart, const char *symEnd, const char *start, const char *end);
     void parseRemoveAndNullLine(SymbolAction action, const char *symStart, const char *symEnd, const char *start, const char *end);
     static bool isRemoveHook(const char *start, const char *end);
@@ -142,16 +144,18 @@ private:
     StringMap<int> m_typeSizes;
 
     struct ExportTypeData {
-        ExportTypeData(const char *str, size_t len, const String& baseType, int arraySize)
-            : type(str, len), arraySize(arraySize) {
+        ExportTypeData(const char *str, size_t len, const String& baseType, int arraySize, int8_t alignment)
+            : type(str, len), arraySize(arraySize), alignment(alignment)
+        {
             new (baseTypePtr()) PascalString(baseType);
         }
-        static size_t requiredSize(const char *, size_t len, const String& baseType, int) {
+        static size_t requiredSize(const char *, size_t len, const String& baseType, int, int8_t) {
             return sizeof(ExportTypeData) + len + PascalString::requiredSize(baseType);
         }
         PascalString *baseTypePtr() const { return (PascalString *)((char *)(this + 1) + type.length()); }
         const PascalString& baseType() const { return *baseTypePtr(); }
         int arraySize;
+        int8_t alignment;
         PascalString type;
         // baseType follows
     };

@@ -640,7 +640,7 @@ m406_g_.raw                "That's the full time whistle. Oh, so close"
 
 References
 ==========
-Mic's guide to SWOS customizing [accessed at 21.10.2018.]
+Mic's guide to SWOS customizing [accessed 21.10.2018.]
 http://www.sensiblesoccer.de/forum/index.php?topic=26844.0
 
 The list of sounds was snatched from Paul Turner's SENSI SUPERstar website ;)

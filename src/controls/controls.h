@@ -1,7 +1,5 @@
 #pragma once
 
-#include "scanCodes.h"
-
 enum PlayerNumber {
     kNoPlayer = -1,
     kPlayer1 = 0,
@@ -18,42 +16,29 @@ enum Controls {
     kNumUniqueControls = kNumControls - 1,
 };
 
+constexpr int kNoJoypad = INT_MIN;
+
 Controls getPl1Controls();
 Controls getPl2Controls();
-Controls getGameControls(int playerNo);
+void setControls(PlayerNumber player, Controls controls, int joypadIndex = kNoJoypad);
+void setPl1Controls(Controls controls, int joypadIndex = kNoJoypad);
+void setPl2Controls(Controls controls, int joypadIndex = kNoJoypad);
 
-void setPl1Controls(Controls controls, int joypadIndex = -1);
-void setPl2Controls(Controls controls, int joypadIndex = -1);
-void setPl1GameControls(Controls controls);
-void setPl2GameControls(Controls controls);
-void disableGameControls(int playerNo);
-
-ScanCodes& getPl1ScanCodes();
-ScanCodes& getPl2ScanCodes();
-
-bool pl1KeyboardNullScancode();
-bool pl2KeyboardNullScancode();
-
-void normalizeInput();
 bool anyInputActive();
-void pressFire();
-void releaseFire();
+bool mouseClickAndRelease();
+void waitForKeyboardAndMouseIdle();
 int mouseWheelAmount();
 
-void clearKeyInput();
-void clearPlayer1State();
-
 void waitForKeyPress();
-void updateControls();
+std::pair<bool, SDL_Scancode> getKeyInterruptible();
+void processControlEvents();
+
+void setGlobalShortcutsEnabled(bool enabled);
 
 void loadControlOptions(const CSimpleIni& ini);
 void saveControlOptions(CSimpleIni& ini);
 
 void initGameControls();
-void finishGameControls();
 
-void updateMatchControls();
-int matchControlsSelected();
-void resetMatchControls();
 bool gotMousePlayer();
 bool testForPlayerKeys();

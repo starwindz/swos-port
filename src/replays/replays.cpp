@@ -5,7 +5,7 @@
 #include "replays.h"
 #include "ReplayData.h"
 #include "replayOptions.h"
-#include "menu.h"
+#include "menus.h"
 #include "file.h"
 #include "sprites.h"
 #include "render.h"
@@ -293,13 +293,6 @@ static void registerPackedCoordinates(dword packedCoordinates)
         swos.currentHilPtr = validateHilPointerAdd(swos.currentHilPtr + 1);
 }
 
-// Must do this in order to accept fire to abort highlight replay.
-static void setGameControls()
-{
-    setPl1GameControls(getPl1Controls());
-    setPl2GameControls(getPl2Controls());
-}
-
 void showHighlights()
 {
     assert(swos.hilNumGoals > 0);
@@ -313,8 +306,6 @@ void showHighlights()
     swos.poolplyrLoaded = 0;
 
     SAFE_INVOKE(CopyTeamsAndHeader);
-
-    setGameControls();
 
     if (swos.g_menuMusic)
         safeInvokeWithSaved68kRegisters(StopMidi);
@@ -335,12 +326,10 @@ void showHighlights()
     swos.g_cameraX = 0;
     swos.g_cameraY = 0;
 
-    resetMatchControls();
-
     m_playing = false;
 
     swos.menuFade = 1;
-    DrawMenu();
+    SWOS::DrawMenu();
 }
 
 void toggleFastReplay()
@@ -538,9 +527,9 @@ static std::pair<dword *, dword> handleSprites(dword *p, dword d)
 
 static void drawBigRotatingLetterR()
 {
-    swos.deltaColor = 0x70;
+    swos.g_deltaColor = 0x70;
     drawSprite(((swos.stoppageTimer >> 1) & 0x1f) + kReplayFrame00Sprite, 11, 14);
-    swos.deltaColor = 0;
+    swos.g_deltaColor = 0;
 }
 
 void SWOS::ReplayFrame()

@@ -60,9 +60,9 @@ namespace SWOS_UnitTest
     {
         InvalidEntryNumericValueException(const MenuEntry *entry, int expectedValue, const char *file, int line)
             : BaseException(file, line) {
-            assert(entry && entry->type2 == kEntryNumber);
+            assert(entry && entry->type == kEntryNumber);
             m_error += getEntryStringWithOrdinal(entry) + " numeric value mismatch, got: " +
-                std::to_string(entry->u2.number) + ", expected: " + std::to_string(expectedValue);
+                std::to_string(entry->fg.number) + ", expected: " + std::to_string(expectedValue);
         }
     };
 
@@ -88,7 +88,7 @@ namespace SWOS_UnitTest
             : BaseException(file, line)
         {
             assert(entry);
-            auto actualColor = isText ? entry->textColor : entry->u1.entryColor;
+            auto actualColor = isText ? entry->stringFlags : entry->bg.entryColor;
             m_error += getEntryStringWithOrdinal(entry) + " has invalid " + (isText ? "text " : "") + "color " +
                 std::to_string(actualColor) + ", expected " + std::to_string(color) + " (" + colorStr + ')';
         }
@@ -98,10 +98,10 @@ namespace SWOS_UnitTest
     {
         EntryStringMismatch(const MenuEntry *entry, const char *expectedString, const char *file, int line)
             : BaseException(file, line) {
-            assert(entry && (entry->type2 == kEntryString || entry->type2 == kEntryStringTable));
-            auto string = entry->type2 == kEntryString ? entry->u2.string : entry->u2.stringTable->currentString();
+            assert(entry && (entry->type == kEntryString || entry->type == kEntryStringTable));
+            auto string = entry->type == kEntryString ? entry->fg.string : entry->fg.stringTable->currentString();
             m_error += getEntryStringWithOrdinal(entry) + " has unexpected string value `" +
-                string + "', expected `" + expectedString + '\'';
+                string.asCharPtr() + "', expected `" + expectedString + '\'';
         }
     };
 
@@ -126,7 +126,7 @@ namespace SWOS_UnitTest
         template<typename T>
         static inline std::string stringify(T *t) {
             char buf[32];
-            _itoa(reinterpret_cast<int>(t), buf, 16);
+            _ultoa(reinterpret_cast<size_t>(t), buf, 16);
             return "0x"s + buf;
         }
         static inline std::string stringify(char *str) {

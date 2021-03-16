@@ -12,7 +12,7 @@ static int m_mouseX;
 static int m_mouseY;
 static Uint32 m_mouseButtonFlags;
 
-static SDL_Scancode m_scancodes[SDL_NUM_SCANCODES];
+static Uint8 m_scancodes[SDL_NUM_SCANCODES];
 
 static int m_getTicksDelta;
 static Uint32 m_lastGetTicks;
@@ -128,7 +128,7 @@ static Uint8 *getKeyboardState(int *numKeys)
     if (numKeys)
         *numKeys = std::size(m_scancodes);
 
-    return reinterpret_cast<Uint8 *>(&m_scancodes);
+    return m_scancodes;
 }
 
 void takeOverInput()
@@ -195,6 +195,7 @@ static void queueSdlKeyEvent(SDL_Scancode keyCode, bool keyDown)
     event.key.state = keyDown ? SDL_PRESSED : SDL_RELEASED;
     event.key.keysym.scancode = keyCode;
     queueSdlEvent(event);
+    m_scancodes[keyCode] = keyDown;
 }
 
 void queueSdlKeyDown(SDL_Scancode keyCode)

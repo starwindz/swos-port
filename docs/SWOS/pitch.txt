@@ -2,7 +2,7 @@ pitchx.dat
 pitchx.blk, 1<=x<=6
 
 Pitchx.dat files contain pointers into corresponding pitchx.blk files. Pointers
-point to 16 x 16 patterns that comprise the entire pitch.
+point to 16 x 16 patterns that the entire pitch is comprised of.
 
 55 chunks 176 bytes long are transferred from pitchx.dat files to
 g_pitchDatBuffer (55 x 168 = 9240, entire file), but only first 168 bytes are

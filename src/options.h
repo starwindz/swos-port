@@ -24,7 +24,7 @@ template<typename T, size_t N>
 static void loadOptions(const CSimpleIniA& ini, const std::array<Option<T>, N>& options, const char *section)
 {
     for (const auto& opt : options) {
-        auto val = ini.GetLongValue(section, opt.key);
+        auto val = ini.GetLongValue(section, opt.key, opt.defaultValue);
         *opt.value = opt.clamp(val);
     }
 }
@@ -44,4 +44,4 @@ bool disableIntro();
 bool disableImageReels();
 bool doNotPauseLoadingScreen();
 int midiBankNumber();
-bool flashCursor();
+bool cursorFlashingEnabled();

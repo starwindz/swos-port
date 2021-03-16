@@ -4,7 +4,7 @@
 #
 
 import sys
-from Parser import Parser
+from Parser.Parser import Parser
 from CodeGenerator import CodeGenerator
 
 # getInputAndOutputFile
@@ -13,11 +13,11 @@ from CodeGenerator import CodeGenerator
 # If they're not present, complains and exits the program.
 #
 def getInputAndOutputFile():
-    if len(sys.argv) < 3:
-        sys.exit('Missing output file path')
-
     if len(sys.argv) < 2:
         sys.exit('Missing input file path')
+
+    if len(sys.argv) < 3:
+        sys.exit('Missing output file path')
 
     return sys.argv[1], sys.argv[2]
 

@@ -1,5 +1,5 @@
 #include "unitTest.h"
-#include "menu.h"
+#include "menus.h"
 #include "file.h"
 #include "scanCodes.h"
 #include "sdlProcs.h"
@@ -13,13 +13,13 @@ static MenuEntry *getVerifiedEntry(int index, const char *indexStr, const char *
 {
     if (index < 0 || index > 256)
         throw SWOS_UnitTest::InvalidEntryIndexException(index, indexStr, file, line);
-    
+
     return getMenuEntry(index);
 }
 
 static void verifyNumericItem(const MenuEntry *entry, const char *file, int line)
 {
-    if (entry->type2 != kEntryNumber)
+    if (entry->type != kEntryNumber)
         throw SWOS_UnitTest::InvalidEntryTypeException(entry, "number", file, line);
 }
 
@@ -64,7 +64,7 @@ void SWOS_UnitTest::assertItemIsNumberImp(int index, const char *indexStr, int v
     auto entry = getVerifiedEntry(index, indexStr, file, line);
     verifyNumericItem(entry, file, line);
 
-    if (entry->u2.number != value)
+    if (entry->fg.number != value)
         throw InvalidEntryNumericValueException(entry, value, file, line);
 }
 
@@ -93,27 +93,34 @@ void SWOS_UnitTest::assertItemIsStringImp(int index, const char *indexStr, const
     assertItemIsStringImp(entry, value, value, file, line);
 }
 
+void SWOS_UnitTest::assertItemIsStringImpCaseInsensitive(int index, const char *indexStr, const char *value, const char *file, int line)
+{
+    auto entry = getVerifiedEntry(index, indexStr, file, line);
+    assertItemIsStringImp(entry, value, value, file, line);
+}
+
 void SWOS_UnitTest::assertItemIsStringImp(const MenuEntry *entry, const char *, const std::string& value, const char *file, int line)
 {
     assertItemIsStringImp(entry, nullptr, value.c_str(), file, line);
 }
 
-void SWOS_UnitTest::assertItemIsStringImp(const MenuEntry *entry, const char *, const char *value, const char *file, int line)
+void SWOS_UnitTest::assertItemIsStringImp(const MenuEntry *entry, const char *, const char *value, const char *file, int line, bool matchCase /* = true */)
 {
     assert(entry);
 
-    if (entry->type2 != kEntryString)
+    if (entry->type != kEntryString)
         throw InvalidEntryTypeException(entry, "string", file, line);
-    if (strcmp(entry->string(), value))
+    int different = matchCase ? strcmp(entry->string(), value) : _stricmp(entry->string(), value);
+    if (different)
         throw EntryStringMismatch(entry, value, file, line);
 }
 
 void SWOS_UnitTest::assertItemIsStringTableImp(int index, const char *indexStr, const char *value, const char *file, int line)
 {
     auto entry = getVerifiedEntry(index, indexStr, file, line);
-    if (entry->type2 != kEntryStringTable)
+    if (entry->type != kEntryStringTable)
         throw InvalidEntryTypeException(entry, "string table", file, line);
-    if (strcmp(entry->u2.stringTable->currentString(), value))
+    if (strcmp(entry->fg.stringTable->currentString(), value))
         throw EntryStringMismatch(entry, value, file, line);
 }
 
@@ -121,23 +128,23 @@ void SWOS_UnitTest::assertItemIsSpriteImp(int index, const char *indexStr, int s
     const char *spriteIndexStr, const char *file, int line)
 {
     auto entry = getVerifiedEntry(index, indexStr, file, line);
-    if (entry->type2 != kEntrySprite2)
+    if (entry->type != kEntrySprite2)
         throw InvalidEntryTypeException(entry, "sprite", file, line);
     if (spriteIndex >= 0)
-        assertEqualImp(true, static_cast<int>(entry->u2.spriteIndex), spriteIndex, "sprite index", spriteIndexStr, file, line);
+        assertEqualImp(true, static_cast<int>(entry->fg.spriteIndex), spriteIndex, "sprite index", spriteIndexStr, file, line);
 }
 
 void SWOS_UnitTest::assertItemHasColorImp(int index, const char *indexStr, int color, const char *colorStr, const char *file, int line)
 {
     auto entry = getVerifiedEntry(index, indexStr, file, line);
-    if (entry->u1.entryColor != color)
+    if (entry->bg.entryColor != color)
         throw InvalidEntryColorException(entry, color, colorStr, file, line);
 }
 
 void SWOS_UnitTest::assertItemHasTextColorImp(int index, const char *indexStr, int color, const char *colorStr, const char *file, int line)
 {
     auto entry = getVerifiedEntry(index, indexStr, file, line);
-    if ((entry->textColor & 0x0f) != color)
+    if ((entry->stringFlags & 0x0f) != color)
         throw InvalidEntryColorException(entry, color, colorStr, file, line, true);
 }
 
@@ -151,18 +158,14 @@ bool SWOS_UnitTest::isItemVisible(int ordinal)
     return !getMenuEntry(ordinal)->invisible;
 }
 
-bool SWOS_UnitTest::queueKeys(const std::vector<SDL_Scancode>& keys)
+void SWOS_UnitTest::queueKeys(const std::vector<SDL_Scancode>& keys)
 {
     assert(!keys.empty());
 
-    size_t i = 0;
-    while (keyCount < std::size(keyBuffer) && i < keys.size()) {
-        auto pcKey = sdlScanCodeToPc(keys[i++]);
-        keyBuffer[keyCount++] = pcKey;
-        lastKey = pcKey;
+    for (auto scancode : keys) {
+        queueSdlKeyDown(scancode);
+        queueSdlKeyUp(scancode);
     }
-
-    return i >= keys.size();
 }
 
 // Translate coordinates since they will be later mapped from window coordinates to game coordinates
@@ -216,5 +219,5 @@ void SWOS_UnitTest::setNumericItemValueImp(int index, const char *indexStr, int 
 {
     auto entry = getVerifiedEntry(index, indexStr, file, line);
     verifyNumericItem(entry, file, line);
-    entry->u2.number = value;
+    entry->fg.number = value;
 }

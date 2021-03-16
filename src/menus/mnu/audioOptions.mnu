@@ -1,0 +1,183 @@
+//
+// Audio options menu
+//
+
+#include "common.mh"
+
+Menu audioOptionsMenu
+{
+    defaultWidth: kOptionWidth
+    defaultHeight: kOptionHeight
+    initialEntry: masterSound
+
+    Entry header {
+        x: kBaseX
+        y: 0
+        width: kBigButtonWidth
+        height: kBigButtonHeight
+
+        text: "AUDIO OPTIONS"
+        color: kHeaderColor
+    }
+
+    defaultX: kOptionsColumn1X
+
+    TemplateEntry {
+        color: kOptionsColumn1Color
+    }
+
+    // column 1
+
+    Entry {
+        y: kOptionsStartY
+        text: "SOUND"
+    }
+
+    defaultY: @prevEndY + kOptionsRowDistance + 1
+
+    Entry { text: swos.aMenuMusic }
+    Entry { text: swos.aCommentary }
+    Entry { text: "CROWD CHANTS" }
+    Entry { text: "MATCH VOLUME" }
+    Entry { text: "MUSIC VOLUME" }
+
+    // column 2
+
+    defaultX: kOptionsColumn2X
+
+    TemplateEntry {
+        color: kOptionsColumn2Color
+    }
+
+    kChangerWidth = 16
+    kChangerColorPlus = @kGreen
+    kChangerColorMinus = @kDarkBlue
+    kChangerOptionWidth = kOptionWidth - 2 * kChangerWidth - 2
+
+    Entry masterSound {
+        y: kOptionsStartY
+
+        stringTable: [ swos.g_soundOff, swos.aOn, swos.aOff ]  // notice backward order
+
+        onSelect: toggleMasterSound
+
+        downEntry: >
+    }
+
+    Entry menuMusic {
+        stringTable: swos.menuMusicStrTable
+
+        onSelect: toggleMenuMusic
+
+        upEntry: <
+        downEntry: >
+    }
+
+    Entry commentary {
+        stringTable: swos.commentaryStrTable
+
+        onSelect: ~ChangeCommentary
+
+        upEntry: <
+        downEntry: >
+    }
+
+    Entry crowdChants {
+        stringTable: [ swos.g_crowdChantsOn, swos.aOff, swos.aOn ]
+
+        onSelect: toggleCrowdChants
+
+        upEntry: <
+        downEntry: >
+    }
+
+    Entry decreaseVolumeButton {
+        width: kChangerWidth
+
+        color: kChangerColorMinus
+        text: swos.aMinus
+
+        onSelect: decreaseVolume
+
+        upEntry: <
+        rightEntry: increaseVolumeButton
+        downEntry: decreaseMusicVolumeButton
+    }
+
+    Entry volume {
+        x: @prevEndX + 1
+        y: @prevY
+        width: kChangerOptionWidth
+
+        number: 0
+
+        beforeDraw: volumeBeforeDraw
+    }
+
+    Entry increaseVolumeButton {
+        x: @prevEndX + 1
+        y: @prevY
+        width: kChangerWidth
+
+        color: kChangerColorPlus
+        text: swos.aPlus
+
+        onSelect: increaseVolume
+
+        upEntry: crowdChants
+        downEntry: increaseMusicVolumeButton
+        leftEntry: decreaseVolumeButton
+    }
+
+    Entry decreaseMusicVolumeButton {
+        width: kChangerWidth
+
+        color: kChangerColorMinus
+        text: swos.aMinus
+
+        onSelect: decreaseMusicVolume
+
+        upEntry: decreaseVolumeButton
+        rightEntry: increaseMusicVolumeButton
+        downEntry: exit
+    }
+
+    Entry musicVolume {
+        x: @prevEndX + 1
+        y: @prevY
+        width: kChangerOptionWidth
+
+        number: 0
+
+        beforeDraw: musicVolumeBeforeDraw
+    }
+
+    Entry increaseMusicVolumeButton {
+        x: @prevEndX + 1
+        y: @prevY
+        width: kChangerWidth
+
+        color: kChangerColorPlus
+        text: swos.aPlus
+
+        onSelect: increaseMusicVolume
+
+        upEntry: increaseVolumeButton
+        downEntry: exit
+        leftEntry: decreaseMusicVolumeButton
+    }
+
+    Entry exit {
+        x: kBaseX
+        y: kExitY
+        width: kBigButtonWidth
+        height: kBigButtonHeight
+
+        text: swos.aExit
+        color: kExitColor
+
+        onSelect: ~SetExitMenuFlag
+
+        upEntry: decreaseMusicVolumeButton
+    }
+}

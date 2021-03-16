@@ -11,6 +11,10 @@ constexpr int kMaxPath = 256;
 void sdlErrorExit(const char *format, ...);
 void errorExit(const char *format, ...);
 
+static inline bool guidEqual(const SDL_JoystickGUID& guid1, const SDL_JoystickGUID& guid2) {
+    return !memcmp(&guid1, &guid2, sizeof(guid1));
+}
+
 struct TimeInfo {
     int year;
     int month;
@@ -21,9 +25,16 @@ struct TimeInfo {
     int msec;
 };
 
+uint64_t getMillisecondsSinceEpoch();
 TimeInfo getCurrentTime();
 std::string formatNumberWithCommas(int64_t num);
-void toUpper(char *str);
+int numDigits(int num);
+
+static inline int sgn(int num) {
+    if (!num)
+        return 0;
+    return num < 0 ? -1 : 1;
+}
 
 void save68kRegisters();
 void restore68kRegisters();
@@ -36,7 +47,7 @@ void invokeWithSaved68kRegisters(F f)
     restore68kRegisters();
 }
 
-size_t hash(const void *buffer, size_t length);
+unsigned hash(const void *buffer, size_t length);
 int getRandomInRange(int min, int max);
 int setZeroFlagAndD0FromAl();
 bool isMatchRunning();

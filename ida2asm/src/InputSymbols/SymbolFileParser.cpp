@@ -69,7 +69,7 @@ static const char kHeader[] =
     "        return reinterpret_cast<T>(data);\n"
     "    }\n"
     "    char *asPtr() { return reinterpret_cast<char *>(SwosVM::offsetToPtr(data)); }\n"
-    "    const char *asPtr() const { return reinterpret_cast<char *>(SwosVM::offsetToPtr(data)); }\n"
+    "    const char *asConstPtr() const { return reinterpret_cast<char *>(SwosVM::offsetToPtr(data)); }\n"
     "    template <typename T> operator T*() const { return reinterpret_cast<T *>(SwosVM::offsetToPtr(data)); }\n"
     "    MenuEntry *asMenuEntry() { return as<MenuEntry *>(); }\n"
     "#else\n"
@@ -78,7 +78,7 @@ static const char kHeader[] =
     "    }\n"
     "    template <typename T> const T as() const { return reinterpret_cast<T>(data); }\n"
     "    char *asPtr() { return reinterpret_cast<char *>(data); }\n"
-    "    const char *asPtr() const { return reinterpret_cast<char *>(data); }\n"
+    "    const char *asConstPtr() const { return reinterpret_cast<char *>(data); }\n"
     "    template <typename T> operator T*() const { return reinterpret_cast<T *>(data); }\n"
     "    MenuEntry *asMenuEntry() { return reinterpret_cast<MenuEntry *>(data); }\n"
     "#endif\n"
@@ -104,8 +104,6 @@ static const char kHeader[] =
     "    };\n"
     "};\n"
     "#pragma pack(pop)\n\n"
-
-    "constexpr int k68kRegisterTotalSize = 15 * 4;\n\n"
 
     "struct MenuBase;\n\n";
 
@@ -233,10 +231,10 @@ bool SymbolFileParser::cppOutput() const
     return m_cppOutput;
 }
 
-std::tuple<String, String, int> SymbolFileParser::exportedDeclaration(const String& var) const
+std::tuple<String, String, int, int> SymbolFileParser::exportedDeclaration(const String& var) const
 {
     if (auto exp = m_exportTypes.get(var))
-        return { exp->type.string(), exp->baseType().string(), exp->arraySize };
+        return { exp->type.string(), exp->baseType().string(), exp->arraySize, exp->alignment };
     else
         return {};
 }
@@ -284,7 +282,7 @@ void SymbolFileParser::outputExports()
             int arraySize = -1;
             if (exp.array)
                 arraySize = exp.arraySize ? exp.arraySize.toInt() : 0;
-            m_exportTypes.add(exp.symbol, buf, len, exp.type, arraySize);
+            m_exportTypes.add(exp.symbol, buf, len, exp.type, arraySize, exp.alignment);
         } else {
             xfwrite(buf, len);
             xfwrite(";\n");
@@ -642,6 +640,47 @@ const char *SymbolFileParser::handlePotentialArray(const char *start, const char
     return p;
 }
 
+const char *SymbolFileParser::handlePotentialAlignment(const char *start, const char *p, ExportEntry& e)
+{
+    auto pOrig = p;
+
+    p = skipWhiteSpace(p);
+    if (*p++ == '(') {
+        p = skipWhiteSpace(p);
+        if (*p == '\n')
+            error("export entry directive missing");
+
+        for (auto c : { 'a', 'l', 'i', 'g', 'n' }) {
+            if (*p++ != c)
+                error("unknown export entry directive");
+        }
+
+        p = skipWhiteSpace(p);
+        if (*p++ != ':')
+            error("colon expected after `align'");
+
+        p = skipWhiteSpace(p);
+        if (!Util::isDigit(*p))
+            error("positive numeric alignment value expected");
+
+        int alignment = 0;
+        while (Util::isDigit(*p))
+            alignment = 10 * alignment + *p++ - '0';
+
+        if (alignment < 2 || alignment > 64)
+            error("only 2-64 alignment values supported");
+
+        p = skipWhiteSpace(p);
+        if (*p++ != ')')
+            error("closing parenthesis missing");
+
+        e.alignment = alignment;
+        return p;
+    }
+
+    return pOrig;
+}
+
 void SymbolFileParser::parseHookProcLine(const char *symStart, const char *symEnd, const char *start, const char *end)
 {
     start = skipWhiteSpace(start);
@@ -814,6 +853,7 @@ const char *SymbolFileParser::addExportEntry(const char *start, const char *p)
 
     p = skipWhiteSpace(p);
     p = handlePotentialArray(start, p, e);
+    p = handlePotentialAlignment(start, p, e);
 
     if (*p != '\n' && *p != '\r')
         error("unexpected input after end of export declaration");
@@ -947,7 +987,7 @@ void SymbolFileParser::ensureUniqueSymbol(const char *start, const char *end, Na
     }
 }
 
-const char *SymbolFileParser::skipWhiteSpace(const char * p)
+const char *SymbolFileParser::skipWhiteSpace(const char *p)
 {
     while (*p != '\n' && Util::isSpace(*p))
         p++;
