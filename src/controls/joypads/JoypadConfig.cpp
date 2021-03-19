@@ -537,7 +537,13 @@ bool JoypadConfig::fetchEvents(const char *& p, GameControlEvents& events)
     if (!fetchHex(p, intEvents))
         return false;
 
-    return convertEvents(events, intEvents);
+    auto result = convertEvents(events, intEvents);
+    if (result && events == kNoGameEvents) {
+        logWarn("Empty event encountered");
+        return false;
+    }
+
+    return result;
 }
 
 bool JoypadConfig::fetchHatMask(const char *& p, int& mask)
@@ -552,6 +558,44 @@ bool JoypadConfig::fetchHatMask(const char *& p, int& mask)
 bool JoypadConfig::expectChar(const char *& p, char c)
 {
     return *p == c ? p++, true : false;
+}
+
+
+template<typename C>
+void JoypadConfig::removeDuplicateIndices(C & c, const char * what)
+{
+    std::sort(c.begin(), c.end(), [](const auto& e1, const auto& e2) { return e1.index < e2.index; });
+
+    auto last = std::unique(c.begin(), c.end());
+    if (last != c.end()) {
+        logWarn("Game controller %s with duplicate index removed", what);
+        c.erase(last, c.end());
+    }
+}
+
+bool JoypadConfig::removeOverlappingIntervals(AxisIntervalList& list)
+{
+    if (list.size() < 2)
+        return false;
+
+    std::sort(list.begin(), list.end());
+
+    bool changed = false;
+    int currentMax = list.front().to;
+
+    for (size_t i = 1; i < list.size(); i++) {
+        if (list[i].to <= currentMax) {
+            list.erase(list.begin() + i--);
+            changed = true;
+        } else if (list[i].from <= currentMax) {
+            list[i].from = currentMax;
+            changed = true;
+        }
+
+        currentMax = list[i].to;
+    }
+
+    return changed;
 }
 
 // Parsing would go so much nicer with exceptions, but didn't want to enable them just for this.
@@ -583,6 +627,8 @@ void JoypadConfig::loadButtons(const CSimpleIni& ini, const char *sectionName)
 
     if (*buttons)
         logWarn("Error while processing buttons, section: [%s], at: %s", sectionName, buttons);
+
+    removeDuplicateIndices(m_buttons, "buttons");
 }
 
 void JoypadConfig::loadAxes(const CSimpleIni& ini, const char *sectionName)
@@ -627,6 +673,9 @@ void JoypadConfig::loadAxes(const CSimpleIni& ini, const char *sectionName)
                 break;
         }
 
+        if (removeOverlappingIntervals(intervals))
+            logWarn("Overlapping intervals eliminated from axis %d, section: [%s]", index, sectionName);
+
         if (!expectChar(axes, ']'))
             break;
     }
@@ -634,6 +683,8 @@ void JoypadConfig::loadAxes(const CSimpleIni& ini, const char *sectionName)
 out:
     if (*axes)
         logWarn("Error while processing axes, section: [%s], at: %s", sectionName, axes);
+
+    removeDuplicateIndices(m_axes, "axes");
 }
 
 void JoypadConfig::loadHats(const CSimpleIni& ini, const char *sectionName)
@@ -641,6 +692,8 @@ void JoypadConfig::loadHats(const CSimpleIni& ini, const char *sectionName)
     auto hats = ini.GetValue(sectionName, kHatsKey);
     if (!hats)
         return;
+
+    constexpr int kMaxHatValue = SDL_HAT_RIGHTUP | SDL_HAT_LEFTDOWN;
 
     while (true) {
         int index;
@@ -653,10 +706,22 @@ void JoypadConfig::loadHats(const CSimpleIni& ini, const char *sectionName)
         m_hats.emplace_back(index);
         auto& bindings = m_hats.back().bindings;
 
+        bool hatsMasksSeen[kMaxHatValue + 1] = { false };
+
         while (true) {
             int mask;
             if (!fetchHatMask(hats, mask))
                 goto out;
+
+            if (mask < 0 || mask > kMaxHatValue) {
+                logWarn("Invalid hat mask value encountered: %#x", mask);
+                goto out;
+            }
+
+            if (hatsMasksSeen[mask]) {
+                logWarn("Duplicate hat mask found: %#x", mask);
+                goto out;
+            }
 
             if (!expectChar(hats, ':'))
                 goto out;
@@ -680,6 +745,8 @@ void JoypadConfig::loadHats(const CSimpleIni& ini, const char *sectionName)
 out:
     if (*hats)
         logWarn("Error while processing hats, section: [%s], at: %s", sectionName, hats);
+
+    removeDuplicateIndices(m_hats, "hats");
 }
 
 void JoypadConfig::loadBalls(const CSimpleIni& ini, const char *sectionName)
@@ -715,12 +782,13 @@ void JoypadConfig::loadBalls(const CSimpleIni& ini, const char *sectionName)
 
         if (!expectChar(balls, ']'))
             break;
-
     }
 
 out:
     if (*balls)
         logWarn("Error while processing trackballs, section: [%s], at: %s", sectionName, balls);
+
+    removeDuplicateIndices(m_balls, "trackballs");
 }
 
 void JoypadConfig::saveButtons(CSimpleIni& ini, const char *sectionName) const

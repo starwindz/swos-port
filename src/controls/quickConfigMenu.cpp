@@ -158,7 +158,7 @@ static FinalPromptResult waitForConfirmation()
     SWOS::FlipInMenu();
 
     do {
-        SDL_PumpEvents();
+        processControlEvents();
 
         auto key = getKeyInterruptible();
         waitForKeyboardAndMouseIdle();

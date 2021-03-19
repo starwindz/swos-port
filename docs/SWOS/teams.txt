@@ -387,7 +387,7 @@ offset:  size:  desc.
   52       2    ??? (UpdatePlayers sets it) (zero during the game)
                 if non-zero, reset pl1ShortFireCounter to zero (for CPU team)
                 I think it might be true if player is heading
-  54       2    fire counter; increases while fire is held, resets when not
+  54       2    fire counter; increases while fire is held, resets when not;
                 no limitations it seems
   56       2    direction of the player controlling the ball:
                         0
@@ -428,8 +428,8 @@ offset:  size:  desc.
   86       2    255 if the ball is out of play (or at the goalkeeper)
                 1 if goalkeeper is controlling the ball (with feet)
                 0 otherwise
-  88       2    1 ako je dodavanje zapoceto; ostaje jedan dok lopta ne dodirne
-                svog igraca (i to verovatno onog kome je pas upucen)
+  88       2    1 if a pass has started; remains one until the ball touches
+                a team mate (and probably the one to who the pass is for)
   90       2    true samo kada se vrsi precizno dodavanje, tj. kada je igrac
                 kome se dodaje privremeno kontrolisan od strane kompjutera
   92       2    tajmer, inicijalizovan na 25; pocinje da otkucava kada igrac
@@ -438,8 +438,8 @@ offset:  size:  desc.
   94       2    1 dok je lopta u igri, nula za vreme prekida
   96       2    izgleda 1 kada igrac kontrolise kameru za vreme prekida
                 (npr. izvodi aut)
-  98       2    x koordinata lopte
- 100       2    y koordinata lopte
+  98       2    ball x coordinate
+ 100       2    ball y coordinate
  102       2    counter, initially 25, ticks down once the player gets rid of
                 the ball by kicking or passing (but not otherwise), else zero
                 decremented until zero

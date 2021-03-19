@@ -111,7 +111,7 @@ JoypadElementValueList joypadFilteredValues(int joypadIndex)
 static void waitUntil(int joypadIndex, std::function<bool()> pred)
 {
     while (true) {
-        SDL_PumpEvents();
+        processControlEvents();
 
         if (pred())
             break;

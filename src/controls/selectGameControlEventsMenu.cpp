@@ -260,7 +260,7 @@ static void showWarning(const char *str)
     assert(str);
 
     auto warningEntry = getMenuEntry(warning);
-    copyStringToEntry(*warningEntry, str);
+    warningEntry->copyString(str);
     m_showWarningTicks = SDL_GetTicks();
     warningEntry->show();
 }

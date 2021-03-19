@@ -252,7 +252,7 @@ void BaseTest::showReport(int numTestsRan, const FailureList& failures, Time sta
         std::cout << '\n';
 
         if (!failures.empty()) {
-            auto numFailedTests = std::accumulate(failures.begin(), failures.end(), 0, [](auto sum, const auto& f) {
+            auto numFailedTests = std::accumulate(failures.begin(), failures.end(), 0ull, [](auto sum, const auto& f) {
                 return sum + f.failures.size();
             });
 

@@ -47,7 +47,7 @@ Controls getPl2Controls()
     return m_pl2Controls;
 }
 
-void setControls(PlayerNumber player, Controls controls, int joypadIndex)
+bool setControls(PlayerNumber player, Controls controls, int joypadIndex)
 {
     assert(player == kPlayer1 || player == kPlayer2);
 
@@ -60,13 +60,17 @@ void setControls(PlayerNumber player, Controls controls, int joypadIndex)
         logInfo("Setting player %d controls to %s", player == kPlayer1 ? 1 : 2, controlsToString(controls));
 
         plControls = controls;
-        selectJoypadControls(player, joypadIndex);
+        bool success = setJoypad(player, joypadIndex);
 
         if (controls == kMouse && otherControls == kMouse) {
             auto otherKeyboard = player == kPlayer1 ? kKeyboard2 : kKeyboard1;
             setControls(otherPlayer, otherKeyboard);
         }
+
+        return success;
     }
+
+    return true;
 }
 
 void setPl1Controls(Controls controls, int joypadIndex /* = kNoJoypad */)
@@ -89,7 +93,7 @@ static void checkQuitEvent()
 
 static bool keyboardOrMouseActive()
 {
-    SDL_PumpEvents();
+    processControlEvents();
 
     int numKeys;
     auto keyState = SDL_GetKeyboardState(&numKeys);
@@ -120,7 +124,7 @@ bool mouseClickAndRelease()
 {
     if (SDL_GetMouseState(nullptr, nullptr)) {
         do {
-            SDL_PumpEvents();
+            processControlEvents();
             SDL_Delay(50);
         } while (SDL_GetMouseState(nullptr, nullptr));
 
@@ -294,13 +298,9 @@ void initGameControls()
     // TODO: kill with fire when possible
     swos.pl1Fire = 0;
     swos.pl1SecondaryFire = 0;
-    swos.pl1ShortFire = 0;
-    swos.pl1FireCounter = 0;
     swos.pl1Direction = -1;
     swos.pl2Fire = 0;
     swos.pl2SecondaryFire = 0;
-    swos.pl2ShortFire = 0;
-    swos.pl2FireCounter = 0;
     swos.pl2Direction = -1;
 }
 
@@ -312,7 +312,7 @@ bool gotMousePlayer()
 // Returns true if last pressed key belongs to selected keys of any currently active player.
 bool testForPlayerKeys()
 {
-    auto key = peekKey();
+    auto key = lastKey();
 
     return m_pl1Controls == kKeyboard1 && pl1HasScancode(key) ||
         m_pl2Controls == kKeyboard2 && pl2HasScancode(key);

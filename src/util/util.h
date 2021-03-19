@@ -47,6 +47,7 @@ void invokeWithSaved68kRegisters(F f)
     restore68kRegisters();
 }
 
+unsigned hash(const char *str);
 unsigned hash(const void *buffer, size_t length);
 int getRandomInRange(int min, int max);
 int setZeroFlagAndD0FromAl();

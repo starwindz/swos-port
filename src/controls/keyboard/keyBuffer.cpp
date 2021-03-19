@@ -1,6 +1,7 @@
 #include "keyBuffer.h"
 
 static std::deque<SDL_Scancode> m_keyBuffer;
+SDL_Scancode m_lastKey;
 
 void registerKey(SDL_Scancode scanCode)
 {
@@ -16,12 +17,12 @@ SDL_Scancode getKey()
         m_keyBuffer.pop_front();
     }
 
-    return key;
+    return m_lastKey = key;
 }
 
-SDL_Scancode peekKey()
+SDL_Scancode lastKey()
 {
-    return m_keyBuffer.empty() ? SDL_SCANCODE_UNKNOWN : m_keyBuffer.back();
+    return m_lastKey;
 }
 
 size_t numKeysInBuffer()

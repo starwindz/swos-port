@@ -20,7 +20,7 @@ constexpr int kNoJoypad = INT_MIN;
 
 Controls getPl1Controls();
 Controls getPl2Controls();
-void setControls(PlayerNumber player, Controls controls, int joypadIndex = kNoJoypad);
+bool setControls(PlayerNumber player, Controls controls, int joypadIndex = kNoJoypad);
 void setPl1Controls(Controls controls, int joypadIndex = kNoJoypad);
 void setPl2Controls(Controls controls, int joypadIndex = kNoJoypad);
 

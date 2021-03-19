@@ -26,6 +26,8 @@ public:
     int numBalls() const { return m_numBalls; }
 
     const char *name() const;
+    size_t hash() const;
+    void setNameSuffix(int suffix);
 
     Uint8 getButton(int index) const;
     Uint8 getHat(int index) const;
@@ -54,6 +56,8 @@ private:
 
     SDL_Joystick *m_handle = nullptr;
     SDL_JoystickID m_id = kInvalidJoypadId;
+    std::string m_name;
+    size_t m_hash;
     int m_numButtons = 0;
     int m_numHats = 0;
     int m_numAxes = 0;

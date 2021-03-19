@@ -686,9 +686,9 @@ struct TeamGeneralInfo
     word direction;
     byte quickFire;
     byte normalFire;
-    byte joyIsFiring;
-    byte joyTriggered;
-    word header;
+    byte firePressed;
+    byte fireThisFrame;
+    word headerOrTackle;
     word fireCounter;
     word allowedPlDirection;
     word shooting;
@@ -737,7 +737,7 @@ struct TeamGeneralInfo
     word unkTimer;
     word goalkeeperPlaying;
     word resetControls;
-    byte joy1SecondaryFire;
+    byte secondaryFire;
 };
 constexpr int xsrf = sizeof(TeamGeneralInfo);
 static_assert(sizeof(TeamGeneralInfo) == 145, "TeamGeneralInfo is invalid");

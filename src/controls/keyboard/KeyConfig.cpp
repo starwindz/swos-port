@@ -67,6 +67,8 @@ void KeyConfig::load(const CSimpleIni& ini, const char *section, const DefaultKe
     ini.GetAllKeys(section, keys);
 
     if (!keys.empty()) {
+        bool keysTaken[SDL_NUM_SCANCODES] = { false };
+
         m_bindings.clear();
 
         for (const auto& iniKey : keys) {
@@ -79,9 +81,17 @@ void KeyConfig::load(const CSimpleIni& ini, const char *section, const DefaultKe
                 logWarn("Out of range key value (%d), events: %#x", keyValue, intEvents);
             } else if (!convertEvents(events, intEvents)) {
                 logWarn("Out of range events value (%#x) for key %d", intEvents, keyValue);
+            } else if (events == kNoGameEvents) {
+                logWarn("Empty event encountered for key %d", keyValue);
             } else {
                 auto key = static_cast<SDL_Scancode>(keyValue);
-                m_bindings.emplace_back(key, events);
+
+                if (keysTaken[keyValue])
+                    logWarn("Duplicate key value found (%d), events: %#x", keyValue, intEvents);
+                else
+                    m_bindings.emplace_back(key, events);
+
+                keysTaken[key] = true;
             }
         }
 

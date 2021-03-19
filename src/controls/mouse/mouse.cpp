@@ -1,42 +1,56 @@
 #include "mouse.h"
 
 static GameControlEvents m_events;
-static GameControlEvents m_oppositeDirectionKick;
-static Uint32 m_longKickStart;
+static int m_longKickFrames;
+
+static bool longKickRunning()
+{
+    return m_longKickFrames > 0;
+}
+
+static GameControlEvents getOppositeDirections(GameControlEvents events)
+{
+    auto oppositeDirections = kNoGameEvents;
+
+    if (events & kGameEventLeft)
+        oppositeDirections |= kGameEventRight;
+    if (events & kGameEventRight)
+        oppositeDirections |= kGameEventLeft;
+    if (events & kGameEventUp)
+        oppositeDirections |= kGameEventDown;
+    if (events & kGameEventDown)
+        oppositeDirections |= kGameEventUp;
+
+    return oppositeDirections;
+}
 
 GameControlEvents mouseEvents()
 {
+    if (longKickRunning() && !--m_longKickFrames)
+        return getOppositeDirections(m_events) | kGameEventKick;
+
     return m_events;
 }
 
 void resetMouse()
 {
     m_events = kNoGameEvents;
-    m_longKickStart = 0;
+    m_longKickFrames = 0;
 }
 
 static void startLongKick()
 {
-    m_longKickStart = SDL_GetTicks();
-    m_oppositeDirectionKick = kGameEventKick;
-    if (m_events & kGameEventLeft)
-        m_oppositeDirectionKick |= kGameEventRight;
-    if (m_events & kGameEventRight)
-        m_oppositeDirectionKick |= kGameEventLeft;
-    if (m_events & kGameEventUp)
-        m_oppositeDirectionKick |= kGameEventDown;
-    if (m_events & kGameEventDown)
-        m_oppositeDirectionKick |= kGameEventUp;
-}
+    static constexpr int kLongKickFrames = 10;  // can't be less
 
-static bool longKickRunning()
-{
-    constexpr int kLongKickLength = 80;
-    return m_longKickStart + kLongKickLength >= SDL_GetTicks();
+    m_longKickFrames = kLongKickFrames;
+    m_events |= kGameEventKick;
 }
 
 void updateMouseButtons(Uint8 button, Uint8 state)
 {
+    if (longKickRunning())
+        return;
+
     if (state == SDL_PRESSED) {
         switch (button) {
         case SDL_BUTTON_LEFT:
@@ -74,14 +88,13 @@ void updateMouseButtons(Uint8 button, Uint8 state)
 
 void updateMouseMovement(Sint32 xrel, Sint32 yrel, Uint32 state)
 {
+    if (longKickRunning())
+        return;
+
     m_events = kNoGameEvents;
 
     if (state & SDL_BUTTON_MMASK)
         return;
-
-    bool longKickNow = longKickRunning();
-    if (longKickNow)
-        m_events = m_oppositeDirectionKick;
 
     if (xrel < 0)
         m_events |= kGameEventLeft;
@@ -99,6 +112,6 @@ void updateMouseMovement(Sint32 xrel, Sint32 yrel, Uint32 state)
         m_events |= kGameEventBench;
     else if (state & SDL_BUTTON_LMASK)
         m_events |= kGameEventKick;
-    else if ((state & SDL_BUTTON_RMASK) && !longKickNow)
+    else if ((state & SDL_BUTTON_RMASK) && !longKickRunning())
         startLongKick();
 }

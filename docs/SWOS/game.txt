@@ -37,7 +37,12 @@ igraca namesta na x +/-1000 bez obzira da li vodi loptu ili ne. Izgleda se iz
 te tabele uzimaju dest x/y offseti i za loptu i za igraca.
 
 
-=== Fels
+=== Ball after-touch
+
+After-touch is handled in ApplyBallAfterTouch(). The routine handles after
+touch in kicks and passes and triggers high kicks (lobs).
+
+Ball after-touch is applied equally to both normal and high kicks.
 
 Ako je dodavanje u toku proverava se da li je protivnicki golman uhvatio/drzi
 loptu i da li je igra u toku. Spin tajmer mora biti pokrenut - vrednost 0
@@ -74,13 +79,19 @@ Preglednije:
 Kada se utvrdi vrsta felsa, vrednosti se jednostavno dodaju na odredisno x i y
 lopte.
 
-
 === Sut
 
 Nakon 4 tika se primenjuje sut, povecava se delta z lopte. Tu se i proverava
 da li je igrac cimnuo unazad, i ako jeste koriste se vrednosti za visoki sut.
 Nakon suta umanji brzinu lopte na 87.5% ako je sut u dijagonalnom pravcu,
 na 75% za ostale pravce.
+
+=== Lob kick
+
+Lob kick test starts 4 ticks after kick has been initiated. If controls are
+pressed in directions: back, back-left, back-right in regards to the player
+controlling the ball, lob kick ensues. In case of perpendicular directions
+(left/right), or no direction at all standard kick happens.
 
 [oduzeti 16 od koordinata]
 Udarcem na gol se smatra sut kada je igrac po y manje ili jednako 342 (kada

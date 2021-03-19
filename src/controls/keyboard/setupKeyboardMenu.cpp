@@ -72,7 +72,7 @@ static void updateKeyAndActionEntriesVisibility()
         actionLegendEntry->hide();
     }
 
-    while (keyEntry->ordinal <= lastKey) {
+    while (keyEntry->ordinal <= SetupKeyboardMenu::lastKey) {
         keyEntry++->hide();
         actionEntry++->hide();
     }
@@ -96,7 +96,7 @@ static void fillKeyAndActionEntries()
 
     for (int i = m_scrollOffset; i < m_scrollOffset + numEntries; i++, keyEntry++, actionEntry++) {
         auto keyName = scancodeToString(bindings[i].key);
-        copyStringToEntry(*keyEntry, keyName);
+        keyEntry->copyString(keyName);
         gameControlEventToString(bindings[i].events, actionEntry->fg.string, kStdMenuTextSize);
     }
 }

@@ -39,10 +39,14 @@ void SWOS::PlayMatchSelected()
     if (reinterpret_cast<TeamFile *>(swos.careerTeam)->teamControls == kComputerTeam)
         swos.careerTeamSetupDone = 1;
 
-    if (isFinalTeamSetup() && !showSelectMatchControlsMenu())
-        return;
+    if (!isFinalTeamSetup()) {
+        swos.playerNumThatStarted = 1;
+    } else {
+        swos.playerNumThatStarted = std::max(1, numPlayers());
+        if (!showSelectMatchControlsMenu())
+            return;
+    }
 
-    swos.playerNumThatStarted = numPlayers();
     SetExitMenuFlag();
 }
 
@@ -61,6 +65,7 @@ bool showSelectMatchControlsMenu()
 static void initMenu();
 static void rearrangeEntriesForSinglePlayer();
 static void setupMouseWheelScrolling();
+static void setPlayOrWatchLabel();
 static void updateMenu();
 static void updateTeamNames();
 static void updateCurrentControls();
@@ -218,6 +223,7 @@ static void initMenu()
     updateTeamNames();
     rearrangeEntriesForSinglePlayer();
     setupMouseWheelScrolling();
+    setPlayOrWatchLabel();
 }
 
 static void rearrangeEntriesForSinglePlayer()
@@ -257,6 +263,12 @@ static void setupMouseWheelScrolling()
     setMouseWheelEntries({{ firstControl, firstControl + kNumControlEntries - 1, scrollUp, scrollDown }});
 }
 
+void setPlayOrWatchLabel()
+{
+    int numCoaches = (swos.playMatchTeam1Ptr->teamControls == kCoach) + (swos.playMatchTeam2Ptr->teamControls == kCoach);
+    playEntry.copyString(numCoaches == numPlayers() ? "COACH" : "PLAY");
+}
+
 static void updateMenu()
 {
     updateControlList();
@@ -269,9 +281,9 @@ static void updateMenu()
 
 static void updateTeamNames()
 {
-    copyStringToEntry(team1Entry, swos.playMatchTeam1Ptr->teamName);
+    team1Entry.copyString(swos.playMatchTeam1Ptr->teamName);
     if (m_twoPlayers)
-        copyStringToEntry(team2Entry, swos.playMatchTeam2Ptr->teamName);
+        team2Entry.copyString(swos.playMatchTeam2Ptr->teamName);
     else
         team2Entry.hide();
 }

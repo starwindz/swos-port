@@ -7,7 +7,7 @@
 Menu controlOptionsMenu
 {
     kStartY = 24
-    kNextPartGap = 14
+    kNextPartGap = 10
 
     kSelectJoypad = "SELECT GAME CONTROLLER"
     kRedefineControls = "SETUP CONTROLS"
@@ -248,6 +248,12 @@ Menu controlOptionsMenu
         text: "DISABLE MENU CONTROLLERS"
     }
 
+    Entry selectMatchControlsLabel {
+        height: kOptionHeight
+        color: kOptionsColumn1Color
+        text: "SELECT MATCH CONTROLS"
+    }
+
     Entry autoConnectJoypads {
         x: kColumn2X
         y: autoConnectJoypadsLabel.y
@@ -271,6 +277,20 @@ Menu controlOptionsMenu
         stringTable: [ ~m_disableMenuControllers, swos.aOff, swos.aOn ]
 
         onSelect: toggleMenuControllers
+
+        upEntry: <
+        downEntry: >
+    }
+
+    Entry selectMatchControls {
+        x: kColumn2X
+        y: selectMatchControlsLabel.y
+        height: kOptionHeight
+        color: kOptionsColumn2Color
+
+        stringTable: [ ~m_showSelectMatchControlsMenu, swos.aOff, swos.aOn ]
+
+        onSelect: toggleShowMatchControlsMenu
 
         upEntry: <
         downEntry: exit

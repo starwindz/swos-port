@@ -80,14 +80,9 @@ static inline bool inputText(char *destBuffer, int maxLength, bool allowExtraCha
     return D0.asWord() == 0;
 }
 
-static inline void copyStringToEntry(MenuEntry& entry, const char *str)
-{
-    entry.copyString(str);
-}
-
 static inline void copyStringToEntry(int entryIndex, const char *str)
 {
-    copyStringToEntry(*getMenuEntry(entryIndex), str);
+    getMenuEntry(entryIndex)->copyString(str);
 }
 
 static inline char *copyStringToMenuBuffer(const char *str)

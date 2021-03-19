@@ -89,22 +89,12 @@ static ElisionInfo getElisionInfo(int x, int maxWidth, const char *str, bool big
 
     maxWidth = std::min(maxWidth, kMenuScreenWidth - x);
 
-    while (*str == ' ')
-        str++;
-
     int i = 0;
     for (; str[i]; i++) {
         int charWidth = charSpriteWidth(str[i], charTable);
         int newLen = len + charWidth;
 
         if (newLen > maxWidth) {
-            for (int j = i; ; j++) {
-                if (!str[j])
-                    return { str, i, len, false };
-                if (str[j] != ' ')
-                    break;
-            }
-
             if (maxWidth < ellipsisWidth)
                 return { str, 0, 0, false };
 
@@ -122,9 +112,6 @@ static ElisionInfo getElisionInfo(int x, int maxWidth, const char *str, bool big
         len = newLen;
         x += charWidth;
     }
-
-    while (i > 0 && str[i] == ' ')
-        i--;
 
     return { str, i, len, false };
 }

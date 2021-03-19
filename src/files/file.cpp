@@ -59,8 +59,10 @@ static int doLoadFile(SDL_RWops *f, const char *path, void *buffer, size_t buffe
         return -1;
     }
 
+#ifndef DEBUG
     bool plural = bufferSize != 1;
     logInfo("Loading \"%s\" [%s byte%s]", path, formatNumberWithCommas(bufferSize).c_str(), plural ? "s" : "");
+#endif
 
     bool readOk = SDL_RWread(f, buffer, bufferSize, 1) == 1;
     SDL_RWclose(f);

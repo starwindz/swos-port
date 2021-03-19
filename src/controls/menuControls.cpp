@@ -51,23 +51,6 @@ static void handleFireReset()
     }
 }
 
-static void updateMenuFireCounter()
-{
-    if (swos.pl1FireCounter) {
-        swos.fireCounter = swos.pl1FireCounter;
-        if (swos.pl1FireCounter >= 0)
-            swos.pl1FireCounter = 0;
-    }
-
-    if (swos.pl2FireCounter) {
-        // player 1 counter has expired or the first fire button is held shorter than the second
-        if (!swos.pl1FireCounter || swos.pl2FireCounter < swos.pl1FireCounter)
-            swos.fireCounter = swos.pl2FireCounter;
-        if (swos.pl2FireCounter >= 0)
-            swos.pl2FireCounter = 0;
-    }
-}
-
 static void updateLongFireTimer()
 {
     if (swos.shortFire) {
@@ -134,7 +117,6 @@ void SWOS::MenuCheckControls()
     if (swos.fireCounter > 0)   // used in EditTactics menu in two functions
         swos.fireCounter = 0;
 
-    updateMenuFireCounter();
     flushKeyBuffer();
 
     swos.shortFire = shortFire;

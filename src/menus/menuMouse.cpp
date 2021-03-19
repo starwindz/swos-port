@@ -120,6 +120,7 @@ static bool handleRightClickExitMenu(bool rightButtonJustReleased)
         if (swos.choosingPreset)    // preset competition must be aborted at any level
             swos.abortSelectTeams = -1;
         swos.g_exitGameFlag = -1;   // play match menu
+        swos.gameCanceled = 1;
         return true;
     }
 
@@ -294,7 +295,6 @@ static void checkForEntryClicksAndMouseWheelMovement(bool leftButtonJustReleased
             currentMenu->selectedEntry = entry;
 
         if (leftButtonJustReleased) {
-logInfo("PRCKUSHKASH");
             if (isPointInsideEntry(m_clickX, m_clickY, *entry)) {
                 currentMenu->selectedEntry = entry;
                 triggerMenuFire();
@@ -363,7 +363,6 @@ static void checkForMouseDragging(bool leftButtonJustPressed)
 
         if (std::abs(dx) > kMinDragDistance || std::abs(dy) > kMinDragDistance) {
             auto controlMask = getDirectionMask(dx, dy) | kFireMask;
-logInfo("NANGHAAAYUUU");
             selectEntry(selectedEntry, controlMask);
         }
     }

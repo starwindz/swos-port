@@ -211,7 +211,9 @@ static void loadCustomCommentary()
                     if (std::find(table.samples.begin(), table.samples.end(), sample) == table.samples.end()) {
                         table.samples.push_back(std::move(sample));
                         table.totalSampleChance += chance;
+#ifndef DEBUG
                         logInfo("`%s' loaded OK, chance: %d", samplePath.c_str(), chance);
+#endif
                     } else {
                         logInfo("Duplicate detected, rejecting: `%s'", samplePath.c_str());
                     }

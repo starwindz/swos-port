@@ -47,9 +47,10 @@ Joy1SetStatus - TryRestartingMusic
 VerifyJoypadControls
 #pl1LastFired - pl2ShortFireCounter
 pl1LastFired - pl1Fire
-pl1UpRight - pl1ShortFire
+pl1UpRight - pl1Direction
 pl2LastFired - pl2Fire
-pl2UpRight - pl2ShortFire
+pl2UpRight - pl2Direction
+pl2FireCounter
 # this currently only lives as write only, to be removed when possible
 #keyboardControlFlags
 keyCount
@@ -98,7 +99,7 @@ aSfxFx11Bgcrd3l - aSfxFxCombrown_
 #DrawFormationMenuEntry
 #FillRectangle
 
-# variables
+# misc. variables
 prevVideoMode
 errorCheckWord
 linAdr120k - linAdr982k
@@ -118,6 +119,7 @@ optionsMenu - pitchTypeStrTable
 menuX - spriteGraphicsPtr
 menuSize - g_exitMenu
 europeanChampionshipMenu - versusMenu
+teamSwitchCounter
 
 # highlights
 HighlightsMenu
@@ -244,14 +246,10 @@ left, byte
 right, byte
 pl1Fire, byte
 pl2Fire, byte
-pl1ShortFire, byte
-pl2ShortFire, byte
 pl1SecondaryFire, byte
 pl2SecondaryFire, byte
 pl1Direction, word
 pl2Direction, word
-pl1FireCounter, int16_t
-pl2FireCounter, int16_t
 g_pl1ControlFlags, word
 g_pl2ControlFlags, word
 g_joy1X, word
@@ -582,6 +580,12 @@ LoadTitleAndStartMusic, function
 StopMidi, function
 TryMidiPlay, function
 
+# game
+RunStoppageEventsAndSetAnimationTables, function
+UpdateControlledPlayer, function
+UpdatePlayerBeingPassedTo, function
+UpdatePlayersAndBall, function
+
 # misc
 FixupInitialCharset, function
 ChainFont, function
@@ -669,6 +673,7 @@ team2GoalsDigit2, word
 animatedPatterns, array int16_t[8]
 
 g_exitGameFlag, word
+gameCanceled, word
 isCareer, word
 careerTeam, array char[1292]
 replaySelected, word
@@ -752,7 +757,7 @@ RunStoppageEventsAndSetAnimationTables, 339, EnqueueCrowdChantsReload
 
 
 #
-# list of symbols that will be replaced by the C++ code
+# list of symbols (functions) that will be replaced by the C++ code
 # it is assumed to be a label in assembly, and a parameterless function in C++, returning void or int
 # they'll go to SWOS namespace to avoid name clashes
 #
@@ -782,6 +787,11 @@ ActivateMenu
 SetCurrentEntry
 FlipInMenu
 SetPalette
+
+# controls
+Player1StatusProc
+Player2StatusProc
+TeamsControlCheck
 
 # sprites
 DrawSpriteInCameraView
@@ -869,8 +879,6 @@ PlayCrowdChants
 
 EndProgram
 ResetAnimatedPatternsForBothTeams
-Player1StatusProc
-Player2StatusProc
 StartMainGameLoop
 ReplayExitMenuAfterFriendly
 Int2Ascii

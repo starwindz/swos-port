@@ -37,7 +37,24 @@ GameControlEvents Joypad::allEventsMask() const
 
 const char *Joypad::name() const
 {
-    return m_handle ? SDL_JoystickName(m_handle) : nullptr;
+    if (m_handle)
+        return !m_name.empty() ? m_name.c_str() : SDL_JoystickName(m_handle);
+    else
+        return nullptr;
+}
+
+size_t Joypad::hash() const
+{
+    return m_hash;
+}
+
+void Joypad::setNameSuffix(int suffix)
+{
+    m_name = SDL_JoystickName(m_handle);
+    m_name += ' ';
+    m_name += '(';
+    m_name += std::to_string(suffix);
+    m_name += ')';
 }
 
 Uint8 Joypad::getButton(int index) const
@@ -230,5 +247,6 @@ void Joypad::fetchJoypadInfo()
         m_numHats = SDL_JoystickNumHats(m_handle);
         m_numAxes = SDL_JoystickNumAxes(m_handle);
         m_numBalls = SDL_JoystickNumBalls(m_handle);
+        m_hash = ::hash(SDL_JoystickName(m_handle));
     }
 }

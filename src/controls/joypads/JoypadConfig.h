@@ -47,18 +47,21 @@ public:
 
     HatBindingList *getHatBindings(int hatIndex);
 
-    struct Interval
+    struct AxisInterval
     {
-        Interval(int16_t from = INT16_MAX - kDefaultDeadZone, int16_t to = INT16_MAX, GameControlEvents events = kNoGameEvents)
+        AxisInterval(int16_t from = INT16_MAX - kDefaultDeadZone, int16_t to = INT16_MAX, GameControlEvents events = kNoGameEvents)
             : from(from), to(to), events(events) {}
-        bool operator==(const Interval& other) const {
+        bool operator==(const AxisInterval& other) const {
             return from == other.from && to == other.to && events == other.events;
+        }
+        bool operator<(const AxisInterval& other) const {
+            return from < other.from && to < other.to;
         }
         int16_t from;
         int16_t to;
         GameControlEvents events;
     };
-    using AxisIntervalList = std::vector<Interval>;
+    using AxisIntervalList = std::vector<AxisInterval>;
 
     AxisIntervalList *getAxisIntervals(int axisIndex);
 
@@ -105,7 +108,7 @@ private:
             return index == other.index && intervals == other.intervals;
         }
         int index;
-        std::vector<Interval> intervals;
+        std::vector<AxisInterval> intervals;
     };
     struct Ball
     {
@@ -139,6 +142,10 @@ private:
     static bool fetchEvents(const char *& p, GameControlEvents& events);
     static bool fetchHatMask(const char *& p, int& mask);
     static bool expectChar(const char *& p, char c);
+
+    template<typename C>
+    static void removeDuplicateIndices(C& c, const char *what);
+    static bool removeOverlappingIntervals(AxisIntervalList& list);
 
     void loadButtons(const CSimpleIni& ini, const char *sectionName);
     void loadAxes(const CSimpleIni& ini, const char *sectionName);

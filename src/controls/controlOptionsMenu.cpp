@@ -1,5 +1,4 @@
 #include "controlOptionsMenu.h"
-#include "controls.h"
 #include "keyboard.h"
 #include "joypads.h"
 #include "menuMouse.h"
@@ -9,6 +8,7 @@
 
 static int16_t m_autoConnectJoypads;
 static int16_t m_disableMenuControllers;
+static int16_t m_showSelectMatchControlsMenu;
 
 #include "controlOptions.mnu.h"
 
@@ -53,7 +53,7 @@ static void setupPlayerJoypadControlEntries(decltype(m_pl1EntryControls)& plEntr
     for (int i = startJoypad; i < startJoypad + numJoypadEntries; i++) {
         tryReopeningJoypad(i);
         auto name = joypadName(i);
-        copyStringToEntry(baseEntry[entriesFilled], name);
+        baseEntry[entriesFilled].copyString(name);
 
         baseEntry[entriesFilled].setBackgroundColor(kLightBlue);
         plEntryControls[entriesFilled].first = kJoypad;
@@ -217,7 +217,7 @@ static void pl1SelectControls()
             pl1SelectMouse();
             break;
         case kJoypad:
-            selectJoypadControls(kPlayer1, joypadNo);
+            setPl1Controls(kJoypad, joypadNo);
             break;
         default:
             assert(false);
@@ -279,7 +279,7 @@ static void pl2SelectControls()
             pl2SelectMouse();
             break;
         case kJoypad:
-            selectJoypadControls(kPlayer2, joypadNo);
+            setPl2Controls(kJoypad, joypadNo);
             break;
         default:
             assert(false);
@@ -299,6 +299,13 @@ static void toggleMenuControllers()
     m_disableMenuControllers = !m_disableMenuControllers;
     setDisableMenuControllers(m_disableMenuControllers != 0);
     logInfo("Game controllers in menus %s", m_disableMenuControllers ? "disabled" : "enabled");
+}
+
+static void toggleShowMatchControlsMenu()
+{
+    m_showSelectMatchControlsMenu = !m_showSelectMatchControlsMenu;
+    setShowSelectMatchControlsMenu(m_showSelectMatchControlsMenu != 0);
+    logInfo("Select match controls menu %s", m_disableMenuControllers ? "disabled" : "enabled");
 }
 
 static void exitControlsMenu()
@@ -377,7 +384,7 @@ static bool selectJoypadWithButtonPress(PlayerNumber player)
                 changed = true;
             } else {
                 logInfo("Selecting joypad %d for player %d via button press", joypadIndex, player == kPlayer1 ? 1 : 2);
-                changed = selectJoypadControls(player, joypadIndex);
+                changed = setControls(player, kJoypad, joypadIndex);
             }
 
             break;

@@ -12,6 +12,7 @@ static int m_pl2Joypad = kNoJoypad;
 static bool m_joypadsInitialized;
 static bool m_autoConnectJoypads = true;
 static bool m_disableMenuControllers = false;
+static bool m_showSelectMatchControlsMenu = true;
 
 static std::vector<Joypad> m_joypads;
 static std::vector<VirtualJoypad> m_virtualJoypads;
@@ -20,6 +21,7 @@ static JoypadConfigRegister m_joypadConfig;
 
 static constexpr char kAutoConnectJoypadsKey[] = "autoConnectControllers";
 static constexpr char kDisableMenuControllers[] = "disableGameControllersInMenu";
+static constexpr char kShowSelectMatchControlsMenu[] = "showSelectMatchControlsMenu";
 
 static constexpr char kJoypad1Key[] = "player1Controller";
 static constexpr char kJoypad2Key[] = "player2Controller";
@@ -483,12 +485,36 @@ static void assignNewJoypadConfig(Joypad& joypad, int index)
     joypad.setConfig(config);
 }
 
+static void assignInstanceNumber(Joypad& joypad)
+{
+    int numSameNameJoypads = 0;
+    Joypad *firstJoypad{};
+
+    for (auto& currentJoypad : m_joypads) {
+        if (&joypad != &currentJoypad && joypad.hash() == currentJoypad.hash() && !strcmp(joypad.name(), currentJoypad.name())) {
+            if (!firstJoypad)
+                firstJoypad = &currentJoypad;
+            numSameNameJoypads++;
+        }
+    }
+
+    if (numSameNameJoypads > 0) {
+        if (numSameNameJoypads == 1) {
+            assert(firstJoypad);
+            firstJoypad->setNameSuffix(1);
+        }
+        joypad.setNameSuffix(numSameNameJoypads + 1);
+    }
+}
+
 void addNewJoypad(int index)
 {
     assert(index <= SDL_NumJoysticks());
 
     m_joypads.emplace(m_joypads.begin() + index, index);
     auto& joypad = m_joypads[index];
+
+    assignInstanceNumber(joypad);
 
     // index shouldn't ever be less than the number of joypads, but just in case...
     m_pl1Joypad += m_pl1Joypad >= index;
@@ -589,10 +615,11 @@ static void unassignJoypad(PlayerNumber player)
     }
 }
 
-bool selectJoypadControls(PlayerNumber player, int joypadIndex)
+bool setJoypad(PlayerNumber player, int joypadIndex)
 {
     assert(player == kPlayer1 || player == kPlayer2);
     assert(joypadIndex == kNoJoypad || isValidJoypadIndex(joypadIndex));
+    assert(joypadIndex == kNoJoypad || (player == kPlayer1 ? getPl1Controls() == kJoypad : getPl2Controls() == kJoypad));
 
     int playerNo = player == kPlayer1 ? 1 : 2;
     if (joypadIndex != kNoJoypad)
@@ -644,6 +671,16 @@ void setDisableMenuControllers(bool value)
     m_disableMenuControllers = value;
 }
 
+bool getShowSelectMatchControlsMenu()
+{
+    return m_showSelectMatchControlsMenu;
+}
+
+void setShowSelectMatchControlsMenu(bool value)
+{
+    m_showSelectMatchControlsMenu = value;
+}
+
 //
 // joypad options
 //
@@ -659,7 +696,8 @@ void loadJoypadOptions(const char *controlsSection, const CSimpleIni& ini)
     m_joy2GuidStr = joy2GuidStr ? joy2GuidStr : "";
 
     m_autoConnectJoypads = ini.GetBoolValue(controlsSection, kAutoConnectJoypadsKey, true);
-    m_disableMenuControllers = ini.GetBoolValue(controlsSection, kDisableMenuControllers, true);
+    m_disableMenuControllers = ini.GetBoolValue(controlsSection, kDisableMenuControllers, false);
+    m_showSelectMatchControlsMenu = ini.GetBoolValue(controlsSection, kShowSelectMatchControlsMenu, true);
 }
 
 void saveJoypadOptions(const char *controlsSection, CSimpleIni& ini)
@@ -689,6 +727,7 @@ void saveJoypadOptions(const char *controlsSection, CSimpleIni& ini)
 
     ini.SetBoolValue(controlsSection, kAutoConnectJoypadsKey, m_autoConnectJoypads);
     ini.SetBoolValue(controlsSection, kDisableMenuControllers, m_disableMenuControllers);
+    ini.SetBoolValue(controlsSection, kShowSelectMatchControlsMenu, m_showSelectMatchControlsMenu);
 
     m_joypadConfig.saveConfig(ini);
 }

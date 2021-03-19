@@ -232,7 +232,7 @@ void dumpVariables()
 {
     if (m_debugOutput) {
         char buf[256];
-        snprintf(buf, sizeof(buf), "%hd", swos.AI_attackHalf);
+        snprintf(buf, sizeof(buf), "%hd", swos.topTeamData.direction);
         printString(buf, 0, 16, kYellowText, false, ALIGN_LEFT);
     }
 }

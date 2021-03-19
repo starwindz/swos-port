@@ -3438,7 +3438,7 @@ earlier:
   of the TODO list ;)
 - "fixed" assertion in draw text routine when given 255 (cursor block), turned out the assertion was wrong
   (treated char as signed), another item crossed :)
-- fixed a bug where an entry would remained selected after it got hidden/disabled by its on-click handler
+- fixed a bug where an entry would remain selected after it got hidden/disabled by its on-click handler
 - finally finished with adding keyboard mapping, I think I've covered all the edge cases
 - both adding and updating keys operational
 - realized I've been using MS sprintf_s function which doesn't truncate too long strings but kills them
@@ -3634,3 +3634,47 @@ earlier:
   correctly, also optimized rotate routines a bit; fortune in misfortune: the code wasn't even been executed
 - [ida2asm] fixed possible overflow when generating 32-bit multiplication instruction
 - added opposite direction events cancelling, with new event having precedence
+- finally pushed an update to repository!
+- somehow I feel it's harder to do long kicks now (on keyboard), and that the controls are a bit worse, but
+  it might be just a coincidence, will continue comparing
+16.03.2021.
+- I think I've fixed the problem with long kicks (but can never be sure!), I forgot to processControlEvents()
+  before processing the controls, so they might have been a bit stale
+- really fixed player keys overriding game shortcuts
+- fixed two player controls not working, it was a really stupid bug where I forgot to send one optional
+  parameter and lost way too much time because of it @_@ but looking at it from the good side: I analyzed
+  TeamsControlCheck() and will be converting it at the first opportunity
+- fixed mouse long kicks ;) good side here too: analyzing long kicks will help finding out why they fail
+  more often than on DOSBox
+- just realized that the release version (both x64 and x86) can't find any joypads o_O (debug works normally)
+- SDL 2.0.14 fails trying to open some kind of sensor manager, maybe it requires admin privileges now, anyway
+  giving up for now
+17.03.2021.
+- joypads issue solved, the problem was in calling SDL_PumpEvents() in certain places (namely at image
+  scrolling at start), and it would let my precious events go to waste (such as add joystick), replaced all
+  calls to it with processControlEvents() and it's all good now
+- added some more checks when loading control config:
+    - elements with duplicate index removed
+    - check for duplicate keys when loading options, even though ini already filters multiple entries, so
+      we're double safe here
+    - check for duplicate and out of range hat mask values
+    - check for null events
+- changed "PLAY" button background to red and now it will say "COACH" if all players are coaches
+- fixed exiting play match menu with right button and then entering edit tactics
+- converted TeamsControlCheck(), having a bit better understanding of fire counters now
+- added number suffixes for joypads with same names, instead of listing "SILLY JOYPAD", "SILLY JOYPAD", it
+  will be "SILLY JOYPAD (1)", "SILLY JOYPAD (2)", so they can be distinguished more easily
+18.03.2021.
+- fixed joypads not getting selected in control options menu
+- fixed team names in versus menu (right before the match) being "stuck" to the edge (no space between); this
+  was caused by adding whitespace removal to menu string elision; it turned out there was plenty of places
+  where SWOS inserts some spaces for positioning; solved by moving whitespace removal to the function that
+  sets menu entry string (lucky I used it in a disciplined way), this way only new-style menus get whitespace
+  removal while the old-style menus are unaltered
+- added an option to disable/enable select match controls menu; I see how annoying it could be when just
+  playing lots of games solo; it's still on by default for the noobies ;)
+- seems menu controllers were disabled by default when loading from ini, whoops
+- added overlapped interval check and elimination when joypad axis are loaded from the ini file
+- fixed long kick keyboard problem for good! the culprit was invalid code that updates control state when
+  opposite directions are pressed (left+right & up+down), it was also causing players to behave hilariously
+  while up+down were held

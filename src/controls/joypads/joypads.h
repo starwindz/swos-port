@@ -43,12 +43,14 @@ void removeJoypad(SDL_JoystickID id);
 int getJoypadWithButtonDown();
 
 void waitForJoypadButtonsIdle();
-bool selectJoypadControls(PlayerNumber player, int joypadNo);
+bool setJoypad(PlayerNumber player, int joypadNo);
 
 bool getAutoConnectJoypads();
 void setAutoConnectJoypads(bool value);
 bool getDisableMenuControllers();
 void setDisableMenuControllers(bool value);
+bool getShowSelectMatchControlsMenu();
+void setShowSelectMatchControlsMenu(bool value);
 
 void loadJoypadOptions(const char *controlsSection, const CSimpleIni& ini);
 void saveJoypadOptions(const char *controlsSection, CSimpleIni& ini);

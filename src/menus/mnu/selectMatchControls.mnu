@@ -180,7 +180,8 @@ Menu selectMatchControlsMenu
         rightEntry: back
         upEntry: lastControl
 
-        text: "PLAY"
+        color: @kRed
+        text: @kAlloc
 
         onSelect: confirmSelection
     }

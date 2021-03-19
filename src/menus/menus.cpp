@@ -13,10 +13,28 @@
 # include "unitTest.h"
 #endif
 
+// Copies string to entry's text and removes spaces from beginning and end.
 void MenuEntry::copyString(const char *str)
 {
-    assert(type == kEntryString);
-    strncpy_s(string(), str, kStdMenuTextSize);
+    assert(type == kEntryString && str);
+
+    while (*str == ' ')
+        str++;
+
+    auto start = string();
+    auto end = start + kStdMenuTextSize;
+    auto p = start;
+
+    while (p < end && *str)
+        *p++ = *str++;
+
+    if (p < end)
+        *p = '\0';
+    else
+        *--p = '\0';
+
+    while (--p >= start && *p == ' ')
+        *p = '\0';
 }
 
 void setEntriesVisibility(const std::vector<int>& entryIndices, bool visible)
