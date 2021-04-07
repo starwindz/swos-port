@@ -28,6 +28,10 @@
 #include <SDL2/SDL.h>
 #include <SDL_mixer.h>
 
+#if SDL_BYTEORDER != SDL_LIL_ENDIAN
+#error "Big endian not supported!"
+#endif
+
 #include "assert.h"
 #include "swos.h"
 #include "swossym.h"

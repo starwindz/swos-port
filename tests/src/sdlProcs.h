@@ -8,7 +8,17 @@ enum SdlApiIndex : size_t {
     SDL_PollEventIndex = 85,
     SDL_WaitEventIndex = 86,
     SDL_NumJoysticksIndex = 158,
+    SDL_JoystickNameForIndexIndex = 159,
+    SDL_JoystickOpenIndex = 160,
+    SDL_JoystickNameIndex = 161,
+    SDL_JoystickGetGUIDIndex = 163,
+    SDL_JoystickInstanceIDIndex = 167,
+    SDL_JoystickNumAxesIndex = 168,
+    SDL_JoystickNumBallsIndex = 169,
+    SDL_JoystickNumHatsIndex = 170,
+    SDL_JoystickNumButtonsIndex = 171,
     SDL_JoystickGetButtonIndex = 177,
+    SDL_JoystickCloseIndex = 178,
     SDL_GetKeyboardStateIndex = 180,
     SDL_GetMouseStateIndex = 209,
     SDL_SetCursorIndex = 217,
@@ -41,3 +51,22 @@ void restoreRealDisplayModes();
 
 void setSetTicksDelta(int delta);
 void freezeSdlTime();
+
+struct FakeJoypad
+{
+    FakeJoypad(const char *name) : name(name) {
+        memset(guid.data, 0, sizeof(guid.data));
+        for (size_t i = 0; i < sizeof(guid.data) && name[i]; i++)
+            guid.data[i] = name[i];
+    }
+
+    const char *name;
+    intptr_t id;
+    SDL_JoystickGUID guid;
+};
+
+using FakeJoypadList = std::vector<FakeJoypad>;
+
+void setJoypads(const FakeJoypadList& joypads);
+void connectJoypad(const FakeJoypad& joypad);
+void disconnectJoypad(int index);

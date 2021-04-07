@@ -112,8 +112,6 @@ static GameControlEvents filterOverlappedEvents(PlayerNumber player, GameControl
 
 static GameControlEvents getPlayerEvents(PlayerNumber player)
 {
-    static_assert(kMaxGameEvent == 64, "You missed a spot!");
-
     assert(player == kPlayer1 || player == kPlayer2);
 
     auto events = kNoGameEvents;
@@ -123,11 +121,11 @@ static GameControlEvents getPlayerEvents(PlayerNumber player)
     switch (controls) {
     case kKeyboard1:
         assert(player == kPlayer1);
-        events = pl1KeyEvents();
+        events = keyboard1Events();
         break;
     case kKeyboard2:
         assert(player == kPlayer2);
-        events = pl2KeyEvents();
+        events = keyboard2Events();
         break;
     case kMouse:
         events = mouseEvents();
@@ -136,7 +134,7 @@ static GameControlEvents getPlayerEvents(PlayerNumber player)
         events = player == kPlayer1 ? pl1JoypadEvents() : pl2JoypadEvents();
         break;
     default:
-        assert(false);
+        return events;
     }
 
     return filterOverlappedEvents(player, events);
@@ -161,6 +159,8 @@ SwosGameControls getGameControls(PlayerNumber player)
 
 static SwosGameControls updateGameControls(PlayerNumber player)
 {
+    static_assert(kMaxGameEvent == 256, "You missed a spot!");
+
     processControlEvents();
 
     auto events = getPlayerEvents(player);
@@ -174,6 +174,18 @@ static SwosGameControls updateGameControls(PlayerNumber player)
 
     if (events & kGameEventPause)
         swos.paused ^= 1;
+
+    // change when MainKeysCheck() is converted
+    if (events & kGameEventReplay) {
+        swos.convertedKey = 'R';
+        swos.lastKey = sdlScancodeToPc(SDL_SCANCODE_R);
+        MainKeysCheck();
+    }
+    if (events & kGameEventSaveHighlight) {
+        swos.convertedKey = ' ';
+        swos.lastKey = sdlScancodeToPc(SDL_SCANCODE_SPACE);
+        MainKeysCheck();
+    }
 
     return controls;
 }

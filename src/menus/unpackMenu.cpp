@@ -519,6 +519,12 @@ char *menuAlloc(size_t size)
     return buf;
 }
 
+void menuFree(size_t size)
+{
+    m_menuMemory -= size;
+    verifyMenuMemoryPtr();
+}
+
 dword menuAllocString(const char *str)
 {
     auto buf = m_menuMemory;

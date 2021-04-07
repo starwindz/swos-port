@@ -5,7 +5,6 @@
 static bool m_strictLogMode = true; // catch-all by default
 
 void initLog() {}
-void flushLog() {}
 void finishLog() {}
 std::string logPath() { return {}; }
 

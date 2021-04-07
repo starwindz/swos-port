@@ -18,6 +18,9 @@ static int m_getTicksDelta;
 static Uint32 m_lastGetTicks;
 static bool m_timeFrozen;
 
+static FakeJoypadList m_joypads;
+static int m_joypadId;
+
 static void SDL_Delay_NOP(Uint32) {}
 static int SDL_PeepEvents_NOP(SDL_Event *, int, SDL_eventaction, Uint32) { return 0; }
 
@@ -115,7 +118,51 @@ static void pumpEvents()
 
 static int getNumJoypads()
 {
+    return m_joypads.size();
+}
+
+static const char *getJoypadNameForIndex(int index)
+{
+    return m_joypads[index].name;
+}
+
+SDL_Joystick *openJoypad(int index)
+{
+    return reinterpret_cast<SDL_Joystick *>(m_joypads[index].id);
+}
+
+static FakeJoypad *findJoypad(SDL_Joystick *joystick)
+{
+    auto id = reinterpret_cast<intptr_t>(joystick);
+    auto it = std::find_if(m_joypads.begin(), m_joypads.end(), [id](const auto& joypad) { return joypad.id == id; });
+    return it != m_joypads.end() ? &*it : nullptr;
+}
+
+const char *joypadName(SDL_Joystick *joystick)
+{
+    auto joypad = findJoypad(joystick);
+    return joypad ? joypad->name : nullptr;
+}
+
+SDL_JoystickGUID joypadGuid(SDL_Joystick *joystick)
+{
+    auto joypad = findJoypad(joystick);
+    return joypad ? joypad->guid : SDL_JoystickGUID{};
+}
+
+SDL_JoystickID joypadInstanceId(SDL_Joystick *joystick)
+{
+    auto joypad = findJoypad(joystick);
+    return joypad ? joypad->id : -1;
+}
+
+int joypadNumElements(SDL_Joystick *joystick)
+{
     return 0;
+}
+
+void closeJoypad(SDL_Joystick *)
+{
 }
 
 static Uint8 getJoystickButton(SDL_Joystick *, int)
@@ -139,6 +186,16 @@ void takeOverInput()
     m_table[SDL_PeepEventsIndex] = pumpEvents;
     m_table[SDL_PumpEventsIndex] = pumpEvents;
     m_table[SDL_NumJoysticksIndex] = getNumJoypads;
+    m_table[SDL_JoystickNameForIndexIndex] = getJoypadNameForIndex;
+    m_table[SDL_JoystickOpenIndex] = openJoypad;
+    m_table[SDL_JoystickNameIndex] = joypadName;
+    m_table[SDL_JoystickGetGUIDIndex] = joypadGuid;
+    m_table[SDL_JoystickInstanceIDIndex] = joypadInstanceId;
+    m_table[SDL_JoystickNumAxesIndex] = joypadNumElements;
+    m_table[SDL_JoystickNumBallsIndex] = joypadNumElements;
+    m_table[SDL_JoystickNumHatsIndex] = joypadNumElements;
+    m_table[SDL_JoystickNumButtonsIndex] = joypadNumElements;
+    m_table[SDL_JoystickCloseIndex] = closeJoypad;
     m_table[SDL_GetKeyboardStateIndex] = getKeyboardState;
     m_table[SDL_JoystickGetButtonIndex] = getJoystickButton;
 }
@@ -302,4 +359,42 @@ void freezeSdlTime()
 
     if (m_table)
         m_table[SDL_GetTicksIndex] = getFakeTicks;
+}
+
+static void disconnectJoypad(const FakeJoypad& joypad)
+{
+    SDL_Event event;
+    event.type = SDL_JOYDEVICEREMOVED;
+    event.jdevice.which = joypad.id;
+
+    queueSdlEvent(event);
+}
+
+void setJoypads(const FakeJoypadList& joypads)
+{
+    for (const auto& joypad : m_joypads)
+        disconnectJoypad(joypad);
+
+    m_joypads.clear();
+
+    for (const auto& joypad : joypads)
+        connectJoypad(joypad);
+}
+
+void connectJoypad(const FakeJoypad& joypad)
+{
+    m_joypads.push_back(joypad);
+    m_joypads.back().id = ++m_joypadId;
+
+    SDL_Event event;
+    event.type = SDL_JOYDEVICEADDED;
+    event.jdevice.which = m_joypads.size() - 1;
+
+    queueSdlEvent(event);
+}
+
+void disconnectJoypad(int index)
+{
+    disconnectJoypad(m_joypads[index]);
+    m_joypads.erase(m_joypads.begin() + index);
 }

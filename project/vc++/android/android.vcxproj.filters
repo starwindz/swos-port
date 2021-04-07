@@ -190,6 +190,18 @@
     <ClInclude Include="..\..\..\src\controls\gameControls.h">
       <Filter>Source Files\controls</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\src\video\windowManager.h">
+      <Filter>Source Files\video</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\video\videoOptionsMenu.h">
+      <Filter>Source Files\video</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\text\textInput.h">
+      <Filter>Source Files\text</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\video\windowModeMenu.h">
+      <Filter>Source Files\video</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source Files">
@@ -350,33 +362,6 @@
     <ClCompile Include="..\..\..\src\menus\drawMenu.cpp">
       <Filter>Source Files\menus</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-64\swos-01.cpp">
-      <Filter>Source Files\swos-cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-64\swos-02.cpp">
-      <Filter>Source Files\swos-cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-64\swos-03.cpp">
-      <Filter>Source Files\swos-cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-64\swos-04.cpp">
-      <Filter>Source Files\swos-cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-64\swos-05.cpp">
-      <Filter>Source Files\swos-cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-64\swos-06.cpp">
-      <Filter>Source Files\swos-cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-64\swos-07.cpp">
-      <Filter>Source Files\swos-cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-64\swos-08.cpp">
-      <Filter>Source Files\swos-cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-64\vm.cpp">
-      <Filter>Source Files\swos-cpp</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\src\controls\joypads\joypads.cpp">
       <Filter>Source Files\controls\joypads</Filter>
     </ClCompile>
@@ -467,6 +452,42 @@
     </ClCompile>
     <ClCompile Include="..\..\..\src\controls\gameControls.cpp">
       <Filter>Source Files\controls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\video\windowManager.cpp">
+      <Filter>Source Files\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-32\swos-01.cpp">
+      <Filter>Source Files\swos-cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-32\swos-02.cpp">
+      <Filter>Source Files\swos-cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-32\swos-03.cpp">
+      <Filter>Source Files\swos-cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-32\swos-04.cpp">
+      <Filter>Source Files\swos-cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-32\swos-05.cpp">
+      <Filter>Source Files\swos-cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-32\swos-06.cpp">
+      <Filter>Source Files\swos-cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-32\swos-07.cpp">
+      <Filter>Source Files\swos-cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-32\swos-08.cpp">
+      <Filter>Source Files\swos-cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-32\vm.cpp">
+      <Filter>Source Files\swos-cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\text\textInput.cpp">
+      <Filter>Source Files\text</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\video\windowModeMenu.cpp">
+      <Filter>Source Files\video</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

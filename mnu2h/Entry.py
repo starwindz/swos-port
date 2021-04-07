@@ -51,7 +51,7 @@ class Entry:
         self.onReturn = 0
 
     def isTemplate(self):
-        return self.ordinal >= Constants.kTemplateEntryOrdinalStart
+        return self.ordinal >= Constants.kMaxEntries
 
 class ResetTemplateEntry(Entry):
     pass

@@ -1,5 +1,5 @@
 #include "sprites.h"
-#include "render.h"
+#include "windowManager.h"
 #include "util.h"
 
 SpriteClipper::SpriteClipper(int spriteIndex, int x, int y)

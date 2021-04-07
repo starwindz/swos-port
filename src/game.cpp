@@ -1,5 +1,4 @@
 #include "game.h"
-#include "render.h"
 #include "audio.h"
 #include "render.h"
 #include "options.h"
@@ -8,6 +7,7 @@
 #include "dump.h"
 #include "replays.h"
 #include "sprites.h"
+#include "windowManager.h"
 #include "replayExit.mnu.h"
 
 constexpr Uint32 kMinimumPreMatchScreenLength = 1'200;

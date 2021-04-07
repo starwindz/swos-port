@@ -3678,3 +3678,197 @@ earlier:
 - fixed long kick keyboard problem for good! the culprit was invalid code that updates control state when
   opposite directions are pressed (left+right & up+down), it was also causing players to behave hilariously
   while up+down were held
+19.03.2021.
+- fixed show play match controls menu and enable menu controllers options
+- changed "auto-detect" to "auto-select" controllers, since with that option they automatically get selected
+  when connected
+- fixed crashes in configure joypad sub-menus when the joypad being configured would disconnect
+- fixed not being able to select 4th joypad for player 2 in control options menu
+- fixed auto-selecting the most recently selected joypad when one player takes over the other player's joypad
+- fixed same-name joypad renaming in case some in the middle get disconnected and re-added (say out of
+  joy (1), joy (2), joy (3), #2 gets reconnected; old code would count the number of same-name joypads and
+  would assign #3 to the new joypad, ending up with #1, #3, #3; fixed code assigns the max so it becomes
+  #1, #3, #4
+- added joypad tests for axis intervals reduction and adding suffixes for same name joypads
+- paved some way for virtual joypad, added #ifdef, removed array and sticked to a single virtual joypad
+  instance
+- [mnu2h] added explicit entry limit so the template entries can freely use it as a start index
+20.03.2021.
+- finished a primitive version of virtual joypad, and it even gets highlighted when clicked ;) now I need to
+  find out how to handle multiple touches on Android (it's unusable on PC since obviously I can only click
+  one thing at a time); hope the changes won't be so drastic as to break the existing code
+21.03.2021.
+- [mnu2h] added a warning if an entry string contains leading/trailing whitespace
+- fixed fire+left/right on control in select match controls menu so that pressing opposite direction while
+  holding fire can assign other control too (mouse dragging is still limited to one assignment only)
+- fixed out of range joypads vector access when virtual joypad is selected for player 2
+- fixed virtual joypad SDL controller mapping
+- fixed not properly switching config around when two joypads with same GUIDs are selected (that was causing
+  incomplete controls warning to not appear sometimes when it should)
+- fixed all the control switch spamming when changing controls in select match controls menu
+- fixed select match controls menu showing up after "VIEW RESULT" is pressed
+22.03.2021.
+- changed instruction text in select match controls, and made it different for single vs 2 players
+- fixed header text for setup keyboard menu (I think it was a leftover from testing from how it looks)
+- removed limitation that only player 1 can select keyboard 1 and only player 2 keyboard 2; it was dragged
+  over from original SWOS and I think it doesn't make much sense anymore, so now on there are two key sets
+  and each can be assigned to any player + also made it possible to select no controls for any player (for
+  any reason it might be)
+- refactored windowManager out of renderer, it was long overdue
+- added -fwrapv flag to Android build, better safe than sorry, especially with all the signed overflow checks
+  in vm.cpp
+- added ability to print exclamation point in strings, now we can YELL!!!!
+- added "RESET TO DEFAULT" button to joypad config menu
+- fixed virtual joypad wrongly detected as a free joypad even if it's used
+- tried virtual joypad on a real device, but it's not working nicely :/ only one button can be pressed at a
+  time, I'll probably have to use touch event APIs to handle it properly; also, touch areas are too small,
+  it's too difficult to press them, I'll have to create some sort of config for that, since there are so many
+  devices and screen sizes out there; on top of that, there are some rendering artefacts on the sides of the
+  screen, only appearing when using virtual joypad
+23.03.2021.
+- [mnu2h] synchronized text measuring routines with the latest text printing changes in SWOS
+- found a hint in SDL Android readme that "dirty rectangles" technique might cause visual glitches; disabled
+  blending when drawing virtual joypad buttons and the artefacts disappeared, so that's a small progress
+- seems coordinate mapping is off too, I was rendering small yellow cursor and it got out of sync
+  horizontally: the game has black margins on my phone, cursor is always drawn only inside the field but
+  touch coordinates come from the entire surface
+- fixed ini file loading and saving on Android (the ini lib was using standard files, had to reroute it to
+  use the SDL RWops)
+- connected Xbox joypad to the phone via a USB adapter, and it worked perfectly :)
+24.03.2021.
+- [ida2asm] @insert-hook symbols are now in global namespace since having a symbol there and removing it at
+  the same time is a hard error
+- found a stack overflow that happens in TextInput() in debug version after some time; converted it to C++
+  and added virtual keyboard pop-ups whenever the text needs to be inputted
+- made Android back button quit the game (it now behaves the same as escape)
+- fixed joypad setup menu for virtual joypad not opening
+25.03.2021.
+- fixed invalid mouse coordinate mapping on mobile (due to incorrect assumption that there is no slack area
+  in full-screen)
+- switched to touch API and added sort of pointer trails at finger touches, which disappear after a while;
+  virtual joypad is improved, it now responds to multiple things at once (e.g. side + kick), but it's still
+  unplayable; have to solve the diagonals and movement of the finger to a different "key" without releasing
+26.03.2021.
+- fixed buttons, axis etc. to start from 1 and not 0 in test menu
+- [mnu2h] fixed making entry invisible even if the entry's invisible property is 0
+- removed everything except full-screen from video options menu and ignored everything else when loading from
+  ini file on Android
+27.03.2021.
+- fixed display truncation of joypad ids to 16-bit
+- separated video options into two menus: true video options, which later optionally leads to window mode
+  menu, where window mode and screen resolution can be adjusted (this is old video options menu)
+- moved flash menu cursor to video options menu
+- fixed up video options to display properly, hid show touch trail for non-virtual joypad builds; it looks
+  pretty empty right now, but I'm foreseeing we'll add more stuff there
+28.03.2021.
+- [android] made back button work like a right mouse button (goes back to previous menu)
+- made right click open quit menu if on main screen
+- disabled virtual joypad rendering if it wasn't needed (e.g. single player game, player 1 using other
+  controls and player 2 set to virtual joypad)
+- determined that artefacts when rendering blended rectangles only happen on Samsung phone, but not on Huawei
+  or even ancient Alcatel... weird
+- fixed a bug in select match controls menu where a wrong joypad would be selected if some of the players
+  were using keyboard (in 2 player game)
+- added option to turn off transparent virtual joypad buttons (since it messes up the rendering on Samsung),
+  and fixed saving of show touch trails option
+- fixed up and tried out new virtual joypad direction pad layout, it's an improvement but still not as
+  playable as it could be... going  for v3 now
+29.03.2021.
+- switched to a safer procedure for saving ini file options, they are first saved to tmp file, then tmp file
+  is renamed to swos.ini (lost my options already when stopping the game at an inappropriate moment)
+- [android] fixed directory scanning so now load competition menu works
+- [android] fixed crash when selecting edit custom teams (file customs.edt was missing from assets)
+- ugh, solved a nasty problem: suddenly team names in all loaded competitions started missing two first
+  letters (" MILAN", "VENTUS"...); tracked the change to the exact date but couldn't figure out why it would
+  happen from the diff; eventually, after a lot of investigation, uncovered that the removal of controlChars
+  triggered cascading alignment disturbance and changed data alignment of selTeamsPtr which was located in
+  the load competition buffer; it's an exported variable and therefore marked for alignment, but by simple
+  chance didn't have it until now, when it got 2 bytes (exact 2 bytes from team names); added static_assert
+  so if this ever happens I'll know immediately
+- [ida2asm] expanded align directive to accept 1-byte alignment (meaning don't align this)
+30.03.2021.
+- connected PC keyboard to Android, and it works phenomenally with 0 configuration! all the keys work for
+  text editing; tried SWOS and it worked perfectly! all the shortcuts work too, besides a small screen it's
+  identical to PC experience (I only noticed comments lagging a little, but don't think it can be helped)
+- figured out how to interface with Android to check the keyboard presence, and it works really well
+- implemented keyboard adding/removal from control menus depending if it's connected on Android (for PC we'll
+  just always assume connected)
+- fixed some bugs in controls menu scrolling
+31.03.2021.
+- unset controls for keyboard players when keyboard was removed
+- fixed control menus in case when there were no joypads connected
+- [android] renamed mouse/mouse click mentions to touch/tap
+- [android] fixed not closing RW context when saving ini file
+- [android] the game used to hang when connecting/disconnecting joypads live, but that seems to be fixed
+  along with previous fixes :P
+- fixed selection remaining on an empty item in controls options menu when the item gets hidden (e.g.
+  selected joypad gets disconnected, scroll arrows disappear)
+- fixed wrong defaults for video options (flash menu cursor, show touch trails, transparent virtual joypad
+  buttons and default window mode: full-screen (Android))
+- [android] made touches open menu items immediately when pressed (instead of released) to make the UI seem
+  more responsive
+- discovered that it was possible to click on opponent's players with mouse when viewing opponent's team,
+  yikes! luckily, it didn't take too long to fix, hope there are no more stuff like this lurking around
+- [android] made annoying spinning "S" removable by tapping on it (my guess is that % of mobile users having
+  a keyboard with F9 attached is ridiculously low)
+- [android] fixed log file handling, now it will be saved into app data area in parallel with line being sent
+  to Android system log
+- fixed improper positioning of elements in select match controls menu for single player when keyboard is
+  present (only first time it's shown)
+- fixed virtual joypad sometimes not appearing even if it was selected
+- [android] turned off touch trails during the match, it seemed out of place
+- [android] switched mouse pointer positioning from mouse polling to touch events and it's much better, for
+  example it was extremely difficult to hit left scrolling arrows in control options menu on Samsung, now
+  they work great); it's also possible to select items by dragging a finger, which makes it easier to hit the
+  active area; also this setup survives rotation just fine, rotation used to break menu controls
+- learned that edit tactics "remembers" teams from friendly game, not sure if that's a bug or a desired
+  behavior
+01.04.2021.
+- implemented test and quick config for virtual joypad; this made me realize I was making the same mistake as
+  with Amiga joysticks: quick config expects second button to be given for the bench, but virtual joypad
+  (currently) has only one
+- implemented bench button skip in controller quick config menu: hold selected fire button for at least 2
+  seconds and release
+- [mnu2h] changed -1 to 255 in direction skip entries so clang would stop crying
+- removed select joypad with fire item from control options menu; considering putting it into select match
+  controls menu, but will see about that
+02.04.2021.
+- added clickable regions to quick config confirmation (save/discard/restart), so it can now be used on
+  mobiles without the keyboard too
+- fixed a small error in control options menu navigation
+- [mnu2h] removed #define for *Entry reference creation so the values could show up properly in debugger
+- fixed menu header turning into "STDMENUTEXT" in setup keyboard menu, when returning from event selection
+- added control events for replay and save highlight, they're working pretty good ;) now it's becoming
+  crowded in select events menu -- when the next event is added I'll probably have to lay them out in two
+  columns; the reason for adding these is mostly to help the mobiles since they got no keys to access them,
+  but on the other hand virtual joypad only has one button, oh well, can't have everything :)
+- picked a nice GUID for virtual joypad
+- added scrolling of a selected joypad into view when control options menu shows up; it's really annoying to
+  have to keep scrolling to see what you got selected when you got plenty of controllers ;)
+03.04.2021.
+- tested out new preliminary virtual joypad rendering: drew a 1/8th of circle, a pie, 8 times with 45 degrees
+  hardware rotation, then used texture color and alpha modding to achieve active/inactive color and
+  transparency; rendering it in much larger dimensions than scaling it down with hardware, not sure if it's
+  an overkill for small screens (it's probably fine, might test it later)
+04.04.2021.
+- did the math for the virtual pad touch detection
+05.04.2021.
+- implementing the joypad area detection, fixed some mistakes (like using y increasing up as in math instead
+  of down for standard graphics programming), but still not quite there yet, need to fix the line separating
+  right and top-right
+06.04.2021.
+- fixed bugs and tested out virtual joypad v3; not bad, I even scored a goal! ;) just gotta fix the Samsung
+  rendering issues, if possible :/
+- shrunk virtual joypad a bit, it was covering a bit too much of the field
+- added little endian check to precompiled headers
+- switched to making a surface first and then converting it to texture with color key (more proper way)
+- fixed transparent joypad buttons option not getting saved properly to ini
+- fixed invalid assert after the game (causing Android build to exit in debug mode)
+- increased contrast between active and inactive virtual joypad colors so it could be more prominent on the
+  devices with lower quality displays (having lesser number of colors)
+- added virtual joypad version without the transparency (though it's now having rendering issues as well,
+  since the texture has to be alpha blended)
+- solved Samsung rendering issues! it disappeared when I started clearing rendering buffer as a first
+  operation, guess I wasn't doing it as an optimization since the game texture covers entire field anyway;
+  leaving it for now in case there are some other devices that act strangely, no idea about the performance
+  hit, it's probably negligible, will measure when the time comes

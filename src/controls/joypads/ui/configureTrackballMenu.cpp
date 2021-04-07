@@ -5,6 +5,7 @@
 #include "configureTrackball.mnu.h"
 
 static int m_joypadIndex;
+static SDL_JoystickID m_joypadId;
 static int m_ballIndex;
 static int m_numBalls;
 static JoypadConfig::BallBinding *m_currentBall;
@@ -22,18 +23,27 @@ void showConfigureTrackballMenu(int joypadIndex, int ballIndex)
 static void initMenu();
 static void setTrackballLabel();
 static void setEventFields();
+static bool exitIfDisconnected();
 
 static void configureTrackballMenuOnInit()
 {
+    m_joypadId = joypadId(m_joypadIndex);
     m_numBalls = joypadNumBalls(m_joypadIndex);
     m_currentBall = &joypadBall(m_joypadIndex, m_ballIndex);
 
-    initMenu();
+    if (!exitIfDisconnected())
+        initMenu();
 }
 
 static void configureTrackballMenuOnRestore()
 {
-    initMenu();
+    if (!exitIfDisconnected())
+        initMenu();
+}
+
+static void configureTrackballMenuOnDraw()
+{
+    exitIfDisconnected();
 }
 
 static void selectEvents()
@@ -110,4 +120,14 @@ static void setEventFields()
     gameControlEventToString(m_currentBall->xNegEvents, getMenuEntry(xNegEvent)->string(), kStdMenuTextSize);
     gameControlEventToString(m_currentBall->yPosEvents, getMenuEntry(yPosEvent)->string(), kStdMenuTextSize);
     gameControlEventToString(m_currentBall->yNegEvents, getMenuEntry(yNegEvent)->string(), kStdMenuTextSize);
+}
+
+static bool exitIfDisconnected()
+{
+    if (joypadDisconnected(m_joypadId)) {
+        SetExitMenuFlag();
+        return true;
+    }
+
+    return false;
 }

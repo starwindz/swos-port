@@ -15,6 +15,10 @@
 #include <condition_variable>
 #include <sys/stat.h>
 
+#ifdef __ANDROID__
+# include <SDL_system.h>
+#endif
+
 // prevent name clash of WriteFile that comes from SWOS and a Win32 API function
 #ifdef _WIN32
 # define WriteFile Win32WriteFile
@@ -28,6 +32,10 @@
 
 #include <SDL2/SDL.h>
 #include <SDL_mixer.h>
+
+#if SDL_BYTEORDER != SDL_LIL_ENDIAN
+#error "Big endian not supported!"
+#endif
 
 #include "assert.h"
 #include "swos.h"

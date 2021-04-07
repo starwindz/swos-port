@@ -16,6 +16,8 @@ public:
     SDL_JoystickGUID guid() const { return m_guid; }
     JoypadConfig *primaryConfig() { return &m_pl1Config; }
     JoypadConfig *secondaryConfig() { return &m_pl2Config; }
+    void resetPrimary();
+    void resetSecondary();
     bool gotPl2Config() const { return m_gotPl2Config; }
 
     void loadFromIni(const CSimpleIni& ini, const char *sectionName);

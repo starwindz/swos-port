@@ -22,6 +22,7 @@ Menu configureTrackballMenu
 
     onInit: configureTrackballMenuOnInit
     onRestore: configureTrackballMenuOnRestore
+    onDraw: configureTrackballMenuOnDraw
 
     initialEntry: xPosEvent
 

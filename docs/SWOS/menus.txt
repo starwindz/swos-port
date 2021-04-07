@@ -372,16 +372,16 @@ Colors from 0 to 31 (for completeness):
 Having taken all this in consideration, the colors used in menu background
 drawing are:
 #    color:                         outer frame:
-0  - pinkish to brown               [no background and frame]
+0  - pinkish/grayish to brown       [no background and frame]
 1  -      -||-                      [gray]
 2  -      -||-                      [-||-]
 3  - blue to black                  [-||-]
 4  - orange to brown                [orange]
 5  -     -||-                       [ -||- ]
 6  -     -||-                       [yellow]
-7  - pinkish to brown               [gray]
+7  - pinkish/grayish to brown       [gray]
 8  - blue to black                  [-||-]
-9  - pinkish to brown               [-||-]
+9  - pinkish/grayish to brown       [-||-]
 10 - light red to bright red        [-||-]
 11 - blue to purplish (pink)        [pale blue]
 12 - orange to brown                [red]

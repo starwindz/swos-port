@@ -5,23 +5,24 @@
 #include "JoypadConfigRegister.h"
 #include "keyboard.h"
 #include "util.h"
+#include "windowManager.h"
 
 static int m_pl1Joypad = kNoJoypad;
 static int m_pl2Joypad = kNoJoypad;
 
 static bool m_joypadsInitialized;
 static bool m_autoConnectJoypads = true;
-static bool m_disableMenuControllers = false;
-static bool m_showSelectMatchControlsMenu = true;
+static bool m_enableMenuControllers = false;
 
 static std::vector<Joypad> m_joypads;
-static std::vector<VirtualJoypad> m_virtualJoypads;
+#ifdef VIRTUAL_JOYPAD
+static VirtualJoypad m_virtualJoypad;
+#endif
 
 static JoypadConfigRegister m_joypadConfig;
 
 static constexpr char kAutoConnectJoypadsKey[] = "autoConnectControllers";
-static constexpr char kDisableMenuControllers[] = "disableGameControllersInMenu";
-static constexpr char kShowSelectMatchControlsMenu[] = "showSelectMatchControlsMenu";
+static constexpr char kEnableMenuControllers[] = "enableGameControllersInMenu";
 
 static constexpr char kJoypad1Key[] = "player1Controller";
 static constexpr char kJoypad2Key[] = "player2Controller";
@@ -29,48 +30,74 @@ static constexpr char kJoypad2Key[] = "player2Controller";
 static std::string m_joy1GuidStr;
 static std::string m_joy2GuidStr;
 
-static bool virtualJoypadIndex(int& index)
+#ifdef VIRTUAL_JOYPAD
+static int virtualJoypadIndex()
 {
-    if (index < 0) {
-        index = -index - 1;
-        assert(index < static_cast<int>(m_virtualJoypads.size()));
+    return m_joypads.size();
+}
+
+static void updateVirtualJoypadStatus()
+{
+    int playerNumber = (m_pl1Joypad == virtualJoypadIndex()) + 2 * (m_pl2Joypad == virtualJoypadIndex());
+    assert(playerNumber == 0 || playerNumber == 1 || playerNumber == 2);
+    m_virtualJoypad.setPlayerNumber(playerNumber);
+}
+#endif
+
+static SDL_UNUSED bool isRealJoypadIndex(int index)
+{
+    return static_cast<size_t>(index) < m_joypads.size();
+}
+
+static SDL_UNUSED inline bool isValidJoypadIndex(int index)
+{
+#ifdef VIRTUAL_JOYPAD
+    return isRealJoypadIndex(index) || index == virtualJoypadIndex();
+#else
+    return isRealJoypadIndex(index);
+#endif
+}
+
+static bool bothPlayersUsingJoypads()
+{
+    if (getPl1Controls() == kJoypad && getPl2Controls() == kJoypad) {
+#ifdef VIRTUAL_JOYPAD
+        if (m_pl1Joypad == virtualJoypadIndex() || m_pl2Joypad == virtualJoypadIndex())
+            return false;
+#endif
         return true;
     }
 
     return false;
 }
 
-static int joypadIndexToVirtual(int index)
-{
-    return -(index + 1);
-}
-
-static bool isRealJoypadIndex(int index)
-{
-    return index >= 0;
-}
-
-static SDL_UNUSED inline bool isValidJoypadIndex(int index)
-{
-    return index < 0 ? (-index - 1) < static_cast<int>(m_virtualJoypads.size()) : index < static_cast<int>(m_joypads.size());
-}
-
-static bool bothPlayersUsingJoypads()
-{
-    return getPl1Controls() == kJoypad && getPl2Controls() == kJoypad;
-}
-
 static int findFreeJoypad()
 {
-    for (int i = static_cast<int>(m_joypads.size()) - 1; i >= 0; i--)
-        if (i != m_pl1Joypad && i != m_pl2Joypad)
-            return i;
+    auto latestTime = 0ull;
+    int mostRecentJoypad = kNoJoypad;
+    int firstAvailableJoypad = kNoJoypad;
 
-    for (int i = static_cast<int>(m_virtualJoypads.size()) - 1; i >= 0; i--)
-        if (i != m_pl1Joypad && i != m_pl2Joypad)
-            return joypadIndexToVirtual(i);
+    for (int i = static_cast<int>(m_joypads.size()) - 1; i >= 0; i--) {
+        if (i != m_pl1Joypad && i != m_pl2Joypad) {
+            if (firstAvailableJoypad == kNoJoypad)
+                firstAvailableJoypad = i;
+            if (m_joypads[i].lastSelected() > latestTime) {
+                latestTime = m_joypads[i].lastSelected();
+                mostRecentJoypad = i;
+            }
+        }
+    }
 
-    return kNoJoypad;
+#ifdef VIRTUAL_JOYPAD
+    if (virtualJoypadIndex() != m_pl1Joypad && virtualJoypadIndex() != m_pl2Joypad) {
+        if (m_virtualJoypad.lastSelected() > latestTime)
+            mostRecentJoypad = virtualJoypadIndex();
+        if (firstAvailableJoypad == kNoJoypad)
+            firstAvailableJoypad = virtualJoypadIndex();
+    }
+#endif
+
+    return mostRecentJoypad != kNoJoypad ? mostRecentJoypad : firstAvailableJoypad;
 }
 
 static GameControlEvents joypadEvents(PlayerNumber player)
@@ -89,24 +116,24 @@ GameControlEvents pl2JoypadEvents()
     return joypadEvents(kPlayer2);
 }
 
-template<typename C>
-GameControlEvents eventsFromAllJoypads(const C& c)
+GameControlEvents eventsFromAllJoypads()
 {
     auto events = kNoGameEvents;
 
-    for (const auto& joypad : c) {
-        events |= joypad.events();
-        if (joypad.anyUnassignedButtonDown())
-            events |= kGameEventKick;
+    if (m_enableMenuControllers) {
+        for (const auto& joypad : m_joypads) {
+            events |= joypad.events();
+            if (joypad.anyUnassignedButtonDown())
+                events |= kGameEventKick;
+        }
+#ifdef VIRTUAL_JOYPAD
+        events |= m_virtualJoypad.events();
+#endif
+    } else {
+        events = pl1JoypadEvents();
+        events |= pl2JoypadEvents();
     }
 
-    return events;
-}
-
-GameControlEvents eventsFromAllJoypads()
-{
-    auto events = eventsFromAllJoypads(m_joypads);
-    events |= eventsFromAllJoypads(m_virtualJoypads);
     return events;
 }
 
@@ -114,31 +141,35 @@ GameControlEvents joypadEvents(int index)
 {
     assert(isValidJoypadIndex(index));
 
-    if (virtualJoypadIndex(index))
-        return m_virtualJoypads[index].events();
-    else
-        return m_joypads[index].events();
+#ifdef VIRTUAL_JOYPAD
+    if (index == virtualJoypadIndex())
+        return m_virtualJoypad.events();
+#endif
+    return m_joypads[index].events();
 }
 
 JoypadElementValueList joypadElementValues(int index)
 {
     assert(isValidJoypadIndex(index));
 
-    if (virtualJoypadIndex(index))
-        return m_virtualJoypads[index].elementValues();
-    else
-        return m_joypads[index].elementValues();
+#ifdef VIRTUAL_JOYPAD
+    if (index == virtualJoypadIndex())
+        return m_virtualJoypad.elementValues();
+#endif
+    return m_joypads[index].elementValues();
 }
 
 bool joypadHasBasicBindings(int index)
 {
     assert(isValidJoypadIndex(index));
 
-    GameControlEvents allEvents;
+    auto allEvents = kNoGameEvents;
 
-    if (virtualJoypadIndex(index))
-        allEvents = m_virtualJoypads[index].allEventsMask();
+#ifdef VIRTUAL_JOYPAD
+    if (index == virtualJoypadIndex())
+        allEvents = m_virtualJoypad.allEventsMask();
     else
+#endif
         allEvents = m_joypads[index].allEventsMask();
 
     return (allEvents & kMinimumGameEventsMask) == kMinimumGameEventsMask;
@@ -159,14 +190,14 @@ static std::pair<int, int> findJoypadsByGuids(const SDL_JoystickGUID& guid1, con
             result.second = i;
     }
 
+#ifdef VIRTUAL_JOYPAD
     if (!foundBoth()) {
-        for (size_t i = 0; i < m_virtualJoypads.size() && !foundBoth(); i++) {
-            if (checkPl1() && m_virtualJoypads[i].guidEqual(guid1))
-                result.first = joypadIndexToVirtual(i);
-            else if (checkPl2() && m_virtualJoypads[i].guidEqual(guid2))
-                result.second = joypadIndexToVirtual(i);
-        }
+        if (checkPl1() && m_virtualJoypad.guidEqual(guid1))
+            result.first = virtualJoypadIndex();
+        else if (checkPl2() && m_virtualJoypad.guidEqual(guid2))
+            result.second = virtualJoypadIndex();
     }
+#endif
 
     return result;
 }
@@ -190,7 +221,7 @@ static SiblingJoypadConfig siblingJoypadConfig(const Joypad& joypad, int index)
             return kNoMatch;
 
         if (guidEqual(joypad.guid(), joypadGuid(otherIndex))) {
-            const auto otherConfig = joypadConfig(joy1Index);
+            const auto otherConfig = joypadConfig(otherIndex);
             assert(otherConfig);
             return otherConfig->primary() ? kPrimary : kSecondary;
         }
@@ -216,10 +247,14 @@ static void handleTwoSameGuidJoypadsSelected(Joypad& joypad, int joypadIndex)
 static void updateJoypadLastSelected(int index)
 {
     auto now = getMillisecondsSinceEpoch();
-    if (virtualJoypadIndex(index))
-        m_virtualJoypads[index].updateLastSelected(now);
-    else
-        m_joypads[index].updateLastSelected(now);
+
+#ifdef VIRTUAL_JOYPAD
+    if (index == virtualJoypadIndex()) {
+        m_virtualJoypad.updateLastSelected(now);
+        return;
+    }
+#endif
+    m_joypads[index].updateLastSelected(now);
 }
 
 static void setPl1JoypadIndex(int index)
@@ -227,6 +262,7 @@ static void setPl1JoypadIndex(int index)
     assert(index == kNoJoypad || isValidJoypadIndex(index));
 
     m_pl1Joypad = index;
+
     if (index != kNoJoypad) {
         logInfo("Player 1 using joypad '%s'", joypadName(index));
         updateJoypadLastSelected(index);
@@ -238,6 +274,7 @@ static void setPl2JoypadIndex(int index)
     assert(index == kNoJoypad || isValidJoypadIndex(index));
 
     m_pl2Joypad = index;
+
     if (index != kNoJoypad) {
         logInfo("Player 2 using joypad '%s'", joypadName(index));
         updateJoypadLastSelected(index);
@@ -246,8 +283,16 @@ static void setPl2JoypadIndex(int index)
 
 // Tries to assign some of the currently connected joypads to users based on configuration from the ini file.
 // Called at the start of the program, after SDL joysticks have been initialized and the joypad config was loaded from the ini file.
-void assignJoypadsToPlayers()
+void initJoypads()
 {
+#ifdef VIRTUAL_JOYPAD
+    auto config = m_joypadConfig.config(VirtualJoypad::kGuid);
+    m_virtualJoypad.setConfig(config);
+
+    m_virtualJoypad.enableTouchTrails(getShowTouchTrails());
+    m_virtualJoypad.enableTransparentButtons(getTransparentVirtualJoypadButtons());
+#endif
+
     if (getPl1Controls() != kJoypad && getPl2Controls() != kJoypad)
         return;
 
@@ -281,7 +326,7 @@ void assignJoypadsToPlayers()
 
     // revert controls if no joypads after all
     if (getPl1Controls() == kJoypad && m_pl1Joypad == kNoJoypad)
-        setPl1Controls(pl1HasBasicBindings() ? kKeyboard1 : kMouse);
+        setPl1Controls(keyboard1HasBasicBindings() ? kKeyboard1 : kMouse);
 
     if (getPl2Controls() == kJoypad && m_pl2Joypad == kNoJoypad)
         setPl2Controls(kNone);
@@ -291,6 +336,10 @@ void assignJoypadsToPlayers()
 
     assert(getPl1Controls() != kJoypad || isValidJoypadIndex(m_pl1Joypad) && joypadId(m_pl1Joypad) != Joypad::kInvalidJoypadId);
     assert(getPl2Controls() != kJoypad || isValidJoypadIndex(m_pl2Joypad) && joypadId(m_pl2Joypad) != Joypad::kInvalidJoypadId);
+
+#ifdef VIRTUAL_JOYPAD
+    updateVirtualJoypadStatus();
+#endif
 
     m_joypadsInitialized = true;
 
@@ -308,10 +357,106 @@ int getPl2JoypadIndex()
     return m_pl2Joypad;
 }
 
-static bool firstSelectedJoypad(int index1, int index2)
+int getJoypadIndex(PlayerNumber player)
+{
+    return player == kPlayer1 ? m_pl1Joypad : m_pl2Joypad;
+}
+
+// Remove the control of the joypad from this player.
+static void unassignJoypad(PlayerNumber player)
+{
+    assert((player == kPlayer1 ? getPl1Controls() : getPl2Controls()) == kJoypad);
+
+    logInfo("Trying to remove joypad %d from player %d", player == kPlayer1 ? getPl1JoypadIndex() : getPl2JoypadIndex(), player + 1);
+
+    int joypadIndex = findFreeJoypad();
+    assert(joypadIndex == kNoJoypad || isValidJoypadIndex(joypadIndex));
+
+    if (joypadIndex == kNoJoypad) {
+        if (player == kPlayer1)
+            setPl1Controls(keyboard1HasBasicBindings() ? kKeyboard1 : kMouse);
+        else
+            setPl2Controls(kNone);
+    } else {
+        if (player == kPlayer1)
+            setPl1JoypadIndex(joypadIndex);
+        else
+            setPl2JoypadIndex(joypadIndex);
+    }
+}
+
+bool setJoypad(PlayerNumber player, int joypadIndex)
+{
+    assert(player == kPlayer1 || player == kPlayer2);
+    assert(joypadIndex == kNoJoypad || isValidJoypadIndex(joypadIndex) &&
+        (player == kPlayer1 ? getPl1Controls() == kJoypad : getPl2Controls() == kJoypad));
+
+    int playerNo = player == kPlayer1 ? 1 : 2;
+    if (joypadIndex != kNoJoypad)
+        logInfo("Selecting controller %d for player %d", joypadIndex, playerNo);
+    else
+        logInfo("Unsetting controller for player %d", playerNo);
+
+    if (player == kPlayer1)
+        setPl1JoypadIndex(joypadIndex);
+    else
+        setPl2JoypadIndex(joypadIndex);
+
+    if (m_pl1Joypad == m_pl2Joypad && m_pl1Joypad != kNoJoypad) {
+        auto otherPlayer = player == kPlayer1 ? kPlayer2 : kPlayer1;
+        unassignJoypad(otherPlayer);
+    }
+
+#ifdef VIRTUAL_JOYPAD
+    updateVirtualJoypadStatus();
+#endif
+
+    if (isRealJoypadIndex(joypadIndex)) {
+        auto& joypad = m_joypads[joypadIndex];
+        if (!joypad.tryReopening(joypadIndex)) {
+            logWarn("Failed to open joypad %d", joypadIndex);
+            beep();
+            return false;
+        }
+
+        handleTwoSameGuidJoypadsSelected(joypad, joypadIndex);
+    }
+
+#ifdef VIRTUAL_JOYPAD
+    assert(m_pl1Joypad != virtualJoypadIndex() || m_pl2Joypad != virtualJoypadIndex());
+#endif
+
+    return true;
+}
+
+#ifdef VIRTUAL_JOYPAD
+VirtualJoypad& getVirtualJoypad()
+{
+    return m_virtualJoypad;
+}
+
+VirtualJoypadEnabler::VirtualJoypadEnabler(int index)
+{
+    m_index = index;
+    if (index == virtualJoypadIndex())
+        m_virtualJoypad.setForceRender(true);
+}
+
+VirtualJoypadEnabler::~VirtualJoypadEnabler()
+{
+    if (m_index == virtualJoypadIndex())
+        m_virtualJoypad.setForceRender(false);
+}
+#endif
+
+static bool moreRecentlySelectedThan(int index1, int index2)
 {
     auto lastSelected = [](int index) {
-        return virtualJoypadIndex(index) ? m_virtualJoypads[index].lastSelected() : m_joypads[index].lastSelected();
+#ifdef VIRTUAL_JOYPAD
+        return index == virtualJoypadIndex() ? m_virtualJoypad.lastSelected() : m_joypads[index].lastSelected();
+#else
+        return m_joypads[index].lastSelected();
+#endif
     };
 
     return lastSelected(index1) < lastSelected(index2);
@@ -319,34 +464,31 @@ static bool firstSelectedJoypad(int index1, int index2)
 
 int getNumJoypads()
 {
-    return m_joypads.size() + m_virtualJoypads.size();
+#ifdef VIRTUAL_JOYPAD
+    return m_joypads.size() + 1;
+#else
+    return m_joypads.size();
+#endif
 }
 
-template<typename C, typename F>
-static int findJoypad(const C& c, F f)
+template< typename F>
+static int findJoypad( F f)
 {
-    auto it = std::find_if(c.begin(), c.end(), f);
+    auto it = std::find_if(m_joypads.begin(), m_joypads.end(), f);
 
-    if (it != c.end())
-        return it - c.begin();
+    if (it != m_joypads.end())
+        return it - m_joypads.begin();
 
     return kNoJoypad;
 }
 
-template<typename C>
-static int findJoypadId(const C& c, SDL_JoystickID id)
-{
-    return findJoypad(c, [id](const auto& joypad) { return joypad.id() == id; });
-}
-
-static int getJoypadIndexFromId(SDL_JoystickID id)
-{
-    return id < 0 ? findJoypadId(m_virtualJoypads, id) : findJoypadId(m_joypads, id);
-}
-
 bool joypadDisconnected(SDL_JoystickID id)
 {
-    int index = getJoypadIndexFromId(id);
+#ifdef VIRTUAL_JOYPAD
+    if (id == m_virtualJoypad.id())
+        return false;
+#endif
+    int index = findJoypad([id](const auto& joypad) { return joypad.id() == id; });
     return index == kNoJoypad;
 }
 
@@ -354,21 +496,40 @@ JoypadConfig *joypadConfig(int index)
 {
     assert(isValidJoypadIndex(index));
 
-    if (virtualJoypadIndex(index))
-        return m_virtualJoypads[index].config();
-    else if (index < static_cast<int>(m_joypads.size()))
+#ifdef VIRTUAL_JOYPAD
+    if (index == virtualJoypadIndex())
+        return m_virtualJoypad.config();
+#endif
+    if (isRealJoypadIndex(index))
         return m_joypads[index].config();
 
     return nullptr;
+}
+
+void resetJoypadConfig(int index)
+{
+    assert(isValidJoypadIndex(index));
+
+#ifdef VIRTUAL_JOYPAD
+    if (index == virtualJoypadIndex()) {
+        m_joypadConfig.resetConfig(VirtualJoypad::kGuid, false);
+        return;
+    }
+#endif
+
+    auto& joypad = m_joypads[index];
+    m_joypadConfig.resetConfig(joypad.guid(), joypad.config()->secondary());
 }
 
 const char *joypadName(int index)
 {
     assert(isValidJoypadIndex(index));
 
-    if (virtualJoypadIndex(index))
-        return m_virtualJoypads[index].name();
-    else if (index < static_cast<int>(m_joypads.size()))
+#ifdef VIRTUAL_JOYPAD
+    if (index == virtualJoypadIndex())
+        return m_virtualJoypad.name();
+#endif
+    if (isRealJoypadIndex(index))
         return m_joypads[index].name();
 
     return nullptr;
@@ -378,9 +539,11 @@ SDL_JoystickGUID joypadGuid(int index)
 {
     assert(isValidJoypadIndex(index));
 
-    if (virtualJoypadIndex(index))
-        return m_virtualJoypads[index].guid();
-    else if (index < static_cast<int>(m_joypads.size()))
+#ifdef VIRTUAL_JOYPAD
+    if (index == virtualJoypadIndex())
+        return VirtualJoypad::kGuid;
+#endif
+    if (isRealJoypadIndex(index))
         return m_joypads[index].guid();
 
     return {};
@@ -390,44 +553,74 @@ SDL_JoystickID joypadId(int index)
 {
     assert(isValidJoypadIndex(index));
 
-    if (index >= 0 && index < static_cast<int>(m_joypads.size()))
+#ifdef VIRTUAL_JOYPAD
+    if (index == virtualJoypadIndex())
+        return m_virtualJoypad.id();
+#endif
+    if (isRealJoypadIndex(index))
         return m_joypads[index].id();
 
-    return -1;
+    return Joypad::kInvalidJoypadId;
 }
 
 const char *joypadPowerLevel(int index)
 {
     assert(isValidJoypadIndex(index));
 
-    if (virtualJoypadIndex(index))
+#ifdef VIRTUAL_JOYPAD
+    if (index == virtualJoypadIndex())
         return "OVER 9000";
-    else
-        return m_joypads[index].powerLevel();
+#endif
+
+    return m_joypads[index].powerLevel();
 }
 
 int joypadNumHats(int index)
 {
     assert(isValidJoypadIndex(index));
-    return virtualJoypadIndex(index) ? m_virtualJoypads[index].numHats() : m_joypads[index].numHats();
+
+#ifdef VIRTUAL_JOYPAD
+    if (index == virtualJoypadIndex())
+        return m_virtualJoypad.numHats();
+#endif
+
+    return m_joypads[index].numHats();
 }
 
 int joypadNumButtons(int index)
 {
     assert(isValidJoypadIndex(index));
-    return virtualJoypadIndex(index) ? m_virtualJoypads[index].numButtons() : m_joypads[index].numButtons();
+
+#ifdef VIRTUAL_JOYPAD
+    if (index == virtualJoypadIndex())
+        return m_virtualJoypad.numButtons();
+#endif
+
+    return m_joypads[index].numButtons();
 }
 
 int joypadNumAxes(int index)
 {
     assert(isValidJoypadIndex(index));
-    return virtualJoypadIndex(index) ? m_virtualJoypads[index].numAxes() : m_joypads[index].numAxes();
+
+#ifdef VIRTUAL_JOYPAD
+    if (index == virtualJoypadIndex())
+        return m_virtualJoypad.numAxes();
+#endif
+
+    return m_joypads[index].numAxes();
 }
 
 int joypadNumBalls(int index)
 {
     assert(isValidJoypadIndex(index));
-    return virtualJoypadIndex(index) ? m_virtualJoypads[index].numBalls() : m_joypads[index].numBalls();
+
+#ifdef VIRTUAL_JOYPAD
+    if (index == virtualJoypadIndex())
+        return m_virtualJoypad.numBalls();
+#endif
+
+    return m_joypads[index].numBalls();
 }
 
 JoypadConfig::HatBindingList *joypadHatBindings(int joypadIndex, int hatIndex)
@@ -435,7 +628,7 @@ JoypadConfig::HatBindingList *joypadHatBindings(int joypadIndex, int hatIndex)
     assert(isValidJoypadIndex(joypadIndex));
 
     auto config = joypadConfig(joypadIndex);
-    return config->getHatBindings(hatIndex);
+    return config ? config->getHatBindings(hatIndex) : nullptr;
 }
 
 JoypadConfig::AxisIntervalList *joypadAxisIntervals(int joypadIndex, int axisIndex)
@@ -443,7 +636,7 @@ JoypadConfig::AxisIntervalList *joypadAxisIntervals(int joypadIndex, int axisInd
     assert(isValidJoypadIndex(joypadIndex));
 
     auto config = joypadConfig(joypadIndex);
-    return config->getAxisIntervals(axisIndex);
+    return config ? config->getAxisIntervals(axisIndex) : nullptr;
 }
 
 JoypadConfig::BallBinding& joypadBall(int joypadIndex, int ballIndex)
@@ -456,7 +649,12 @@ JoypadConfig::BallBinding& joypadBall(int joypadIndex, int ballIndex)
 
 bool tryReopeningJoypad(int index)
 {
-    return virtualJoypadIndex(index) ? true : m_joypads[index].tryReopening(index);
+#ifdef VIRTUAL_JOYPAD
+    if (index == virtualJoypadIndex())
+        return m_virtualJoypad.init();
+#endif
+
+    return m_joypads[index].tryReopening(index);
 }
 
 static void autoSelectJoypad(int index)
@@ -471,7 +669,7 @@ static void autoSelectJoypad(int index)
         assert(isValidJoypadIndex(m_pl1Joypad) && isValidJoypadIndex(m_pl2Joypad));
 
         // kick out the one that was first to connect
-        if (firstSelectedJoypad(m_pl1Joypad, m_pl2Joypad))
+        if (moreRecentlySelectedThan(m_pl1Joypad, m_pl2Joypad))
             setPl1Controls(kJoypad, index);
         else
             setPl2Controls(kJoypad, index);
@@ -487,23 +685,20 @@ static void assignNewJoypadConfig(Joypad& joypad, int index)
 
 static void assignInstanceNumber(Joypad& joypad)
 {
-    int numSameNameJoypads = 0;
-    Joypad *firstJoypad{};
+    int maxInstance = 0;
+    Joypad *sameNameJoypad{};
 
     for (auto& currentJoypad : m_joypads) {
-        if (&joypad != &currentJoypad && joypad.hash() == currentJoypad.hash() && !strcmp(joypad.name(), currentJoypad.name())) {
-            if (!firstJoypad)
-                firstJoypad = &currentJoypad;
-            numSameNameJoypads++;
+        if (&joypad != &currentJoypad && joypad.hash() == currentJoypad.hash() && !strcmp(joypad.baseName(), currentJoypad.baseName())) {
+            sameNameJoypad = &currentJoypad;
+            maxInstance = std::max(maxInstance, currentJoypad.instance());
         }
     }
 
-    if (numSameNameJoypads > 0) {
-        if (numSameNameJoypads == 1) {
-            assert(firstJoypad);
-            firstJoypad->setNameSuffix(1);
-        }
-        joypad.setNameSuffix(numSameNameJoypads + 1);
+    if (sameNameJoypad) {
+        if (!maxInstance)
+            sameNameJoypad->setNameSuffix(++maxInstance);
+        joypad.setNameSuffix(maxInstance + 1);
     }
 }
 
@@ -568,19 +763,18 @@ void removeJoypad(SDL_JoystickID id)
     }
 }
 
-template<typename C>
-static int getJoypadWithButtonDown(const C& c)
-{
-    return findJoypad(c, [](const auto& joypad) { return joypad.anyButtonDown(); });
-}
-
 int getJoypadWithButtonDown()
 {
-    int index = getJoypadWithButtonDown(m_joypads);
+    int index = findJoypad([](const auto& joypad) { return joypad.anyButtonDown(); });
     if (index != kNoJoypad)
         return index;
 
-    return getJoypadWithButtonDown(m_virtualJoypads);
+#ifdef VIRTUAL_JOYPAD
+    if (m_virtualJoypad.anyButtonDown())
+        index = virtualJoypadIndex();
+#endif
+
+    return index;
 }
 
 void waitForJoypadButtonsIdle()
@@ -590,65 +784,6 @@ void waitForJoypadButtonsIdle()
     } while (getJoypadWithButtonDown() >= 0);
 
     swos.fire = 0;
-}
-
-// Remove the control of the joypad from this player.
-static void unassignJoypad(PlayerNumber player)
-{
-    assert((player == kPlayer1 ? getPl1Controls() : getPl2Controls()) == kJoypad);
-
-    logInfo("Trying to remove joypad %d from player %d", player == kPlayer1 ? getPl1JoypadIndex() : getPl2JoypadIndex(), player + 1);
-
-    int joypadIndex = findFreeJoypad();
-    assert(joypadIndex == kNoJoypad || isValidJoypadIndex(joypadIndex));
-
-    if (joypadIndex == kNoJoypad) {
-        if (player == kPlayer1)
-            setPl1Controls(pl1HasBasicBindings() ? kKeyboard1 : kMouse);
-        else
-            setPl2Controls(kNone);
-    } else {
-        if (player == kPlayer1)
-            setPl1JoypadIndex(joypadIndex);
-        else
-            setPl2JoypadIndex(joypadIndex);
-    }
-}
-
-bool setJoypad(PlayerNumber player, int joypadIndex)
-{
-    assert(player == kPlayer1 || player == kPlayer2);
-    assert(joypadIndex == kNoJoypad || isValidJoypadIndex(joypadIndex));
-    assert(joypadIndex == kNoJoypad || (player == kPlayer1 ? getPl1Controls() == kJoypad : getPl2Controls() == kJoypad));
-
-    int playerNo = player == kPlayer1 ? 1 : 2;
-    if (joypadIndex != kNoJoypad)
-        logInfo("Selecting controller %d for player %d", joypadIndex, playerNo);
-    else
-        logInfo("Unsetting controller for player %d", playerNo);
-
-    if (player == kPlayer1)
-        setPl1JoypadIndex(joypadIndex);
-    else
-        setPl2JoypadIndex(joypadIndex);
-
-    if (m_pl1Joypad == m_pl2Joypad && m_pl1Joypad != kNoJoypad) {
-        auto otherPlayer = player == kPlayer1 ? kPlayer2 : kPlayer1;
-        unassignJoypad(otherPlayer);
-    }
-
-    if (isRealJoypadIndex(joypadIndex)) {
-        auto& joypad = m_joypads[joypadIndex];
-        if (!joypad.tryReopening(joypadIndex)) {
-            logWarn("Failed to open joypad %d", joypadIndex);
-            beep();
-            return false;
-        }
-
-        handleTwoSameGuidJoypadsSelected(joypad, joypadIndex);
-    }
-
-    return true;
 }
 
 bool getAutoConnectJoypads()
@@ -661,24 +796,14 @@ void setAutoConnectJoypads(bool value)
     m_autoConnectJoypads = value;
 }
 
-bool getDisableMenuControllers()
+bool getEnableMenuControllers()
 {
-    return m_disableMenuControllers;
+    return m_enableMenuControllers;
 }
 
-void setDisableMenuControllers(bool value)
+void setEnableMenuControllers(bool value)
 {
-    m_disableMenuControllers = value;
-}
-
-bool getShowSelectMatchControlsMenu()
-{
-    return m_showSelectMatchControlsMenu;
-}
-
-void setShowSelectMatchControlsMenu(bool value)
-{
-    m_showSelectMatchControlsMenu = value;
+    m_enableMenuControllers = value;
 }
 
 //
@@ -696,8 +821,7 @@ void loadJoypadOptions(const char *controlsSection, const CSimpleIni& ini)
     m_joy2GuidStr = joy2GuidStr ? joy2GuidStr : "";
 
     m_autoConnectJoypads = ini.GetBoolValue(controlsSection, kAutoConnectJoypadsKey, true);
-    m_disableMenuControllers = ini.GetBoolValue(controlsSection, kDisableMenuControllers, false);
-    m_showSelectMatchControlsMenu = ini.GetBoolValue(controlsSection, kShowSelectMatchControlsMenu, true);
+    m_enableMenuControllers = ini.GetBoolValue(controlsSection, kEnableMenuControllers, true);
 }
 
 void saveJoypadOptions(const char *controlsSection, CSimpleIni& ini)
@@ -726,8 +850,7 @@ void saveJoypadOptions(const char *controlsSection, CSimpleIni& ini)
     }
 
     ini.SetBoolValue(controlsSection, kAutoConnectJoypadsKey, m_autoConnectJoypads);
-    ini.SetBoolValue(controlsSection, kDisableMenuControllers, m_disableMenuControllers);
-    ini.SetBoolValue(controlsSection, kShowSelectMatchControlsMenu, m_showSelectMatchControlsMenu);
+    ini.SetBoolValue(controlsSection, kEnableMenuControllers, m_enableMenuControllers);
 
     m_joypadConfig.saveConfig(ini);
 }

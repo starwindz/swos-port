@@ -7,38 +7,9 @@ constexpr int kVgaScreenSize = kVgaWidth * kVgaHeight;
 constexpr int kVgaPaletteNumColors = 256;
 constexpr int kVgaPaletteSize = kVgaPaletteNumColors * 3;
 
-constexpr int kWindowWidth = 4 * kVgaWidth;
-constexpr int kWindowHeight = 4 * kVgaHeight;
-
-enum WindowMode { kModeFullScreen, kModeWindow, kModeBorderlessMaximized, kNumWindowModes, };
-
-std::pair<int, int> getWindowSize();
-void setWindowSize(int width, int height);
-bool getWindowResizable();
-WindowMode getWindowMode();
-int getWindowDisplayIndex();
-bool setFullScreenResolution(int width, int height);
-bool isInFullScreenMode();
-std::pair<int, int> getFullScreenDimensions();
-std::pair<int, int> getVisibleFieldSize();
-int getVisibleFieldWidth();
-
-void switchToWindow();
-void switchToBorderlessMaximized();
-
-void toggleBorderlessMaximizedMode();
-void toggleFullScreenMode();
-void toggleWindowResizable();
-void centerWindow();
-
-bool hasMouseFocus();
-SDL_Rect getViewport();
-
-void loadVideoOptions(const CSimpleIni& ini);
-void saveVideoOptions(CSimpleIni& ini);
-
 void initRendering();
 void finishRendering();
+SDL_Rect getViewport();
 void setPalette(const char *palette, int numColors = kVgaPaletteNumColors);
 void getPalette(char *palette);
 void clearScreen();
@@ -49,5 +20,3 @@ void timerProc();
 void fadeIfNeeded();
 
 void makeScreenshot();
-
-void showVideoOptionsMenu();

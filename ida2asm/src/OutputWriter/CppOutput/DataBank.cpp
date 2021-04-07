@@ -75,7 +75,9 @@ void DataBank::consolidateVariables(const StructStream& structs)
                     var.offset = m_memoryByteSize;
                     m_varToAddress.add(var.name, m_memoryByteSize);
 
-                    assert(!var.exportedDecl || var.type == kString || var.offset % (var.type == kStruct ? 4 : std::min<int>(var.size, 4)) == 0);
+                    assert(!var.exportedDecl || var.type == kString ||
+                        var.offset % (var.type == kStruct ? 4 : std::min<int>(var.size, 4)) == 0 ||
+                        std::get<3>(m_symFileParser.exportedDeclaration(var.name)) == 1);
                 }
 
                 m_memoryByteSize += var.dup * var.size;

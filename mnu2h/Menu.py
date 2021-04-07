@@ -51,7 +51,7 @@ class Menu:
 
     def createNewTemplateEntry(self, isReset=False):
         entry = ResetTemplateEntry() if isReset else Entry()
-        entry.ordinal = Constants.kTemplateEntryOrdinalStart + len(self.entries)
+        entry.ordinal = Constants.kMaxEntries + len(self.entries)
         internalName = f'{len(self.entries):02}'    # use a number since it can't be assigned to entry name by the user
 
         return entry, internalName

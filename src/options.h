@@ -44,4 +44,3 @@ bool disableIntro();
 bool disableImageReels();
 bool doNotPauseLoadingScreen();
 int midiBankNumber();
-bool cursorFlashingEnabled();

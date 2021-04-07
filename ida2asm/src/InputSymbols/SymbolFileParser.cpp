@@ -475,12 +475,13 @@ void SymbolFileParser::parseSymbolFile()
             }
 
             if (action == kRemove || action == kNull || action == kInsertCall || action == kTypeSizes) {
-                if (action == kInsertCall) {
-                    parseHookProcLine(symStart, symEnd, start, p);
-                } else if (action == kTypeSizes) {
+                if (action == kTypeSizes) {
                     parseTypeSize(symStart, symEnd, start, p);
                 } else {
-                    parseRemoveAndNullLine(action, symStart, symEnd, start, p);
+                    if (action == kInsertCall)
+                        parseHookProcLine(symStart, symEnd, start, p);
+                    else
+                        parseRemoveAndNullLine(action, symStart, symEnd, start, p);
                     ensureUniqueSymbol(symStart, symEnd, kGlobal, action);
                 }
             } else {
@@ -667,7 +668,7 @@ const char *SymbolFileParser::handlePotentialAlignment(const char *start, const 
         while (Util::isDigit(*p))
             alignment = 10 * alignment + *p++ - '0';
 
-        if (alignment < 2 || alignment > 64)
+        if (alignment < 1 || alignment > 64)
             error("only 2-64 alignment values supported");
 
         p = skipWhiteSpace(p);
@@ -901,7 +902,7 @@ std::pair<const char *, const char *> SymbolFileParser::getNextToken(const char 
 
     do {
         p++;
-    } while (*p != '\r' && *p != '\n' && *p != ',' && *p != '[' && *p != ']');
+    } while (*p != '\r' && *p != '\n' && *p != ',' && *p != '[' && *p != ']' && *p != '(');
 
     if (*p == '[') {
         auto q = p - 1;

@@ -26,6 +26,10 @@ namespace SWOS_UnitTest
         static inline bool different(char *t1, char *t2) {
             return strcmp(t1, t2) != 0;
         }
+        template<typename T>
+        static inline bool different(const std::vector<T>& t1, const std::vector<T>& t2) {
+            return t1 != t2;
+        }
     };
     template<typename T1, typename T2>
     void assertEqualImp(bool mustBeEqual, const T1& t1, const T2& t2, const char *t1Str, const char *t2Str, const char *file, int line)

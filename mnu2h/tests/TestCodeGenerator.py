@@ -133,6 +133,7 @@ kTestData = (
 
             Entry {
                 stringTable: swos.SmoothJazz101DaPierre
+                directionRight: @kDown
             }
             Entry {
                 stringTable: [ extern flannel, 0, "WOOPTEE", "DOO" ]
@@ -250,6 +251,7 @@ kTestData = (
 
                 {'id': 'eb03',    'type': 'Entry',      'params': ['0', '0', '0', '0']},
                 {'id': 'est03',   'type': 'EntryStringTable', 'params': ['0', 'SwosVM::Offsets::SmoothJazz101DaPierre']},
+                {'id': 'ers03',   'type': 'EntryRightSkip',   'params': ['255', '3']},
                 {'id': 'ee03',    'type': 'EntryEnd',   'params': []},
 
                 {'id': 'eb04',    'type': 'Entry',      'params': ['0', '0', '0', '0']},
@@ -282,14 +284,14 @@ kMenuRegex = re.compile(r'''
     \s*namespace\s+(?P<enumName>\w+?)\s*{\s*
     enum\s+Entries\s*{
     (?P<enumEntries>[^}]+)}\s*;
-    (?P<entryPointers>\s*\/\/[^#]+\#define\s+makeEntryPointer(.*?)undef\s+makeEntryPointer)?
+    ([^\/]+\/\/.*?\n(?P<entryReferences>(?:\s*static\s+auto\s*&\s.*?reinterpret_cast<[^>]+>.*?MenuEntry[^;]+;)+))?
     (?P<constants>([^}]+))?
     ''',
     re.DOTALL | re.VERBOSE)
 kFuncRegex = re.compile(r'static void (\w+)\s*\(\s*\)\s*;')
 kStringTableDeclarationPattern = r'struct\s+StringTableNative{length}\s*:\s*public\s+StringTableNative\s*{{(.*?)}};'
 kEnumEntryRegex = re.compile(r'(\w+)\s*=\s*(\d+)\s*,')
-kEntryPointerRegex = re.compile(r'makeEntryPointer\((\w+)\s*,\s*(\d+)')
+kEntryReferenceRegex = re.compile(r'\s*static\s+auto\s*&\s+(\w+)[^\d]+(\d+)\s*\*[^;]+;')
 kConstantsRegex = re.compile(r'constexpr\s+int\s+(\w+)\s*=\s*(\d+)')
 kMenuElementsRegex = re.compile(r'''
     (?P<type>\w+)\s+(?P<id>\w+)\s*{\s*
@@ -460,17 +462,19 @@ class TestCodeGenerator(unittest.TestCase):
 
             for menuName, entryIndices in expectedNamedEntries.items():
                 self.assertIn(menuName, menusWithNamedEntries)
-                enumValues, entryPointerValues = menusWithNamedEntries[menuName]
+                enumValues, entryReferenceValues = menusWithNamedEntries[menuName]
+
+                self.assertTrue(all(ref[0].endswith('Entry') for ref in entryReferenceValues))
 
                 for entryName, expectedIndex in entryIndices:
                     enumEntryNames = list(map(operator.itemgetter(0), enumValues))
-                    self.assertEqual(enumEntryNames, list(map(operator.itemgetter(0), entryPointerValues)))
+                    self.assertEqual(enumEntryNames, list(map(lambda ref: ref[0][:-5], entryReferenceValues)))
                     self.assertIn(entryName, enumEntryNames)
 
                     index = enumEntryNames.index(entryName)
                     actualEntryIndex = enumValues[index][1]
                     self.assertEqual(int(actualEntryIndex), expectedIndex)
-                    self.assertEqual(actualEntryIndex, entryPointerValues[index][1])
+                    self.assertEqual(actualEntryIndex, entryReferenceValues[index][1])
         else:
             self.assertFalse(menusWithNamedEntries)
 
@@ -495,11 +499,11 @@ class TestCodeGenerator(unittest.TestCase):
             enumEntries = match['enumEntries']
             enumValues = kEnumEntryRegex.findall(enumEntries)
 
-            entryPointers = match['entryPointers']
-            entryPointerValues = kEntryPointerRegex.findall(entryPointers) if entryPointers else []
+            entryReferences = match['entryReferences']
+            entryReferenceValues = kEntryReferenceRegex.findall(entryReferences) if entryReferences else []
 
             if enumValues:
-                menusWithNamedEntries[menuName] = (enumValues, entryPointerValues)
+                menusWithNamedEntries[menuName] = (enumValues, entryReferenceValues)
 
         return menusWithNamedEntries
 

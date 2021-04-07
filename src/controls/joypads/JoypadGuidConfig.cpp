@@ -1,5 +1,6 @@
 #include "JoypadGuidConfig.h"
 #include "Joypad.h"
+#include "VirtualJoypad.h"
 
 static constexpr char kConfigPrefix[] = "controllerConfig-";
 static constexpr int kConfigPrefixLen = sizeof(kConfigPrefix) - 1;
@@ -28,6 +29,16 @@ const JoypadConfig& JoypadGuidConfig::config(PlayerNumber player) const
     if (player == kPlayer1)
         return m_pl1Config;
     return m_gotPl2Config ? m_pl2Config : m_pl1Config;
+}
+
+void JoypadGuidConfig::resetPrimary()
+{
+    m_pl1Config = m_defaultConfig;
+}
+
+void JoypadGuidConfig::resetSecondary()
+{
+    m_pl2Config = m_defaultConfig;
 }
 
 void JoypadGuidConfig::loadFromIni(const CSimpleIni& ini, const char *sectionName)
@@ -76,6 +87,12 @@ const char *JoypadGuidConfig::internalMapping(const SDL_JoystickGUID& guid)
             { 0x03, 0x00, 0x00, 0x00, 0x10, 0x08, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, },
             ",,a:b0,b:b1,leftx:a0,lefty:a4,"
         },
+#ifdef VIRTUAL_JOYPAD
+        {
+            VirtualJoypad::kGuid,
+            ",,a:b0,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,",
+        },
+#endif
     };
 
     for (const auto& mapping : kInternalMappings)

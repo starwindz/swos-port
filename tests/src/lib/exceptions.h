@@ -116,6 +116,15 @@ namespace SWOS_UnitTest
 
     namespace Detail {
         template<typename T>
+        static inline std::string stringify(const std::vector<T>& v) {
+            std::string result(1, '[');
+            for (const auto& el : v)
+                result += stringify(el) + ',';
+            if (result.back() == ',')
+                result.erase(result.end() - 1);
+            return result + ']';
+        }
+        template<typename T>
         static inline std::string stringify(T t) {
             return std::to_string(t);
         }

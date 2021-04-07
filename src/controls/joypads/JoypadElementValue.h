@@ -11,11 +11,14 @@ enum class JoypadElement {
 };
 
 struct JoypadElementValue {
+    JoypadElementValue() = default;
+    JoypadElementValue(JoypadElement type, int index, int hatMask)
+        : type(type), index(index), hatMask(hatMask) {}
     JoypadElement type;
     int index;
     union {
-        bool pressed;
         int hatMask;
+        bool pressed;
         int16_t axisValue;
         struct {
             int dx;

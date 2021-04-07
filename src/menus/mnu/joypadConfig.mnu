@@ -15,8 +15,9 @@ Menu joypadConfigMenu
     export kInfoFieldWidth = 260
     kInfoFieldHeight = 10
 
+    export kResetTextY = 20
     kStartY = 30
-    kBottomButtonsY = kExitY - 2 * (kBigButtonHeight + 2)
+    kBottomButtonsY = kExitY - 3 * (kBigButtonHeight + 2)
 
     kElementsDescriptionWidth = 66
 
@@ -99,7 +100,6 @@ Menu joypadConfigMenu
 
     Entry id {
         textFlags: @kYellowText | @kLeftAligned
-        number: 0
     }
 
     Entry powerLevel {}
@@ -315,6 +315,14 @@ Menu joypadConfigMenu
         downEntry: >
 
         onSelect: joypadQuickConfig
+    }
+
+    Entry reset {
+        text: "RESET TO DEFAULT"
+        upEntry: <
+        downEntry: >
+
+        onSelect: resetConfigToDefault
     }
 
     Entry test {

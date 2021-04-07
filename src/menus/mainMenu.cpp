@@ -8,6 +8,16 @@ void activateMainMenu()
     activateMenu(&mainMenu);
 }
 
+bool mainMenuActive()
+{
+    return getCurrentPackedMenu() == &mainMenu;
+}
+
+void activateExitGameButton()
+{
+    showQuitMenu();
+}
+
 static void drawExitIcon()
 {
     static const unsigned char kExitIconData[] = {

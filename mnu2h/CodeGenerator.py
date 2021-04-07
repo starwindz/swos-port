@@ -298,12 +298,10 @@ class CodeGenerator:
         out('    };')
 
         if len(entries):
-            out('\n    // entry pointers')
-            out(('#define makeEntryPointer(entryName, ord) static auto& entryName##Entry = '
-                '*reinterpret_cast<MenuEntry *>(swos.g_currentMenu + sizeof(Menu) + ord * sizeof(MenuEntry))'))
+            out('\n    // entry references')
             for entryName, ordinal in entries:
-                out(f'    makeEntryPointer({entryName}, {ordinal});')
-            out('#undef makeEntryPointer')
+                out((f'    static auto& {entryName}Entry = *reinterpret_cast<MenuEntry *>'
+                    f'(swos.g_currentMenu + sizeof(Menu) + {ordinal} * sizeof(MenuEntry));'))
 
         if menu.exportedVariables and exportedOrdinals:
             out()
@@ -391,7 +389,7 @@ class CodeGenerator:
         if entry.forceColor or entry.color and entry.color != '0':
             result.append(f'EntryColor ec{ord}{{ {entry.color} }};')
 
-        if entry.invisible:
+        if entry.invisible and entry.invisible != '0':
             result.append(f'EntryInvisible ei{ord}{{}};')
 
         if entry.leftEntry != -1 or entry.rightEntry != -1 or entry.upEntry != -1 or entry.downEntry != -1:
@@ -406,6 +404,8 @@ class CodeGenerator:
             if newDirection != '-1' or skip != '-1':
                 if newDirection == '-1':
                     newDirection = Constants.kConstants['k' + direction]
+                if skip == '-1':
+                    skip = 255
 
                 result.append(f'Entry{direction}Skip e{direction[0].lower()}s{ord}{{ {skip}, {newDirection} }};')
 

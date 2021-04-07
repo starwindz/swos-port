@@ -293,10 +293,12 @@ class TestPreprocessor(unittest.TestCase):
     @data(  # expected values read directly from SWOS :D
         ('HA-HA-HA', 'true', 58, 8),
         ('HA-HA-HA', 'false', 44, 6),
-        ('mIxEdCaSe', 1, 69, 8),
+        ('mIxEdCaSe', 1, 68, 8),
         ('mIxEdCaSe', 0, 50, 6),
-        ('@#$*BRB|];~!\t', 'big', 100, 8),
-        ('@#$*BRB|];~!\t', 'small', 75, 6),
+        ('@#$*BRB|];~!\t', 'big', 39, 8),
+        ('@#$*BRB|];~!\t', 'small', 29, 6),
+        ('HA_HA_$$$_HA!!!', 1, 69, 8),
+        ('HA_HA_$$$_HA!!!', 0, 51, 6),
         ('LAST REMNANT GONE AND WASHED AWAY IT WAS TIME TO MOVE. FAST.', 512, 409, 8),
         ('NIGHT WAS COLD AND RAINY, AND THEY WERE CLOSING IN ON ME.', 0x0, 285, 6),
     )

@@ -153,5 +153,8 @@
     <CustomBuild Include="..\..\..\src\menus\mnu\selectMatchControls.mnu">
       <Filter>mnu</Filter>
     </CustomBuild>
+    <CustomBuild Include="..\..\..\src\menus\mnu\windowMode.mnu">
+      <Filter>mnu</Filter>
+    </CustomBuild>
   </ItemGroup>
 </Project>

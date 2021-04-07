@@ -6,10 +6,9 @@
 
 Menu controlOptionsMenu
 {
-    kStartY = 24
+    kStartY = 30
     kNextPartGap = 10
 
-    kSelectJoypad = "SELECT GAME CONTROLLER"
     kRedefineControls = "SETUP CONTROLS"
 
     export kControlButtonWidth = 144
@@ -29,8 +28,9 @@ Menu controlOptionsMenu
     defaultHeight: kOptionHeight + 1
 
     onInit: controlOptionsMenuInit
+    onRestore: controlOptionsMenuOnDraw
     onDraw: controlOptionsMenuOnDraw
-    initialEntry: pl1Control0
+    initialEntry: pl1FirstControl
 
     Entry header {
         x: kBaseX
@@ -38,7 +38,7 @@ Menu controlOptionsMenu
         width: kBigButtonWidth
         height: kBigButtonHeight
 
-        text: "CONTROLS MENU"
+        text: "SELECT CONTROLS"
         color: kHeaderColor
     }
 
@@ -58,6 +58,7 @@ Menu controlOptionsMenu
 
         upEntry: <
         downEntry: >
+        leftEntry: #{i < kNumControlEntries / 2 ? :pl1ScrollUp : :pl1ScrollDown}
         rightEntry: #join(pl2Control, #i)
 
         skipLeft: <
@@ -69,32 +70,31 @@ Menu controlOptionsMenu
     }
 #endRepeat
 
-    pl1Control0.leftEntry = pl1ScrollUp
-    pl1Control0.upEntry = @kNoEntry
-    pl1Control0.skipUp = @kNoEntry
-    pl1Control1.leftEntry = pl1ScrollUp
-    pl1Control2.leftEntry = pl1ScrollDown
-    pl1Control3.leftEntry = pl1ScrollDown
-    pl1Control3.downEntry = pl1RedefineControls
-    pl1Control3.skipDown = pl1RedefineControls
+    entryAlias pl1FirstControl = pl1Control0
+    entryAlias pl1LastControl = #join(pl1Control, #{kNumControlEntries - 1})
+
+    pl1FirstControl.upEntry = @kNoEntry
+    pl1FirstControl.skipUp = @kNoEntry
+    pl1LastControl.downEntry = pl1RedefineControls
+    pl1LastControl.skipDown = pl1RedefineControls
 
     Entry pl1ScrollUp {
         x: kPl1ScrollArrowX
-        y: pl1Control0.y
+        y: pl1FirstControl.y
         width: kScrollArrowWidth
         height: kScrollArrowHeight
 
         sprite: kUpArrowSpriteIndex
 
         downEntry: pl1ScrollDown
-        rightEntry: pl1Control0
+        rightEntry: pl1FirstControl
 
         onSelect: pl1ScrollUpSelected
     }
 
     Entry pl1ScrollDown {
         x: kPl1ScrollArrowX
-        y: pl1Control3.y
+        y: pl1LastControl.y
         width: kScrollArrowWidth
         height: kScrollArrowHeight
 
@@ -102,7 +102,7 @@ Menu controlOptionsMenu
 
         upEntry: pl1ScrollUp
         downEntry: pl1RedefineControls
-        rightEntry: pl1Control3
+        rightEntry: pl1LastControl
 
         onSelect: pl1ScrollDownSelected
     }
@@ -123,6 +123,7 @@ Menu controlOptionsMenu
         upEntry: <
         downEntry: >
         leftEntry: #join(pl1Control, #i)
+        rightEntry: #{i < kNumControlEntries / 2 ? :pl2ScrollUp : :pl2ScrollDown}
 
         skipRight: <
         directionRight: @kUp
@@ -133,18 +134,17 @@ Menu controlOptionsMenu
     }
 #endRepeat
 
-    pl2Control0.rightEntry = pl2ScrollUp
-    pl2Control0.upEntry = @kNoEntry
-    pl2Control0.skipUp = @kNoEntry
-    pl2Control1.rightEntry = pl2ScrollUp
-    pl2Control2.rightEntry = pl2ScrollDown
-    pl2Control3.rightEntry = pl2ScrollDown
-    pl2Control3.downEntry = pl2RedefineControls
-    pl2Control3.skipDown = pl2RedefineControls
+    entryAlias pl2FirstControl = pl2Control0
+    entryAlias pl2LastControl = #join(pl2Control, #{kNumControlEntries - 1})
+
+    pl2FirstControl.upEntry = @kNoEntry
+    pl2FirstControl.skipUp = @kNoEntry
+    pl2LastControl.downEntry = pl2RedefineControls
+    pl2LastControl.skipDown = pl2RedefineControls
 
     Entry pl2ScrollUp {
         x: kPl2ScrollArrowX
-        y: pl2Control0.y
+        y: pl2FirstControl.y
         width: kScrollArrowWidth
         height: kScrollArrowHeight
 
@@ -158,7 +158,7 @@ Menu controlOptionsMenu
 
     Entry pl2ScrollDown {
         x: kPl2ScrollArrowX
-        y: pl2Control3.y
+        y: pl2LastControl.y
         width: kScrollArrowWidth
         height: kScrollArrowHeight
 
@@ -166,7 +166,7 @@ Menu controlOptionsMenu
 
         upEntry: pl2ScrollUp
         downEntry: pl2RedefineControls
-        leftEntry: pl2Control3
+        leftEntry: pl2LastControl
 
         onSelect: pl2ScrollDownSelected
     }
@@ -182,28 +182,15 @@ Menu controlOptionsMenu
 
         text: kRedefineControls
 
-        upEntry: pl2Control3
+        upEntry: pl2LastControl
         downEntry: >
         leftEntry: pl1RedefineControls
 
-        skipRight: pl2SelectJoypad
         directionRight: @kDown
 
-        skipUp: pl2Control3
+        skipUp: pl2LastControl
 
         onSelect: redefinePlayer2Controls
-    }
-
-    Entry pl2SelectJoypad {
-        text: kSelectJoypad
-
-        upEntry: <
-        downEntry: autoConnectJoypads
-        leftEntry: pl1SelectJoypad
-
-        skipUp: pl2RedefineControls
-
-        onSelect: pl2SelectWhichJoypad
     }
 
     defaultX: kColumn1X
@@ -213,39 +200,28 @@ Menu controlOptionsMenu
 
         text: kRedefineControls
 
-        upEntry: pl1Control3
-        downEntry: >
+        upEntry: pl1LastControl
+        downEntry: exit
         rightEntry: pl2RedefineControls
 
-        skipLeft: pl1SelectJoypad
         directionLeft: @kDown
 
-        skipUp: pl1Control3
+        skipUp: pl1LastControl
 
         onSelect: redefinePlayer1Controls
-    }
-
-    Entry pl1SelectJoypad {
-        text: kSelectJoypad
-
-        upEntry: <
-        downEntry: autoConnectJoypads
-        rightEntry: pl2SelectJoypad
-
-        onSelect: pl1SelectWhichJoypad
     }
 
     Entry autoConnectJoypadsLabel {
         y: @prevEndY + kNextPartGap
         height: kOptionHeight
         color: kOptionsColumn1Color
-        text: "AUTO-DETECT CONTROLLERS"
+        text: "AUTO-SELECT CONTROLLERS"
     }
 
-    Entry disableMenuControllersLabel {
+    Entry enableMenuControllersLabel {
         height: kOptionHeight
         color: kOptionsColumn1Color
-        text: "DISABLE MENU CONTROLLERS"
+        text: "ENABLE MENU CONTROLLERS"
     }
 
     Entry selectMatchControlsLabel {
@@ -264,17 +240,17 @@ Menu controlOptionsMenu
 
         onSelect: toggleAutoConnectJoypads
 
-        upEntry: pl2SelectJoypad
+        upEntry: pl2RedefineControls
         downEntry: >
     }
 
-    Entry disableMenuControllers {
+    Entry enableMenuControllers {
         x: kColumn2X
-        y: disableMenuControllersLabel.y
+        y: enableMenuControllersLabel.y
         height: kOptionHeight
         color: kOptionsColumn2Color
 
-        stringTable: [ ~m_disableMenuControllers, swos.aOff, swos.aOn ]
+        stringTable: [ ~m_enableMenuControllers, swos.aOff, swos.aOn ]
 
         onSelect: toggleMenuControllers
 

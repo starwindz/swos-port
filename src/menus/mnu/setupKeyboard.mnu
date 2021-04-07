@@ -32,7 +32,7 @@ Menu setupKeyboardMenu
         width: kBigButtonWidth
         height: kBigButtonHeight
 
-        text: "SETUP KEYBOARD MENU"
+        text: @kAlloc
         color: kHeaderColor
     }
 

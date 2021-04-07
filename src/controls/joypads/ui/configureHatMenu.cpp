@@ -7,6 +7,7 @@
 #include "configureHat.mnu.h"
 
 static int m_joypadIndex;
+static SDL_JoystickID m_joypadId;
 static int m_hatIndex;
 
 static int m_currentBinding;
@@ -33,24 +34,34 @@ static void applyBindingData();
 static void updateEventsBox();
 static void updateMask();
 static void setMask(bool activate, int labelIndex, int statusIndex);
+static bool exitIfDisconnected();
 
 static void configureHatMenuOnInit()
 {
+    m_joypadId = joypadId(m_joypadIndex);
     m_bindings = joypadHatBindings(m_joypadIndex, m_hatIndex);
     assert(m_bindings);
 
-    if (m_bindings->empty())
-        m_bindings->emplace_back();
+    if (!exitIfDisconnected()) {
+        if (m_bindings->empty())
+            m_bindings->emplace_back();
 
-    m_currentBinding = 0;
-    m_maxBindingDigits = numDigits(m_bindings->size());
+        m_currentBinding = 0;
+        m_maxBindingDigits = numDigits(m_bindings->size());
 
-    initMenu();
+        initMenu();
+    }
 }
 
 static void configureHatMenuOnRestore()
 {
-    initMenu();
+    if (!exitIfDisconnected())
+        initMenu();
+}
+
+static void configureHatMenuOnDraw()
+{
+    exitIfDisconnected();
 }
 
 static void inputCurrentBinding()
@@ -273,4 +284,14 @@ static void setMask(bool activate, int labelIndex, int statusIndex)
     auto status = getMenuEntry(statusIndex);
     status->setBackgroundColor(color);
     status->setString(activate ? swos.aOn : swos.aOff);
+}
+
+static bool exitIfDisconnected()
+{
+    if (joypadDisconnected(m_joypadId)) {
+        SetExitMenuFlag();
+        return true;
+    }
+
+    return false;
 }

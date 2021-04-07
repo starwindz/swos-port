@@ -82,6 +82,8 @@ class MenuParser:
             if token.string == '#':
                 self.preprocessor.parsePreprocessorDirective(self.menu)
             elif token.string == 'Entry':
+                if len(self.menu.entries) >= Constants.kMaxEntries:
+                    Util.error(f'entry limit ({Constants.kMaxEntries}) exceeded', token)
                 self.entryParser.parse(self.menu, False)
                 self.stringTableLengths.add(self.entryParser.stringTableLength)
                 self.functions.update(self.entryParser.functions)

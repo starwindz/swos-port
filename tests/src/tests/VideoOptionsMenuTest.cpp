@@ -1,5 +1,8 @@
 #include "VideoOptionsMenuTest.h"
 #include "unitTest.h"
+#include "videoOptionsMenu.h"
+#include "windowManager.h"
+#include "mockWindowManager.h"
 #include "mockRender.h"
 #include "sdlProcs.h"
 #include "controls.h"
@@ -8,9 +11,9 @@
 
 #define SWOS_STUB_MENU_DATA
 static int16_t m_windowResizable = 1;
-#include "videoOptions.mnu.h"
+#include "windowMode.mnu.h"
 
-using namespace VideoOptionsMenu;
+using namespace WindowModeMenu;
 
 constexpr size_t kSlowResolutionsListSize = 20;
 
@@ -153,7 +156,7 @@ void VideoOptionsMenuTest::setupVariousResolutionLists()
 
 void VideoOptionsMenuTest::testVariousResolutionLists()
 {
-    for (size_t j = 0; j < kNumResolutionFields; j++) {
+    for (size_t j = 0; j < kNumResolutionFieldsShort; j++) {
         int entryIndex = j + resolutionField0;
         if (!m_displayModeList.empty() && j < m_displayModeList.size()) {
             assertItemIsVisible(entryIndex);
@@ -164,7 +167,7 @@ void VideoOptionsMenuTest::testVariousResolutionLists()
         }
     }
 
-    bool arrowsVisible = m_displayModeList.size() > kNumResolutionFields;
+    bool arrowsVisible = m_displayModeList.size() > kNumResolutionFieldsShort;
     assertItemVisibility(scrollUpArrow, arrowsVisible);
     assertItemVisibility(scrollDownArrow, arrowsVisible);
     assertItemVisibility(fullScreenArrow, !m_displayModeList.empty());
@@ -232,7 +235,7 @@ void VideoOptionsMenuTest::testResolutionListScrolling()
 
     auto normalizeScrollOffset = [&displayModes](int scrollOffset) {
         scrollOffset = std::max(scrollOffset, 0);
-        int maxOffset = std::max(0, static_cast<int>(displayModes.size()) - kNumResolutionFields);
+        int maxOffset = std::max(0, static_cast<int>(displayModes.size()) - kNumResolutionFieldsShort);
         scrollOffset = std::min(scrollOffset, maxOffset);
         return scrollOffset;
     };
@@ -267,7 +270,7 @@ void VideoOptionsMenuTest::scrollResolutionListOneLine(int direction, ScrollMeth
     switch (method) {
     case kArrowClick:
     case kArrowMouseWheel:
-        if (displayModes.size() > kNumResolutionFields) {
+        if (displayModes.size() > kNumResolutionFieldsShort) {
             int arrowItem = direction >= 0 ? scrollDownArrow : scrollUpArrow;
             if (method == kArrowClick)
                 clickItem(arrowItem);
@@ -278,7 +281,7 @@ void VideoOptionsMenuTest::scrollResolutionListOneLine(int direction, ScrollMeth
     case kResolutionListMouseWheel:
         if (!displayModes.empty()) {
             static int lastResolutionEntry;
-            auto resolutionItem = resolutionField0 + (lastResolutionEntry + 1) % std::min<int>(displayModes.size(), kNumResolutionFields);
+            auto resolutionItem = resolutionField0 + (lastResolutionEntry + 1) % std::min<int>(displayModes.size(), kNumResolutionFieldsShort);
             sendMouseWheelEvent(resolutionItem, -direction);
             lastResolutionEntry++;
         }
@@ -300,9 +303,9 @@ void VideoOptionsMenuTest::scrollResolutionListOneLine(int direction, ScrollMeth
 void VideoOptionsMenuTest::verifyResolutionListStrings(const DisplayModeList& displayModes, int scrollOffset /* = 0 */)
 {
     assert(scrollOffset >= 0);
-    assert(scrollOffset <= std::max(0, static_cast<int>(displayModes.size()) - kNumResolutionFields));
+    assert(scrollOffset <= std::max(0, static_cast<int>(displayModes.size()) - kNumResolutionFieldsShort));
 
-    for (int i = 0; i < std::min(kNumResolutionFields, static_cast<int>(displayModes.size()) - scrollOffset); i++) {
+    for (int i = 0; i < std::min(kNumResolutionFieldsShort, static_cast<int>(displayModes.size()) - scrollOffset); i++) {
         int entryIndex = resolutionField0 + i;
         assertItemIsVisible(entryIndex);
         auto expectedDisplayModeString = getResolutionString(displayModes[scrollOffset + i].w, displayModes[scrollOffset + i].h);
@@ -355,7 +358,7 @@ void VideoOptionsMenuTest::testCustomWindowSize()
 void VideoOptionsMenuTest::testExitButton()
 {
     assertEqual(swos.g_exitMenu, 0);
-    selectItem(VideoOptionsMenu::exit);
+    selectItem(WindowModeMenu::exit);
     assertEqual(swos.g_exitMenu, 1);
 }
 
@@ -567,7 +570,7 @@ void VideoOptionsMenuTest::verifyResolutionListColors(const char *current /* = n
     auto entry = getMenuEntry(resolutionField0);
     auto visible = !entry->invisible;
 
-    for (int i = 0; i < kNumResolutionFields; i++, entry++) {
+    for (int i = 0; i < kNumResolutionFieldsShort; i++, entry++) {
         // make sure there is never a visible field once they start going invisible
         if (entry->invisible)
             visible = 0;

@@ -318,14 +318,6 @@ void SWOS::ExitEuropeanChampionshipMenu()
     activateMainMenu();
 }
 
-void SWOS::AbortTextInputOnEscapeAndRightMouseClick()
-{
-    if (swos.lastKey == kKeyEscape || SDL_GetMouseState(nullptr, nullptr) & SDL_BUTTON_RMASK) {
-        swos.convertedKey = kKeyEscape;
-        swos.g_inputingText = 0;
-    }
-}
-
 bool inputNumber(MenuEntry *entry, int maxDigits, int minNum, int maxNum)
 {
     assert(entry->type == kEntryNumber);
@@ -333,20 +325,20 @@ bool inputNumber(MenuEntry *entry, int maxDigits, int minNum, int maxNum)
     int num = static_cast<int16_t>(entry->fg.number);
     assert(num >= minNum && num <= maxNum);
 
-    swos.g_inputingText = -1;
-
     auto buf = menuAlloc(16);
     SDL_itoa(num, buf, 10);
     assert(static_cast<int>(strlen(buf)) <= maxDigits);
 
     auto end = buf + strlen(buf);
-    *end++ = -1;    // insert cursor
+    *end++ = kCursorChar;
     *end = '\0';
 
     entry->type = kEntryString;
     entry->setString(buf);
 
     auto cursorPtr = end - 1;
+
+    TextInputScope textInput;
 
     while (true) {
         processControlEvents();
@@ -366,14 +358,12 @@ bool inputNumber(MenuEntry *entry, int maxDigits, int minNum, int maxNum)
             memmove(cursorPtr, cursorPtr + 1, end - cursorPtr);
             entry->type = kEntryNumber;
             entry->fg.number = atoi(buf);
-            swos.g_inputingText = 0;
             return true;
 
         case kKeyEscape:
             A5 = entry;
             entry->type = kEntryNumber;
             entry->fg.number = num;
-            swos.g_inputingText = 0;   // original SWOS leaves it set, wonder if it's significant...
             return false;
 
         case kKeyLShift:

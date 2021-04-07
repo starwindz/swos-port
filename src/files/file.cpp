@@ -99,7 +99,7 @@ int loadFile(const char *path, void *buffer, int maxSize /* = -1 */, size_t skip
 //
 // in:
 //      path         - path of the file to load
-//      bufferOffset - number of additional bytes at the start of the buffer that will remain uninitialized
+//      bufferOffset - number of additional bytes at the start of the destination buffer that will remain uninitialized
 //      skipBytes    - number of bytes to skip from the beginning of the file
 // out:
 //      pair of allocated buffer (which caller must free) and its size; nullptr/0 in case of error
@@ -218,6 +218,25 @@ __declspec(naked) int SWOS::WriteFile()
 #endif
 }
 
+bool renameFile(const char *oldPath, const char *newPath)
+{
+#ifdef __ANDROID__
+    char oldPathBuf[PATH_MAX];
+    char newPathBuf[PATH_MAX];
+
+    if (*oldPath != '/') {
+        snprintf(oldPathBuf, sizeof(oldPathBuf), "%s/%s", SDL_AndroidGetInternalStoragePath(), oldPath);
+        oldPath = oldPathBuf;
+    }
+    if (*newPath != '/') {
+        snprintf(newPathBuf, sizeof(newPathBuf), "%s/%s", SDL_AndroidGetInternalStoragePath(), newPath);
+        newPath = newPathBuf;
+    }
+#endif
+    std::remove(newPath);
+    return std::rename(oldPath, newPath) == 0;
+}
+
 void setRootDir(const char *dir)
 {
     m_rootDir = dir;
@@ -244,6 +263,19 @@ std::string joinPaths(const char *path1, const char *path2)
         result += dirSeparator;
 
     return result + path2;
+}
+
+bool fileExists(const char *path)
+{
+#ifdef __ANDROID__
+    char pathBuf[PATH_MAX];
+    if (*path != '/') {
+        snprintf(pathBuf, sizeof(pathBuf), "%s/%s", SDL_AndroidGetInternalStoragePath(), path);
+        path = pathBuf;
+    }
+#endif
+    struct stat statBuffer;
+    return stat(path, &statBuffer) == 0;
 }
 
 bool dirExists(const char *path)
@@ -307,6 +339,14 @@ FoundFileList findFiles(const char *extension, const char *dirName /* = nullptr 
     const char **allowedExtensions /* = nullptr */, size_t numAllowedExtensions /* = 0 */)
 {
     assert(extension && (extension[0] == '\0' || extension[0] == '.'));
+
+#ifdef __ANDROID__
+    char dirBuf[PATH_MAX];
+    if (!dirName || *dirName != '/') {
+        snprintf(dirBuf, sizeof(dirBuf), "%s/%s", SDL_AndroidGetInternalStoragePath(), dirName ? dirName : ".");
+        dirName = dirBuf;
+    }
+#endif
 
     FoundFileList result;
 

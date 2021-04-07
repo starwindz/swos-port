@@ -33,6 +33,7 @@ Menu configureHatMenu
 
     onInit: configureHatMenuOnInit
     onRestore: configureHatMenuOnRestore
+    onDraw: configureHatMenuOnDraw
 
     initialEntry: createNewBinding
 

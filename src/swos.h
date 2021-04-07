@@ -789,6 +789,7 @@ enum SwosControls
 
 enum MenuControlMask
 {
+    kNoEventsMask = 0x00,
     kFireMask = 0x01,
     kLeftMask = 0x02,
     kRightMask = 0x04,

@@ -8,6 +8,9 @@
 #include "joypadQuickConfigMenu.h"
 #include "testJoypadMenu.h"
 #include "joypadConfig.mnu.h"
+#ifdef VIRTUAL_JOYPAD
+# include "VirtualJoypad.h"
+#endif
 
 using namespace JoypadConfigMenu;
 
@@ -28,6 +31,8 @@ static int m_numAxes;
 static int m_numBalls;
 
 static int m_maxElementNumDigits;
+
+static Uint32 m_resetTicks;
 
 struct JoypadElementEntry
 {
@@ -69,34 +74,33 @@ static void centerElementsHorizontally();
 static void repositionVisibleElements(int startY, int singleLinHeight);
 static MenuEntry *getNextEntryInLine(MenuEntry *entry);
 static void fixSelectedEntry();
+static bool exitIfDisconnected();
 
 static void joypadConfigMenuOnInit()
 {
     m_joypadId = joypadId(m_joypadIndex);
     m_config = joypadConfig(m_joypadIndex);
 
-    if (joypadDisconnected(m_joypadId)) {
-        SetExitMenuFlag();
-        return;
+    if (!exitIfDisconnected()) {
+        initJoypadElements();
+        initializeMenu();
     }
-
-    initJoypadElements();
-    initializeMenu();
 }
 
 static void joypadConfigMenuOnReturn()
 {
-    initializeMenu();
+    if (!exitIfDisconnected())
+        initializeMenu();
 }
 
 static void joypadConfigMenuOnDraw()
 {
-    if (joypadDisconnected(m_joypadId)) {
-        SetExitMenuFlag();
-        return;
-    }
+    if (!exitIfDisconnected()) {
+        updatePowerLevel();
 
-    updatePowerLevel();
+        if (SDL_GetTicks() <= m_resetTicks)
+            drawMenuTextCentered(kMenuScreenWidth / 2, kResetTextY, "CONTROLS RESET!");
+    }
 }
 
 static void initJoypadElements()
@@ -129,7 +133,7 @@ static void fillJoypadBasicInfo()
     auto joyGuid = joypadGuid(m_joypadIndex);
     SDL_JoystickGetGUIDString(joyGuid, guidStr, kStdMenuTextSize);
 
-    getMenuEntry(id)->setNumber(m_joypadId);
+    SDL_itoa(m_joypadId, idEntry.string(), 10);
 
     updatePowerLevel();
 
@@ -314,6 +318,16 @@ static void fixSelectedEntry()
     }
 }
 
+static bool exitIfDisconnected()
+{
+    if (joypadDisconnected(m_joypadId)) {
+        SetExitMenuFlag();
+        return true;
+    }
+
+    return false;
+}
+
 static void updateJoypadElementValues()
 {
     for (const auto& elem : kElementEntries) {
@@ -391,7 +405,7 @@ static void configureJoypadButton()
         return m_config->getButtonEvents(index);
     };
 
-    updateGameControlEvents(m_currentButton, setFunction, getFunction, true);
+    updateGameControlEvents(m_currentButton, setFunction, getFunction, exitIfDisconnected, true);
 }
 
 // A5 -> configure entry
@@ -427,12 +441,26 @@ static void configureSelected()
 
 static void joypadQuickConfig()
 {
+#ifdef VIRTUAL_JOYPAD
+    VirtualJoypadEnabler enabler(m_joypadIndex);
+#endif
+
     auto result = promptForDefaultJoypadEvents(m_player, m_joypadIndex);
     if (result.first)
         m_config->assign(result.second);
 }
 
+static void resetConfigToDefault()
+{
+    m_resetTicks = SDL_GetTicks() + 500;
+    resetJoypadConfig(m_joypadIndex);
+}
+
 static void testJoypad()
 {
+#ifdef VIRTUAL_JOYPAD
+    VirtualJoypadEnabler enabler(m_joypadIndex);
+#endif
+
     showTestJoypadMenu(m_joypadIndex);
 }

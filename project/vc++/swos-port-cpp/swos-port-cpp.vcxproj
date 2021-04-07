@@ -95,10 +95,13 @@
     </ClCompile>
     <ClCompile Include="..\..\..\src\substitutes\substitutes.cpp" />
     <ClCompile Include="..\..\..\src\text\text.cpp" />
+    <ClCompile Include="..\..\..\src\text\textInput.cpp" />
     <ClCompile Include="..\..\..\src\util\util.cpp" />
     <ClCompile Include="..\..\..\src\video\render.cpp" />
     <ClCompile Include="..\..\..\src\video\sprites.cpp" />
     <ClCompile Include="..\..\..\src\video\videoOptionsMenu.cpp" />
+    <ClCompile Include="..\..\..\src\video\windowManager.cpp" />
+    <ClCompile Include="..\..\..\src\video\windowModeMenu.cpp" />
     <ClCompile Include="..\..\..\tmp\swos-cpp-gen-$(PlatformArchitecture)\swos-01.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Default</CompileAs>
@@ -237,11 +240,15 @@
     <ClInclude Include="..\..\..\src\stdinc.h" />
     <ClInclude Include="..\..\..\src\swos.h" />
     <ClInclude Include="..\..\..\src\text\text.h" />
+    <ClInclude Include="..\..\..\src\text\textInput.h" />
     <ClInclude Include="..\..\..\src\util\fetch.h" />
     <ClInclude Include="..\..\..\src\util\flags.h" />
     <ClInclude Include="..\..\..\src\util\util.h" />
     <ClInclude Include="..\..\..\src\video\render.h" />
     <ClInclude Include="..\..\..\src\video\sprites.h" />
+    <ClInclude Include="..\..\..\src\video\videoOptionsMenu.h" />
+    <ClInclude Include="..\..\..\src\video\windowManager.h" />
+    <ClInclude Include="..\..\..\src\video\windowModeMenu.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\mnu.mh.tmLanguage" />
@@ -325,7 +332,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>$(SolutionDir)..\..\src\stdinc.h</PrecompiledHeaderFile>
       <ForcedIncludeFiles>$(SolutionDir)..\..\src\stdinc.h</ForcedIncludeFiles>
-      <PreprocessorDefinitions>SWOS_VM;DEBUG;_MBCS;_CRT_SECURE_NO_WARNINGS;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>SWOS_VM;VIRTUAL_JOYPAD;DEBUG;_MBCS;_CRT_SECURE_NO_WARNINGS;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AssemblerOutput>NoListing</AssemblerOutput>
       <UndefinePreprocessorDefinitions>NDEBUG</UndefinePreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -352,7 +359,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>$(SolutionDir)..\..\src\stdinc.h</PrecompiledHeaderFile>
       <ForcedIncludeFiles>$(SolutionDir)..\..\src\stdinc.h</ForcedIncludeFiles>
-      <PreprocessorDefinitions>SWOS_VM;_MBCS;_CRT_SECURE_NO_WARNINGS;NOMINMAX;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>SWOS_VM;VIRTUAL_JOYPAD;_MBCS;_CRT_SECURE_NO_WARNINGS;NOMINMAX;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AssemblerOutput>NoListing</AssemblerOutput>
       <CallingConvention>Cdecl</CallingConvention>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>

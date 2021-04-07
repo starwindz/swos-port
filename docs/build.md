@@ -1,8 +1,9 @@
 # Requirements
 
-Currently, the game only builds and runs on Windows. To build you must have the following installed and
-available in the system path:
+Currently, the game only builds and runs on Windows and Android. To build you must have the following
+installed and available in the system path:
 
+[Windows]
 - Visual Studio 2019 for the tests, 2015 for the rest (maybe older would work too)
 - Python 3.6+
   - ddt (for mnu2h tests)
@@ -22,11 +23,15 @@ Required libraries (as *.lib files in lib dir):
 Include only libraries:
 - SimpleIni
 
+[Android]
+- TODO
+
 Also corresponding dll's are required to run.
 
 For non-Windows systems Meson build scripts are under development.
 
 # Build process
+<!-- TODO, describe required defined symbols (DEBUG,NDEBUG,SWOS_TEST) etc.-->
 
 `swos-port` is composed of several inter-dependent projects. Goal of this document is to describe those
 dependencies and their build steps in high-level and give overview to help anyone interested in understanding
@@ -104,8 +109,8 @@ Visual Studio project files are in `vc-proj` directory, and the main solution fi
 
 ## `sdl-address-table-fetcher`
 
-This is a prerequisite for tests, it builds a small DLL which will gain access to SDL's dynamic table of functions
-in order to allow mocking them.
+This is a prerequisite for tests, it builds a small DLL which will gain access to SDL's dynamic table of
+functions in order to allow mocking them.
 
 There is nothing unusual about the build.
 

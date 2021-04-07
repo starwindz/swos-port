@@ -8,6 +8,11 @@ constexpr int kBigDotSprite = 63;
 constexpr int kSmallDotWidth = 2;
 constexpr int kBigDotWidth = 3;
 
+constexpr int kBigExclamationMarkWidth = 3;
+constexpr int kBigExclamationMarkHeight = 8;
+constexpr int kSmallExclamationMarkWidth = 2;
+constexpr int kSmallExclamationMarkHeight = 6;
+
 static int charToSprite(unsigned char c, bool bigFont)
 {
     int spriteIndex = 0;
@@ -40,10 +45,49 @@ static int charToSprite(unsigned char c, bool bigFont)
     case 255: spriteIndex = 44; break;  // cursor block
     }
 
-    if (bigFont)
+    if (spriteIndex && bigFont)
         spriteIndex += kBigFontOffset;
 
     return spriteIndex;
+}
+
+static int drawExclamationMark(int x, int y, int color, bool bigFont)
+{
+    static const uint8_t kSmallData[kSmallExclamationMarkWidth * kSmallExclamationMarkHeight] = {
+        2, 0,
+        2, 8,
+        2, 8,
+        0, 8,
+        2, 0,
+        0, 8,
+    };
+    static const uint8_t kBigData[kBigExclamationMarkWidth * kBigExclamationMarkHeight] = {
+        2, 2, 0,
+        2, 2, 8,
+        2, 2, 8,
+        2, 2, 8,
+        0, 0, 0,
+        2, 2, 0,
+        2, 2, 8,
+        0, 8, 8,
+    };
+
+    int width = bigFont ? 3 : 2;
+    int height = bigFont ? 8 : 6;
+    auto data = bigFont ? kBigData : kSmallData;
+
+    auto dest = swos.linAdr384k + kMenuScreenWidth * (y + (swos.g_cameraY & 0x0f)) + x;
+
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            auto pixel = *data++;
+            if (pixel)
+                dest[j] = pixel == kNearBlackText ? pixel : color;
+        }
+        dest += kMenuScreenWidth;
+    }
+
+    return width;
 }
 
 static bool isSpace(char c)
@@ -55,14 +99,21 @@ static int charSpriteWidth(char c, const CharTable *charTable)
 {
     assert(static_cast<unsigned char>(c) >= ' ');
 
+    bool bigFont = charTable == &swos.bigCharsTable;
+
     if (isSpace(c))
         return charTable->spaceWidth;
+    else if (c == '!')
+        return bigFont ? kBigExclamationMarkWidth : kSmallExclamationMarkWidth;
 
-    bool bigFont = charTable == &swos.bigCharsTable;
     auto spriteIndex = charToSprite(c, bigFont);
-    auto sprite = getSprite(spriteIndex);
 
-    return sprite->width;
+    if (spriteIndex) {
+        auto sprite = getSprite(spriteIndex);
+        return sprite->width;
+    } else {
+        return 0;
+    }
 }
 
 struct ElisionInfo {
@@ -124,6 +175,8 @@ static void drawMenuText(int x, int y, const char *str, const char *limit, int c
         auto c = *str++;
         if (isSpace(c))
             x += charTable.spaceWidth;
+        else if (c == '!')
+            x += drawExclamationMark(x, y, color, bigFont) + charTable.charSpacing;
         else if (int spriteIndex = charToSprite(c, bigFont))
             x += drawCharSprite(spriteIndex, x, y, color) + charTable.charSpacing;
     }

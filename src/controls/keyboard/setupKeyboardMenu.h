@@ -1,5 +1,5 @@
 #pragma once
 
-#include "controls.h"
+#include "keyboard.h"
 
-void showSetupKeyboardMenu(PlayerNumber player);
+void showSetupKeyboardMenu(Keyboard keyboard);

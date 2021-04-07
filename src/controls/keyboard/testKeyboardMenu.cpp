@@ -4,9 +4,9 @@
 #include "keyboard.h"
 #include "controls.h"
 
-static PlayerNumber m_player;
+static Keyboard m_keyboard;
 
-static std::vector<std::string> getControls()
+static std::vector<std::string> getControlNames()
 {
     std::vector<std::string> keys;
 
@@ -23,15 +23,15 @@ static std::vector<std::string> getControls()
 
 static GameControlEvents getEvents()
 {
-    return m_player == kPlayer1 ? pl1KeyEvents() : pl2KeyEvents();
+    return keyboardEvents(m_keyboard);
 }
 
-void showTestKeyboardMenu(PlayerNumber player)
+void showTestKeyboardMenu(Keyboard keyboard)
 {
-    m_player = player;
+    m_keyboard = keyboard;
     setGlobalShortcutsEnabled(false);
 
-    showTestControlsMenu("TEST KEYBOARD", "KEYS PRESSED:", false, getControls, getEvents);
+    showTestControlsMenu("TEST KEYBOARD", "KEYS PRESSED:", false, getControlNames, getEvents);
 
     setGlobalShortcutsEnabled(true);
 }

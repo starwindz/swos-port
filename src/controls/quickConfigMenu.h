@@ -2,10 +2,12 @@
 
 #include "gameControlEvents.h"
 #include "controls.h"
+#include "keyboard.h"
 
 enum class QuickConfigControls
 {
-    kKeyboard,
+    kKeyboard1,
+    kKeyboard2,
     kJoypad,
 };
 
@@ -28,9 +30,9 @@ struct QuickConfigContext
 
     // VS is driving me crazy... it wouldn't compile without a constructor under x86 and C++17 only
     QuickConfigContext(PlayerNumber player, QuickConfigControls controls, int joypadIndex, const char *selectWhat, const char *abortText,
-        GetControlFunction getControlFn, ResetFunction resetFn)
+        GetControlFunction getControlFn, ResetFunction resetFn, bool benchRequired = false)
         : player(player), controls(controls), joypadIndex(joypadIndex), elementNames{}, selectWhat(selectWhat),
-        abortText(abortText), getControlFn(getControlFn), resetFn(resetFn) {}
+        abortText(abortText), getControlFn(getControlFn), resetFn(resetFn), benchRequired(benchRequired) {}
 
     PlayerNumber player;
     QuickConfigControls controls;
@@ -43,6 +45,7 @@ struct QuickConfigContext
     ResetFunction resetFn;
     int currentSlot = -1;
     int warningY = -1;
+    bool benchRequired = false;
 
     void reset() {
         currentSlot = -1;
@@ -57,11 +60,20 @@ struct QuickConfigContext
         return getControlFn(*this);
     }
 
-    static QuickConfigContext getKeyboardContext(PlayerNumber player, GetControlFunction get, ResetFunction reset) {
-        return QuickConfigContext(player, QuickConfigControls::kKeyboard , kNoJoypad, "KEY", "(MOUSE CLICK ABORTS)", get, reset);
+    static QuickConfigContext getKeyboardContext(Keyboard keyboard, GetControlFunction get, ResetFunction reset) {
+        auto controls = keyboard == Keyboard::kSet1 ? QuickConfigControls::kKeyboard1 : QuickConfigControls::kKeyboard2;
+#ifdef __ANDROID__
+        return QuickConfigContext(kPlayer1, controls, kNoJoypad, "KEY", "(TAP ABORTS)", get, reset, true);
+#else
+        return QuickConfigContext(kPlayer1, controls, kNoJoypad, "KEY", "(MOUSE CLICK ABORTS)", get, reset, true);
+#endif
     }
     static QuickConfigContext getJoypadContext(PlayerNumber player, int joypadIndex, GetControlFunction get, ResetFunction reset) {
+#ifdef __ANDROID__
+        return QuickConfigContext(player, QuickConfigControls::kJoypad, joypadIndex, "CONTROL", "(TAP/BACK ABORTS)", get, reset);
+#else
         return QuickConfigContext(player, QuickConfigControls::kJoypad, joypadIndex, "CONTROL", "(MOUSE CLICK/ESCAPE ABORTS)", get, reset);
+#endif
     }
 };
 

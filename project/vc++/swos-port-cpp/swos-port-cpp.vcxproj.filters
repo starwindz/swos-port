@@ -271,6 +271,15 @@
     <ClCompile Include="..\..\..\src\controls\gameControls.cpp">
       <Filter>Source Files\controls</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\src\video\windowManager.cpp">
+      <Filter>Source Files\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\text\textInput.cpp">
+      <Filter>Source Files\text</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\video\windowModeMenu.cpp">
+      <Filter>Source Files\video</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\src\swos.h">
@@ -461,6 +470,18 @@
     </ClInclude>
     <ClInclude Include="..\..\..\src\controls\gameControls.h">
       <Filter>Source Files\controls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\video\windowManager.h">
+      <Filter>Source Files\video</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\text\textInput.h">
+      <Filter>Source Files\text</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\video\windowModeMenu.h">
+      <Filter>Source Files\video</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\video\videoOptionsMenu.h">
+      <Filter>Source Files\video</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

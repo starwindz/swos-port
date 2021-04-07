@@ -7,16 +7,22 @@ static constexpr int kConfigPrefixLen = sizeof(kConfigPrefix) - 1;
 
 JoypadConfig *JoypadConfigRegister::config(const SDL_JoystickGUID& guid, bool secondary /* = false */)
 {
-    auto it = std::find_if(m_config.begin(), m_config.end(), [&guid](const auto& config) {
-        return guidEqual(config.guid(), guid);
-    });
-
-    if (it != m_config.end()) {
-        return secondary ? it->secondaryConfig() : it->primaryConfig();
+    if (auto config = findConfig(guid)) {
+        return secondary ? config->secondaryConfig() : config->primaryConfig();
     } else {
         assert(!secondary);
         m_config.emplace_back(guid);
         return m_config.back().primaryConfig();
+    }
+}
+
+void JoypadConfigRegister::resetConfig(const SDL_JoystickGUID& guid, bool secondary)
+{
+    if (auto config = findConfig(guid)) {
+        if (secondary)
+            config->resetSecondary();
+        else
+            config->resetPrimary();
     }
 }
 
@@ -54,4 +60,13 @@ void JoypadConfigRegister::saveConfig(CSimpleIni& ini)
 {
     for (auto& config : m_config)
         config.saveToIni(ini);
+}
+
+JoypadGuidConfig *JoypadConfigRegister::findConfig(const SDL_JoystickGUID& guid)
+{
+    auto it = std::find_if(m_config.begin(), m_config.end(), [&guid](const auto& config) {
+        return guidEqual(config.guid(), guid);
+    });
+
+    return it != m_config.end() ? &*it : nullptr;
 }

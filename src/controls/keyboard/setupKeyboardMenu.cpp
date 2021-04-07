@@ -10,18 +10,29 @@
 
 using namespace SetupKeyboardMenu;
 
-static PlayerNumber m_player;
+static Keyboard m_keyboard;
 
 static int m_scrollOffset;
 static int m_numBindings;
 
-void showSetupKeyboardMenu(PlayerNumber player)
+void showSetupKeyboardMenu(Keyboard keyboard)
 {
-    m_player = player;
+    m_keyboard = keyboard;
     showMenu(setupKeyboardMenu);
 }
 
-void setupMouseWheelScrolling()
+static void initMouseWheelScrolling();
+static void initHeader();
+
+static void setupKeyboardMenuOnInit()
+{
+    m_scrollOffset = 0;
+
+    initMouseWheelScrolling();
+    setupKeyboardMenuOnRestore();
+}
+
+void initMouseWheelScrolling()
 {
     setMouseWheelEntries({
         { firstKey, firstKey + kMaxKeyEntriesShown - 1, leftUpArrow, leftDownArrow },
@@ -29,12 +40,11 @@ void setupMouseWheelScrolling()
     });
 }
 
-static void setupKeyboardMenuOnInit()
+static void initHeader()
 {
-    m_scrollOffset = 0;
-
-    setupMouseWheelScrolling();
-    setupKeyboardMenuOnRestore();
+    char headerStr[64];
+    snprintf(headerStr, sizeof(headerStr), "SETUP KEYBOARD %d", m_keyboard == Keyboard::kSet1 ? 1 : 2);
+    headerEntry.copyString(headerStr);
 }
 
 static void updateScrollArrowsVisibility(bool show)
@@ -80,7 +90,7 @@ static void updateKeyAndActionEntriesVisibility()
 
 static void fillKeyAndActionEntries()
 {
-    const auto& bindings = getPlayerKeyBindings(m_player);
+    const auto& bindings = getKeyboardKeyBindings(m_keyboard);
     m_numBindings = bindings.size();
 
     bool showScrollingArrows = m_numBindings > kMaxKeyEntriesShown;
@@ -123,6 +133,7 @@ static void updateMenu()
 
 static void setupKeyboardMenuOnRestore()
 {
+    initHeader();
     updateMenu();
 }
 
@@ -170,10 +181,10 @@ static void deleteKey()
     assert(entry->selectable());
 
     size_t keyIndex = entry->ordinal - firstKey + m_scrollOffset;
-    auto binding = getPlayerKeyBindingAt(m_player, keyIndex);
+    auto binding = getKeyboardKeyBindingAt(m_keyboard, keyIndex);
 
     if (confirmDeletion(binding.key)) {
-        deleteKeyBindingAt(m_player, keyIndex);
+        deleteKeyBindingAt(m_keyboard, keyIndex);
         updateMenu();
     }
 }
@@ -191,13 +202,13 @@ static void updateAction()
     };
 
     auto setEvents = [](int index, GameControlEvents events, bool) {
-        updatePlayerKeyBindingEventsAt(m_player, index, events);
+        updateKeyboardKeyBindingEventsAt(m_keyboard, index, events);
     };
     auto getEvents = [fillKeyName](int& index, char *buf, int bufSize) {
         index = std::min(m_numBindings - 1, index);
-        auto binding = getPlayerKeyBindingAt(m_player, index);
+        auto binding = getKeyboardKeyBindingAt(m_keyboard, index);
         fillKeyName(buf, bufSize, binding.key);
-        return std::make_pair(getPlayerKeyBindingAt(m_player, index).events, false);
+        return std::make_pair(getKeyboardKeyBindingAt(m_keyboard, index).events, false);
     };
 
     updateGameControlEvents(keyIndex, setEvents, getEvents);
@@ -211,7 +222,11 @@ static void drawInputKeyPrompt()
 
     redrawMenuBackground();
     drawMenuTextCentered(kMenuScreenWidth / 2, kPressKeyYLine1, "PRESS A KEY ON THE KEYBOARD");
+#ifdef __ANDROID__
+    drawMenuTextCentered(kMenuScreenWidth / 2, kPressKeyYLine2, "(TAP CANCELS)");
+#else
     drawMenuTextCentered(kMenuScreenWidth / 2, kPressKeyYLine2, "(MOUSE CLICK CANCELS)");
+#endif
 
     SWOS::Flip();
 }
@@ -221,7 +236,7 @@ static void addKeyMapping()
     constexpr int kWarningY = 60;
 
     drawInputKeyPrompt();
-    auto key = getControlKey(m_player, kWarningY);
+    auto key = getControlKey(m_keyboard, kWarningY);
 
     if (key != SDL_SCANCODE_UNKNOWN) {
         auto keyName = scancodeToString(key);
@@ -231,7 +246,7 @@ static void addKeyMapping()
         auto events = getNewGameControlEvents(buf);
 
         if (events.first) {
-            addPlayerKeyBinding(m_player, key, events.second);
+            addKeyboardKeyBinding(m_keyboard, key, events.second);
             setupKeyboardMenuOnRestore();
         }
     }
@@ -239,14 +254,14 @@ static void addKeyMapping()
 
 static void redefineKeys()
 {
-    auto result = promptForDefaultKeys(m_player);
+    auto result = promptForDefaultKeys(m_keyboard);
     if (result.first) {
-        setDefaultKeyPackForPlayer(m_player, result.second);
+        setDefaultKeyPackForKeyboard(m_keyboard, result.second);
         updateMenu();
     }
 }
 
 static void testKeyboard()
 {
-    showTestKeyboardMenu(m_player);
+    showTestKeyboardMenu(m_keyboard);
 }

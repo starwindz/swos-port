@@ -7,7 +7,7 @@
 #include "joypadConfigMenu.h"
 
 static int16_t m_autoConnectJoypads;
-static int16_t m_disableMenuControllers;
+static int16_t m_enableMenuControllers;
 static int16_t m_showSelectMatchControlsMenu;
 
 #include "controlOptions.mnu.h"
@@ -20,9 +20,28 @@ static int m_pl2ControlsOffset;
 static std::pair<word, word> m_pl1EntryControls[kNumControlEntries];
 static std::pair<word, word> m_pl2EntryControls[kNumControlEntries];
 
+static bool m_keyboardPresent;
+
 void showControlOptionsMenu()
 {
     showMenu(controlOptionsMenu);
+}
+
+static void setupMouseWheelScrolling();
+static void scrollJoypadIntoView(PlayerNumber player);
+static int getNumControls();
+
+static void controlOptionsMenuInit()
+{
+    m_keyboardPresent = keyboardPresent();
+
+    setupMouseWheelScrolling();
+    scrollJoypadIntoView(kPlayer1);
+    scrollJoypadIntoView(kPlayer2);
+
+    m_autoConnectJoypads = getAutoConnectJoypads();
+    m_enableMenuControllers = getEnableMenuControllers();
+    m_showSelectMatchControlsMenu = getShowSelectMatchControlsMenu();
 }
 
 static void setupMouseWheelScrolling()
@@ -33,74 +52,99 @@ static void setupMouseWheelScrolling()
     });
 }
 
-static void controlOptionsMenuInit()
+static void scrollJoypadIntoView(PlayerNumber player)
 {
-    setupMouseWheelScrolling();
+    assert(player == kPlayer1 || player == kPlayer2);
 
-    m_autoConnectJoypads = getAutoConnectJoypads();
-    m_disableMenuControllers = getDisableMenuControllers();
+    if (getControls(player) != kJoypad)
+        return;
+
+    auto joypadIndex = player == kPlayer1 ? getPl1JoypadIndex() : getPl2JoypadIndex();
+    assert(joypadIndex >= 0 && joypadIndex < getNumJoypads());
+
+    int numBasicControls = getNumControls() - getNumJoypads();
+    auto minOffset = std::max(0, joypadIndex + numBasicControls - kNumControlEntries + 1);
+    auto maxOffset = joypadIndex + numBasicControls;
+
+    auto& scrollOffset = player == kPlayer1 ? m_pl1ControlsOffset : m_pl2ControlsOffset;
+    scrollOffset = std::max(scrollOffset, minOffset);
+    scrollOffset = std::min(scrollOffset, maxOffset);
 }
 
-static void setupPlayerJoypadControlEntries(decltype(m_pl1EntryControls)& plEntryControls, MenuEntry *baseEntry, int& entriesFilled,
-    int numControlEntries, int scrollOffset, int numJoypads, int initiallyVisibleJoypadEntries)
+static void setupPlayerJoypadControlEntries(decltype(m_pl1EntryControls)& plEntryControls,
+    MenuEntry *baseEntry, int& entriesFilled, int scrollOffset, int numControls)
 {
-    int startJoypad = std::max(0, scrollOffset - numControlEntries + initiallyVisibleJoypadEntries);
-    assert(!numJoypads || numJoypads == 1 || startJoypad + numControlEntries - entriesFilled <= numJoypads);
+    int numJoypads = getNumJoypads();
+    int numBasicControls = numControls - numJoypads;
+    int startJoypad = std::max(0, scrollOffset - numBasicControls);
 
-    int numJoypadEntries = std::min(numControlEntries - entriesFilled, numJoypads);
-    assert(numJoypadEntries <= numControlEntries);
+    assert(!numJoypads || numJoypads == 1 || startJoypad + kNumControlEntries - entriesFilled <= numJoypads);
+
+    int numJoypadEntries = std::min(kNumControlEntries - entriesFilled, numJoypads);
+    assert(numJoypadEntries <= kNumControlEntries);
 
     for (int i = startJoypad; i < startJoypad + numJoypadEntries; i++) {
         tryReopeningJoypad(i);
-        auto name = joypadName(i);
-        baseEntry[entriesFilled].copyString(name);
+        auto& entry = baseEntry[entriesFilled];
 
-        baseEntry[entriesFilled].setBackgroundColor(kLightBlue);
+        auto name = joypadName(i);
+        entry.copyString(name);
+        entry.setBackgroundColor(kLightBlue);
+        entry.show();
+
         plEntryControls[entriesFilled].first = kJoypad;
-        plEntryControls[entriesFilled].second = i;
-        entriesFilled++;
+        plEntryControls[entriesFilled++].second = i;
     }
 }
 
+static int getNumControls()
+{
+    // none & mouse always present
+    return 2 + (2 * m_keyboardPresent) + getNumJoypads();
+}
+
 static void setupPlayerControlEntries(PlayerNumber player, decltype(m_pl1EntryControls)& plEntryControls,
-    Entries baseControlsEntryIndex, Entries scrollUp, Entries scrollDown, int& scrollOffset, int initiallyVisibleJoypadEntries)
+    Entries baseControlsEntryIndex, Entries scrollUp, Entries scrollDown, int& scrollOffset)
 {
     using namespace SwosVM;
 
     assert(player == kPlayer1 || player == kPlayer2);
 
-    static const char aKeyboard[] = "KEYBOARD";
-    static const char aMouse[] = "MOUSE";
-    static const char aNone[] = "NONE";
+    int numControls = getNumControls();
 
-    int numJoypads = getNumJoypads();
-
-    bool showScrollArrows = numJoypads > (player == kPlayer1 ? 2 : 1);
+    bool showScrollArrows = numControls > kNumControlEntries;
     setEntriesVisibility({ scrollUp, scrollDown }, showScrollArrows);
 
-    if (!showScrollArrows || scrollOffset > numJoypads - initiallyVisibleJoypadEntries)
+    if (!showScrollArrows)
         scrollOffset = 0;
+    else
+        scrollOffset = std::min(scrollOffset, numControls - kNumControlEntries);
 
     auto baseEntry = getMenuEntry(baseControlsEntryIndex);
 
-    const char *kFixedEntries[] = { cacheString(aNone), cacheString(aKeyboard), cacheString(aMouse) };
-    static const Controls kFixedEntryControls[] = { kNone, kKeyboard1, kMouse };
-    int startIndex = player == kPlayer1 ? 1 : 0;
+    static const std::array<std::pair<Controls, const char *>, 4> kBasicControls = {{
+        { kNone, "NONE" }, { kKeyboard1, "KEYBOARD1" }, { kKeyboard2, "KEYBOARD2" },
+#ifdef __ANDROID__
+        { kMouse, "TOUCH", }
+#else
+        { kMouse, "MOUSE", }
+#endif
+    }};
 
     int entriesFilled = 0;
 
-    for (int i = startIndex + scrollOffset; i < static_cast<int>(std::size(kFixedEntries)); i++) {
-        strcpy(baseEntry[entriesFilled].string(), kFixedEntries[i]);
-        baseEntry[entriesFilled].bg.entryColor = kLightBlue;
-        plEntryControls[entriesFilled].first = kFixedEntryControls[i];
-
-        if (kFixedEntryControls[i] == kKeyboard1 && player == kPlayer2)
-            plEntryControls[entriesFilled].first = kKeyboard2;
-
-        entriesFilled++;
+    for (int i = scrollOffset; i < static_cast<int>(kBasicControls.size()); i++) {
+        if ((kBasicControls[i].first != kKeyboard1 && kBasicControls[i].first != kKeyboard2) || m_keyboardPresent) {
+            auto& entry = baseEntry[entriesFilled];
+            entry.copyString(kBasicControls[i].second);
+            entry.bg.entryColor = kLightBlue;
+            entry.show();
+            plEntryControls[entriesFilled].first = kBasicControls[i].first;
+            plEntryControls[entriesFilled++].second = kNoJoypad;
+        }
     }
 
-    setupPlayerJoypadControlEntries(plEntryControls, baseEntry, entriesFilled, kNumControlEntries, scrollOffset, numJoypads, initiallyVisibleJoypadEntries);
+    setupPlayerJoypadControlEntries(plEntryControls, baseEntry, entriesFilled, scrollOffset, numControls);
 
     assert(entriesFilled <= kNumControlEntries);
 
@@ -123,168 +167,131 @@ static void highlightSelectedControlEntries(decltype(m_pl1EntryControls) entry, 
     }
 }
 
-static void enableControlConfigButtons(Entries redefineEntryIndex, Entries selectJoypadEntryIndex, Controls controls)
+static void enableControlConfigButtons(MenuEntry &redefineEntry, Controls controls)
 {
-    auto numJoypads = getNumJoypads();
-
-    auto redefineEntry = getMenuEntry(redefineEntryIndex);
-    auto selectJoypadEntry = getMenuEntry(selectJoypadEntryIndex);
-
     if (controls == kJoypad || controls == kKeyboard1 || controls == kKeyboard2) {
-        redefineEntry->bg.entryColor = kGreen;
-        redefineEntry->disabled = 0;
+        redefineEntry.setBackgroundColor(kGreen);
+        redefineEntry.enable();
     } else {
-        redefineEntry->bg.entryColor = kGray;
-        redefineEntry->disabled = 1;
+        redefineEntry.setBackgroundColor(kGray);
+        redefineEntry.disable();
     }
+}
 
-    if (numJoypads) {
-        selectJoypadEntry->bg.entryColor = kGreen;
-        selectJoypadEntry->disabled = 0;
-    } else {
-        selectJoypadEntry->bg.entryColor = kGray;
-        selectJoypadEntry->disabled = 1;
+static void fixSelection()
+{
+    auto& selectedEntry = getCurrentMenu()->selectedEntry;
+
+    if (selectedEntry && !selectedEntry->selectable()) {
+        if (selectedEntry == &pl1ScrollUpEntry || selectedEntry == &pl1ScrollDownEntry)
+            selectedEntry = &pl1LastControlEntry;
+        else if (selectedEntry == &pl2ScrollUpEntry || selectedEntry == &pl2ScrollDownEntry)
+            selectedEntry = &pl2LastControlEntry;
+
+        while (selectedEntry >= &pl1FirstControlEntry && selectedEntry <= &pl1LastControlEntry && !selectedEntry->selectable())
+            selectedEntry--;
+
+        while (selectedEntry >= &pl2FirstControlEntry && selectedEntry <= &pl2LastControlEntry && !selectedEntry->selectable())
+            selectedEntry--;
+
+        if (!selectedEntry->selectable())
+            selectedEntry = &exitEntry;
     }
 }
 
 static void controlOptionsMenuOnDraw()
 {
-    setupPlayerControlEntries(kPlayer1, m_pl1EntryControls, pl1Control0, pl1ScrollUp, pl1ScrollDown, m_pl1ControlsOffset, 2);
-    setupPlayerControlEntries(kPlayer2, m_pl2EntryControls, pl2Control0, pl2ScrollUp, pl2ScrollDown, m_pl2ControlsOffset, 1);
+    m_keyboardPresent = keyboardPresent();
+
+    if (!m_keyboardPresent)
+        unsetKeyboardControls();
+
+    setupPlayerControlEntries(kPlayer1, m_pl1EntryControls, pl1Control0, pl1ScrollUp, pl1ScrollDown, m_pl1ControlsOffset);
+    setupPlayerControlEntries(kPlayer2, m_pl2EntryControls, pl2Control0, pl2ScrollUp, pl2ScrollDown, m_pl2ControlsOffset);
 
     highlightSelectedControlEntries(m_pl1EntryControls, pl1Control0, getPl1Controls(), getPl1JoypadIndex());
     highlightSelectedControlEntries(m_pl2EntryControls, pl2Control0, getPl2Controls(), getPl2JoypadIndex());
 
-    enableControlConfigButtons(pl1RedefineControls, pl1SelectJoypad, getPl1Controls());
-    enableControlConfigButtons(pl2RedefineControls, pl2SelectJoypad, getPl2Controls());
+    enableControlConfigButtons(pl1RedefineControlsEntry, getPl1Controls());
+    enableControlConfigButtons(pl2RedefineControlsEntry, getPl2Controls());
+
+    fixSelection();
 }
 
-static void pl1SelectKeyboard()
+static void redefineControls(PlayerNumber player)
 {
-    assert(getPl1Controls() != kKeyboard1 && getPl1Controls() != kKeyboard2);
-
-    logInfo("Player 1 keyboard controls selected");
-
-    setPl1Controls(kKeyboard1);
-
-    if (!pl1HasBasicBindings()) {
-        logInfo("Player 1 keyboard controls don't include basic controls, redefining...");
-        redefinePlayer1Controls();
+    switch (getControls(player)) {
+    case kKeyboard1:
+        showSetupKeyboardMenu(Keyboard::kSet1);
+        break;
+    case kKeyboard2:
+        showSetupKeyboardMenu(Keyboard::kSet2);
+        break;
+    case kJoypad:
+        showJoypadConfigMenu(player, getJoypadIndex(player));
+        break;
+    default:
+        assert(false);
     }
 }
 
-static void pl1SelectMouse()
+static void selectControlsForPlayer(PlayerNumber player, Controls controls, int joypadIndex)
 {
-    assert(getPl1Controls() != kMouse);
+    assert(player == kPlayer1 || player == kPlayer2);
 
-    logInfo("Player 1 mouse controls selected");
+    logInfo("Player %d %s selected", player + 1, controlsToString(controls));
 
-    setPl1Controls(kMouse);
+    if (!setControls(player, controls, joypadIndex)) {
+        logInfo("Couldn't set controls");
+        return;
+    }
 
-    waitForKeyboardAndMouseIdle();
-
-    if (getPl2Controls() == kMouse)
-        setPl2Controls(kNone);
+    if (controls == kKeyboard1 || controls == kKeyboard2) {
+        auto keyboard = controls == kKeyboard1 ? Keyboard::kSet1 : Keyboard::kSet2;
+        if (!keyboardHasBasicBindings(keyboard)) {
+            int keyboardNum = keyboard == Keyboard::kSet1 ? 1 : 2;
+            logInfo("Keyboard %d controls don't include basic controls, redefining...", keyboardNum);
+            redefineControls(player);
+        }
+    }
 }
 
-static std::tuple<MenuEntry *, int, int, int> getControlsInfo(int baseEntryIndex, decltype(m_pl1EntryControls) plControls)
+// A5 -> selected controls entry
+static std::pair<Controls, int> getControlsInfo(PlayerNumber player)
 {
-    auto entry = A5.as<MenuEntry *>();
+    assert(player == kPlayer1 || player == kPlayer2);
+
+    const auto& plControls = player == kPlayer1 ? m_pl1EntryControls : m_pl2EntryControls;
+    int baseEntryIndex = player == kPlayer1 ? pl1Control0 : pl2Control0;
+
+    SDL_UNUSED auto entry = A5.as<MenuEntry *>();
     assert(entry->ordinal >= baseEntryIndex && entry->ordinal < baseEntryIndex + kNumUniqueControls);
 
     int index = entry->ordinal - baseEntryIndex;
-    int newControls = plControls[index].first;
-    int joypadNo = plControls[index].second;
+    auto newControls = static_cast<Controls>(plControls[index].first);
+    int joypadNo = newControls == kJoypad ? plControls[index].second : kNoJoypad;
 
-    return std::make_tuple(entry, index, newControls, joypadNo);
+    return { newControls, joypadNo };
+}
+
+static void selectControls(PlayerNumber player)
+{
+    Controls controls;
+    int joypadNo;
+    std::tie(controls, joypadNo) = getControlsInfo(player);
+
+    assert(controls != kJoypad || joypadNo != kNoJoypad);
+    selectControlsForPlayer(player, controls, joypadNo);
 }
 
 static void pl1SelectControls()
 {
-    MenuEntry *entry;
-    int index, newControls, joypadNo;
-
-    std::tie(entry, index, newControls, joypadNo) = getControlsInfo(pl1Control0, m_pl1EntryControls);
-
-    assert(newControls != kJoypad || joypadNo >= 0);
-
-    if (getPl1Controls() != newControls || getPl1Controls() == kJoypad && getPl1JoypadIndex() != joypadNo) {
-        switch (newControls) {
-        case kKeyboard1:
-            pl1SelectKeyboard();
-            break;
-        case kMouse:
-            pl1SelectMouse();
-            break;
-        case kJoypad:
-            setPl1Controls(kJoypad, joypadNo);
-            break;
-        default:
-            assert(false);
-        }
-    }
-}
-
-static void pl2SelectNoControls()
-{
-    assert(getPl2Controls() != kNone);
-
-    logInfo("Player 2 controls disabled");
-
-    setPl2Controls(kNone);
-}
-
-static void pl2SelectKeyboard()
-{
-    assert(getPl2Controls() != kKeyboard1 && getPl2Controls() != kKeyboard2);
-
-    logInfo("Player 2 keyboard controls selected");
-
-    setPl2Controls(kKeyboard2);
-
-    if (!pl2HasBasicBindings()) {
-        logInfo("Player 2 keyboard controls don't include basic controls, redefining...");
-        redefinePlayer2Controls();
-    }
-}
-
-static void pl2SelectMouse()
-{
-    assert(getPl2Controls() != kMouse);
-
-    logInfo("Player 2 mouse controls selected");
-
-    setPl2Controls(kMouse);
-
-    if (getPl1Controls() == kMouse)
-        pl1SelectKeyboard();
+    selectControls(kPlayer1);
 }
 
 static void pl2SelectControls()
 {
-    MenuEntry *entry;
-    int index, newControls, joypadNo;
-
-    std::tie(entry, index, newControls, joypadNo) = getControlsInfo(pl2Control0, m_pl2EntryControls);
-
-    if (getPl2Controls() != newControls || getPl2Controls() == kJoypad && getPl2Controls() != joypadNo) {
-        switch (newControls) {
-        case kNone:
-            pl2SelectNoControls();
-            break;
-        case kKeyboard2:
-            pl2SelectKeyboard();
-            break;
-        case kMouse:
-            pl2SelectMouse();
-            break;
-        case kJoypad:
-            setPl2Controls(kJoypad, joypadNo);
-            break;
-        default:
-            assert(false);
-        }
-    }
+    selectControls(kPlayer2);
 }
 
 static void toggleAutoConnectJoypads()
@@ -296,16 +303,16 @@ static void toggleAutoConnectJoypads()
 
 static void toggleMenuControllers()
 {
-    m_disableMenuControllers = !m_disableMenuControllers;
-    setDisableMenuControllers(m_disableMenuControllers != 0);
-    logInfo("Game controllers in menus %s", m_disableMenuControllers ? "disabled" : "enabled");
+    m_enableMenuControllers = !m_enableMenuControllers;
+    setEnableMenuControllers(m_enableMenuControllers != 0);
+    logInfo("Game controllers in menus %s", m_enableMenuControllers ? "enabled" : "disabled");
 }
 
 static void toggleShowMatchControlsMenu()
 {
     m_showSelectMatchControlsMenu = !m_showSelectMatchControlsMenu;
     setShowSelectMatchControlsMenu(m_showSelectMatchControlsMenu != 0);
-    logInfo("Select match controls menu %s", m_disableMenuControllers ? "disabled" : "enabled");
+    logInfo("Select match controls menu %s", m_showSelectMatchControlsMenu ? "enabled" : "disabled");
 }
 
 static void exitControlsMenu()
@@ -315,6 +322,11 @@ static void exitControlsMenu()
     SetExitMenuFlag();
 }
 
+static int maxScrollOffset()
+{
+    return std::max(0, getNumControls() - kNumControlEntries);
+}
+
 static void pl1ScrollUpSelected()
 {
     m_pl1ControlsOffset = std::max(0, m_pl1ControlsOffset - 1);
@@ -322,8 +334,7 @@ static void pl1ScrollUpSelected()
 
 static void pl1ScrollDownSelected()
 {
-    int maxOffset = std::max(2 + getNumJoypads() - kNumUniqueControls, 0);
-    m_pl1ControlsOffset = std::min(m_pl1ControlsOffset + 1, maxOffset);
+    m_pl1ControlsOffset = std::min(m_pl1ControlsOffset + 1, maxScrollOffset());
 }
 
 static void pl2ScrollUpSelected()
@@ -333,125 +344,15 @@ static void pl2ScrollUpSelected()
 
 static void pl2ScrollDownSelected()
 {
-    int maxOffset = std::max(3 + getNumJoypads() - kNumUniqueControls, 0);
-    m_pl2ControlsOffset = std::min(m_pl2ControlsOffset + 1, maxOffset);
-}
-
-static bool selectJoypadWithButtonPress(PlayerNumber player)
-{
-    using namespace SwosVM;
-
-    assert(player == kPlayer1 || player == kPlayer2);
-
-    if (getNumJoypads() < 2)
-        return false;
-
-    redrawMenuBackground();
-
-    constexpr int kPromptX = kMenuScreenWidth / 2;
-    constexpr int kPromptY = 40;
-    constexpr int kAbortY = 150;
-
-    drawMenuTextCentered(kPromptX, kPromptY, cacheString("PRESS ANY CONTROLLER BUTTON TO SELECT"));
-
-    constexpr char aGameControllerForPlayer[] = "GAME CONTROLLER FOR PLAYER 1";
-    auto text = cacheString(aGameControllerForPlayer);
-    text[sizeof(aGameControllerForPlayer) - 2] = player == kPlayer1 ? '1' : '2';
-
-    drawMenuTextCentered(kPromptX, kPromptY + 10, text);
-    drawMenuTextCentered(kPromptX, kAbortY, cacheString("ESCAPE/MOUSE CLICK ABORTS"));
-
-    SWOS::FlipInMenu();
-
-    bool changed = false;
-
-    waitForJoypadButtonsIdle();
-
-    while (true) {
-        processControlEvents();
-        SWOS::GetKey();
-
-        if (SDL_GetMouseState(nullptr, nullptr) || swos.lastKey == kKeyEscape)
-            break;
-
-        auto joypadIndex = getJoypadWithButtonDown();
-
-        if (joypadIndex >= 0) {
-            auto currentControls = player == kPlayer1 ? getPl1Controls() : getPl2Controls();
-            auto currentJoypadIndex = player == kPlayer1 ? getPl1JoypadIndex() : getPl2JoypadIndex();
-
-            if (currentControls == kJoypad && currentJoypadIndex == joypadIndex) {
-                changed = true;
-            } else {
-                logInfo("Selecting joypad %d for player %d via button press", joypadIndex, player == kPlayer1 ? 1 : 2);
-                changed = setControls(player, kJoypad, joypadIndex);
-            }
-
-            break;
-        }
-
-        SDL_Delay(25);
-    }
-
-    if (changed) {
-        auto currentJoypadIndex = player == kPlayer1 ? getPl1JoypadIndex() : getPl2JoypadIndex();
-        auto name = joypadName(currentJoypadIndex);
-
-        char buf[128];
-        snprintf(buf, sizeof(buf), "%s SELECTED", name ? name : "<UNKNOWN CONTROLLER>");
-
-        drawMenuTextCentered(kPromptX, (kPromptY + kAbortY) / 2, buf, -1, kYellowText);
-        SWOS::FlipInMenu();
-        SDL_Delay(600);
-    }
-
-    waitForKeyboardAndMouseIdle();
-    waitForJoypadButtonsIdle();
-
-    return changed;
-}
-
-static void scrollJoypadIntoView(PlayerNumber player)
-{
-    assert(player == kPlayer1 || player == kPlayer2);
-
-    auto joypadIndex = player == kPlayer1 ? getPl1JoypadIndex() : getPl2JoypadIndex();
-    assert(joypadIndex >= 0 && joypadIndex < SDL_NumJoysticks());
-
-    auto minOffset = std::max(0, joypadIndex - (player == kPlayer1));
-    auto maxOffset = joypadIndex + 2 + (player == kPlayer2);
-
-    auto& scrollOffset = player == kPlayer1 ? m_pl1ControlsOffset : m_pl2ControlsOffset;
-    if (scrollOffset < minOffset)
-        scrollOffset = minOffset;
-    if (scrollOffset > maxOffset)
-        scrollOffset = maxOffset;
-}
-
-static void pl1SelectWhichJoypad()
-{
-    if (selectJoypadWithButtonPress(kPlayer1))
-        scrollJoypadIntoView(kPlayer1);
-}
-
-static void pl2SelectWhichJoypad()
-{
-    if (selectJoypadWithButtonPress(kPlayer2))
-        scrollJoypadIntoView(kPlayer2);
+    m_pl2ControlsOffset = std::min(m_pl2ControlsOffset + 1, maxScrollOffset());
 }
 
 static void redefinePlayer1Controls()
 {
-    if (getPl1Controls() == kKeyboard1)
-        showSetupKeyboardMenu(kPlayer1);
-    else if (getPl1Controls() == kJoypad)
-        showJoypadConfigMenu(kPlayer1, getPl1JoypadIndex());
+    redefineControls(kPlayer1);
 }
 
 static void redefinePlayer2Controls()
 {
-    if (getPl2Controls() == kKeyboard2)
-        showSetupKeyboardMenu(kPlayer2);
-    else if (getPl2Controls() == kJoypad)
-        showJoypadConfigMenu(kPlayer2, getPl2JoypadIndex());
+    redefineControls(kPlayer2);
 }

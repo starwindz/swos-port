@@ -125,8 +125,6 @@ static void selectEntryWithControlMask(MenuEntry *entry)
 
 void SWOS::MenuProc()
 {
-    swos.g_videoSpeedIndex = 50;    // just in case
-
     ReadTimerDelta();
     DrawMenu();
     swos.menuCycleTimer = 0;        // must come after DrawMenu(), set to 1 to slow down input

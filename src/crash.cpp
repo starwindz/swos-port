@@ -20,10 +20,10 @@ static void save68kRegisters()
     for (size_t i = 0; i < registers.size(); i++) {
         if (i < 7) {
             regName[0] = 'A';
-            regName[1] = '0' + i;
+            regName[1] = '0' + static_cast<char>(i);
         } else {
             regName[0] = 'D';
-            regName[1] = '0' + i - 7;
+            regName[1] = '0' + static_cast<char>(i) - 7;
         }
 
         auto value = registers[i].asDword();

@@ -5,7 +5,7 @@ kOnInit = 'onInit'
 kOnReturn = 'onReturn'
 kOnDraw = 'onDraw'
 
-kTemplateEntryOrdinalStart = 30_000     # just a random big number to avoid clashes with non-templates
+kMaxEntries = 30_000    # just a random big number to avoid clashes with non-templates
 kPreprocReservedWords = ('include', 'textWidth', 'textHeight', 'repeat', 'endRepeat', 'join', 'print')
 kPreprocValueDirectives = ( 'eval', '{', 'textWidth', 'textHeight' )
 kMenuFunctions = (kOnInit, kOnReturn, kOnDraw)
@@ -61,9 +61,9 @@ kConstants = {
 
 # font character width tables used for calculating string widths
 kSmallFontWidths = (
-    0, 0, 0, 0, 0, 6, 0, 2, 3, 3, 6, 6, 2, 4, 2, 6, 6, 2, 6, 6, 6, 6, 6, 6, 6, 6, 2, 3,
+    0, 2, 0, 0, 0, 6, 0, 2, 3, 3, 6, 6, 2, 4, 2, 6, 6, 2, 6, 6, 6, 6, 6, 6, 6, 6, 2, 3,
     0, 0, 0, 6, 0, 6, 6, 6, 6, 6, 6, 6, 6, 2, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
-    6, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    6, 6, 6, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 6, 0, 6, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -72,9 +72,9 @@ kSmallFontWidths = (
 )
 
 kBigFontWidths = (
-    0, 0, 0, 0, 0, 8, 0, 2, 4, 4, 8, 8, 3, 5, 3, 8, 8, 5, 8, 8, 8, 8, 8, 8, 8, 8, 3, 4,
+    0, 3, 0, 0, 0, 8, 0, 2, 4, 4, 8, 8, 3, 5, 3, 8, 8, 5, 8, 8, 8, 8, 8, 8, 8, 8, 3, 4,
     0, 0, 0, 8, 0, 8, 8, 8, 8, 8, 8, 8, 8, 5, 8, 8, 8, 8, 7, 8, 8, 8, 8, 8, 7, 8, 8, 8,
-    7, 7, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    7, 7, 8, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 8, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,

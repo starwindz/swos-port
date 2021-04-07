@@ -3,17 +3,28 @@
 #include "menuMouse.h"
 #include "menus.h"
 #include "menuControls.h"
+#include "mainMenu.h"
 #include "controls.h"
+#include "windowManager.h"
 
 constexpr int kScrollRateMs = 100;
 
 static Uint32 m_buttons;
-static Uint32 m_previousButtons;
+static SDL_UNUSED Uint32 m_previousButtons;
 
 static int m_x;     // current mouse coordinates
 static int m_y;
 static int m_clickX;
 static int m_clickY;
+
+#ifdef  __ANDROID__
+constexpr auto kInvalidFinger = std::numeric_limits<SDL_FingerID>::max();
+static bool m_hasTouch;
+static auto m_fingerId = kInvalidFinger;
+static float m_touchX;
+static float m_touchY;
+static SDL_FingerID m_blockedFinger;
+#endif
 
 static Uint32 m_lastScrollTick;
 static bool m_scrolling;
@@ -49,12 +60,49 @@ static std::vector<MenuMouseWheelData> m_mouseWheelData = { {} };
 using ReachabilityMap = std::array<bool, 256>;
 static ReachabilityMap m_reachableEntries;
 
+#ifdef __ANDROID__
+static std::tuple<bool, bool, bool> updateMouseStatus()
+{
+    m_buttons = 0;
+
+    auto keys = SDL_GetKeyboardState(nullptr);
+    bool backButtonNow = keys[SDL_SCANCODE_AC_BACK] != 0;
+    static bool s_previousBackButton;
+
+    if (backButtonNow && !s_previousBackButton)
+        m_buttons = SDL_BUTTON_RMASK;
+
+    s_previousBackButton = backButtonNow;
+
+    if (m_hasTouch || m_buttons) {
+        if (m_hasTouch) {
+            auto viewport = getViewport();
+            m_x = static_cast<int>(m_touchX * viewport.w);
+            m_y = static_cast<int>(m_touchY * viewport.h);
+
+            static int s_lastX, s_lastY;
+
+            if (m_x != s_lastX || m_y != s_lastY)
+                m_buttons |= SDL_BUTTON_LMASK;
+
+            s_lastX = m_x;
+            s_lastY = m_y;
+            m_hasTouch = false;
+        }
+
+        return { (m_buttons & SDL_BUTTON_LMASK) != 0, (m_buttons & SDL_BUTTON_LMASK) != 0, (m_buttons & SDL_BUTTON_RMASK) != 0 };
+    } else {
+        return { false, false, false };
+    }
+}
+#else
 static std::tuple<bool, bool, bool> updateMouseStatus()
 {
     m_buttons = SDL_GetMouseState(&m_x, &m_y);
 
     bool leftButtonDownNow = (m_buttons & SDL_BUTTON_LMASK) != 0;
     bool leftButtonDownPreviously = (m_previousButtons & SDL_BUTTON_LMASK) != 0;
+
     bool rightButtonDownNow = (m_buttons & SDL_BUTTON_RMASK) != 0;
     bool rightButtonDownPreviously = (m_previousButtons & SDL_BUTTON_RMASK) != 0;
 
@@ -66,6 +114,7 @@ static std::tuple<bool, bool, bool> updateMouseStatus()
 
     return { leftButtonJustPressed, leftButtonJustReleased, rightButtonJustReleased };
 }
+#endif
 
 // Tries to recognize if the entry is a scroll arrow by using some heuristics.
 static bool isEntryScroller(const MenuEntry& entry)
@@ -121,48 +170,12 @@ static bool handleRightClickExitMenu(bool rightButtonJustReleased)
             swos.abortSelectTeams = -1;
         swos.g_exitGameFlag = -1;   // play match menu
         swos.gameCanceled = 1;
+        if (mainMenuActive())
+            activateExitGameButton();
         return true;
     }
 
     return false;
-}
-
-static bool mapCoordinatesToGameArea()
-{
-    int windowWidth, windowHeight;
-
-    if (isInFullScreenMode()) {
-        std::tie(windowWidth, windowHeight) = getFullScreenDimensions();
-        m_x = m_x * kVgaWidth / windowWidth;
-        m_y = m_y * kVgaHeight / windowHeight;
-        return true;
-    }
-
-    std::tie(windowWidth, windowHeight) = getWindowSize();
-
-    SDL_Rect viewport = getViewport();
-
-    int slackWidth = 0;
-    int slackHeight = 0;
-
-    if (viewport.x) {
-        auto logicalWidth = kVgaWidth * windowHeight / kVgaHeight;
-        slackWidth = (windowWidth - logicalWidth) / 2;
-    } else if (viewport.y) {
-        auto logicalHeight = kVgaHeight * windowWidth / kVgaWidth;
-        slackHeight = (windowHeight - logicalHeight) / 2;
-    }
-
-    if (m_y < slackHeight || m_y >= windowHeight - slackHeight)
-        return false;
-
-    if (m_x < slackWidth || m_x >= windowWidth - slackWidth)
-        return false;
-
-    m_x = (m_x - slackWidth) * kVgaWidth / (windowWidth - 2 * slackWidth);
-    m_y = (m_y - slackHeight) * kVgaHeight / (windowHeight - 2 * slackHeight);
-
-    return true;
 }
 
 static bool globalWheelHandler(int scrollAmount)
@@ -278,7 +291,7 @@ static void saveClickCoordinates(bool leftButtonJustPressed)
     }
 }
 
-static void checkForEntryClicksAndMouseWheelMovement(bool leftButtonJustReleased)
+static void checkForEntryClicksAndMouseWheelMovement(bool leftButtonTriggered)
 {
     auto currentMenu = getCurrentMenu();
 
@@ -294,8 +307,8 @@ static void checkForEntryClicksAndMouseWheelMovement(bool leftButtonJustReleased
         if (!(m_buttons & SDL_BUTTON_LMASK) && mouseMovedFromPreviousFrame())
             currentMenu->selectedEntry = entry;
 
-        if (leftButtonJustReleased) {
-            if (isPointInsideEntry(m_clickX, m_clickY, *entry)) {
+        if (leftButtonTriggered) {
+            if (isPointInsideEntry(m_clickX, m_clickY,  *entry)) {
                 currentMenu->selectedEntry = entry;
                 triggerMenuFire();
             }
@@ -374,6 +387,10 @@ void resetMenuMouseData()
     m_currentEntryUnderPointer = nullptr;
     m_clickX = -1;
     m_clickY = -1;
+#ifdef __ANDROID__
+    m_blockedFinger = m_fingerId;
+    m_hasTouch = false;
+#endif
 }
 
 void menuMouseOnAboutToShowNewMenu()
@@ -409,6 +426,15 @@ void setGlobalWheelEntries(int upEntry /* = -1 */, int downEntry /* = -1 */)
     wheelData.entries.clear();
 }
 
+static bool clickValid(int x, int y)
+{
+#ifdef __ANDROID__
+    return hasMouseFocus() && !isMatchRunning() && m_x >= 0 && m_x < kVgaWidth && m_y >= 0 && m_y < kVgaHeight;
+#else
+    return hasMouseFocus() && !isMatchRunning() && mapCoordinatesToGameArea(m_x, m_y);
+#endif
+}
+
 void updateMouse()
 {
     bool leftButtonJustPressed, leftButtonJustReleased, rightButtonJustReleased;
@@ -417,20 +443,48 @@ void updateMouse()
     if (handleClickScrolling() || handleRightClickExitMenu(rightButtonJustReleased))
         return;
 
-    if (hasMouseFocus() && !isMatchRunning() && mapCoordinatesToGameArea()) {
+    if (clickValid(m_x, m_y)) {
         saveClickCoordinates(leftButtonJustPressed);
         checkForEntryClicksAndMouseWheelMovement(leftButtonJustReleased);
         checkForMouseDragging(leftButtonJustPressed);
     }
 }
 
+std::tuple<bool, int, int> getClickCoordinates()
+{
+    updateMouseStatus();
+    bool valid = clickValid(m_x, m_y);
+    return { valid && m_buttons != 0, m_x, m_y };
+}
+
+#ifdef __ANDROID__
+void updateTouch(float x, float y, SDL_FingerID fingerId)
+{
+    if (fingerId != m_blockedFinger && fingerId <= m_fingerId) {
+        m_touchX = x;
+        m_touchY = y;
+        m_fingerId = fingerId;
+        m_hasTouch = true;
+    }
+}
+
+void fingerUp(SDL_FingerID fingerId)
+{
+    if (m_blockedFinger == fingerId)
+        m_blockedFinger = kInvalidFinger;
+    if (m_fingerId == fingerId)
+        m_fingerId = kInvalidFinger;
+    m_hasTouch = false;
+}
+#endif
+
 // Finds and marks every reachable item starting from the initial one. We must track reachability in order
 // to avoid selecting items with the mouse that are never supposed to be selected, like say labels.
-void determineReachableEntries()
+void determineReachableEntries(bool force /* = false */)
 {
     static const void *s_lastMenu;
 
-    if (s_lastMenu == getCurrentPackedMenu())
+    if (!force && s_lastMenu == getCurrentPackedMenu())
         return;
 
     s_lastMenu = getCurrentPackedMenu();

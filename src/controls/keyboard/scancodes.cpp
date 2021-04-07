@@ -149,6 +149,7 @@ uint8_t sdlScancodeToPc(SDL_Scancode scancode)
     case SDL_SCANCODE_0: case SDL_SCANCODE_KP_0: return 11;
 
     case SDL_SCANCODE_ESCAPE: return 1;
+    case SDL_SCANCODE_AC_BACK: return 1;
     case SDL_SCANCODE_MINUS: return 12;
     case SDL_SCANCODE_EQUALS: return 13;
     case SDL_SCANCODE_BACKSPACE: return 14;

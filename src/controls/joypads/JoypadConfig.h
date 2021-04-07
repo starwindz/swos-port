@@ -21,6 +21,7 @@ public:
     void canonize();
 
     bool primary() const;
+    bool secondary() { return !primary(); }
     bool empty() const;
 
     void loadFromIni(const CSimpleIni& ini, const char *sectionName);

@@ -7,18 +7,18 @@
 
 static DefaultScancodesPack m_keys;
 
-static QuickConfigStatus getScanCodeStatus(PlayerNumber player, SDL_Scancode key, int numKeys = 0)
+static QuickConfigStatus getScanCodeStatus(Keyboard keyboard, SDL_Scancode key, int numKeys = 0)
 {
-    assert(player == kPlayer1 || player == kPlayer2);
+    assert(keyboard == Keyboard::kSet1 || keyboard == Keyboard::kSet2);
 
     if (std::find(m_keys.begin(), m_keys.begin() + numKeys, key) != m_keys.begin() + numKeys)
         return QuickConfigStatus::kAlreadyUsed;
 
-    if (player == kPlayer1 && getPl2Controls() == kKeyboard2) {
-        if (playerHasScancode(kPlayer2, key))
+    if (keyboard == Keyboard::kSet1 && getPl2Controls() == kKeyboard2) {
+        if (keyboard2HasScancode(key))
             return QuickConfigStatus::kTakenByOtherPlayer;
-    } else if (player == kPlayer2 && getPl1Controls() == kKeyboard1) {
-        if (playerHasScancode(kPlayer1, key))
+    } else if (keyboard == Keyboard::kSet2 && getPl1Controls() == kKeyboard1) {
+        if (keyboard1HasScancode(key))
             return QuickConfigStatus::kTakenByOtherPlayer;
     }
 
@@ -41,21 +41,27 @@ static void addKey(QuickConfigContext& context, SDL_Scancode key)
 
 static std::pair<QuickConfigStatus, const char *> getControlKey(QuickConfigContext& context)
 {
-    auto key = getKeyInterruptible();
+    assert(context.controls == QuickConfigControls::kKeyboard1 || context.controls == QuickConfigControls::kKeyboard2);
 
-    if (key.first)
+    auto keyClick = getKeyInterruptible();
+    auto clicked = std::get<0>(keyClick);
+    auto key = std::get<1>(keyClick);
+
+    if (clicked)
         return { QuickConfigStatus::kAbort, nullptr };
 
-    if (key.second != SDL_SCANCODE_UNKNOWN) {
+    if (key != SDL_SCANCODE_UNKNOWN) {
         waitForKeyboardAndMouseIdle();
 
-        auto status = getScanCodeStatus(context.player, key.second, context.currentSlot);
+        auto keyboard = context.controls == QuickConfigControls::kKeyboard1 ? Keyboard::kSet1 : Keyboard::kSet2;
+        auto status = getScanCodeStatus(keyboard, key, context.currentSlot);
+
         if (status == QuickConfigStatus::kContinue) {
-            addKey(context, key.second);
+            addKey(context, key);
             status = context.currentSlot >= kNumDefaultGameControlEvents ? QuickConfigStatus::kDone : status;
             return { status, nullptr };
         } else {
-            auto keyName = scancodeToString(key.second, context.scratchBuf, sizeof(context.scratchBuf));
+            auto keyName = scancodeToString(key, context.scratchBuf, sizeof(context.scratchBuf));
             return { status, keyName };
         }
     }
@@ -63,9 +69,9 @@ static std::pair<QuickConfigStatus, const char *> getControlKey(QuickConfigConte
     return { QuickConfigStatus::kNoInput, nullptr };
 }
 
-SDL_Scancode getControlKey(PlayerNumber player, int warningY)
+SDL_Scancode getControlKey(Keyboard keyboard, int warningY)
 {
-    auto context = QuickConfigContext::getKeyboardContext(player, getControlKey, nullptr);
+    auto context = QuickConfigContext::getKeyboardContext(keyboard, getControlKey, nullptr);
     context.currentSlot = 0;
     context.warningY = warningY;
 
@@ -74,11 +80,11 @@ SDL_Scancode getControlKey(PlayerNumber player, int warningY)
     return status == QuickConfigStatus::kContinue ? m_keys[0] : SDL_SCANCODE_UNKNOWN;
 }
 
-std::pair<bool, DefaultScancodesPack> promptForDefaultKeys(PlayerNumber player)
+std::pair<bool, DefaultScancodesPack> promptForDefaultKeys(Keyboard keyboard)
 {
     waitForKeyboardAndMouseIdle();
 
-    auto context = QuickConfigContext::getKeyboardContext(player, getControlKey, resetKeys);
+    auto context = QuickConfigContext::getKeyboardContext(keyboard, getControlKey, resetKeys);
     auto result = promptForDefaultGameEvents(context);
 
     return { result, m_keys };

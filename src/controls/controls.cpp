@@ -4,10 +4,11 @@
 #include "keyboard.h"
 #include "joypads.h"
 #include "mouse.h"
-#include "render.h"
+#include "menuMouse.h"
 #include "options.h"
 #include "game.h"
 #include "util.h"
+#include "VirtualJoypad.h"
 
 static Controls m_pl1Controls = kNone;
 static Controls m_pl2Controls = kNone;
@@ -17,12 +18,16 @@ static int m_mouseWheelAmount;
 static bool m_shortcutsEnabled = true;
 
 // options
+static bool m_showSelectMatchControlsMenu = true;
+
 static constexpr char kControlsSection[] = "controls";
 
 const char kPlayer1ControlsKey[] = "player1Controls";
 const char kPlayer2ControlsKey[] = "player2Controls";
 
-static const char *controlsToString(Controls controls)
+static constexpr char kShowSelectMatchControlsMenu[] = "showSelectMatchControlsMenu";
+
+const char *controlsToString(Controls controls)
 {
     switch (controls) {
     case kNone: return "<none>";
@@ -47,6 +52,11 @@ Controls getPl2Controls()
     return m_pl2Controls;
 }
 
+Controls getControls(PlayerNumber player)
+{
+    return player == kPlayer1 ? m_pl1Controls : m_pl2Controls;
+}
+
 bool setControls(PlayerNumber player, Controls controls, int joypadIndex)
 {
     assert(player == kPlayer1 || player == kPlayer2);
@@ -62,9 +72,18 @@ bool setControls(PlayerNumber player, Controls controls, int joypadIndex)
         plControls = controls;
         bool success = setJoypad(player, joypadIndex);
 
-        if (controls == kMouse && otherControls == kMouse) {
-            auto otherKeyboard = player == kPlayer1 ? kKeyboard2 : kKeyboard1;
-            setControls(otherPlayer, otherKeyboard);
+        if (joypadIndex == kNoJoypad && controls == otherControls) {
+            assert(controls != kJoypad);
+
+            switch (controls) {
+            case kKeyboard1:
+                setControls(otherPlayer, kKeyboard2);
+                break;
+            case kMouse:
+            case kKeyboard2:
+                setControls(otherPlayer, kKeyboard1);
+                break;
+            }
         }
 
         return success;
@@ -81,6 +100,14 @@ void setPl1Controls(Controls controls, int joypadIndex /* = kNoJoypad */)
 void setPl2Controls(Controls controls, int joypadIndex /* = kNoJoypad */)
 {
     setControls(kPlayer2, controls, joypadIndex);
+}
+
+void unsetKeyboardControls()
+{
+    if (m_pl1Controls == kKeyboard1 || m_pl1Controls == kKeyboard2)
+        setPl1Controls(kNone);
+    if (m_pl2Controls == kKeyboard1 || m_pl2Controls == kKeyboard2)
+        setPl2Controls(kNone);
 }
 
 static void checkQuitEvent()
@@ -101,7 +128,7 @@ static bool keyboardOrMouseActive()
     if (std::find(keyState, keyState + numKeys, 1) != keyState + numKeys)
         return true;
 
-    if (SDL_GetMouseState(nullptr, nullptr))
+    if (std::get<0>(getClickCoordinates()))
         return true;
 
     return false;
@@ -120,18 +147,27 @@ bool anyInputActive()
     return false;
 }
 
-bool mouseClickAndRelease()
+std::tuple<bool, int, int> mouseClickAndRelease()
 {
-    if (SDL_GetMouseState(nullptr, nullptr)) {
+    auto click = getClickCoordinates();
+    int x = std::get<1>(click);
+    int y = std::get<2>(click);
+
+    if (std::get<0>(click)) {
         do {
             processControlEvents();
+#ifdef VIRTUAL_JOYPAD
+            if (getVirtualJoypad().events() != kNoGameEvents)
+                return {};
+#endif
             SDL_Delay(50);
-        } while (SDL_GetMouseState(nullptr, nullptr));
+            click = getClickCoordinates();
+        } while (std::get<0>(click));
 
-        return true;
+        return { true, x, y };
     }
 
-    return false;
+    return click;
 }
 
 void waitForKeyboardAndMouseIdle()
@@ -189,6 +225,17 @@ static void processEvent(const SDL_Event& event)
         if (event.wheel.y)
             m_mouseWheelAmount = event.wheel.y;
         break;
+#ifdef __ANDROID__
+    case SDL_FINGERDOWN:
+    case SDL_FINGERMOTION:
+        if (!getVirtualJoypad().updateTouch(event.tfinger.x, event.tfinger.y, event.tfinger.fingerId, event.tfinger.timestamp))
+            updateTouch(event.tfinger.x, event.tfinger.y, event.tfinger.fingerId);
+        break;
+    case SDL_FINGERUP:
+        getVirtualJoypad().removeTouch(event.tfinger.fingerId);
+        fingerUp(event.tfinger.fingerId);
+        break;
+#endif
     }
 }
 
@@ -206,10 +253,12 @@ void waitForKeyPress()
     }
 }
 
-std::pair<bool, SDL_Scancode> getKeyInterruptible()
+std::tuple<bool, SDL_Scancode, int, int> getKeyInterruptible()
 {
-    if (mouseClickAndRelease())
-        return { true, SDL_SCANCODE_UNKNOWN };
+    auto click = mouseClickAndRelease();
+
+    if (std::get<0>(click))
+        return { true, SDL_SCANCODE_UNKNOWN, std::get<1>(click), std::get<2>(click) };
 
     processControlEvents();
     auto key = getKey();
@@ -217,7 +266,7 @@ std::pair<bool, SDL_Scancode> getKeyInterruptible()
     if (numKeysInBuffer() > 3)
         flushKeyBuffer();
 
-    return { false, key };
+    return { false, key, 0, 0 };
 }
 
 void processControlEvents()
@@ -238,6 +287,16 @@ void setGlobalShortcutsEnabled(bool enabled)
     m_shortcutsEnabled = enabled;
 }
 
+bool getShowSelectMatchControlsMenu()
+{
+    return m_showSelectMatchControlsMenu;
+}
+
+void setShowSelectMatchControlsMenu(bool value)
+{
+    m_showSelectMatchControlsMenu = value;
+}
+
 void loadControlOptions(const CSimpleIni& ini)
 {
     loadJoypadOptions(kControlsSection, ini);
@@ -252,6 +311,8 @@ void loadControlOptions(const CSimpleIni& ini)
     auto pl2Controls = ini.GetLongValue(kControlsSection, kPlayer2ControlsKey);
     if (pl2Controls >= 0 && pl2Controls < kNumControls)
         m_pl2Controls = static_cast<Controls>(pl2Controls);
+
+    m_showSelectMatchControlsMenu = ini.GetBoolValue(kControlsSection, kShowSelectMatchControlsMenu, true);
 
     logInfo("Controls set to: %s (player 1), %s (player 2)", controlsToString(m_pl1Controls), controlsToString(m_pl2Controls));
 }
@@ -287,6 +348,8 @@ void saveControlOptions(CSimpleIni& ini)
     ini.SetLongValue(kControlsSection, kPlayer1ControlsKey, m_pl1Controls, kInputControlsComment);
     ini.SetLongValue(kControlsSection, kPlayer2ControlsKey, m_pl2Controls);
 
+    ini.SetBoolValue(kControlsSection, kShowSelectMatchControlsMenu, m_showSelectMatchControlsMenu);
+
     saveJoypadOptions(kControlsSection, ini);
     saveKeyboardConfig(ini);
 }
@@ -314,8 +377,8 @@ bool testForPlayerKeys()
 {
     auto key = lastKey();
 
-    return m_pl1Controls == kKeyboard1 && pl1HasScancode(key) ||
-        m_pl2Controls == kKeyboard2 && pl2HasScancode(key);
+    return m_pl1Controls == kKeyboard1 && keyboard1HasScancode(key) ||
+        m_pl2Controls == kKeyboard2 && keyboard2HasScancode(key);
 }
 
 // outputs:

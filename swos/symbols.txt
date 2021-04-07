@@ -21,6 +21,14 @@ ShowRestOfPics - StartingMatch
 InitMenuEntry - Int2Ascii
 DrawTeamNameSprites
 QuitToDosPromptLoop - SWOSMainMenuInit
+aSetup_dat
+
+# InputText
+InputTextKeyLoop - InitUserTactics
+g_inputtingText
+g_allowExtraCharsFlag
+inMenuKeyboardBuffer
+g_videoSpeedIndex
 
 # menus
 UnpackMenu
@@ -32,7 +40,7 @@ g_currentMenuPtr
 menuStatus
 menuTextBlinkCounter
 dseg_1666DE
-charTables - shirtColorTable
+deadInputTextVar - shirtColorTable
 DrawMenuText - GetTextSize
 controlsHeldTimer
 lastControls
@@ -55,8 +63,9 @@ pl2FireCounter
 #keyboardControlFlags
 keyCount
 keyBuffer
+g_inputControls
 
-# commentary & sfx
+# commentary & SFX
 PlayCommentarySample
 PlaySampleFromTable
 commentarySampleHandle
@@ -208,7 +217,6 @@ CommonMenuExit
 CalcMenuEntryAddress
 SetCurrentEntry
 SavePixelsBehindSprite
-FilterKeys
 ZeroOutStars
 SetDefaultNameAndSurname
 InitHighestScorersTable
@@ -285,12 +293,6 @@ menuCycleTimer, word
 kColorTableShine, array word[8]
 menuCursorFrame, word
 
-# menu keyboard input
-FilterKeys, function
-InputText, function
-g_inputingText, word
-g_allowExtraCharsFlag, word
-
 # main menu
 SWOSMainMenuInit, function
 EditTacticsMenu, function
@@ -347,7 +349,6 @@ ChangeAutoSaveHighlights, function
 ChangeChairmanScenes, function
 g_menuMusic, int16_t
 g_musicOff, int16_t
-g_inputControls, int16_t
 g_gameLength, int16_t
 g_autoReplays, int16_t
 g_autoSaveHighlights, int16_t
@@ -586,6 +587,18 @@ UpdateControlledPlayer, function
 UpdatePlayerBeingPassedTo, function
 UpdatePlayersAndBall, function
 
+# goals
+team1Goals, word
+team2Goals, word
+statsTeam1Goals, word
+statsTeam2Goals, word
+statsTeam1GoalsCopy, word
+statsTeam2GoalsCopy, word
+team1GoalsFirstLeg, word
+team2GoalsFirstLeg, word
+team1GoalsDigit2, word
+team2GoalsDigit2, word
+
 # misc
 FixupInitialCharset, function
 ChainFont, function
@@ -601,14 +614,14 @@ ZeroOutStars, function
 CopyTeamsAndHeader, function
 LoadFillAndSwtitle, function
 
+# must not get alignment, it's inside the load competition buffer
+selTeamsPtr, dword (align: 1)
+
 stadiumMenu, PackedMenu
 setupDatBuffer, word
-aSetup_dat, array const char
 aSensibleWorldOfSoccerV2_0, array const char
-selTeamsPtr, dword
 partOneImages, array const char *
 partTwoImages, array const char *
-g_videoSpeedIndex, word
 doSpriteColorConversion, word
 aCharset_dat, array const char
 randomSeed, word
@@ -637,14 +650,6 @@ gameAborted, word
 teamDataPtr, TeamGeneralInfo *
 big_S_Sprite, Sprite
 playGame, word
-team1Goals, word
-team2Goals, word
-statsTeam1Goals, word
-statsTeam2Goals, word
-statsTeam1GoalsCopy, word
-statsTeam2GoalsCopy, word
-team1GoalsFirstLeg, word
-team2GoalsFirstLeg, word
 smallCharsTable, CharTable
 bigCharsTable, CharTable
 twoPlayers, word
@@ -668,8 +673,6 @@ topTeamData, TeamGeneralInfo
 bottomTeamData, TeamGeneralInfo
 lastTeamPlayed, TeamGeneralInfo *
 g_trainingGame, word
-team1GoalsDigit2, word
-team2GoalsDigit2, word
 animatedPatterns, array int16_t[8]
 
 g_exitGameFlag, word
@@ -678,11 +681,13 @@ isCareer, word
 careerTeam, array char[1292]
 replaySelected, word
 
+# play match menu
 playerNumThatStarted, word
 careerTeamSetupDone, word
 isFirstPlayerChoosingTeam, word
 playMatchTeam1Ptr, TeamFile *
 playMatchTeam2Ptr, TeamFile *
+squadChangesAllowed, word
 
 BumpAllPlayersLastPlayedHalfAtGameStart, function
 BumpAllPlayersLastPlayedHalfPostGame, function
@@ -710,6 +715,10 @@ gameSeconds, int16_t
 endGameCounter, int16_t
 secondsSwitchAccumulator, int16_t
 gameTime, array byte[4]
+
+# keep these so the competition buffer integrity static assert could work
+competitionFileBuffer, word
+g_selectedTeams, array char[68400]
 
 ### debug dump
 AI_attackHalf, word
@@ -742,6 +751,8 @@ ShowStadiumInit
 
 @insert-hook
 AdjustPlayerSkills, 246, FixTwoCPUsGameCrash
+ViewOpponentsSelect, 66, RecalculateReachableEntries
+ReturnFromViewOpponent, 9, RecalculateReachableEntries
 
 # TODO: remove this when bench routines are converted
 LeaveSubsMenu, 1, @remove
@@ -750,7 +761,6 @@ CheckIfBallOutOfPlay, 252, FixPenaltyBug
 GameLoop, 92, InsertPauseBeforeTheGameIfNeeded
 GameLoop, 224, LoadCrowdChantSampleIfNeeded
 GameLoop, 346, GameEnded
-InputTextKeyLoop, 3, AbortTextInputOnEscapeAndRightMouseClick
 PlayerDoingHeader, 161, PlayHeaderComment
 PlayerTackled, 59, PlayInjuryComment
 RunStoppageEventsAndSetAnimationTables, 339, EnqueueCrowdChantsReload
@@ -798,8 +808,10 @@ DrawSpriteInCameraView
 DrawSprite16Pixels
 CopySprite
 
-# strings
+# text
+InputText
 GetTextSize
+GetKey
 
 ReadPitchFile
 WaitRetrace
@@ -814,7 +826,6 @@ IntroEnsureFrameDataLoaded
 IntroDrawFrame
 JoyKeyOrCtrlPressed
 CloseSoccerBin
-GetKey
 
 # replays
 PlayHighlightsLoop
@@ -877,6 +888,10 @@ PlayDrawComment
 PlayItsBeenACompleteRoutComment
 PlayCrowdChants
 
+# time
+ResetTime
+UpdateTime
+
 EndProgram
 ResetAnimatedPatternsForBothTeams
 StartMainGameLoop
@@ -884,8 +899,6 @@ ReplayExitMenuAfterFriendly
 Int2Ascii
 ExitEuropeanChampionshipMenu
 #DrawBenchAndSubsMenu
-ResetTime
-UpdateTime
 
 #
 # Let ida2asm know about the sizes of types used in the export section so it can generate offsets properly.

@@ -69,17 +69,6 @@ static inline void setCurrentEntry(int ordinal)
     highlightEntry(ordinal);
 }
 
-static inline bool inputText(char *destBuffer, int maxLength, bool allowExtraChars = false)
-{
-    A0 = destBuffer;
-    D0 = maxLength;
-    swos.g_allowExtraCharsFlag = allowExtraChars;
-
-    SAFE_INVOKE(InputText);
-
-    return D0.asWord() == 0;
-}
-
 static inline void copyStringToEntry(int entryIndex, const char *str)
 {
     getMenuEntry(entryIndex)->copyString(str);
@@ -115,3 +104,4 @@ bool showContinueAbortPrompt(const char *header, const char *continueText,
     const char *abortText, const std::vector<const char *>& messageLines);
 
 char *menuAlloc(size_t size);
+void menuFree(size_t size);

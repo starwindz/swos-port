@@ -6,35 +6,14 @@
 
 Menu videoOptionsMenu
 {
-    kRowHeight = 12
-    kBoxHeight = 10
-    kCustomSizeWidth = #textWidth("999999") + 4
-
-    export kNumResolutionFields = 6
-
-    kResolutionFieldX = kBaseX + 4
-    kResolutionFieldWidth = kBigButtonWidth - 10
-    kResolutionListY = 100
-
-    kArrowWidth = 10
-    kArrowSpriteIndex = 175
-
-    kScrollArrowX = kResolutionFieldX + kResolutionFieldWidth + 2
-    kScrollDownArrowY = kResolutionListY + kNumResolutionFields * kRowHeight - kScrollArrowHeight
-
-    kFirstArrowX = 74
-    kColumn1X = 82
-    kColumn2X = 96
-
-    kCustomSizeY = 48
-    kBorderlessMaximizedY = kCustomSizeY + 2 * kRowHeight + 2
-    kFullScreenY = kBorderlessMaximizedY + kRowHeight + 2
+    kGamePlayOptionsStartY = kOptionsStartY - kOptionHeight
 
     onInit: videoOptionsMenuOnInit
-    onDraw: videoOptionsMenuOnDraw
-    initialEntry: windowed
 
-    defaultHeight: kRowHeight
+    initialEntry: flashCursor
+
+    defaultWidth: kOptionWidth
+    defaultHeight: kOptionHeight
 
     Entry header {
         x: kBaseX
@@ -45,214 +24,77 @@ Menu videoOptionsMenu
         color: kHeaderColor
     }
 
-    Entry {
-        x: 110
-        y: 30
-        width: 84
-        height: 12
-        text: "WINDOW MODE"
+    defaultX: kOptionsColumn1X
+    defaultY: @prevEndY + kOptionsRowDistance
+
+    TemplateEntry {
+        color: kOptionsColumn1Color
     }
 
-    defaultY: kCustomSizeY
-    defaultTextFlags: @kLeftAligned
+    Entry flashMenuCursorLabel {
+        y: kGamePlayOptionsStartY
+        text: "FLASH MENU CURSOR"
+    }
+    Entry showTouchTrailsLabel { text: "SHOW TOUCH TRAILS" }
+    Entry transparentVirtualJoypadButtonsLabel { text: "BLEND VIRTUAL JOYPAD" }
 
-    Entry customSizeArrow {
-        x: kFirstArrowX
-        width: kArrowWidth
-        sprite: kArrowSpriteIndex
+    entryAlias firstLabel = flashMenuCursorLabel
+
+    defaultX: kOptionsColumn2X
+
+    TemplateEntry {
+        color: kOptionsColumn2Color
     }
 
-    defaultX: @prevEndX + 1
-
-    Entry windowed {
-        x: @prevEndX + 3
-        width: @kTextWidth + 4
-
-        text: "WINDOWED"
-
-        onSelect: ~switchToWindow
-
-        downEntry: resizable
-        rightEntry: customWidth
-    }
-
-    Entry customWidth {
-        y: @prevY + 1
-        width: kCustomSizeWidth
-        height: kBoxHeight
-
-        color: @kLightBlue
-        textFlags: @kCenterAligned
-        number: 9999
-
-        onSelect: inputWindowWidth
-
-        leftEntry: windowed
-        rightEntry: customHeight
-        downEntry: resizableOnOff
-    }
-
-    Entry {
-        x: @prevEndX + 2
-        text: "X"
-        width: 10
-    }
-
-    Entry customHeight {
-        x: @prevEndX - 3
-        y: @prevY + 1
-        width: kCustomSizeWidth
-        height: kBoxHeight
-
-        color: @kLightBlue
-        textFlags: @kCenterAligned
-        number: 9999
-
-        onSelect: inputWindowHeight
-
-        leftEntry: customWidth
-        downEntry: resizableOnOff
-    }
-
-    Entry resizable {
-        x: kColumn2X + 10
-        y: kCustomSizeY + kRowHeight
-        width: @kTextWidth + 4
-
-        textFlags: @kCenterAligned
-        text: "RESIZABLE"
-
-        onSelect: ~toggleWindowResizable
-
-        upEntry: windowed
-        downEntry: borderlessMaximized
-        rightEntry: resizableOnOff
-    }
-
-    Entry resizableOnOff {
-        y: @prevY + 1
-        width: @kTextWidth + 3 + 4
-        height: kRowHeight - 2
-
-        textFlags: 0
-        // using direct constants instead of variables here in order to be able to measure width above
-        stringTable: [ ~m_windowResizable, "OFF", "ON" ]
-        color: @kLightBlue
-
-        onSelect: ~toggleWindowResizable
-
-        upEntry: customWidth
-        downEntry: borderlessMaximized
-        leftEntry: resizable
-    }
-
-    defaultY: kBorderlessMaximizedY
-
-    Entry borderlessMaximizedArrow {
-        x: kColumn1X
-        width: kArrowWidth
-        sprite: kArrowSpriteIndex
-    }
-
-    Entry borderlessMaximized {
-        x: kColumn2X
-        width: @kTextWidth + 5
-
-        textFlags: @kCenterAligned
-        text: "BORDERLESS MAXIMIZED"
-
-        onSelect: ~switchToBorderlessMaximized
-
-        upEntry: resizable
-        downEntry: resolutionField0
-    }
-
-    defaultY: kFullScreenY
-
-    Entry fullScreenArrow {
-        x: kColumn1X
-        width: kArrowWidth
-        sprite: kArrowSpriteIndex
-    }
-
-    Entry fullScreen {
-        x: kColumn2X
-        width: kResolutionFieldWidth
-
-        textFlags: 0
-        text: @kAlloc
-
-        upEntry: borderlessMaximized
+    Entry flashCursor {
+        y: kGamePlayOptionsStartY
         downEntry: >
+
+        stringTable: [ ~m_flashCursor, swos.aOff, swos.aOn ]
+        onSelect: changeFlashCursor
     }
 
-    // full screen resolution list
-#repeat kNumResolutionFields
-    Entry #join(resolutionField, #i) {
-        x: kResolutionFieldX
-        y: kResolutionListY + #i * kRowHeight
-        width: kResolutionFieldWidth
+    Entry showTouchTrails {
+        upEntry: <
+        downEntry: >
 
-        color: @kLightBlue
-        textFlags: 0
-        text: @kAlloc
+        stringTable: [ ~m_showTouchTrails, swos.aOff, swos.aOn ]
+        onSelect: changeShowTouchTrails
+    }
 
-        onSelect: changeResolutionSelected
+    Entry transparentVirtualJoypadButtons {
+        upEntry: <
+        downEntry: >
+
+        stringTable: [ ~m_transparentButtons, swos.aOff, swos.aOn ]
+        onSelect: changeVirtualJoypadTransparentButtons
+    }
+
+    entryAlias firstChangerItem = flashCursor
+
+    Entry showWindowMode {
+        x: (@kScreenWidth - kOptionWidth) / 2 - kMenuOffset
+        y: @prevEndY + 3 * kOptionsRowDistance
 
         upEntry: <
         downEntry: >
+
+        color: @kGreen
+        text: "WINDOW MODE"
+        onSelect: openWindowModeMenu
     }
-#endRepeat
-
-    Entry scrollUpArrow {
-        x: kScrollArrowX
-        y: kResolutionListY
-        width: kScrollArrowWidth
-        height: kScrollArrowHeight
-
-        sprite: kUpArrowSpriteIndex
-        onSelect: scrollResolutionsUpSelected
-
-        leftEntry: resolutionField0
-        upEntry: borderlessMaximized
-        downEntry: scrollDownArrow
-    }
-
-    Entry scrollDownArrow {
-        x: kScrollArrowX
-        y: kScrollDownArrowY
-        width: kScrollArrowWidth
-        height: kScrollArrowHeight
-
-        sprite: kDownArrowSpriteIndex
-        onSelect: scrollResolutionsDownSelected
-
-        upEntry: scrollUpArrow
-        downEntry: exit
-        leftEntry: resolutionField5
-    }
-
-    resolutionField0.upEntry = borderlessMaximized
-
-    resolutionField0.rightEntry = scrollUpArrow
-    resolutionField1.rightEntry = scrollUpArrow
-    resolutionField2.rightEntry = scrollUpArrow
-
-    resolutionField3.rightEntry = scrollDownArrow
-    resolutionField4.rightEntry = scrollDownArrow
-    resolutionField5.rightEntry = scrollDownArrow
-
-    resolutionField5.downEntry = exit
 
     Entry exit {
         x: kBaseX
         y: kExitY
         width: kBigButtonWidth
         height: kBigButtonHeight
+
+        color: kExitColor
         textFlags: 0
         text: swos.aExit
-        color: kExitColor
+
+        upEntry: <
         onSelect: ~SetExitMenuFlag
-        upEntry: resolutionField5
     }
 }

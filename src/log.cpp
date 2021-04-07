@@ -1,27 +1,19 @@
 #include "log.h"
 #include "util.h"
-
-#ifdef __ANDROID__
-constexpr const char * const kLogTag = "swos";
-#else
 # include "file.h"
 # include <sys/stat.h>
 
+#ifdef __ANDROID__
+constexpr const char * const kLogTag = "swos";
+#endif
+
 constexpr char kLogFilename[] = "swos.log";
 constexpr char kOldLogFilename[] = "swos.log.old";
-static FILE *m_logFile;
+static SDL_RWops *m_logFile;
 static std::string m_logPath;
-
-static bool fileExists(const char *path)
-{
-    struct stat buffer;
-    return stat(path, &buffer) == 0;
-}
-#endif
 
 void initLog()
 {
-#ifndef __ANDROID__
     auto dir = rootDir();
     m_logPath = dir + kLogFilename;
 
@@ -31,7 +23,7 @@ void initLog()
         rename(m_logPath.c_str(), oldLog.c_str());
     }
 
-    m_logFile = fopen(m_logPath.c_str(), "w");
+    m_logFile = SDL_RWFromFile(m_logPath.c_str(), "w");
 
     if (!m_logFile)
         errorExit("Could not open log file %s for writing", kLogFilename);
@@ -39,25 +31,14 @@ void initLog()
     logInfo("Log started");
     if (!dir.empty())
         logInfo("Root directory set to `%s'", dir.c_str());
-#endif
-}
-
-void flushLog()
-{
-#ifndef __ANDROID__
-    if (m_logFile)
-        fflush(m_logFile);
-#endif
 }
 
 void finishLog()
 {
-#ifndef __ANDROID__
     logInfo("Log ended.");
     if (m_logFile)
-        fclose(m_logFile);
+        SDL_RWclose(m_logFile);
     m_logFile = nullptr;
-#endif
 }
 
 void log(LogCategory category, const char *format, ...)
@@ -81,7 +62,7 @@ void logv(LogCategory category, const char *format, va_list args)
         assert(category == kInfo);
 
     __android_log_vprint(prio, kLogTag, format, args);
-#else
+#endif
     if (!m_logFile)
         return;
 
@@ -105,18 +86,15 @@ void logv(LogCategory category, const char *format, va_list args)
         buf[len] = '\0';
     }
 
-    if (!fwrite(buf, len, 1, m_logFile))
+    if (!SDL_RWwrite(m_logFile, buf, len, 1))
         SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Writing to log file failed");
 
+#ifndef __ANDROID__
     std::cout << buf;
 #endif
 }
 
 std::string logPath()
 {
-#ifndef __ANDROID__
     return m_logPath;
-#else
-    return {};
-#endif
 }

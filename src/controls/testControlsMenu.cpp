@@ -27,7 +27,11 @@ static void drawFixedPart(const char *title, const char *controlsTitle, bool all
     drawMenuTextCentered(kCenterX, kHeaderY, title);
     drawMenuTextCentered(kColumn1X, kDescriptionY, controlsTitle);
     drawMenuTextCentered(kColumn2X, kDescriptionY, "EVENTS TRIGGERING:");
+#ifdef __ANDROID__
+    drawMenuTextCentered(kCenterX, kAbortInfoY, allowEscapeExit ? "(TAP/BACK EXITS)" : "(TAP EXITS)");
+#else
     drawMenuTextCentered(kCenterX, kAbortInfoY, allowEscapeExit ? "(MOUSE CLICK/ESCAPE EXITS)" : "(MOUSE CLICK EXITS)");
+#endif
     SWOS::FlipInMenu();
 }
 
@@ -76,11 +80,11 @@ static void drawEvents(GetEventsFn getEvents)
 
 static bool aborted(bool allowEscapeExit)
 {
-    bool aborted = mouseClickAndRelease();
+    bool aborted = std::get<0>(mouseClickAndRelease());
 
     if (!aborted && allowEscapeExit) {
         auto keys = SDL_GetKeyboardState(nullptr);
-        aborted = keys[SDL_SCANCODE_ESCAPE] != 0;
+        aborted = keys[SDL_SCANCODE_ESCAPE] || keys[SDL_SCANCODE_AC_BACK];
     }
 
     return aborted;
@@ -92,6 +96,8 @@ void showTestControlsMenu(const char *title, const char *controlsTitle, bool all
     assert(title && controlsTitle && getControls && getEvents);
 
     drawFixedPart(title, controlsTitle, allowEscapeExit);
+
+    waitForKeyboardAndMouseIdle();
 
     while (!aborted(allowEscapeExit)) {
         redrawMenuBackground(kControlsAndEventsY, kAbortInfoY);

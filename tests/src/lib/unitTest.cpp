@@ -3,7 +3,7 @@
 #include "file.h"
 #include "scanCodes.h"
 #include "sdlProcs.h"
-#include "render.h"
+#include "windowManager.h"
 
 #undef assertEqual
 

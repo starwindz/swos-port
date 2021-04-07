@@ -1,5 +1,6 @@
 #include "selectFilesMenu.h"
 #include "text.h"
+#include "textInput.h"
 #include "selectFiles.mnu.h"
 #include "menuMouse.h"
 #include "drawMenu.h"
@@ -623,7 +624,7 @@ static void inputFilenameToSave()
     auto entry = A5.asMenuEntry();
     auto entryString = entry->string();
 
-    if (inputText(entryString, kMaxSaveFilenameChars, true)) {
+    if (inputText(*entry, kMaxSaveFilenameChars, kFileCharset)) {
         assert(m_saveFilenameBuffer && m_saveExtension);
 
         if (m_saveFilenameBuffer) {

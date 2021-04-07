@@ -5,8 +5,11 @@ from unittest import mock
 from ddt import ddt, data
 
 import TestHelper
+import Constants
 import Util
 
+from Menu import Menu
+from Entry import Entry
 from Token import Token
 from StringTable import StringTable
 from TestHelper import getParserWithData
@@ -316,6 +319,7 @@ class TestParser(unittest.TestCase):
                     stringTable: [ g_soundOff, aOn, aOff ]
                     downEntry: >
                     rightEntry: whichEntry + 1 - 1
+                    invisible: 0
                 }
 
                 e1.width = 53
@@ -328,6 +332,7 @@ class TestParser(unittest.TestCase):
                     height: 100
                     upEntry: <
                     downEntry: >
+                    invisible: #{40 / 20 * 15 - 5 * 6}
                 }
 
                 Entry e3 {
@@ -744,6 +749,34 @@ class TestParser(unittest.TestCase):
         parser = getParserWithData('#warningsOff ' + input.replace('`', '\n'))
         actual = eval(parser.varStorage.getGlobalVariable('result').value)
         self.assertEqual(actual, expected)
+
+    def testEntryLimit(self):
+        realLen = len
+
+        def fakeLen(value):
+            if isinstance(value, dict):
+                return Constants.kMaxEntries
+            return realLen(value)
+
+        with mock.patch('builtins.len', fakeLen):
+            input = '#warningsOff Menu K9 {}'
+            getParserWithData(input)
+
+            input = '#warningsOff Menu K9 \n { Entry OneTooMany {} }'
+            expectedError = TestHelper.formatError(TestHelper.kTestFilename, 2, f'entry limit ({Constants.kMaxEntries}) exceeded')
+            TestHelper.assertExitWithError(self, lambda: getParserWithData(input), expectedError)
+
+    @mock.patch('builtins.print')
+    def testWhitespaceInStringWarning(self, mockPrint):
+        input = 'Menu Fashion\n{\nEntry Fabrique {\ntext:\n" Do You Wanna Make Love " }}\n'
+        getParserWithData(input)
+
+        mockPrint.assert_called_once()
+
+        warning = Util.formatMessage('leading/trailing whitespace detected in a string', TestHelper.kTestFilename, 5, True)
+        actualOutput = mockPrint.call_args[0][0]
+
+        self.assertEqual(actualOutput, warning)
 
 def extractExpectedData(testData, key):
     assert isinstance(testData, (list, tuple))

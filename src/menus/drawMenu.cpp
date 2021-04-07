@@ -1,8 +1,8 @@
 #include "drawMenu.h"
 #include "menus.h"
 #include "sprites.h"
-#include "options.h"
 #include "text.h"
+#include "windowManager.h"
 
 static void initializeMenuBackground();
 static void clearAllItemsDrawnFlag();
@@ -378,6 +378,7 @@ static void drawMenuItemInnerFrame(int x, int y, int width, int height, word col
     D2 = y;
     D3 = width;
     D4 = height;
+    assert(D1.asInt() >= 0 && D1 + D3 <= kMenuScreenWidth && D2.asInt() >= 0 && D2 + D4 <= kMenuScreenHeight);
     SAFE_INVOKE(DrawMenuItemInnerFrame);
 }
 
@@ -388,5 +389,6 @@ static void drawMenuItemOuterFrame(MenuEntry *entry)
     D2 = entry->y;
     D3 = entry->width;
     D4 = entry->height;
+    assert(D1.asInt() >= 0 && D1 + D3 <= kMenuScreenWidth && D2.asInt() >= 0 && D2 + D4 <= kMenuScreenHeight);
     SAFE_INVOKE(DrawMenuItemOuterFrame);
 }

@@ -19,5 +19,11 @@ void setMouseWheelEntries(const MouseWheelEntryGroupList& mouseWheelEntries);
 void setGlobalWheelEntries(int upEntry = -1, int downEntry = -1);
 
 void updateMouse();
-void determineReachableEntries();
+std::tuple<bool, int, int> getClickCoordinates();
+#ifdef __ANDROID__
+void updateTouch(float x, float y, SDL_FingerID fingerId);
+void fingerUp(SDL_FingerID fingerId);
+#endif
+
+void determineReachableEntries(bool force = false);
 bool isEntryReachable(int index);

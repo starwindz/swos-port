@@ -5,24 +5,33 @@
 #include "gameControlEvents.h"
 #include "KeyConfig.h"
 
+bool keyboardPresent();
+
+enum class Keyboard {
+    kSet1,
+    kSet2,
+};
+
 GameControlEvents eventsFromAllKeysets();
-GameControlEvents pl1KeyEvents();
-GameControlEvents pl2KeyEvents();
+GameControlEvents keyboard1Events();
+GameControlEvents keyboard2Events();
+GameControlEvents keyboardEvents(Keyboard keyboard);
 
-bool pl1HasScancode(SDL_Scancode scancode);
-bool pl2HasScancode(SDL_Scancode scancode);
-bool playerHasScancode(PlayerNumber player, SDL_Scancode key);
-bool pl1HasBasicBindings();
-bool pl2HasBasicBindings();
+bool keyboard1HasScancode(SDL_Scancode scancode);
+bool keyboard2HasScancode(SDL_Scancode scancode);
+bool keyboardHasScancode(Keyboard keyboard, SDL_Scancode key);
+bool keyboard1HasBasicBindings();
+bool keyboard2HasBasicBindings();
+bool keyboardHasBasicBindings(Keyboard keyboard);
 
-const KeyConfig::KeyBindings& getPlayerKeyBindings(PlayerNumber player);
-const KeyConfig::KeyBinding& getPlayerKeyBindingAt(PlayerNumber player, size_t index);
+const KeyConfig::KeyBindings& getKeyboardKeyBindings(Keyboard keyboard);
+const KeyConfig::KeyBinding& getKeyboardKeyBindingAt(Keyboard keyboard, size_t index);
 
-void addPlayerKeyBinding(PlayerNumber player, SDL_Scancode key, GameControlEvents events);
-void updatePlayerKeyBindingEventsAt(PlayerNumber player, size_t index, GameControlEvents events);
-void setDefaultKeyPackForPlayer(PlayerNumber player, const DefaultScancodesPack& scancodes);
+void addKeyboardKeyBinding(Keyboard keyboard, SDL_Scancode key, GameControlEvents events);
+void updateKeyboardKeyBindingEventsAt(Keyboard keyboard, size_t index, GameControlEvents events);
+void setDefaultKeyPackForKeyboard(Keyboard keyboard, const DefaultScancodesPack& scancodes);
 
-void deleteKeyBindingAt(PlayerNumber player, size_t index);
+void deleteKeyBindingAt(Keyboard keyboard, size_t index);
 
 void loadKeyboardConfig(const CSimpleIni& ini);
 void saveKeyboardConfig(CSimpleIni& ini);

@@ -132,7 +132,7 @@ Menu selectMatchControlsMenu
     Entry legend {
         x: -kMenuOffset
         width: @kScreenWidth
-        text: "(HOLD FIRE AND MOVE TO SELECT)"
+        text: @kAlloc
     }
 
     Entry scrollUp {
@@ -142,6 +142,7 @@ Menu selectMatchControlsMenu
 
         leftEntry: secondLastControl
         downEntry: scrollDown
+        upEntry: player2Controls
 
         sprite: kUpArrowSpriteIndex
 
@@ -180,6 +181,8 @@ Menu selectMatchControlsMenu
         rightEntry: back
         upEntry: lastControl
 
+        skipDown: back
+
         color: @kRed
         text: @kAlloc
 
@@ -215,6 +218,9 @@ Menu selectMatchControlsMenu
 
         upEntry: player2Controls
         leftEntry: back
+
+        directionDown: @kUp
+        skipDown: scrollUp
 
         text: "CONFIGURE"
 

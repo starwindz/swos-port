@@ -622,22 +622,17 @@ class Preprocessor:
         assert isinstance(text, str)
 
         spaceWidth = 4 if useBigFont else 3
-        invalidCharWidth = 8 if useBigFont else 6
         table = Constants.kBigFontWidths if useBigFont else Constants.kSmallFontWidths
 
         width = 0
 
         for c in text:
-            c = ord(c) - 32
+            c = ord(c.upper()) - 32
             if c == 0:
                 width += spaceWidth
             elif c > 0 and c < len(table):
                 charWidth = table[c]
-                if not charWidth:
-                    charWidth = invalidCharWidth
                 width += charWidth
-            else:
-                width += invalidCharWidth
 
         return width
 

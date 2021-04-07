@@ -13,9 +13,9 @@ Menu selectGameControlEvents {
 
     kColumn1X = (@kScreenWidth - kToggleWidth - kStatusWidth - kColumnGap) / 2 - kMenuOffset
     kColumn2X = kColumn1X + kToggleWidth + kColumnGap
-    kEventHeaderLabelY = 28
-    kToggleStartY = 52
-    kWarningY = 180
+    kEventHeaderLabelY = 21
+    kToggleStartY = 36
+    kWarningY = 186
 
     export kOnColor = @kGreen
     export kOffColor = @kGray
@@ -109,9 +109,25 @@ Menu selectGameControlEvents {
     Entry pauseToggle {
         rightEntry: pauseStatus
         upEntry: <
-        downEntry: ok
+        downEntry: >
 
         text: "PAUSE"
+    }
+
+    Entry replayToggle {
+        rightEntry: replayStatus
+        upEntry: <
+        downEntry: >
+
+        text: "REPLAY"
+    }
+
+    Entry saveHighlightToggle {
+        rightEntry: saveHighlightStatus
+        upEntry: <
+        downEntry: ok
+
+        text: "SAVE HIGHLIGHT"
     }
 
     Entry invertedToggle {
@@ -177,6 +193,18 @@ Menu selectGameControlEvents {
     Entry pauseStatus {
         leftEntry: pauseToggle
         upEntry: <
+        downEntry: >
+    }
+
+    Entry replayStatus {
+        leftEntry: replayToggle
+        upEntry: <
+        downEntry: >
+    }
+
+    Entry saveHighlightStatus {
+        leftEntry: saveHighlightToggle
+        upEntry: <
         downEntry: cancel
     }
 
@@ -199,7 +227,7 @@ Menu selectGameControlEvents {
     entryAlias firstEventStatus = upStatus
     entryAlias lastEventStatus = invertedStatus
 
-    entryAlias lastVisibleToggle = pauseToggle
+    entryAlias lastVisibleToggle = saveHighlightToggle
 
     kOkCancelWidth = (kToggleWidth + kStatusWidth) / 2
     kCancelX = kColumn1X + kOkCancelWidth + kColumnGap

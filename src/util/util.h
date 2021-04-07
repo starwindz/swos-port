@@ -36,6 +36,11 @@ static inline int sgn(int num) {
     return num < 0 ? -1 : 1;
 }
 
+struct TextInputScope {
+    TextInputScope() { SDL_StartTextInput(); }
+    ~TextInputScope() { SDL_StopTextInput(); }
+};
+
 void save68kRegisters();
 void restore68kRegisters();
 

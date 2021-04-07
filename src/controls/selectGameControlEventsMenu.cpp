@@ -10,6 +10,7 @@ static const char *m_title;
 static int m_index;
 SetGameControlEventsFunction m_setFunction;
 GetGameControlEventsFunction m_getFunction;
+GameControlEventsDisconnectedFunction m_disconnectedFunction;
 static bool m_addNew;
 static bool m_showInverted;
 static bool m_inverted;
@@ -22,7 +23,7 @@ static Uint32 m_showWarningTicks;
 
 static const std::vector<int> kPrevExitNextButtons = { prev, SelectGameControlEvents::exit, next };
 
-static_assert(kMaxGameEvent == 64, "New game event added, menu needs redressing!");
+static_assert(kMaxGameEvent == 256, "New game event added, menu needs redressing!");
 
 std::pair<bool, GameControlEvents> getNewGameControlEvents(const char *title)
 {
@@ -40,8 +41,8 @@ std::pair<bool, GameControlEvents> getNewGameControlEvents(const char *title)
     return { m_success, m_events };
 }
 
-void updateGameControlEvents(int index, SetGameControlEventsFunction setEvents,
-    GetGameControlEventsFunction getEvents, bool showInverted /* = false */)
+void updateGameControlEvents(int index, SetGameControlEventsFunction setEvents, GetGameControlEventsFunction getEvents,
+    GameControlEventsDisconnectedFunction disconnected /* = {} */, bool showInverted /* = false */)
 {
     assert(setEvents && getEvents);
 
@@ -52,6 +53,7 @@ void updateGameControlEvents(int index, SetGameControlEventsFunction setEvents,
     m_index = index;
     m_getFunction = getEvents;
     m_setFunction = setEvents;
+    m_disconnectedFunction = disconnected;
     m_showInverted = showInverted;
     m_addNew = false;
 
@@ -80,10 +82,13 @@ static void selectGameControlEventsOnRestore()
 static void selectGameControlEventsOnDraw()
 {
     auto keys = SDL_GetKeyboardState(nullptr);
-    if (keys[SDL_SCANCODE_ESCAPE])
+    if (keys[SDL_SCANCODE_ESCAPE] || keys[SDL_SCANCODE_AC_BACK])
         m_addNew ? onCancel() : SetExitMenuFlag();
     else if (keys[SDL_SCANCODE_RETURN] || keys[SDL_SCANCODE_RETURN2])
         m_addNew ? onOk() : SetExitMenuFlag();
+
+    if (m_disconnectedFunction && m_disconnectedFunction())
+        SetExitMenuFlag();
 }
 
 static void initEventEntries()

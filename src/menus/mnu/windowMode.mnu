@@ -1,0 +1,260 @@
+//
+// Switch window mode menu
+//
+
+#include "common.mh"
+
+Menu windowModeMenu
+{
+    kRowHeight = 12
+    kBoxHeight = 10
+    kCustomSizeWidth = #textWidth("999999") + 4
+
+    export kNumResolutionFieldsShort = 8
+    export kNumResolutionFieldsFull = 12
+
+    kResolutionFieldX = kBaseX + 4
+    kResolutionFieldWidth = kBigButtonWidth - 10
+    kResolutionListY = 76
+
+    kArrowWidth = 10
+    kArrowSpriteIndex = 175
+
+    kScrollArrowX = kResolutionFieldX + kResolutionFieldWidth + 2
+    kScrollDownArrowY = kResolutionListY + kNumResolutionFieldsShort * kRowHeight - kScrollArrowHeight
+
+    kFirstArrowX = 74
+    kColumn1X = 82
+    kColumn2X = 96
+
+    kCustomSizeY = 26
+    kBorderlessMaximizedY = kCustomSizeY + 2 * kRowHeight + 2
+    kFullScreenY = kBorderlessMaximizedY + kRowHeight + 2
+
+    onInit: windowModeMenuOnInit
+    onDraw: windowModeMenuOnDraw
+    initialEntry: windowed
+
+    defaultHeight: kRowHeight
+
+    Entry header {
+        x: kBaseX
+        y: 0
+        width: kBigButtonWidth
+        height: kBigButtonHeight
+        text: "WINDOW MODE"
+        color: kHeaderColor
+    }
+
+    defaultY: kCustomSizeY
+    defaultTextFlags: @kLeftAligned
+
+    Entry customSizeArrow {
+        x: kFirstArrowX
+        width: kArrowWidth
+        sprite: kArrowSpriteIndex
+    }
+
+    defaultX: @prevEndX + 1
+
+    Entry windowed {
+        x: @prevEndX + 3
+        width: @kTextWidth + 4
+
+        text: "WINDOWED"
+
+        onSelect: ~switchToWindow
+
+        downEntry: resizable
+        rightEntry: customWidth
+    }
+
+    Entry customWidth {
+        y: @prevY + 1
+        width: kCustomSizeWidth
+        height: kBoxHeight
+
+        color: @kLightBlue
+        textFlags: @kCenterAligned
+        number: 9999
+
+        onSelect: inputWindowWidth
+
+        leftEntry: windowed
+        rightEntry: customHeight
+        downEntry: resizableOnOff
+    }
+
+    Entry {
+        x: @prevEndX + 2
+        text: "X"
+        width: 10
+    }
+
+    Entry customHeight {
+        x: @prevEndX - 3
+        y: @prevY + 1
+        width: kCustomSizeWidth
+        height: kBoxHeight
+
+        color: @kLightBlue
+        textFlags: @kCenterAligned
+        number: 9999
+
+        onSelect: inputWindowHeight
+
+        leftEntry: customWidth
+        downEntry: resizableOnOff
+    }
+
+    Entry resizable {
+        x: kColumn2X + 10
+        y: kCustomSizeY + kRowHeight
+        width: @kTextWidth + 4
+
+        textFlags: @kCenterAligned
+        text: "RESIZABLE"
+
+        onSelect: ~toggleWindowResizable
+
+        upEntry: windowed
+        downEntry: borderlessMaximized
+        rightEntry: resizableOnOff
+    }
+
+    Entry resizableOnOff {
+        y: @prevY + 1
+        width: @kTextWidth + 3 + 4
+        height: kRowHeight - 2
+
+        textFlags: 0
+        // using direct constants instead of variables here in order to be able to measure width above
+        stringTable: [ ~m_windowResizable, "OFF", "ON" ]
+        color: @kLightBlue
+
+        onSelect: ~toggleWindowResizable
+
+        upEntry: customWidth
+        downEntry: borderlessMaximized
+        leftEntry: resizable
+    }
+
+    defaultY: kBorderlessMaximizedY
+
+    Entry borderlessMaximizedArrow {
+        x: kColumn1X
+        width: kArrowWidth
+        sprite: kArrowSpriteIndex
+    }
+
+    Entry borderlessMaximized {
+        x: kColumn2X
+        width: @kTextWidth + 5
+
+        textFlags: @kCenterAligned
+        text: "BORDERLESS MAXIMIZED"
+
+        onSelect: ~switchToBorderlessMaximized
+
+        upEntry: resizable
+        downEntry: resolutionField0
+    }
+
+    defaultY: kFullScreenY
+
+    Entry fullScreenArrow {
+        x: kColumn1X
+        width: kArrowWidth
+        sprite: kArrowSpriteIndex
+    }
+
+    Entry fullScreen {
+        x: kColumn2X
+        width: kResolutionFieldWidth
+
+        textFlags: 0
+        text: @kAlloc
+
+        upEntry: borderlessMaximized
+        downEntry: >
+    }
+
+    TemplateEntry {
+        color: @kLightBlue
+        textFlags: 0
+        text: @kAlloc
+
+        onSelect: changeResolutionSelected
+    }
+
+    // full screen resolution list
+#repeat kNumResolutionFieldsFull
+    Entry #join(resolutionField, #i) {
+        invisible: #{i >= kNumResolutionFieldsShort}
+
+        x: kResolutionFieldX
+        y: kResolutionListY + #i * kRowHeight
+        width: kResolutionFieldWidth
+
+        upEntry: <
+        downEntry: >
+    }
+#endRepeat
+
+    ResetTemplate
+
+    entryAlias firstResolutionField = resolutionField0
+    entryAlias lastResolutionField = #join(resolutionField, #{kNumResolutionFieldsFull - 1})
+
+    Entry scrollUpArrow {
+        x: kScrollArrowX
+        y: kResolutionListY
+        width: kScrollArrowWidth
+        height: kScrollArrowHeight
+
+        sprite: kUpArrowSpriteIndex
+        onSelect: scrollResolutionsUpSelected
+
+        leftEntry: resolutionField0
+        upEntry: borderlessMaximized
+        downEntry: scrollDownArrow
+    }
+
+    Entry scrollDownArrow {
+        x: kScrollArrowX
+        y: kScrollDownArrowY
+        width: kScrollArrowWidth
+        height: kScrollArrowHeight
+
+        sprite: kDownArrowSpriteIndex
+        onSelect: scrollResolutionsDownSelected
+
+        upEntry: scrollUpArrow
+        downEntry: exit
+        leftEntry: resolutionField5
+    }
+
+    resolutionField0.upEntry = borderlessMaximized
+
+    resolutionField0.rightEntry = scrollUpArrow
+    resolutionField1.rightEntry = scrollUpArrow
+    resolutionField2.rightEntry = scrollUpArrow
+
+    resolutionField3.rightEntry = scrollDownArrow
+    resolutionField4.rightEntry = scrollDownArrow
+    resolutionField5.rightEntry = scrollDownArrow
+
+    resolutionField5.downEntry = exit
+
+    Entry exit {
+        x: kBaseX
+        y: kExitY
+        width: kBigButtonWidth
+        height: kBigButtonHeight
+        textFlags: 0
+        text: swos.aExit
+        color: kExitColor
+        onSelect: ~SetExitMenuFlag
+        upEntry: resolutionField5
+    }
+}

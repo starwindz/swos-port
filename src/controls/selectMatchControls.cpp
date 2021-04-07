@@ -7,19 +7,16 @@
 #include "joypadConfigMenu.h"
 #include "selectMatchControls.mnu.h"
 
-constexpr int kKeyboardOffset = 0;
-constexpr int kMouseOffset = 1;
-constexpr int kJoypadOffset = 2;
-
 static bool m_success;
-static int m_controlsOffset;
+static int m_controlsScrollOffset;
 static bool m_twoPlayers;
+static bool m_keyboardPresent;
 
-static bool m_blockControlDrag;
+static bool m_blockControlAssignment;
 
 using namespace SelectMatchControlsMenu;
 
-static int m_joypadIndices[kNumControlEntries - kJoypadOffset];
+static std::array<std::pair<Controls, int>, kNumControlEntries> m_controls;
 
 static int numPlayers()
 {
@@ -43,11 +40,18 @@ void SWOS::PlayMatchSelected()
         swos.playerNumThatStarted = 1;
     } else {
         swos.playerNumThatStarted = std::max(1, numPlayers());
-        if (!showSelectMatchControlsMenu())
+        if (swos.squadChangesAllowed && getShowSelectMatchControlsMenu() && !showSelectMatchControlsMenu())
             return;
     }
 
     SetExitMenuFlag();
+}
+
+// Makes sure players can't be selected via mouse, and also returns mouse selection to normal
+// once we're done with viewing opponent's team.
+void SWOS::RecalculateReachableEntries()
+{
+    determineReachableEntries(true);
 }
 
 bool showSelectMatchControlsMenu()
@@ -68,11 +72,13 @@ static void setupMouseWheelScrolling();
 static void setPlayOrWatchLabel();
 static void updateMenu();
 static void updateTeamNames();
+static void updateInstructions();
 static void updateCurrentControls();
 static void updateControlList();
 static void updateScrollButtons();
 static void updateConfigureButtons();
 static void updateWarnings();
+static void updatePlayButton();
 static void fixSelection();
 
 static void selectMatchControlsMenuOnInit()
@@ -89,11 +95,17 @@ static void selectMatchControlsMenuOnRestore()
 
 static void updateDragBlock()
 {
-    bool mouseDragging = m_blockControlDrag && (SDL_GetMouseState(nullptr, nullptr) & SDL_BUTTON_LMASK);
-    bool keyboardFireOrMove = (swos.controlMask & (kLeftMask | kRightMask | kFireMask | kShortFireMask)) != 0;
+    bool mouseDown = (SDL_GetMouseState(nullptr, nullptr) & SDL_BUTTON_LMASK) != 0;
 
-    if (!keyboardFireOrMove && !mouseDragging)
-        m_blockControlDrag = false;
+    if (!m_twoPlayers) {
+        bool fire = (swos.controlMask & (kFireMask | kShortFireMask)) != 0;
+        if (!mouseDown && !fire)
+            m_blockControlAssignment = false;
+    } else {
+        bool keyboardLeftRightDown = (swos.controlMask & (kLeftMask | kRightMask)) != 0;
+        if (!mouseDown && !keyboardLeftRightDown)
+            m_blockControlAssignment = false;
+    }
 }
 
 static void selectMatchControlsMenuOnDraw()
@@ -104,7 +116,7 @@ static void selectMatchControlsMenuOnDraw()
 
 static void selectControl()
 {
-    if (m_blockControlDrag)
+    if (m_blockControlAssignment)
         return;
 
     auto entry = A5.asMenuEntry();
@@ -115,49 +127,48 @@ static void selectControl()
         int offset = entry->ordinal - firstControl;
 
         if (!m_twoPlayers || (swos.controlMask & (kLeftMask | kRightMask))) {
-            bool setPlayer1 = !m_twoPlayers || (swos.controlMask & kLeftMask);
+            bool moveLeft = (swos.controlMask & kLeftMask) != 0;
+            bool setPlayer1 = !m_twoPlayers || moveLeft;
             auto player = setPlayer1 ? kPlayer1 : kPlayer2;
 
-            switch (offset) {
-            case kKeyboardOffset:
-                {
-                    auto keyboard = setPlayer1 ? kKeyboard1 : kKeyboard2;
-                    setControls(player, keyboard);
-                }
+            switch (m_controls[offset].first) {
+            case kKeyboard1:
+                setControls(player, kKeyboard1);
                 break;
-            case kMouseOffset:
+            case kKeyboard2:
+                setControls(player, kKeyboard2);
+                break;
+            case kMouse:
                 setControls(player, kMouse);
                 break;
-            default:
-                {
-                    int joypadIndex = entry->ordinal - firstControl - kJoypadOffset;
-                    joypadIndex = m_joypadIndices[joypadIndex];
-                    setControls(player, kJoypad, joypadIndex);
-                }
+            case kJoypad:
+                setControls(player, kJoypad, m_controls[offset].second);
                 break;
+            default:
+                assert(false);
             }
 
-            m_blockControlDrag = true;
+            m_blockControlAssignment = true;
         }
     }
 }
 
 static void player1ControlsSelected()
 {
-    if (!m_blockControlDrag && (swos.controlMask & (kFireMask | kShortFireMask)))
+    if (!m_blockControlAssignment && (swos.controlMask & (kFireMask | kShortFireMask)))
         setPl1Controls(kNone);
 
-    m_blockControlDrag = true;
+    m_blockControlAssignment = true;
 }
 
 static void player2ControlsSelected()
 {
     assert(m_twoPlayers);
 
-    if (!m_blockControlDrag && (swos.controlMask & (kFireMask | kShortFireMask)))
+    if (!m_blockControlAssignment && (swos.controlMask & (kFireMask | kShortFireMask)))
         setPl2Controls(kNone);
 
-    m_blockControlDrag = true;
+    m_blockControlAssignment = true;
 }
 
 static void cancelSelection()
@@ -172,32 +183,39 @@ static void confirmSelection()
     SetExitMenuFlag();
 }
 
+static void configureControls(PlayerNumber player)
+{
+    switch (getControls(player)) {
+    case kKeyboard1:
+        showSetupKeyboardMenu(Keyboard::kSet1);
+        break;
+    case kKeyboard2:
+        showSetupKeyboardMenu(Keyboard::kSet2);
+        break;
+    case kJoypad:
+        showJoypadConfigMenu(player, getJoypadIndex(player));
+        break;
+    default:
+        assert(false);
+    }
+}
+
 static void configurePl1Controls()
 {
-    if (getPl1Controls() == kKeyboard1)
-        showSetupKeyboardMenu(kPlayer1);
-    else if (getPl1Controls() == kJoypad)
-        showJoypadConfigMenu(kPlayer1, getPl1JoypadIndex());
-    else
-        assert(false);
+    configureControls(kPlayer1);
 }
 
 static void configurePl2Controls()
 {
     assert(m_twoPlayers);
 
-    if (getPl2Controls() == kKeyboard2)
-        showSetupKeyboardMenu(kPlayer2);
-    else if (getPl2Controls() == kJoypad)
-        showJoypadConfigMenu(kPlayer2, getPl2JoypadIndex());
-    else
-        assert(false);
+    configureControls(kPlayer2);
 }
 
 static void scrollUpSelected()
 {
-    if (m_controlsOffset > 0) {
-        m_controlsOffset--;
+    if (m_controlsScrollOffset > 0) {
+        m_controlsScrollOffset--;
         updateControlList();
     }
 }
@@ -205,22 +223,35 @@ static void scrollUpSelected()
 static int numControls()
 {
     int numJoypadPlayers = (getPl1Controls() == kJoypad) + (m_twoPlayers && getPl2Controls() == kJoypad);
-    return getNumJoypads() - numJoypadPlayers + kJoypadOffset;
+
+    int numBaseControls = 1;
+    int numBaseControlsPlayers = getPl1Controls() == kMouse || getPl2Controls() == kMouse;
+    if (m_keyboardPresent) {
+        numBaseControlsPlayers += getPl1Controls() == kKeyboard1 || getPl1Controls() == kKeyboard2;
+        numBaseControlsPlayers += m_twoPlayers && (getPl2Controls() == kKeyboard1 || getPl2Controls() == kKeyboard2);
+        numBaseControls += 2;
+    }
+
+    return getNumJoypads() - numJoypadPlayers + numBaseControls - numBaseControlsPlayers;
 }
 
 static void scrollDownSelected()
 {
     int maxScrollOffset = numControls() - kNumControlEntries;
 
-    if (m_controlsOffset < maxScrollOffset) {
-        m_controlsOffset++;
+    if (m_controlsScrollOffset < maxScrollOffset) {
+        m_controlsScrollOffset++;
         updateControlList();
     }
 }
 
 static void initMenu()
 {
+    // must initialize it here since rearranging entries for single player depends on it
+    m_keyboardPresent = keyboardPresent();
+
     updateTeamNames();
+    updateInstructions();
     rearrangeEntriesForSinglePlayer();
     setupMouseWheelScrolling();
     setPlayOrWatchLabel();
@@ -271,11 +302,17 @@ void setPlayOrWatchLabel()
 
 static void updateMenu()
 {
-    updateControlList();
+    m_keyboardPresent = keyboardPresent();
+
+    if (!m_keyboardPresent)
+        unsetKeyboardControls();
+
     updateScrollButtons();
+    updateControlList();
     updateCurrentControls();
     updateConfigureButtons();
     updateWarnings();
+    updatePlayButton();
     fixSelection();
 }
 
@@ -288,13 +325,23 @@ static void updateTeamNames()
         team2Entry.hide();
 }
 
+void updateInstructions()
+{
+    legendEntry.copyString(m_twoPlayers ? "SELECT CONTROLLER, HOLD FIRE AND PRESS LEFT/RIGHT" :
+        "SELECT YOUR CONTROLLER ABOVE");
+}
+
 static const char *controlsToString(Controls controls, int joypadIndex)
 {
     switch (controls) {
     case kNone: return "NONE";
-    case kKeyboard1:
-    case kKeyboard2: return "KEYBOARD";
+    case kKeyboard1: return "KEYBOARD1";
+    case kKeyboard2: return "KEYBOARD2";
+#ifdef __ANDROID__
+    case kMouse: return "TOUCH";
+#else
     case kMouse: return "MOUSE";
+#endif
     case kJoypad: return joypadName(joypadIndex);
     default: return "";
     }
@@ -323,24 +370,44 @@ static void updateCurrentControls()
 
 static void updateControlList()
 {
+    assert(kNumControlEntries > 3 && (numControls() > kNumControlEntries || !m_controlsScrollOffset));
+
+    int keyboard1Available = m_keyboardPresent && getPl1Controls() != kKeyboard1 && (!m_twoPlayers || getPl2Controls() != kKeyboard1);
+    int keyboard2Available = m_keyboardPresent && getPl1Controls() != kKeyboard2 && (!m_twoPlayers || getPl2Controls() != kKeyboard2);
+
     auto entry = &firstControlEntry;
     auto sentinel = entry + kNumControlEntries;
+    int controlsIndex = 0;
 
-    assert(kNumControlEntries > kJoypadOffset && (numControls() > kNumControlEntries || !m_controlsOffset));
+    if (m_controlsScrollOffset < 1 && keyboard1Available) {
+        entry->copyString("KEYBOARD1");
+        entry++->show();
+        m_controls[controlsIndex++].first = kKeyboard1;
+    }
+    if (m_controlsScrollOffset < (keyboard1Available + 1) && keyboard2Available) {
+        entry->copyString("KEYBOARD2");
+        entry++->show();
+        m_controls[controlsIndex++].first = kKeyboard2;
+    }
+    if (m_controlsScrollOffset < (keyboard1Available + keyboard2Available + 1)) {
+#ifdef __ANDROID__
+        entry->copyString("TOUCH");
+#else
+        entry->copyString("MOUSE");
+#endif
+        entry++->show();
+        m_controls[controlsIndex++].first = kMouse;
+    }
 
-    if (m_controlsOffset <= kKeyboardOffset)
-        entry++->copyString("KEYBOARD");
-    if (m_controlsOffset <= kMouseOffset)
-        entry++->copyString("MOUSE");
-
-    int initialJoypadIndex = std::max(0, m_controlsOffset - kJoypadOffset);
-    int storedJoypadIndex = 0;
+    int numBaseControls = 1 + keyboard1Available + keyboard2Available;
+    int initialJoypadIndex = std::max(0, m_controlsScrollOffset - numBaseControls);
 
     for (int joypadIndex = initialJoypadIndex; joypadIndex < getNumJoypads() && entry < sentinel; joypadIndex++) {
         if (joypadIndex != getPl1JoypadIndex() && (!m_twoPlayers || joypadIndex != getPl2JoypadIndex())) {
-            entry->show();
-            entry++->copyString(joypadName(joypadIndex));
-            m_joypadIndices[storedJoypadIndex++] = joypadIndex;
+            entry->copyString(joypadName(joypadIndex));
+            entry++->show();
+            m_controls[controlsIndex].first = kJoypad;
+            m_controls[controlsIndex++].second = joypadIndex;
         }
     }
 
@@ -353,9 +420,10 @@ static void updateScrollButtons()
     static const std::vector<int> kScrollButtons = { scrollDown, scrollUp };
 
     if (numControls() <= kNumControlEntries) {
-        m_controlsOffset = 0;
+        m_controlsScrollOffset = 0;
         setEntriesVisibility(kScrollButtons, false);
     } else {
+        m_controlsScrollOffset = std::min(m_controlsScrollOffset, numControls() - kNumControlEntries);
         setEntriesVisibility(kScrollButtons, true);
     }
 }
@@ -388,9 +456,9 @@ static bool hasBasicEvents(Controls controls, int joypadIndex)
 {
     switch (controls) {
     case kKeyboard1:
-        return pl1HasBasicBindings();
+        return keyboard1HasBasicBindings();
     case kKeyboard2:
-        return pl2HasBasicBindings();
+        return keyboard2HasBasicBindings();
     case kMouse:
     case kNone:
         return true;
@@ -421,18 +489,33 @@ static void updateWarnings()
     }
 }
 
+void updatePlayButton()
+{
+    if (getPl1Controls() == kNone || m_twoPlayers && getPl2Controls() == kNone) {
+        playEntry.disable();
+        playEntry.setBackgroundColor(kDisabledColor);
+    } else {
+        playEntry.enable();
+        playEntry.setBackgroundColor(kRed);
+    }
+}
+
 void fixSelection()
 {
     auto& selectedEntry = getCurrentMenu()->selectedEntry;
 
     if (!selectedEntry->selectable()) {
-        if (selectedEntry->ordinal == player1Controls || selectedEntry->ordinal == player2Controls)
+        if (selectedEntry->ordinal == play)
+            selectedEntry = &backEntry;
+        else if (selectedEntry->ordinal == player1Controls || selectedEntry->ordinal == player2Controls)
             selectedEntry = &firstControlEntry;
 
         while (!selectedEntry->selectable() && selectedEntry->ordinal >= firstControl)
             selectedEntry--;
+
+        if (selectedEntry->ordinal < firstControl)
+            selectedEntry = &backEntry;
     }
 
-    if (!selectedEntry->selectable())
-        selectedEntry = &playEntry;
+    assert(selectedEntry->selectable());
 }

@@ -7,6 +7,7 @@
 #include "configureAxis.mnu.h"
 
 static int m_joypadIndex;
+static SDL_JoystickID m_joypadId;
 static int m_axisIndex;
 static int m_numAxes;
 
@@ -41,19 +42,29 @@ static void setCurrentAxisBox();
 static void setCurrentIntervalBox();
 static void setFromToIntervalBoxes();
 static void updateEventsBox();
+static bool exitIfDisconnected();
 
 static void configureAxisMenuOnInit()
 {
     m_numAxes = joypadNumAxes(m_joypadIndex);
+    m_joypadId = joypadId(m_joypadIndex);
     m_maxAxesDigits = numDigits(m_numAxes);
 
-    initIntervals();
-    initMenu();
+    if (!exitIfDisconnected()) {
+        initIntervals();
+        initMenu();
+    }
 }
 
 static void configureAxisMenuOnRestore()
 {
-    initMenu();
+    if (!exitIfDisconnected())
+        initMenu();
+}
+
+static void configureAxisMenuOnDraw()
+{
+    exitIfDisconnected();
 }
 
 static void goToPreviousInterval()
@@ -165,7 +176,7 @@ static void pickEvents()
         return std::make_pair(events, false);
     };
 
-    updateGameControlEvents(m_currentInterval, setFunction, getFunction);
+    updateGameControlEvents(m_currentInterval, setFunction, getFunction, exitIfDisconnected);
     updateEventsBox();
 }
 
@@ -332,4 +343,14 @@ static void updateEventsBox()
     auto events = (*m_intervals)[m_currentInterval].events;
 
     gameControlEventToString(events, buf, kStdMenuTextSize);
+}
+
+static bool exitIfDisconnected()
+{
+    if (joypadDisconnected(m_joypadId)) {
+        SetExitMenuFlag();
+        return true;
+    }
+
+    return false;
 }

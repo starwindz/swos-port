@@ -440,7 +440,9 @@ void VmFileWriter::outputMemoryArray()
         xfputs("\n    ", true);
 
         assert(!var.name || var.offset == offset + var.alignment && m_dataBank.getVarOffset(var.name) == var.offset);
-        assert(!var.exportedDecl || var.type == DataBank::kString || var.offset % (var.type == DataBank::kStruct ? 4 : std::min<uint32_t>(var.size, 4)) == 0);
+        assert(!var.exportedDecl || var.type == DataBank::kString ||
+            var.offset % (var.type == DataBank::kStruct ? 4 : std::min<uint32_t>(var.size, 4)) == 0 ||
+            std::get<3>(m_symFileParser.exportedDeclaration(var.name)) == 1);
 
         outputComment(var.leadingComment);
         if (!var.leadingComment.empty())
@@ -952,7 +954,7 @@ void VmFileWriter::outputOriginalValue(const DataBank::Var& var, size_t offset)
         xfputc(' ');
 
     if (var.alignment)
-        xfprintf("[+%d alignment bytes] ", var.alignment);
+        xfprintf("[+%d alignment byte(s)] ", var.alignment);
 
     outputComment(var.comment, true);
 

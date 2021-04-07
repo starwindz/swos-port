@@ -13,9 +13,22 @@ constexpr int kRedefineKeysColumn1X = 108;
 constexpr int kFinalPromptY = 140;
 constexpr int kWarningY = 172;
 
+// confirmation prompt boxes
+constexpr int kMargin = 20;
+constexpr int kSegmentLength = 90;
+constexpr int kHorizontalGap = 5;
+constexpr int kHorizontalSegmentLength = 8;
+constexpr int kVerticalSegmentLength = 4;
+
+constexpr int kTopLineY = kFinalPromptY - 4;
+constexpr int kBottomLineY = kFinalPromptY + 10;
+constexpr int kSegment1X = kMargin;
+constexpr int kSegment2X = kSegment1X + kSegmentLength + kHorizontalGap;
+constexpr int kSegment3X = kSegment2X + kSegmentLength + kHorizontalGap;
+
 enum class FinalPromptResult {
     kSuccess,
-    kFailure,
+    kAbort,
     kRestart,
 };
 
@@ -25,13 +38,14 @@ static FinalPromptResult waitForConfirmation();
 bool promptForDefaultGameEvents(QuickConfigContext& context)
 {
     assert(context.player == kPlayer1 || context.player == kPlayer2);
-    assert(context.controls == QuickConfigControls::kKeyboard || context.controls == QuickConfigControls::kJoypad);
+    assert(context.controls == QuickConfigControls::kKeyboard1 || context.controls == QuickConfigControls::kKeyboard2 ||
+        context.controls == QuickConfigControls::kJoypad);
 
     context.reset();
     if (context.warningY < 0)
         context.warningY = kWarningY;
 
-    logInfo("Configuring %s for player %d", context.controls == QuickConfigControls::kKeyboard ? "keyboard" : "joypad",
+    logInfo("Configuring %s for player %d", context.controls == QuickConfigControls::kJoypad ? "joypad" : "keyboard",
         context.player == kPlayer1 ? 1 : 2);
     if (context.controls == QuickConfigControls::kJoypad)
         logInfo("Joypad: #%d", context.joypadIndex);
@@ -58,10 +72,13 @@ bool promptForDefaultGameEvents(QuickConfigContext& context)
 
         switch (waitForConfirmation()) {
         case FinalPromptResult::kSuccess:
+            logInfo("Quick config successful");
             return true;
-        case FinalPromptResult::kFailure:
+        case FinalPromptResult::kAbort:
+            logInfo("Quick config aborted");
             return false;
         case FinalPromptResult::kRestart:
+            logInfo("Restarting quick config...");
             context.reset();
             break;
         }
@@ -139,6 +156,10 @@ static void drawQuickConfigMenu(const QuickConfigContext& context)
     drawMenuText(kRedefineKeysColumn1X, kRedefineKeysStartY + 40, "FIRE:");
     drawMenuText(kRedefineKeysColumn1X, kRedefineKeysStartY + 50, "BENCH:");
 
+    assert(kDefaultGameControlEvents[kDefaultControlsBenchIndex] == kGameEventBench);
+    if (!context.benchRequired && context.currentSlot == kDefaultControlsBenchIndex)
+        drawMenuText(kRedefineKeysColumn1X, kRedefineKeysStartY + 60, "(HOLD FIRE TO SKIP)", -1, kYellowText);
+
     constexpr int kAbortY = kRedefineKeysStartY + 50 + kRedefineKeysStartY - kRedefineKeysHeaderY;
 
     static_assert(kWarningY >= kAbortY + 10, "Warning and abort labels overlap");
@@ -150,23 +171,73 @@ static void drawQuickConfigMenu(const QuickConfigContext& context)
     SWOS::FlipInMenu();
 }
 
-static FinalPromptResult waitForConfirmation()
+enum LineDirection { kVertical, kHorizontal };
+static void drawLine(int x, int y, int length, LineDirection direction)
 {
-    drawMenuTextCentered(kRedefineKeysPromptX, kFinalPromptY,
-        "ENTER/S - SAVE, ESCAPE/D - DISCARD, R - RESTART");
+    auto dest = swos.linAdr384k + y * kVgaWidth + x;
+
+    if (direction == kHorizontal) {
+        memset(dest, kWhiteText2, length);
+    } else {
+        while (length--) {
+            *dest = kWhiteText2;
+            dest += kVgaWidth;
+        }
+    }
+}
+
+static void drawConfirmationMenu()
+{
+    static const std::array<std::pair<int, const char *>, 3> kSegmentData = {{
+        { kSegment1X, "ENTER/S - SAVE" }, { kSegment2X, "ESC/D - DISCARD" }, { kSegment3X, "R - RESTART" },
+    }};
+
+    for (const auto& segmentData : kSegmentData) {
+        int x = segmentData.first;
+        auto text = segmentData.second;
+        drawLine(x, kTopLineY, kHorizontalSegmentLength, kHorizontal);
+        drawLine(x, kTopLineY + 1, kVerticalSegmentLength - 1, kVertical);
+        drawLine(x, kBottomLineY, kHorizontalSegmentLength, kHorizontal);
+        drawLine(x, kBottomLineY - kVerticalSegmentLength + 1, kVerticalSegmentLength - 1, kVertical);
+
+        drawMenuTextCentered(x + kSegmentLength / 2 + 1, kFinalPromptY, text);
+
+        drawLine(x + kSegmentLength - kHorizontalSegmentLength + 1, kTopLineY, kHorizontalSegmentLength, kHorizontal);
+        drawLine(x + kSegmentLength, kTopLineY + 1, kVerticalSegmentLength - 1, kVertical);
+        drawLine(x + kSegmentLength - kHorizontalSegmentLength + 1, kBottomLineY, kHorizontalSegmentLength, kHorizontal);
+        drawLine(x + kSegmentLength, kBottomLineY - kVerticalSegmentLength + 1, kVerticalSegmentLength - 1, kVertical);
+    }
 
     SWOS::FlipInMenu();
+}
+
+static FinalPromptResult handleConfirmationClick(int x, int y)
+{
+    if (y >= kTopLineY && y <= kBottomLineY) {
+        if (x >= kSegment1X && x < kSegment1X + kSegmentLength)
+            return FinalPromptResult::kSuccess;
+        if (x >= kSegment3X && x < kSegment3X + kSegmentLength)
+            return FinalPromptResult::kRestart;
+    }
+
+    return FinalPromptResult::kAbort;
+}
+
+static FinalPromptResult waitForConfirmation()
+{
+    drawConfirmationMenu();
 
     do {
         processControlEvents();
 
-        auto key = getKeyInterruptible();
+        bool clicked;
+        SDL_Scancode key;
+        int x, y;
+
+        std::tie(clicked, key, x, y) = getKeyInterruptible();
         waitForKeyboardAndMouseIdle();
 
-        if (key.first)
-            return FinalPromptResult::kFailure;
-
-        switch (key.second) {
+        switch (key) {
         case SDL_SCANCODE_S:
         case SDL_SCANCODE_RETURN:
         case SDL_SCANCODE_RETURN2:
@@ -174,10 +245,14 @@ static FinalPromptResult waitForConfirmation()
             return FinalPromptResult::kSuccess;
         case SDL_SCANCODE_D:
         case SDL_SCANCODE_ESCAPE:
-            return FinalPromptResult::kFailure;
+        case SDL_SCANCODE_AC_BACK:
+            return FinalPromptResult::kAbort;
         case SDL_SCANCODE_R:
             return FinalPromptResult::kRestart;
         }
+
+        if (clicked)
+            return handleConfirmationClick(x, y);
 
         SDL_Delay(50);
     } while (true);

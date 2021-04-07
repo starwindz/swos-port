@@ -4,7 +4,7 @@
 
 static int m_joypadIndex;
 
-static std::vector<std::string> getControls()
+static std::vector<std::string> getControlNames()
 {
     auto elements = joypadElementValues(m_joypadIndex);
 
@@ -28,5 +28,5 @@ void showTestJoypadMenu(int joypadIndex)
     char titleBuf[128];
     snprintf(titleBuf, sizeof(titleBuf), "TEST %s", joypadName(joypadIndex));
 
-    showTestControlsMenu(titleBuf, "CONTROLLER INPUTS:", true, getControls, getEvents);
+    showTestControlsMenu(titleBuf, "CONTROLLER INPUTS:", true, getControlNames, getEvents);
 }

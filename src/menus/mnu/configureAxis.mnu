@@ -22,6 +22,7 @@ Menu configureAxisMenu
 
     onInit: configureAxisMenuOnInit
     onRestore: configureAxisMenuOnRestore
+    onDraw: configureAxisMenuOnDraw
 
     initialEntry: currentInterval
 

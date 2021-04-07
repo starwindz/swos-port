@@ -1,7 +1,7 @@
 #pragma once
 
 #include "gameControlEvents.h"
-#include "controls.h"
+#include "keyboard.h"
 
-std::pair<bool, DefaultScancodesPack> promptForDefaultKeys(PlayerNumber player);
-SDL_Scancode getControlKey(PlayerNumber player, int warningY);
+std::pair<bool, DefaultScancodesPack> promptForDefaultKeys(Keyboard keyboard);
+SDL_Scancode getControlKey(Keyboard keyboard, int warningY);

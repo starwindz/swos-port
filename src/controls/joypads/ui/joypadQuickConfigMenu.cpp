@@ -12,9 +12,9 @@ static JoypadElementValueList m_ignoredInputs;
 
 static bool compareElementForIgnore(const JoypadElementValue& el, const JoypadElementValue& ignored)
 {
-    if (el.type == JoypadElement::kAxis && std::abs(el.axisValue) < kAxisJitterLimit) {
-        return true;
-    } else if (el.type == ignored.type && el.index == ignored.index) {
+    assert(el.type != JoypadElement::kAxis || std::abs(el.axisValue) >= kAxisJitterLimit);
+
+    if (el.type == ignored.type && el.index == ignored.index) {
         if (el.type == JoypadElement::kAxis) {
             if (std::abs(ignored.axisValue) > kAxisJitterLimit && sgn(el.axisValue) == sgn(ignored.axisValue))
                 return true;
@@ -36,6 +36,8 @@ static bool compareElementForIgnore(const JoypadElementValue& el, const JoypadEl
 static bool joypadElementIgnored(const JoypadElementValue& element)
 {
     auto it = std::find_if(m_ignoredInputs.begin(), m_ignoredInputs.end(), [&element](const auto& ignoredElement) {
+        if (element.type == JoypadElement::kAxis && std::abs(element.axisValue) < kAxisJitterLimit)
+            return true;
         return compareElementForIgnore(element, ignoredElement);
     });
 
@@ -90,11 +92,11 @@ static void addControl(QuickConfigContext& context, const JoypadElementValue& el
 
 static bool aborted()
 {
-    if (mouseClickAndRelease())
+    if (std::get<0>(mouseClickAndRelease()))
         return true;
 
     auto keys = SDL_GetKeyboardState(nullptr);
-    return keys[SDL_SCANCODE_ESCAPE] != 0;
+    return keys[SDL_SCANCODE_ESCAPE] || keys[SDL_SCANCODE_AC_BACK];
 }
 
 JoypadElementValueList joypadFilteredValues(int joypadIndex)
@@ -141,30 +143,40 @@ static void waitUntilAllButtonsUp(int joypadIndex)
     });
 }
 
+static bool compareElements(const JoypadElementValue& value1, const JoypadElementValue& value2)
+{
+    assert(value1.type != JoypadElement::kNone);
+
+    if (value1.type != value2.type || value1.index != value2.index)
+        return false;
+
+    switch (value1.type) {
+    case JoypadElement::kHat:
+        return value1.hatMask == value2.hatMask;
+    case JoypadElement::kAxis:
+        assert(std::abs(value1.axisValue) >= kAxisJitterLimit && std::abs(value2.axisValue) >= kAxisJitterLimit);
+        return sgn(value1.axisValue) == sgn(value2.axisValue);
+    case JoypadElement::kBall:
+        assert(!!value1.ball.dx != !!value1.ball.dy && !!value2.ball.dx != !!value2.ball.dy);
+        if (value1.ball.dx && value2.ball.dx)
+            return sgn(value1.ball.dx) == sgn(value2.ball.dx);
+        else if (value1.ball.dy && value2.ball.dy)
+            return sgn(value1.ball.dy) == sgn(value2.ball.dy);
+        else
+            return false;
+    case JoypadElement::kNone:
+        return assert(false), false;
+    default:
+        return true;
+    }
+}
+
 static bool alreadyHaveElement(const JoypadElementValue& value)
 {
     assert(value.type != JoypadElement::kNone);
 
     auto it = std::find_if(m_controls.begin(), m_controls.end(), [&value](const auto& elem) {
-        if (elem.type != value.type || elem.index != value.index)
-            return false;
-
-        switch (value.type) {
-        case JoypadElement::kHat:
-            return value.hatMask == elem.hatMask;
-        case JoypadElement::kAxis:
-            return sgn(value.axisValue) == sgn(elem.axisValue);
-        case JoypadElement::kBall:
-            assert(!!value.ball.dx != !!value.ball.dy);
-            if (value.ball.dx && elem.ball.dx)
-                return sgn(value.ball.dx) == sgn(elem.ball.dx);
-            else if (value.ball.dy && elem.ball.dy)
-                return sgn(value.ball.dy) == sgn(elem.ball.dy);
-            else
-                return false;
-        default:
-            return true;
-        }
+        return compareElements(value, elem);
     });
 
     return it != m_controls.end();
@@ -177,9 +189,38 @@ static void syncDisplayNames(QuickConfigContext& context)
             m_controls[i].toString(context.elementNames[i], sizeof(context.elementNames[i]));
 }
 
+static bool isFireTriggering(const JoypadElementValueList& values)
+{
+    const auto& fire = m_controls[4];
+    assert(fire.type != JoypadElement::kNone && kDefaultGameControlEvents[4] == kGameEventKick);
+
+    for (const auto& value : values) {
+        assert(value.type != JoypadElement::kNone);
+        if (compareElements(value, fire))
+            return true;
+    }
+
+    return false;
+}
+
+static bool skipBench(Uint32 scanTime, QuickConfigContext& context, const JoypadElementValueList& values)
+{
+    constexpr int kHoldFireToSkipBenchInterval = 2'000;
+
+    if (context.currentSlot == kDefaultControlsBenchIndex && isFireTriggering(values) && SDL_GetTicks() >= scanTime + kHoldFireToSkipBenchInterval) {
+        strcpy(context.elementNames[context.currentSlot++], "(SKIPPED)");
+        assert(m_controls[kDefaultControlsBenchIndex].type == JoypadElement::kNone);
+        return true;
+    }
+
+    return false;
+}
+
 static std::pair<QuickConfigStatus, const char *> getJoypadControl(QuickConfigContext& context)
 {
+    auto scanTime = SDL_GetTicks();
     auto values = joypadFilteredValues(context.joypadIndex);
+
     if (!values.empty()) {
         const auto& value = values.front();
         bool alreadyHave = alreadyHaveElement(value);
@@ -187,6 +228,8 @@ static std::pair<QuickConfigStatus, const char *> getJoypadControl(QuickConfigCo
         waitUntilIdle(context.joypadIndex);
 
         if (alreadyHave) {
+            if (skipBench(scanTime, context, values))
+                return { QuickConfigStatus::kDone, nullptr };
             return { QuickConfigStatus::kAlreadyUsed, value.toString(context.scratchBuf, sizeof(context.scratchBuf)) };
         } else {
             addControl(context, value);
@@ -229,7 +272,11 @@ static void drawCalibrateMenu()
     redrawMenuBackground();
 
     drawMenuTextCentered(kMenuScreenWidth / 2, kTextY, "WHEN THE CONTROLLER IS IDLE PRESS ANY BUTTON");
+#ifdef __ANDROID__
+    drawMenuTextCentered(kMenuScreenWidth / 2, kTextY + 10, "(TAP/BACK CANCELS)");
+#else
     drawMenuTextCentered(kMenuScreenWidth / 2, kTextY + 10, "(MOUSE CLICK/ESCAPE CANCELS)");
+#endif
 
     SWOS::FlipInMenu();
 }

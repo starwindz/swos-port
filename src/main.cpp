@@ -43,11 +43,13 @@ int main(int argc, char **argv)
     setSdlHints();
     initRendering();
     normalizeOptions();
-    assignJoypadsToPlayers();
+    initJoypads();
 
     atexit(finishRendering);
     atexit(saveOptions);        // must be set after finishRendering
     atexit(finishAudio);
+
+    SDL_StopTextInput();
 
     SWOS::SWOS();
 

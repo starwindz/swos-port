@@ -106,14 +106,14 @@ class EntryParser:
 
             setattr(self.entry, property, result)
             if property == 'color':
-                self.updateColorForce(result, isTemplate)
+                self.updateForceColor(result, isTemplate)
 
             if property in Constants.kNextEntryProperties:
                 setattr(self.entry, property + 'Token', propertyToken)
 
         return propertiesSet
 
-    def updateColorForce(self, result, isTemplate):
+    def updateForceColor(self, result, isTemplate):
         assert isinstance(result, str)
 
         self.entry.forceColor = not isTemplate and result == '0' and \
@@ -157,16 +157,34 @@ class EntryParser:
     def getEntryPropertyValue(self, property):
         assert isinstance(property, str)
 
+        valueToken = self.tokenizer.peekNextToken()
+
         if property in Constants.kEntryFunctions:
             result, declareFunction = Parser.Common.registerFunction(self.tokenizer)
             if declareFunction:
                 self.functions.add(result)
         elif property == 'stringTable':
             result = self.parseStringTable()
+            self.checkForWhitespaceInStrings(property, result.values, valueToken)
         else:
             result = self.expressionParser.parse(self.menu)
+            self.checkForWhitespaceInStrings(property, result, valueToken)
 
         return result
+
+    def checkForWhitespaceInStrings(self, property, value, valueToken):
+        assert isinstance(property, str)
+        assert isinstance(value, (str, int, list, tuple))
+        assert isinstance(valueToken, (Token, None))
+
+        if self.preprocessor.showWarnings:
+            if not isinstance(value, (list, tuple)):
+                value = [value]
+
+            for val in value:
+                if Util.isString(val) and len(val) > 2 and {val[0], val[-1]} < {"'", '"'} and \
+                    len(val[1:-1].strip()) != len(val) - 2:
+                    Util.warning('leading/trailing whitespace detected in a string', valueToken)
 
     def verifyEntryName(self, name, nameToken):
         assert isinstance(name, (str, type(None)))

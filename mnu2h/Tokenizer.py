@@ -19,6 +19,8 @@ class Tokenizer:
         ), key=len, reverse=True)
     )
 
+    kAllowedInDecimal = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', "'"}
+
     @staticmethod
     def fromFile(inputPath):
         return Tokenizer(inputPath)
@@ -256,8 +258,7 @@ class Tokenizer:
 
     @staticmethod
     def removeApostrophesFromNumbers(tokens):
-        kAllowedIndecimal = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', "'"}
-        if tokens[-1].startswith('0x') or kAllowedIndecimal.issuperset(tokens[-1]):
+        if tokens[-1].startswith('0x') or Tokenizer.kAllowedInDecimal.issuperset(tokens[-1]):
             tokens[-1] = tokens[-1].replace("'", '')
 
     # expect

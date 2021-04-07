@@ -10,6 +10,8 @@ std::pair<const char *, size_t> gameControlEventToString(GameControlEvents event
         { kGameEventKick, "KICK", 4 },
         { kGameEventBench, "BENCH", 5 },
         { kGameEventPause, "PAUSE", 5 },
+        { kGameEventReplay, "REPLAY", 6 },
+        { kGameEventSaveHighlight, "SAVE HIGHLIGHT", 14 },
     };
 
     for (const auto& ev : kEventsToStrings) {
@@ -23,7 +25,7 @@ std::pair<const char *, size_t> gameControlEventToString(GameControlEvents event
 
 int gameControlEventToString(GameControlEvents events, char *buffer, size_t bufferSize, const char *noneString /* = "N/A" */)
 {
-    static_assert(kMaxGameEvent == 64, "action event stringifying needs an update");
+    static_assert(kMaxGameEvent == 256, "action event stringifying needs an update");
 
     *buffer = '\0';
     auto start = buffer;

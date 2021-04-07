@@ -8,6 +8,11 @@
 #include "controls.h"
 #include "menuControls.h"
 
+#ifndef SWOS_TEST
+static_assert(offsetof(SwosVM::SwosVariables, g_selectedTeams) -
+    offsetof(SwosVM::SwosVariables, competitionFileBuffer) == 5'191, "Load competition buffer broken");
+#endif
+
 #ifdef NDEBUG
 constexpr int kSentinelSize = 0;
 #else
@@ -91,9 +96,6 @@ static void init()
 
     swos.setupDatBuffer = 0;    // disable this permanently
     swos.EGA_graphics = 0;
-    swos.g_videoSpeedIndex = 100;
-
-    swos.g_inputControls = 6;   // set this up for CheckControls to avoid touching g_*ScanCode variables
 
     logInfo("Setting up base and extended memory pointers");
     setupExtraMemory();

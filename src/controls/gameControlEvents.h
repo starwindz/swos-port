@@ -12,7 +12,9 @@ enum GameControlEvents : int32_t
     kGameEventKick = 16,
     kGameEventBench = 32,
     kGameEventPause = 64,
-    kMaxGameEvent = kGameEventPause,
+    kGameEventReplay = 128,
+    kGameEventSaveHighlight = 256,
+    kMaxGameEvent = kGameEventSaveHighlight,
 };
 
 ENABLE_FLAGS(GameControlEvents)
@@ -29,6 +31,8 @@ using DefaultScancodesPack = std::array<SDL_Scancode, kNumDefaultGameControlEven
 constexpr DefaultEventsPack kDefaultGameControlEvents = {
     kGameEventUp, kGameEventDown, kGameEventLeft, kGameEventRight, kGameEventKick, kGameEventBench,
 };
+constexpr int kDefaultControlsKickIndex = 4;
+constexpr int kDefaultControlsBenchIndex = 5;
 
 std::pair<const char *, size_t> gameControlEventToString(GameControlEvents event);
 int gameControlEventToString(GameControlEvents events, char *buffer, size_t bufferSize, const char *noneString = "N/A");

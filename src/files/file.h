@@ -4,8 +4,9 @@ constexpr int kMaxFilenameLength = 260;
 
 SDL_RWops *openFile(const char *path, const char *mode = "rb");
 int loadFile(const char *path, void *buffer, int maxSize = -1, size_t skipBytes = 0, bool required = true);
-bool saveFile(const char *path, void *buffer, size_t size);
 std::pair<char *, size_t> loadFile(const char *path, size_t bufferOffset = 0, size_t skipBytes = 0);
+bool saveFile(const char *path, void *buffer, size_t size);
+bool renameFile(const char *oldPath, const char *newPath);
 
 void setRootDir(const char *dir);
 std::string rootDir();
@@ -21,6 +22,7 @@ inline char getDirSeparator()
 }
 
 std::string joinPaths(const char *path1, const char *path2);
+bool fileExists(const char *path);
 bool dirExists(const char *path);
 bool createDir(const char *path);
 

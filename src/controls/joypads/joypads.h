@@ -5,7 +5,9 @@
 #include "JoypadConfig.h"
 #include "JoypadElementValue.h"
 
-void assignJoypadsToPlayers();
+class VirtualJoypad;
+
+void initJoypads();
 
 GameControlEvents pl1JoypadEvents();
 GameControlEvents pl2JoypadEvents();
@@ -16,11 +18,27 @@ bool joypadHasBasicBindings(int index);
 
 int getPl1JoypadIndex();
 int getPl2JoypadIndex();
+int getJoypadIndex(PlayerNumber player);
+bool setJoypad(PlayerNumber player, int joypadNo);
+
+#ifdef VIRTUAL_JOYPAD
+VirtualJoypad& getVirtualJoypad();
+
+class VirtualJoypadEnabler
+{
+public:
+    VirtualJoypadEnabler(int index);
+    ~VirtualJoypadEnabler();
+private:
+    int m_index;
+};
+#endif
 
 int getNumJoypads();
 bool joypadDisconnected(SDL_JoystickID id);
 
 JoypadConfig *joypadConfig(int index);
+void resetJoypadConfig(int index);
 const char *joypadName(int index);
 SDL_JoystickGUID joypadGuid(int index);
 SDL_JoystickID joypadId(int index);
@@ -41,14 +59,12 @@ void addNewJoypad(int index);
 void removeJoypad(SDL_JoystickID id);
 
 int getJoypadWithButtonDown();
-
 void waitForJoypadButtonsIdle();
-bool setJoypad(PlayerNumber player, int joypadNo);
 
 bool getAutoConnectJoypads();
 void setAutoConnectJoypads(bool value);
-bool getDisableMenuControllers();
-void setDisableMenuControllers(bool value);
+bool getEnableMenuControllers();
+void setEnableMenuControllers(bool value);
 bool getShowSelectMatchControlsMenu();
 void setShowSelectMatchControlsMenu(bool value);
 

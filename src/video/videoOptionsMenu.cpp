@@ -1,325 +1,84 @@
-#include "menuMouse.h"
-#include "text.h"
+#include "videoOptionsMenu.h"
+#include "joypads.h"
+#include "VirtualJoypad.h"
+#include "windowManager.h"
+#include "windowModeMenu.h"
 
-constexpr auto kSelectedColor = kSoftBlueText;
-constexpr int kPleaseWaitLimitMs = 333;
-
-static bool m_menuShown;
-static int16_t m_windowResizable = 1;
+static int16_t m_flashCursor = 1;
+static int16_t m_showTouchTrails;
+static int16_t m_transparentButtons = 1;
 
 #include "videoOptions.mnu.h"
-
-static const char *kPleaseWaitText;
 
 using namespace VideoOptionsMenu;
 
 void showVideoOptionsMenu()
 {
-    m_menuShown = false;
     showMenu(videoOptionsMenu);
 }
 
 static void videoOptionsMenuOnInit()
 {
-    setGlobalWheelEntries(scrollUpArrow, scrollDownArrow);
-}
+    m_flashCursor = cursorFlashingEnabled();
+#ifdef VIRTUAL_JOYPAD
+    m_showTouchTrails = getShowTouchTrails();
+    m_transparentButtons = getTransparentVirtualJoypadButtons();
+#else
+    int diff;
+    auto label = &firstLabelEntry;
+    auto changer = &firstChangerItemEntry;
 
-static void updateDisplayedWindowSize()
-{
-    int width, height;
-    std::tie(width, height) = getWindowSize();
+    static_assert(transparentVirtualJoypadButtonsLabel > showTouchTrailsLabel, "Stop! Hammer time!");
 
-    auto widthEntry = getMenuEntry(customWidth);
-    widthEntry->fg.number = width;
-
-    auto heightEntry = getMenuEntry(customHeight);
-    heightEntry->fg.number = height;
-
-    m_windowResizable = getWindowResizable();
-}
-
-using DisplayModeList = std::vector<std::pair<int, int>>;
-
-static DisplayModeList getDisplayModes(int displayIndex)
-{
-    assert(displayIndex >= 0);
-
-    int numModes = SDL_GetNumDisplayModes(displayIndex);
-    if (numModes < 1)
-        logWarn("No display modes, SDL reported: %s", SDL_GetError());
-    else
-        logInfo("Enumerating display modes, %d found", numModes);
-
-    auto startTicks = SDL_GetTicks();
-    bool shownWarning = false;
-
-    DisplayModeList result;
-
-    for (int i = 0; i < numModes; i++) {
-        SDL_DisplayMode mode;
-        if (!SDL_GetDisplayMode(displayIndex, i, &mode)) {
-            logInfo("  %2d %d x %d, format: %x, refresh rate: %d", i, mode.w, mode.h, mode.format, mode.refresh_rate);
-
-            if (!shownWarning && SDL_GetTicks() > startTicks + kPleaseWaitLimitMs) {
-                if (!kPleaseWaitText)
-                    kPleaseWaitText = SwosVM::allocateString("PLEASE WAIT, ENUMERATING GRAPHICS MODES...");
-                drawMenuText(55, 80, kPleaseWaitText, -1, kYellowText);
-                updateScreen();
-                shownWarning = true;
-            }
-
-            // disallow any silly display mode
-            switch (mode.format) {
-            case SDL_PIXELFORMAT_INDEX1LSB:
-            case SDL_PIXELFORMAT_INDEX1MSB:
-            case SDL_PIXELFORMAT_INDEX4LSB:
-            case SDL_PIXELFORMAT_INDEX4MSB:
-            case SDL_PIXELFORMAT_INDEX8:
-                continue;
-            default:
-                bool different = result.empty() ? true : result.back().first != mode.w || result.back().second != mode.h;
-                if (different)
-                    result.emplace_back(mode.w, mode.h);
-            }
-        } else {
-            logWarn("Failed to retrieve mode %d info, SDL reported: %s", i, SDL_GetError());
+    while (label != &firstChangerItemEntry) {
+        if (label->ordinal == showTouchTrailsLabel) {
+            diff = 2 * (label == &firstChangerItemEntry ? label[1].y - label->y : label->y - label[-1].y);
+            label->hide();
+            changer->hide();
+        } else if (label->ordinal == transparentVirtualJoypadButtonsLabel) {
+            label->hide();
+            changer->hide();
+        } else if (label->ordinal > showTouchTrailsLabel) {
+            label->y -= diff;
+            changer->y -= diff;
         }
+        label++;
+        changer++;
     }
 
-    logInfo("Accepted display modes:");
-    for (size_t i = 0; i < result.size(); i++)
-        logInfo("  %2d %d x %d", i, result[i].first, result[i].second);
-
-    std::sort(result.rbegin(), result.rend());
-    return result;
+    showWindowModeEntry.y -= diff;
+#endif
 }
 
-static DisplayModeList m_resolutions;
-static int m_resListOffset;
-
-static void fillResolutionListUi()
+static void changeFlashCursor()
 {
-    int currentEntry = getCurrentEntryOrdinal();
-
-    for (int i = resolutionField0; i < resolutionField0 + kNumResolutionFields; i++)
-        getMenuEntry(i)->hide();
-
-    int visibleFields = m_resolutions.size() - m_resListOffset;
-    for (int i = m_resListOffset; i < m_resListOffset + std::min(visibleFields, kNumResolutionFields); i++) {
-        auto entry = getMenuEntry(resolutionField0 + i - m_resListOffset);
-        entry->show();
-
-        auto width = m_resolutions[i].first;
-        auto height = m_resolutions[i].second;
-        snprintf(entry->string(), 30, "%d X %d", width, height);
-
-        entry->bg.entryColor = kLightBlue;
-        if (isInFullScreenMode() && getFullScreenDimensions() == std::make_pair(width, height))
-            entry->bg.entryColor = kPurple;
-    }
-
-    for (int i = resolutionField0; i < resolutionField0 + kNumResolutionFields; i++)
-        if (i == currentEntry && getMenuEntry(i)->invisible)
-            setCurrentEntry(VideoOptionsMenu::exit);
+    m_flashCursor = !m_flashCursor;
+    logInfo("Flash cursor changed to %s", m_flashCursor ? "ON" : "OFF");
+    setFlashMenuCursor(m_flashCursor != 0);
+    swos.menuCursorFrame = 0;
 }
 
-static void updateFullScreenAvailability()
+static void changeShowTouchTrails()
 {
-    auto fullScreenEntry = getMenuEntry(fullScreen);
-    bool fullScreenAvailable = !m_resolutions.empty();
-
-    strcpy(fullScreenEntry->string(), "FULL SCREEN:");
-    if (!fullScreenAvailable)
-        strcpy(fullScreenEntry->string() + 11, " UNAVAILABLE");
-
-    fullScreenEntry->disabled = !fullScreenAvailable;
-
-    auto fullScreenArrowEntry = getMenuEntry(fullScreenArrow);
-    fullScreenArrowEntry->setVisible(getWindowMode() == kModeFullScreen && fullScreenAvailable);
+#ifdef VIRTUAL_JOYPAD
+    m_showTouchTrails = !m_showTouchTrails;
+    logInfo("Touch trails changed to %s", m_showTouchTrails ? "ON" : "OFF");
+    setShowTouchTrails(m_showTouchTrails != 0);
+    getVirtualJoypad().enableTouchTrails(m_showTouchTrails != 0);
+#endif
 }
 
-static void scrollResolutionsDownSelected()
+static void changeVirtualJoypadTransparentButtons()
 {
-    if (m_resolutions.size() > kNumResolutionFields)
-        m_resListOffset = std::min(m_resListOffset + 1, static_cast<int>(m_resolutions.size()) - kNumResolutionFields);
+#ifdef VIRTUAL_JOYPAD
+    m_transparentButtons = !m_transparentButtons;
+    logInfo("Turning transparent virtual joypad buttons %s", m_transparentButtons ? "ON" : "OFF");
+    setTransparentVirtualJoypadButtons(m_transparentButtons != 0);
+    getVirtualJoypad().enableTransparentButtons(m_transparentButtons != 0);
+#endif
 }
 
-static void scrollResolutionsUpSelected()
+static void openWindowModeMenu()
 {
-    if (m_resolutions.size() > VideoOptionsMenu::kNumResolutionFields)
-        m_resListOffset = std::max(0, m_resListOffset - 1);
-}
-
-static void updateScrollArrows()
-{
-    bool show = m_resolutions.size() > kNumResolutionFields;
-
-    int selectedEntry = getCurrentEntryOrdinal();
-
-    for (auto i : { scrollUpArrow, scrollDownArrow }) {
-        auto entry = getMenuEntry(i);
-        entry->setVisible(show);
-
-        if (!show && i == selectedEntry)
-            setCurrentEntry(resolutionField0);
-    }
-}
-
-static void changeResolutionSelected()
-{
-    auto entry = A5.as<MenuEntry *>();
-
-    int i = entry->ordinal - VideoOptionsMenu::resolutionField0 + m_resListOffset;
-    assert(i >= 0 && i < static_cast<int>(m_resolutions.size()));
-
-    if (i < 0 || i >= static_cast<int>(m_resolutions.size()))
-        return;
-
-    if (isInFullScreenMode()) {
-        auto currentResolution = getFullScreenDimensions();
-        if (currentResolution == m_resolutions[i])
-            return;
-    }
-
-    constexpr int kBufferSize = 64;
-    auto buffer = SwosVM::allocateMemory(kBufferSize).asCharPtr();
-
-    if (setFullScreenResolution(m_resolutions[i].first, m_resolutions[i].second)) {
-        strncpy_s(buffer, entry->string(), kBufferSize);
-        if (auto space = strchr(buffer, ' ')) {
-            *space = 'x';
-
-            while (space++[3])
-                *space = space[2];
-
-            *space = '\0';
-        }
-
-        logInfo("Successfully switched to %s", buffer);
-    } else {
-        logWarn("Failed to switch to %s", entry->string());
-        snprintf(buffer, kBufferSize, "FAILED TO SWITCH TO %s", entry->string());
-        showError(buffer);
-    }
-}
-
-enum Dimension { kWidth, kHeight };
-
-static void inputWindowWidthOrHeight(Dimension dimension)
-{
-    if (getWindowMode() == kModeWindow) {
-        auto entry = A5.as<MenuEntry *>();
-        auto numberEntered = inputNumber(entry, 5, 0, 99999);
-
-        if (numberEntered) {
-            int widthOrHeight = entry->fg.number;
-
-            int windowWidth, windowHeight;
-            std::tie(windowWidth, windowHeight) = getWindowSize();
-
-            bool isInputWidth = dimension == kWidth;
-            int oldWidthOrHeight = isInputWidth ? windowWidth : windowHeight;
-            int minAllowedSize = isInputWidth ? kVgaWidth : kVgaHeight;
-
-            if (widthOrHeight != oldWidthOrHeight && widthOrHeight >= minAllowedSize) {
-                isInputWidth ? setWindowSize(widthOrHeight, windowHeight) : setWindowSize(windowWidth, widthOrHeight);
-                centerWindow();
-            }
-        }
-    }
-}
-
-static void inputWindowWidth()
-{
-    inputWindowWidthOrHeight(kWidth);
-}
-
-static void inputWindowHeight()
-{
-    inputWindowWidthOrHeight(kHeight);
-}
-
-static void setWindowedFieldsColor(bool selected)
-{
-    getMenuEntry(windowed)->stringFlags = selected ? kSelectedColor : kWhiteText;
-}
-
-static void setBorderlessFieldsColor(bool selected)
-{
-    getMenuEntry(VideoOptionsMenu::borderlessMaximized)->stringFlags = selected ? kSelectedColor : kWhiteText;
-}
-
-static void setFullScreenFieldsColor(bool selected)
-{
-    int stringFlags = selected ? kSelectedColor : kWhiteText;
-    if (m_resolutions.empty())
-        stringFlags = kGrayText;
-
-    getMenuEntry(fullScreen)->stringFlags = stringFlags;
-}
-
-static void highlightCurrentMode()
-{
-    static const std::array<int, 3> kHighlightArrows = {
-        customSizeArrow, borderlessMaximizedArrow, fullScreenArrow,
-    };
-
-    for (int index : kHighlightArrows)
-        getMenuEntry(index)->hide();
-
-    int showArrowIndex = customSizeArrow;
-    bool windowedSelected = false, borderlessSelected = false, fullScreenSelected = false;
-
-    switch (getWindowMode()) {
-    case kModeWindow:
-        showArrowIndex = customSizeArrow;
-        windowedSelected = true;
-        break;
-
-    case kModeBorderlessMaximized:
-        showArrowIndex = borderlessMaximizedArrow;
-        borderlessSelected = true;
-        break;
-
-    case kModeFullScreen:
-        showArrowIndex = fullScreenArrow;
-        fullScreenSelected = true;
-        break;
-
-    default:
-        assert(false);
-    }
-
-    getMenuEntry(showArrowIndex)->show();
-
-    setWindowedFieldsColor(windowedSelected);
-    setBorderlessFieldsColor(borderlessSelected);
-    setFullScreenFieldsColor(fullScreenSelected);
-}
-
-static void videoOptionsMenuOnDraw()
-{
-    if (swos.g_inputingText)
-        return;
-
-    static int lastDisplayIndex = -1;
-
-    int displayIndex = getWindowDisplayIndex();
-    if (displayIndex >= 0) {
-        if (displayIndex != lastDisplayIndex) {
-            m_resolutions = getDisplayModes(displayIndex);
-            lastDisplayIndex = displayIndex;
-            m_resListOffset = 0;
-        }
-
-        updateDisplayedWindowSize();
-        highlightCurrentMode();
-        fillResolutionListUi();
-        updateFullScreenAvailability();
-        updateScrollArrows();
-    } else if (!m_menuShown) {
-        logWarn("Failed to get window display index, SDL reported: %s", SDL_GetError());
-    }
-
-    m_menuShown = true;
+    showWindowModeMenu();
 }
