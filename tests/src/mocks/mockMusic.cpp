@@ -1,7 +1,9 @@
 #include "music.h"
 
+void initMusic() {}
 void finishMusic() {}
-void fadeOutMusic() {}
+void startFadingOutMusic() {}
+void waitForMusicToFadeOut() {}
 void synchronizeMixVolume() {}
 void synchronizeSystemVolume() {}
 void updateSongState() {}
@@ -9,7 +11,5 @@ void stopTitleSong() {}
 void startMenuSong() {}
 void restartMusic() {}
 
-void SWOS::InitMenuMusic() {}
-void SWOS::PlayMidi() {}
-void SWOS::StopMidiSequence() {}
-void SWOS::FadeOutXmidi() {}
+void SWOS::CycleMenuMusic() {}
+void SWOS::TryMidiPlay() {}

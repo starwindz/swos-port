@@ -2,6 +2,7 @@
 #include "drawMenu.h"
 #include "replays.h"
 #include "render.h"
+#include "music.h"
 #include "main.mnu.h"
 
 static void initMainMenu();
@@ -29,10 +30,8 @@ void activateExitGameButton()
 
 static void initMainMenu()
 {
-    SWOS::InitMenuMusic();
+    initMusic();
     initMainMenuGlobals();
-
-    activateMainMenu();
 
     // speed up starting up in debug mode
 #ifdef DEBUG
@@ -104,7 +103,7 @@ static void showQuitMenu()
 
 static void quitMenuOnInit()
 {
-    FadeOutToBlack();
+//    FadeOutToBlack();
     drawMenu();     // redraw menu so it's ready for the fade-in
     FadeIn();
     swos.skipFade = -1;
@@ -112,13 +111,13 @@ static void quitMenuOnInit()
 
 static void quitGame()
 {
-    FadeOutToBlack();
+//    FadeOutToBlack();
     std::exit(EXIT_SUCCESS);
 }
 
 static void returnToGame()
 {
-    FadeOutToBlack();
+//    FadeOutToBlack();
     SetExitMenuFlag();
     swos.menuFade = 1;
 }

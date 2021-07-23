@@ -1,9 +1,9 @@
 #pragma once
 
-void drawMenuText(int x, int y, const char *str, int maxWidth = INT_MAX, int color = kWhiteText2, bool bigFont = false);
-void drawMenuTextRightAligned(int x, int y, const char *str, int maxWidth = INT_MAX, int color = kWhiteText2, bool bigFont = false);
+void drawText(int x, int y, const char *str, int maxWidth = INT_MAX, int color = kWhiteText2, bool bigFont = false);
+void drawTextRightAligned(int x, int y, const char *str, int maxWidth = INT_MAX, int color = kWhiteText2, bool bigFont = false);
 // x coordinate marks the center of the string
-void drawMenuTextCentered(int x, int y, const char *str, int maxWidth = INT_MAX, int color = kWhiteText2, bool bigFont = false);
+void drawTextCentered(int x, int y, const char *str, int maxWidth = INT_MAX, int color = kWhiteText2, bool bigFont = false);
 
 int getStringPixelLength(const char *str, bool bigFont = false);
 void elideString(char *str, int maxStrLen, int maxPixels, bool bigFont = false);

@@ -96,11 +96,6 @@ std::pair<int, int> getVisibleFieldSize()
     return {};
 }
 
-int getVisibleFieldWidth()
-{
-    return 0;
-}
-
 void switchToWindow()
 {
     m_windowMode = kModeWindow;
@@ -160,7 +155,7 @@ std::pair<float, float> mapPoint(float x, float y)
     return { x, y };
 }
 
-SDL_Rect mapRect(int x, int y, int width, int height)
+SDL_FRect mapRect(int x, int y, int width, int height)
 {
     return {};
 }

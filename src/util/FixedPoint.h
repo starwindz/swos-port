@@ -103,22 +103,11 @@ private:
     int32_t m_value;
 };
 
-struct FixedRect {
-    float xStart = INT16_MAX;
-    float xEnd = INT16_MIN;
-    float yStart = INT16_MAX;
-    float yEnd = INT16_MIN;
-
-    bool valid() const {
-        return xEnd > xStart && yEnd > yStart;
-    }
-};
-
 static inline FixedPoint operator+(int value, const FixedPoint& fixed)
 {
-    return value + fixed.raw();
+    return FixedPoint(value) + fixed;
 }
 static inline FixedPoint operator-(int value, const FixedPoint& fixed)
 {
-    return value - fixed.raw();
+    return FixedPoint(value) - fixed;
 }

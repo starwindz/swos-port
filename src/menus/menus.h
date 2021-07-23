@@ -32,14 +32,6 @@ static inline int getCurrentEntryOrdinal()
     return currentMenu->selectedEntry ? currentMenu->selectedEntry->ordinal : -1;
 }
 
-static inline void drawMenuSprite(int x, int y, int index)
-{
-    D0 = index;
-    D1 = x;
-    D2 = y;
-    DrawSprite();
-}
-
 static inline void highlightEntry(MenuEntry *entry)
 {
     auto menu = getCurrentMenu();

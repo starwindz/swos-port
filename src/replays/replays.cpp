@@ -5,11 +5,14 @@
 #include "replays.h"
 #include "ReplayData.h"
 #include "replayOptions.h"
+#include "benchControls.h"
 #include "menus.h"
+#include "music.h"
+#include "comments.h"
 #include "drawMenu.h"
 #include "game.h"
 #include "file.h"
-#include "sprites.h"
+#include "renderSprites.h"
 #include "render.h"
 #include "controls.h"
 
@@ -127,7 +130,7 @@ static void highlightsPausedLoop()
     while (swos.paused) {
         SWOS::GetKey();
         MainKeysCheck();
-        SWOS::PlayEnqueuedSamples();
+        playEnqueuedSamples();
     }
 }
 
@@ -146,7 +149,7 @@ static bool highlightsAborted()
     swos.statsFireExit = 1;
     swos.replayState = kNotReplaying;
     swos.paused = 0;
-    FadeOutToBlack();
+//    FadeOutToBlack();
     RestoreCameraPosition();
 
     return true;
@@ -221,15 +224,15 @@ static void drawResult()
     auto leftScoreDigit2 = leftScoreDigits.rem;
 
     if (leftScoreDigit1) {
-        drawSprite(leftScoreDigit1 + kBigZeroSprite, x, y);
+        drawMenuSprite(leftScoreDigit1 + kBigZeroSprite, x, y);
         x += 12;
     }
 
-    drawSprite(leftScoreDigit2 + kBigZeroSprite, x, y);
+    drawMenuSprite(leftScoreDigit2 + kBigZeroSprite, x, y);
 
     x += 15;
     y += 8;
-    drawSprite(kBigDashSprite, x, y);
+    drawMenuSprite(kBigDashSprite, x, y);
 
     x += 8;
     y -= 8;
@@ -239,11 +242,11 @@ static void drawResult()
     auto rightScoreDigit2 = rightScoreDigits.rem;
 
     if (rightScoreDigit1) {
-        drawSprite(rightScoreDigit1 + kBigZero2Sprite, x, y);
+        drawMenuSprite(rightScoreDigit1 + kBigZero2Sprite, x, y);
         x += 12;
     }
 
-    drawSprite(rightScoreDigit2 + kBigZero2Sprite, x, y);
+    drawMenuSprite(rightScoreDigit2 + kBigZero2Sprite, x, y);
 }
 
 static void replayPausedLoop()
@@ -310,18 +313,13 @@ void showHighlights()
 
     CopyTeamsAndHeader();
 
-    if (swos.g_menuMusic)
-        invokeWithSaved68kRegisters(StopMidi);
-
     invokeWithSaved68kRegisters([] {
         showMenu(swos.stadiumMenu);
     });
 
     SWOS::ViewHighlightsWrapper();
-    SWOS::InitMenuMusic();
 
-    if (swos.g_menuMusic)
-        TryMidiPlay();
+    startMenuSong();
 
     swos.screenWidth = kMenuScreenWidth;
     swos.g_cameraX = 0;
@@ -339,12 +337,6 @@ void toggleFastReplay()
         m_fastReplay ^= 1;
 }
 
-static bool inSubstitutes()
-{
-    // without goToSubsTimer, cutout is too sharp
-    return !swos.goToSubsTimer && swos.g_inSubstitutesMenu;
-}
-
 void SWOS::ViewHighlightsWrapper()
 {
     save68kRegisters();
@@ -360,7 +352,7 @@ void SWOS::ViewHighlightsWrapper()
 void SWOS::SaveCoordinatesForHighlights()
 {
     // reject save coordinates requests while in substitutes menu
-    if (inSubstitutes())
+    if (inBenchOrGoingTo())
         return;
 
     auto spriteIndex = D0.asInt16();
@@ -431,7 +423,7 @@ void SWOS::PlayInstantReplayLoop()
         fadeIfNeeded();
     }
 
-    FadeOutToBlack();
+//    FadeOutToBlack();
     RestoreCameraPosition();
 }
 
@@ -461,7 +453,7 @@ void SWOS::PlayHighlightsLoop()
                 fadeIfNeeded();
                 continue;
             } else {
-                FadeOutToBlack();
+//                FadeOutToBlack();
                 RestoreCameraPosition();
                 swos.paused = 0;
             }
@@ -515,7 +507,7 @@ static std::pair<dword *, dword> handleSprites(dword *p, dword d)
         int x = static_cast<int>(d << 12) >> 22;
         int y = static_cast<int>(d << 22) >> 22;
 
-        drawSprite(spriteIndex, x, y);
+        drawMenuSprite(spriteIndex, x, y);
 
         d = *p++;
     }
@@ -525,7 +517,7 @@ static std::pair<dword *, dword> handleSprites(dword *p, dword d)
 
 static void drawBigRotatingLetterR()
 {
-    drawSprite(((swos.stoppageTimer >> 1) & 0x1f) + kReplayFrame00Sprite, 11, 14);
+    drawMenuSprite(((swos.stoppageTimer >> 1) & 0x1f) + kReplayFrame00Sprite, 11, 14);
 }
 
 void SWOS::ReplayFrame()

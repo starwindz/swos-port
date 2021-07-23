@@ -5,6 +5,7 @@
 #include "dump.h"
 #include "joypads.h"
 #include "VirtualJoypad.h"
+#include "color.h"
 
 static SDL_Renderer *m_renderer;
 
@@ -92,13 +93,30 @@ void updateScreen()
 #ifdef VIRTUAL_JOYPAD
     getVirtualJoypad().render(m_renderer);
 #endif
+
+#ifdef DEBUG
+    dumpVariables();
+#endif
+
     SDL_RenderPresent(m_renderer);
-    // must clear the renderer or there will be display artefacts on Samsung phone
+    // must clear the renderer or there will be display artifacts on Samsung phone
     SDL_SetRenderDrawColor(m_renderer, 0, 0, 0, 255);
     SDL_RenderClear(m_renderer);
 
     m_lastRenderEndTime = SDL_GetPerformanceCounter();
     determineIfDelayNeeded();
+}
+
+void updateFrame()
+{
+    processControlEvents();
+    frameDelay();
+    updateScreen();
+}
+
+void SWOS::Flip()
+{
+    updateFrame();
 }
 
 void frameDelay(double factor /* = 1.0 */)
@@ -171,6 +189,15 @@ void fadeIfNeeded()
     }
 }
 
+void drawFrame(int x, int y, int width, int height, const Color& color)
+{
+    SDL_SetRenderDrawColor(m_renderer, color.r, color.g, color.b, 255);
+    SDL_RenderSetScale(m_renderer, getXScale(), getYScale());
+    SDL_Rect dstRect{ x, y, width, height };
+    SDL_RenderDrawRect(m_renderer, &dstRect);
+    SDL_RenderSetScale(m_renderer, 1, 1);
+}
+
 bool getLinearFiltering()
 {
     return m_useLinearFiltering;
@@ -221,11 +248,4 @@ void makeScreenshot()
     } else {
         logWarn("Failed to create a surface for the screenshot: %s", SDL_GetError());
     }
-}
-
-void SWOS::Flip()
-{
-    processControlEvents();
-    frameDelay();
-    updateScreen();
 }

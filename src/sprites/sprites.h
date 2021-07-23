@@ -1,17 +1,16 @@
 #pragma once
 
 #include "windowManager.h"
-#include "FixedPoint.h"
+#include "PackedSprite.h"
 
-struct PackedSprite;
+struct Color;
 
 void initSprites();
+void initMatchSprites(const TeamGame *topTeam, const TeamGame *bottomTeam);
 void initMenuSprites();
-void initGameSprites(const TeamGame *topTeam, const TeamGame *bottomTeam);
-void drawSprite(int spriteIndex, int x, int y);
-void drawCharSprite(int spriteIndex, int x, int y, int color);
-void copySprite(int sourceSpriteIndex, int destSpriteIndex, int xOffset, int yOffset);
-std::pair<int, int> getSpriteDimensions(int spriteIndex);
+const PackedSprite& getSprite(int index);
+SDL_Texture *getTexture(const PackedSprite& sprite);
+void setMenuSpritesColor(const Color& color);
 void fillPlayerSprites(SDL_Texture **topTeamTextures, SDL_Texture **bottomTeamTextures, int numTextures,
     const PackedSprite *sprites, int numSprites);
 void fillGoalkeeperSprites(SDL_Texture **topTeamTextures, SDL_Texture **bottomTeamTextures, int numTextures,
@@ -20,6 +19,5 @@ void fillBenchSprites(SDL_Texture *topTeamTexture, SDL_Texture *bottomTeamTextur
 
 enum AdditionalSpriteIndices
 {
-    kBigPitchSpriteBottom = 1334,
-    kExitIcon = 1335,
+    kExitIcon = 1334,
 };

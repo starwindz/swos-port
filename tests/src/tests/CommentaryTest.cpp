@@ -1,6 +1,7 @@
 #include "CommentaryTest.h"
 #include "comments.h"
 #include "sfx.h"
+#include "chants.h"
 #include "unitTest.h"
 #include "mockFile.h"
 #include "wavFormat.h"
@@ -450,9 +451,9 @@ void CommentaryTest::setupOriginalSamplesLoadingTest()
 {
     addFakeOriginalComments();
     clearCommentsSampleCache();
-    LoadCommentary();
-    LoadIntroChant();
-    LoadSoundEffects();
+    loadCommentary();
+    loadIntroChant();
+    loadSoundEffects();
 }
 
 void CommentaryTest::testOriginalSamples()
@@ -547,8 +548,8 @@ static void loadFakeCustomSamples()
     AssertSilencer assertSilencer;
     LogSilencer logSilencer;
 
-    LoadCommentary();
-    LoadSoundEffects();
+    loadCommentary();
+    loadSoundEffects();
 
     setStrictLogMode(true);
 }
@@ -754,7 +755,7 @@ void CommentaryTest::setupLoadingCustomExtensionsTest()
     addFakeFiles(kFakeCustomFiles);
 
     clearCommentsSampleCache();
-    LoadCommentary();
+    loadCommentary();
 }
 
 void CommentaryTest::testLoadingCustomExtensions()
@@ -801,7 +802,7 @@ void CommentaryTest::setupHandlingBadFileTest()
     LogSilencer logSilencer;
 
     clearCommentsSampleCache();
-    LoadCommentary();
+    loadCommentary();
 }
 
 void CommentaryTest::testHandlingBadFile()
@@ -845,7 +846,7 @@ void CommentaryTest::setupMutingCommentsTest()
     resetFakeFiles();
     clearCommentsSampleCache();
     addFakeFiles({{ "audio\\commentary\\own_goal\\oh_my.mp3", "!", 2 }});
-    LoadCommentary();
+    loadCommentary();
 }
 
 void CommentaryTest::testMutingComments()
@@ -910,7 +911,7 @@ void CommentaryTest::testOriginalEnqueuedSamples()
     applyEnqueuedSamplesData(kEnqueuedSamplesData, values);
 
     resetMockSdlMixer();
-    PlayEnqueuedSamples();
+    playEnqueuedSamples();
 
     assertEqual(numTimesPlayChunkCalled(), 1);
     auto lastChunk = getLastPlayedChunk();
@@ -923,7 +924,7 @@ void CommentaryTest::testOriginalEnqueuedSamples()
     while (createNextPermutation(values)) {
         resetMockSdlMixer();
         applyEnqueuedSamplesData(kEnqueuedSamplesData, values);
-        PlayEnqueuedSamples();
+        playEnqueuedSamples();
 
         assertEqual(numTimesPlayChunkCalled(), 1);
         const auto& playedChunks = getLastPlayedChunks();
@@ -1014,7 +1015,7 @@ void CommentaryTest::testResultChants()
 
         for (int index : sampleData.playedSampleIndices) {
             resetMockSdlMixer();
-            LoadCrowdChantSample();
+            loadCrowdChantSample();
 
             if (index >= 0) {
 //                assertEqual(playFansChant10lOffset, PlayResultSample);

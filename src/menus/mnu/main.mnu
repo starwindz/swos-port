@@ -4,7 +4,7 @@
 
 Menu mainMenu
 {
-    kExitIconSprite = 1335
+    kExitIconSprite = 1334
 
     y: 1
     onInit: swos.SWOSMainMenuInit

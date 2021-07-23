@@ -1,6 +1,8 @@
 #include "game.h"
+#include "gameLoop.h"
 #include "windowManager.h"
 #include "audio.h"
+#include "music.h"
 #include "options.h"
 #include "controls.h"
 #include "dump.h"
@@ -8,24 +10,91 @@
 #include "replays.h"
 #include "pitch.h"
 #include "sprites.h"
+#include "gameSprites.h"
 #include "gameTime.h"
+#include "playerNameDisplay.h"
 #include "result.h"
-
-constexpr Uint32 kMinimumPreMatchScreenLength = 1'200;
+#include "random.h"
 
 static TeamGame m_topTeamSaved;
 static TeamGame m_bottomTeamSaved;
 
-static Uint32 m_loadingStartTick;
-
 static bool m_playingMatch;
 
-static void initGame();
+static void saveTeams();
+static void restoreTeams();
 static void initPlayerCardChance();
+static void resetGoalAttempt();
 static void determineStartingTeamAndTeamPlayingUp();
 static void initTimeDelta();
 static void initPitchBallFactors();
 static void initGameVariables();
+
+void initMatch(TeamGame *topTeam, TeamGame *bottomTeam, bool saveOrRestoreTeams)
+{
+    saveOrRestoreTeams ? saveTeams() : restoreTeams();
+
+    initMatchSprites(topTeam, bottomTeam);
+    loadPitch();
+    //InitAdvertisements
+    initPlayerCardChance();
+
+    swos.gameRandValue = SWOS::rand();
+
+    if (swos.hilStarted != 1) {
+        A4 = &swos.topTeamIngame;
+
+        save68kRegisters();
+        ApplyTeamTactics();
+        restore68kRegisters();
+
+        A4 = &swos.bottomTeamIngame;
+
+        save68kRegisters();
+        ApplyTeamTactics();
+        restore68kRegisters();
+    }
+
+    determineStartingTeamAndTeamPlayingUp();
+    initTimeDelta();
+//arrange pitch type pattern coloring
+    initPitchBallFactors();
+    initGameVariables();
+
+    initDisplaySprites();
+    resetTime();
+    resetResult(topTeam->teamName, bottomTeam->teamName);
+    resetGoalAttempt();
+//    InitAnimatedPatterns();
+    swos.topTeamPtr = topTeam;
+    swos.bottomTeamPtr = bottomTeam;
+    StartingMatch();
+
+    if (!swos.g_trainingGame)
+        swos.showFansCounter = 100;
+}
+
+void matchEnded()
+{
+    finishCurrentReplay();
+}
+
+// in:
+//      A5 -> left team in-game struct
+//      A6 -> right team in-game struct
+//
+void SWOS::InitGameSaveTeams()
+{
+    swos.topTeamPtr = A5.as<TeamGame *>();
+    swos.bottomTeamPtr = A6.as<TeamGame *>();
+
+    initMatch(swos.topTeamPtr, swos.bottomTeamPtr, true);
+}
+
+void SWOS::InitGameRestoreTeams()
+{
+    initMatch(swos.topTeamPtr, swos.bottomTeamPtr, false);
+}
 
 void checkKeyboardShortcuts(SDL_Scancode scanCode, bool pressed)
 {
@@ -69,79 +138,21 @@ bool isMatchRunning()
     return m_playingMatch;
 }
 
-// in:
-//      A5 -> left team in-game struct
-//      A6 -> right team in-game struct
-//
-void SWOS::InitGameSaveTeams()
+static void saveTeams()
 {
-    swos.topTeamPtr = A5.as<TeamGame *>();
-    swos.bottomTeamPtr = A6.as<TeamGame *>();
-
     m_topTeamSaved = swos.topTeamIngame;
     m_bottomTeamSaved = swos.bottomTeamIngame;
-
-    InitGameRestoreTeams();
 }
 
-// in:
-//      A5 -> left team in-game struct
-//      A6 -> right team in-game struct
-//
-void SWOS::InitGameRestoreTeams()
+static void restoreTeams()
 {
     swos.topTeamIngame = m_topTeamSaved;
     swos.bottomTeamIngame = m_bottomTeamSaved;
-
-    initGame();
 }
 
 static void resetGoalAttempt()
 {
     swos.isGoalAttempt = 0;
-}
-
-static void initGame()
-{
-    initGameSprites(swos.topTeamPtr, swos.bottomTeamPtr);
-    loadPitch();
-    //InitAdvertisements
-    //CopyPlayerNameLengths
-    initPlayerCardChance();
-
-    Rand();
-    swos.gameRandValue = D0;
-
-    if (swos.hilStarted != 1) {
-        A4 = &swos.topTeamIngame;
-
-        save68kRegisters();
-        ChangeTeamTactics();
-        restore68kRegisters();
-
-        A4 = &swos.bottomTeamIngame;
-
-        save68kRegisters();
-        ChangeTeamTactics();
-        restore68kRegisters();
-    }
-
-    determineStartingTeamAndTeamPlayingUp();
-    initTimeDelta();
-    //arrange pitch type pattern coloring
-    initPitchBallFactors();
-    initGameVariables();
-
-    InitDisplaySprites();
-    resetTime();
-    resetResult();
-    ClearSaveFlagForGoalSprites();
-    resetGoalAttempt();
-//    InitAnimatedPatterns();
-    StartingMatch();
-
-    if (!swos.g_trainingGame)
-        swos.showFansCounter = 100;
 }
 
 static void initPlayerCardChance()
@@ -159,19 +170,15 @@ static void initPlayerCardChance()
 
     auto chanceTable = kPlayerCardChancesPerGameLength[swos.ingameGameLength];
 
-    Rand();
-    int chanceIndex = (D0.asWord() & 0x1e) >> 1;
+    int chanceIndex = (SWOS::rand() & 0x1e) >> 1;
 
     swos.playerCardChance = chanceTable[chanceIndex];
 }
 
 static void determineStartingTeamAndTeamPlayingUp()
 {
-    Rand();
-    swos.teamPlayingUp = (D0.asWord() & 1) + 1;
-
-    Rand();
-    swos.teamStarting = (D0.asWord() & 1) + 1;
+    swos.teamPlayingUp = (SWOS::rand() & 1) + 1;
+    swos.teamStarting = (SWOS::rand() & 1) + 1;
 }
 
 static void initTimeDelta()
@@ -202,12 +209,7 @@ static void initGameVariables()
     swos.statsTimeout = 0;
     swos.showStats = 0;
     swos.showingStats = 0;
-    swos.controlsSwapped = 0;
-    swos.g_inSubstitutesMenu = 0;
-    swos.cameraLeavingSubsTimer = 0;
-    swos.benchOff = 0;
-    swos.g_leavingSubsMenu = 0;
-    swos.waitForPlayerToGoInTimer = 0;
+    swos.g_waitForPlayerToGoInTimer = 0;
     swos.g_substituteInProgress = 0;
     swos.statsTeam1Goals = 0;
     swos.team1GoalsDigit1 = 0;
@@ -261,42 +263,17 @@ void SWOS::StartMainGameLoop()
 {
     m_playingMatch = true;
 
+    startFadingOutMusic();
+
     initGameControls();
     initNewReplay();
     updateCursor(true);
 
-    A5 = &swos.topTeamIngame;
-    A6 = &swos.bottomTeamIngame;
-
-    swos.EGA_graphics = 0;
-
-    GameLoop();
+    gameLoop(&swos.topTeamIngame, &swos.bottomTeamIngame);
 
     updateCursor(false);
 
     m_playingMatch = false;
-}
-
-void SWOS::GameEnded()
-{
-    finishCurrentReplay();
-}
-
-void SWOS::ShowStadiumInit_OnEnter()
-{
-    m_loadingStartTick = SDL_GetTicks();
-}
-
-void SWOS::InsertPauseBeforeTheGameIfNeeded()
-{
-    if (!doNotPauseLoadingScreen()) {
-        auto diff = SDL_GetTicks() - m_loadingStartTick;
-        if (diff < kMinimumPreMatchScreenLength) {
-            auto pause = kMinimumPreMatchScreenLength - diff;
-            logInfo("Pausing loading screen for %d milliseconds (target: %d)", pause, kMinimumPreMatchScreenLength);
-            SDL_Delay(pause);
-        }
-    }
 }
 
 // Fix crash when watching 2 CPU players with at least one top-class goalkeeper in the game.

@@ -32,7 +32,7 @@ static void drawSpriteToBuffer(int spriteIndex, char *buf)
 
     D0 = spriteIndex;
     D1 = D2 = 0;
-    DrawSprite();
+//    DrawSprite();
 
     memcpy(buf, vmBuffer, sprite->width * sprite->height);
 

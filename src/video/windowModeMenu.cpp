@@ -88,7 +88,7 @@ static DisplayModeList getDisplayModes(int displayIndex)
             if (!shownWarning && SDL_GetTicks() > startTicks + kPleaseWaitLimitMs) {
                 if (!kPleaseWaitText)
                     kPleaseWaitText = SwosVM::allocateString("PLEASE WAIT, ENUMERATING GRAPHICS MODES...");
-                drawMenuText(55, 80, kPleaseWaitText, -1, kYellowText);
+                drawText(55, 80, kPleaseWaitText, -1, kYellowText);
                 updateScreen();
                 shownWarning = true;
             }

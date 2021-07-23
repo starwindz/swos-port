@@ -100,7 +100,7 @@ static void joypadConfigMenuOnDraw()
         updatePowerLevel();
 
         if (SDL_GetTicks() <= m_resetTicks)
-            drawMenuTextCentered(kMenuScreenWidth / 2, kResetTextY, "CONTROLS RESET!");
+            drawTextCentered(kMenuScreenWidth / 2, kResetTextY, "CONTROLS RESET!");
     }
 }
 

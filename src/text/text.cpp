@@ -1,5 +1,11 @@
 #include "text.h"
 #include "sprites.h"
+#include "renderSprites.h"
+#include "color.h"
+
+constexpr int kSmallFontSpace = 3;
+constexpr int kBigFontSpace = 4;
+constexpr int kTabSpace = 5;
 
 constexpr int kBigFontOffset = 57;
 
@@ -90,24 +96,24 @@ static int drawExclamationMark(int x, int y, int color, bool bigFont)
     return width;
 }
 
-static bool isSpace(char c)
+static bool isBlank(char c)
 {
     return c == ' ' || c == '_';
 }
 
-static int charSpriteWidth(char c, const CharTable *charTable)
+static int charSpriteWidth(char c, bool bigFont)
 {
-    assert(static_cast<unsigned char>(c) >= ' ');
+    assert(static_cast<unsigned char>(c) >= ' ' || c == '\t');
 
-    bool bigFont = charTable == &swos.bigCharsTable;
-
-    if (isSpace(c))
-        return charTable->spaceWidth;
+    if (isBlank(c))
+        return bigFont ? kBigFontSpace : kSmallFontSpace;
+    else if (c == '\t')
+        return kTabSpace;
     else if (c == '!')
         return bigFont ? kBigExclamationMarkWidth : kSmallExclamationMarkWidth;
 
     auto spriteIndex = charToSprite(c, bigFont);
-    return spriteIndex ? getSpriteDimensions(spriteIndex).first : 0;
+    return spriteIndex ? getSprite(spriteIndex).width : 0;
 }
 
 struct ElisionInfo {
@@ -122,10 +128,9 @@ static ElisionInfo getElisionInfo(int x, int maxWidth, const char *str, bool big
 {
     assert(str);
     assert(maxWidth > 0);
-    assert(charSpriteWidth('.', &swos.smallCharsTable) == kSmallDotWidth &&
-        charSpriteWidth('.', &swos.bigCharsTable) == kBigDotWidth);
+    assert(charSpriteWidth('.', false) == kSmallDotWidth &&
+        charSpriteWidth('.', true) == kBigDotWidth);
 
-    const auto charTable = bigFont ? &swos.bigCharsTable : &swos.smallCharsTable;
     int len = 0;
     int ellipsisWidth = 3 * (bigFont ? kBigDotWidth : kSmallDotWidth);
 
@@ -136,7 +141,7 @@ static ElisionInfo getElisionInfo(int x, int maxWidth, const char *str, bool big
 
     int i = 0;
     for (; str[i]; i++) {
-        int charWidth = charSpriteWidth(str[i], charTable);
+        int charWidth = charSpriteWidth(str[i], bigFont);
         int newLen = len + charWidth;
 
         if (newLen > maxWidth) {
@@ -161,53 +166,63 @@ static ElisionInfo getElisionInfo(int x, int maxWidth, const char *str, bool big
     return { str, i, len, false };
 }
 
-static void drawMenuText(int x, int y, const char *str, const char *limit, int color, bool bigFont, bool addEllipsis)
+static void setTextColor(int color)
 {
-    const auto& charTable = bigFont ? swos.bigCharsTable : swos.smallCharsTable;
+    assert(color >= 0 && color < 16);
+
+    const auto& colorRgb = color == 0 || color == 2 ? Color{ 255, 255, 255 } : kMenuPalette[color];
+    setMenuSpritesColor(colorRgb);
+}
+
+static void drawText(int x, int y, const char *str, const char *limit, int color, bool bigFont, bool addEllipsis)
+{
+    setTextColor(color);
 
     while (str < limit) {
         auto c = *str++;
-        if (isSpace(c)) {
-            x += charTable.spaceWidth;
+        if (isBlank(c)) {
+            x += bigFont ? kBigFontSpace : kSmallFontSpace;
+        } else if (c == '\t') {
+            x += kTabSpace;
         } else if (c == '!') {
-            x += drawExclamationMark(x, y, color, bigFont) + charTable.charSpacing;
+            x += drawExclamationMark(x, y, color, bigFont);
         } else if (int spriteIndex = charToSprite(c, bigFont)) {
-            drawCharSprite(spriteIndex, x, y, color);
-            x += getSpriteDimensions(spriteIndex).first + charTable.charSpacing;
+            drawCharSprite(spriteIndex, x, y);
+            x += getSprite(spriteIndex).width;
         }
     }
 
     if (addEllipsis) {
         int dotSprite = bigFont ? kBigDotSprite : kSmallDotSprite;
-        auto dotSpriteWidth = getSpriteDimensions(dotSprite).first;
-        drawCharSprite(dotSprite, x, y, color);
+        auto dotSpriteWidth = getSprite(dotSprite).width;
+        drawCharSprite(dotSprite, x, y);
         x += dotSpriteWidth;
-        drawCharSprite(dotSprite, x, y, color);
+        drawCharSprite(dotSprite, x, y);
         x += dotSpriteWidth;
-        drawCharSprite(dotSprite, x, y, color);
+        drawCharSprite(dotSprite, x, y);
     }
 }
 
-void drawMenuText(int x, int y, const char *str, int maxWidth /* = INT_MAX */, int color /* = kWhiteText2 */, bool bigFont /* = false */)
+void drawText(int x, int y, const char *str, int maxWidth /* = INT_MAX */, int color /* = kWhiteText2 */, bool bigFont /* = false */)
 {
     maxWidth = maxWidth <= 0 ? INT_MAX : maxWidth;
 
     auto elisionInfo = getElisionInfo(x, maxWidth, str, bigFont);
     auto end = elisionInfo.start + elisionInfo.stringLength;
-    drawMenuText(x, y, elisionInfo.start, end, color, bigFont, elisionInfo.needsEllipsis);
+    drawText(x, y, elisionInfo.start, end, color, bigFont, elisionInfo.needsEllipsis);
 }
 
-void drawMenuTextRightAligned(int x, int y, const char *str, int maxWidth /* = INT_MAX */, int color /* = kWhiteText2 */, bool bigFont /* = false */)
+void drawTextRightAligned(int x, int y, const char *str, int maxWidth /* = INT_MAX */, int color /* = kWhiteText2 */, bool bigFont /* = false */)
 {
     maxWidth = maxWidth <= 0 ? INT_MAX : maxWidth;
     int textLength = getStringPixelLength(str, bigFont);
     int tempX = x - std::min(textLength, maxWidth);
     auto elisionInfo = getElisionInfo(tempX, maxWidth, str, bigFont);
     auto end = elisionInfo.start + elisionInfo.stringLength;
-    drawMenuText(x - elisionInfo.pixelWidth, y, elisionInfo.start, end, color, bigFont, elisionInfo.needsEllipsis);
+    drawText(x - elisionInfo.pixelWidth, y, elisionInfo.start, end, color, bigFont, elisionInfo.needsEllipsis);
 }
 
-void drawMenuTextCentered(int x, int y, const char *str, int maxWidth /* = INT_MAX */, int color /* = kWhiteText2 */, bool bigFont /* = false */)
+void drawTextCentered(int x, int y, const char *str, int maxWidth /* = INT_MAX */, int color /* = kWhiteText2 */, bool bigFont /* = false */)
 {
     maxWidth = maxWidth <= 0 ? INT_MAX : maxWidth;
     int textLength = getStringPixelLength(str, bigFont);
@@ -215,16 +230,15 @@ void drawMenuTextCentered(int x, int y, const char *str, int maxWidth /* = INT_M
     auto elisionInfo = getElisionInfo(tempX, maxWidth, str, bigFont);
     x -= (elisionInfo.pixelWidth + 1) / 2;
     auto end = elisionInfo.start + elisionInfo.stringLength;
-    drawMenuText(x, y, elisionInfo.start, end, color, bigFont, elisionInfo.needsEllipsis);
+    drawText(x, y, elisionInfo.start, end, color, bigFont, elisionInfo.needsEllipsis);
 }
 
 int getStringPixelLength(const char *str, bool bigFont /* = false */)
 {
-    const auto charTable = bigFont ? &swos.bigCharsTable : &swos.smallCharsTable;
     int len = 0;
 
     for (char c; c = *str; str++)
-        len += charSpriteWidth(c, charTable);
+        len += charSpriteWidth(c, bigFont);
 
     return len;
 }
@@ -235,8 +249,7 @@ void elideString(char *str, int maxStrLen, int maxPixels, bool bigFont /* = fals
 {
     assert(str && maxPixels);
 
-    const auto charTable = bigFont ? &swos.bigCharsTable : &swos.smallCharsTable;
-    int dotWidth = charSpriteWidth('.', charTable);
+    int dotWidth = charSpriteWidth('.', bigFont);
 
     constexpr int kNumDotsInEllipsis = 3;
     int ellipsisWidth = kNumDotsInEllipsis * dotWidth;
@@ -247,7 +260,7 @@ void elideString(char *str, int maxStrLen, int maxPixels, bool bigFont /* = fals
     for (int i = 0; str[i]; i++) {
         auto c = str[i];
 
-        int charWidth = charSpriteWidth(c, charTable);
+        int charWidth = charSpriteWidth(c, bigFont);
 
         if (len + charWidth > maxPixels) {
             int pixelsRemaining = maxPixels - len;

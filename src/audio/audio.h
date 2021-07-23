@@ -14,6 +14,7 @@ int getMusicVolume();
 
 void initAudio();
 void finishAudio();
+void stopAudio();
 void initGameAudio();
 void resetGameAudio();
 void ensureMenuAudioFrequency();

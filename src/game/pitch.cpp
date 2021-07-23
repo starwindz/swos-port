@@ -11,6 +11,7 @@ static constexpr int kSwosPatternSize = 16;
 
 static int m_res;
 
+static void drawPitch(float xOfs, float yOfs, int row, int column, int numPatternsX, int numPatternsY);
 static void reloadPitch(AssetResolution oldResolution, AssetResolution newResolution);
 
 void initPitches()
@@ -30,6 +31,7 @@ static int getPitchNo()
 void loadPitch()
 {
     int pitchNo = getPitchNo();
+    logInfo("Loading pitch %d", pitchNo);
 
     auto pitchIndex = kPitchIndices[pitchNo];
     auto start = kPitchPatternStartIndices[pitchNo];
@@ -47,6 +49,38 @@ void loadPitch()
             }
         }
     }
+}
+
+// Renders pitch at cameraX and cameraY.
+void drawPitch()
+{
+    auto cameraX = getCameraX();
+    auto cameraY = getCameraY();
+
+    // make sure to skip the top invisible row
+    int row = swos.g_cameraY / kSwosPatternSize - 1;
+    int column = swos.g_cameraX / kSwosPatternSize;
+    float xOfs = FixedPoint(cameraX.whole() % kSwosPatternSize, cameraX.fraction());
+    float yOfs = FixedPoint(cameraY.whole() % kSwosPatternSize, cameraY.fraction());
+
+    int numPatternsX = kVgaWidth / kSwosPatternSize + 2;
+    int numPatternsY = kVgaHeight / kSwosPatternSize + 2;
+    numPatternsX = std::min(numPatternsX, kPitchWidth - column);
+    numPatternsY = std::min(numPatternsY, kPitchHeight - row);
+
+    drawPitch(xOfs, yOfs, row, column, numPatternsX, numPatternsY);
+
+    setCameraX(cameraX);
+    setCameraY(cameraY);
+    swos.g_oldCameraX = cameraX.whole();
+    swos.g_oldCameraY = cameraY.whole();
+
+    swos.cameraCoordinatesValid = 1;
+}
+
+void SWOS::ScrollToCurrent()
+{
+    drawPitch();
 }
 
 // Using floating point SDL calls resulted with visible stitches in patterns. Switched to integer, rounding
@@ -122,39 +156,11 @@ static void drawPitch(float xOfs, float yOfs, int row, int column, int numPatter
     }
 }
 
-// Sets view to cameraX and cameraY.
-// Updates oldCameraX and oldCameraY.
-//
-void SWOS::ScrollToCurrent()
-{
-    auto cameraX = getCameraX();
-    auto cameraY = getCameraY();
-
-    // make sure to skip the top invisible row
-    int row = swos.g_cameraY / kSwosPatternSize - 1;
-    int column = swos.g_cameraX / kSwosPatternSize;
-    float xOfs = FixedPoint(cameraX.whole() % kSwosPatternSize, cameraX.fraction());
-    float yOfs = FixedPoint(cameraY.whole() % kSwosPatternSize, cameraY.fraction());
-
-    int numPatternsX = kVgaWidth / kSwosPatternSize + 2;
-    int numPatternsY = kVgaHeight / kSwosPatternSize + 2;
-    numPatternsX = std::min(numPatternsX, kPitchWidth - column);
-    numPatternsY = std::min(numPatternsY, kPitchHeight - row);
-
-    drawPitch(xOfs, yOfs, row, column, numPatternsX, numPatternsY);
-
-    setCameraX(cameraX);
-    setCameraY(cameraY);
-    swos.g_oldCameraX = cameraX.whole();
-    swos.g_oldCameraY = cameraY.whole();
-
-    swos.cameraCoordinatesValid = 1;
-}
-
 void SWOS::DrawAnimatedPatterns()
 {
     if (!swos.replayState && !swos.g_trainingGame && swos.showFansCounter)
         swos.showFansCounter--;
+    //...
 }
 
 static void reloadPitch(AssetResolution oldResolution, AssetResolution newResolution)

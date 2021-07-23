@@ -100,11 +100,12 @@ Play Match menu
 ---------------
 
 It is the menu that pops up right before the game and after the players have set up their teams. It allows
-change of controls for any player. All available controls are listed in the middle. To select a control for
+a change of controls for any player. All available controls are listed in the middle. To select a control for
 the player select the control and press left/right while holding the fire. Left assigns it to the player 1,
 right to the player 2 (if 2 player game). It is also possible to drag with mouse. Currently selected controls
 for the players are on the left (player 1) and right (player 2). When satisfied with choice choose "PLAY"
 item. There's also a "BACK" button to return to set up team menu.
+If needed, this menu can be disabled via options.
 
 
 

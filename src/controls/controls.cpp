@@ -377,8 +377,8 @@ bool testForPlayerKeys()
 {
     auto key = lastKey();
 
-    return m_pl1Controls == kKeyboard1 && keyboard1HasScancode(key) ||
-        m_pl2Controls == kKeyboard2 && keyboard2HasScancode(key);
+    return swos.playMatchTeam1Ptr->teamControls != kComputerTeam && m_pl1Controls == kKeyboard1 && keyboard1HasScancode(key) ||
+        swos.playMatchTeam2Ptr->teamControls != kComputerTeam && m_pl2Controls == kKeyboard2 && keyboard2HasScancode(key);
 }
 
 // outputs:

@@ -27,7 +27,7 @@ static void videoOptionsMenuOnInit()
     m_showTouchTrails = getShowTouchTrails();
     m_transparentButtons = getTransparentVirtualJoypadButtons();
 #else
-    int diff;
+    int diff = 0;
     auto label = &firstLabelEntry;
     auto changer = &firstChangerItemEntry;
 

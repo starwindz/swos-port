@@ -271,11 +271,11 @@ static void drawCalibrateMenu()
 
     drawMenuBackground();
 
-    drawMenuTextCentered(kMenuScreenWidth / 2, kTextY, "WHEN THE CONTROLLER IS IDLE PRESS ANY BUTTON");
+    drawTextCentered(kMenuScreenWidth / 2, kTextY, "WHEN THE CONTROLLER IS IDLE PRESS ANY BUTTON");
 #ifdef __ANDROID__
-    drawMenuTextCentered(kMenuScreenWidth / 2, kTextY + 10, "(TAP/BACK CANCELS)");
+    drawTextCentered(kMenuScreenWidth / 2, kTextY + 10, "(TAP/BACK CANCELS)");
 #else
-    drawMenuTextCentered(kMenuScreenWidth / 2, kTextY + 10, "(MOUSE CLICK/ESCAPE CANCELS)");
+    drawTextCentered(kMenuScreenWidth / 2, kTextY + 10, "(MOUSE CLICK/ESCAPE CANCELS)");
 #endif
 
     updateScreen();

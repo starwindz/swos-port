@@ -1,21 +1,34 @@
 #include "gameTime.h"
+#include "gameSprites.h"
 #include "sprites.h"
-#include "camera.h"
+#include "renderSprites.h"
 
 using LastPeriodMinuteHandler = void (*)();
+using TimeDigitSprites = std::array<int, 4>;
 
 static int m_endGameCounter;
 
 static bool isGameAtMinute(dword minute);
 static bool prolongLastMinute();
 static void positionTimeSprite();
+static TimeDigitSprites getGameTimeSprites();
 static LastPeriodMinuteHandler getPeriodEndHandler();
 static bool isNextMinuteLastInPeriod();
 static void bumpGameTime();
 static void setupLastMinuteSwitchNextFrame();
 static void ensureTimeSpriteIsVisible();
 
-static void updateTime()
+void resetTime()
+{
+    swos.gameSeconds = 0;
+    memset(&swos.gameTime, 0, sizeof(swos.gameTime));
+    swos.secondsSwitchAccumulator = 0;
+    positionTimeSprite();
+    swos.currentTimeSprite.visible = 0;
+    swos.currentTimeSprite.pictureIndex = kTimeSprite118Mins;
+}
+
+void updateGameTime()
 {
     ensureTimeSpriteIsVisible();
 
@@ -63,37 +76,24 @@ static void updateTime()
     positionTimeSprite();
 }
 
-void SWOS::UpdateTime()
+void drawGameTime(const Sprite& sprite)
 {
-    updateTime();
-}
+    assert(!sprite.x.fraction() && !sprite.y.fraction() && !sprite.z.fraction());
 
-TimeDigitSprites getGameTime()
-{
-    TimeDigitSprites sprites = { -1, -1, -1, -1 };
+    int x = sprite.x.whole();
+    int y = sprite.y.whole();
+    int z = sprite.z.whole();
 
-    if (swos.gameTime[1]) {
-        sprites[0] = swos.gameTime[1] + kBigTimeDigitSprite0;
-        sprites[1] = swos.gameTime[2] + kBigTimeDigitSprite0;
-        sprites[2] = swos.gameTime[3] + kBigTimeDigitSprite0;
-    } else if (swos.gameTime[2]) {
-        sprites[0] = swos.gameTime[2] + kBigTimeDigitSprite0;
-        sprites[1] = swos.gameTime[3] + kBigTimeDigitSprite0;
-    } else {
-        sprites[0] = swos.gameTime[3] + kBigTimeDigitSprite0;
+    auto kDigitWidth = getSprite(kBigTimeDigitSprite0 + 8).width;
+    auto timeDigitSprites = getGameTimeSprites();
+
+    int xOffset = 0;
+    for (size_t i = 0; i < timeDigitSprites.size() && timeDigitSprites[i] >= 0; i++) {
+        drawMenuSprite(timeDigitSprites[i], x + xOffset, y - z);
+        xOffset += kDigitWidth;
     }
 
-    return sprites;
-}
-
-void resetTime()
-{
-    swos.gameSeconds = 0;
-    memset(&swos.gameTime, 0, sizeof(swos.gameTime));
-    swos.secondsSwitchAccumulator = 0;
-    positionTimeSprite();
-    swos.currentTimeSprite.visible = 0;
-    swos.currentTimeSprite.pictureIndex = kTimeSprite118Mins;
+    drawMenuSprite(kTimeSprite8Mins, x + xOffset, y - z);
 }
 
 static dword gameTimeInMinutes()
@@ -193,7 +193,23 @@ static void endSecondExtraTime()
     EndOfGame();
 }
 
-using LastPeriodMinuteHandler = void (*)();
+static TimeDigitSprites getGameTimeSprites()
+{
+    TimeDigitSprites sprites = { -1, -1, -1, -1 };
+
+    if (swos.gameTime[1]) {
+        sprites[0] = swos.gameTime[1] + kBigTimeDigitSprite0;
+        sprites[1] = swos.gameTime[2] + kBigTimeDigitSprite0;
+        sprites[2] = swos.gameTime[3] + kBigTimeDigitSprite0;
+    } else if (swos.gameTime[2]) {
+        sprites[0] = swos.gameTime[2] + kBigTimeDigitSprite0;
+        sprites[1] = swos.gameTime[3] + kBigTimeDigitSprite0;
+    } else {
+        sprites[0] = swos.gameTime[3] + kBigTimeDigitSprite0;
+    }
+
+    return sprites;
+}
 
 static LastPeriodMinuteHandler getPeriodEndHandler()
 {
@@ -215,12 +231,12 @@ static void positionTimeSprite()
 {
     constexpr int kTimeXOffset = 20 - 6;
 
-    swos.currentTimeSprite.x = getCameraX() + kTimeXOffset;
+    swos.currentTimeSprite.x = kTimeXOffset;
 
     constexpr int kTimeZOffset = 10'000;
     constexpr int kTimeYOffset = 9;
 
-    swos.currentTimeSprite.y = getCameraY() + kTimeYOffset + kTimeZOffset;
+    swos.currentTimeSprite.y = kTimeYOffset + kTimeZOffset;
     swos.currentTimeSprite.z = kTimeZOffset;
 }
 
@@ -246,6 +262,6 @@ static void ensureTimeSpriteIsVisible()
 {
     if (!swos.currentTimeSprite.visible) {
         swos.currentTimeSprite.visible = true;
-        InitDisplaySprites();
+        initDisplaySprites();
     }
 }

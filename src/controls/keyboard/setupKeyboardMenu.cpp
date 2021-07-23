@@ -148,8 +148,8 @@ static void setupKeyboardMenuOnDraw()
         auto firstKeyEntry = getMenuEntry(firstKey);
         auto firstActionEntry = getMenuEntry(firstAction);
 
-        drawMenuTextCentered(firstKeyEntry->centerX(), firstKeyEntry->y, tempBuf);
-        drawMenuTextCentered(firstActionEntry->centerX(), firstActionEntry->y, tempBuf);
+        drawTextCentered(firstKeyEntry->centerX(), firstKeyEntry->y, tempBuf);
+        drawTextCentered(firstActionEntry->centerX(), firstActionEntry->y, tempBuf);
     }
 }
 
@@ -222,11 +222,11 @@ static void drawInputKeyPrompt()
     constexpr int kPressKeyYLine2 = 40;
 
     drawMenuBackground();
-    drawMenuTextCentered(kMenuScreenWidth / 2, kPressKeyYLine1, "PRESS A KEY ON THE KEYBOARD");
+    drawTextCentered(kMenuScreenWidth / 2, kPressKeyYLine1, "PRESS A KEY ON THE KEYBOARD");
 #ifdef __ANDROID__
-    drawMenuTextCentered(kMenuScreenWidth / 2, kPressKeyYLine2, "(TAP CANCELS)");
+    drawTextCentered(kMenuScreenWidth / 2, kPressKeyYLine2, "(TAP CANCELS)");
 #else
-    drawMenuTextCentered(kMenuScreenWidth / 2, kPressKeyYLine2, "(MOUSE CLICK CANCELS)");
+    drawTextCentered(kMenuScreenWidth / 2, kPressKeyYLine2, "(MOUSE CLICK CANCELS)");
 #endif
 
     updateScreen();

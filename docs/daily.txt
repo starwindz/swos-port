@@ -4233,3 +4233,164 @@ earlier:
 - fixed missing result dash sprite
 - made the app DPI aware
 - fixed number input (it was calling the wrong function when I tested it initially, d-oh!)
+22.06.2021.
+- implemented string coloring in menus, it's a pretty simplistic solution (changing texture color mod), I
+  wasn't sure it will look good, but it seems it does, at least with these current shitty sprites
+- converted remnants of FixedPoint to float
+- fixed keyboard shortcuts getting blocked by custom player keys even if that player isn't currently playing
+  (e.g. keyboard2 uses 'S' and stats get blocked even if the only player is playing with keyboard1)
+- implemented statistics screen
+- fixed invalid team colors conversion palette
+23.06.2021.
+- created blocky assets variant
+- fixed compile assets script, it was skipping zero pattern which has only single color due to ignore_blank
+  option; turned the option off for pitches
+- removed empty sprites 1287 and 1302
+- wanted to implement current player indicator, but it kind of ballooned out of proportions, so couldn't
+  finish it, but it's on a good path
+24.06.2021.
+- recompiled SWOS++ to observe how some variables change in their original habitat without fear of accidental
+  tampering ;)
+- restored debug variable dump functionality
+- finished with current player name indicator, but it's not working properly :/
+25.06.2021.
+- player name indicator fixed, that was easy, just wasn't resetting lastPlayerBeforeGoalkeeper when the name
+  got hidden, and even remembered it while lying in bed; now it works perfectly in sync with the only true
+  SWOS version
+- conversion of code to display scorer list and rest of the result data is in progress
+26.06.2021.
+- decided to remove sprites 225 and 226 (big football pitches), they take up a lot of space, and 226 even
+  can't fit in one 2k texture; I'll probably recreate them by drawing instructions, or even using SVG
+- refactored sprites code, separated into few more files and removed some obsolete code
+- working on GoalScored and ShowResult, one place updates internal data structures, second renders it (or
+  sets it up to be called by the sprite renderer); still in progress
+27.06.2021.
+- removed all uses of SWOS charsTable from text.cpp except where strictly necessary; out with the old in with
+  the new
+- finished implementing result sprites, now on to debugging (since of course it's not working)
+28.06.2021.
+- result and scorer list fixed, now working! (though result needs a bit more testing)
+29.06.2021.
+- fixed invalid update of team1 total goals (not counting 2nd leg in total)
+- digit 1 seems to look fine in the game time, no idea how that got spontaneously fixed :P
+- started converting bench code, first removed a ton of it, it's gonna take a while
+30.06.2021.
+- been analyzing bench rendering code, pretty much figured it all out, now looking at BenchCheckControls();
+  SWOS++ proved invaluable with its variable dumping and easy routine (or just about any code) nop-ing
+01.07.2021.
+- went through "dynamic" part of bench code, got it more-less
+- removed tons of old bench variables (only some shared ones left for now)
+- removed remains of CD-ROM routines
+- finally started converting GameLoop()
+- [ida2asm] added display error when an end of range symbol is encountered in a fragment, but without the
+  starting symbol (which most likely means that the starting range symbol fell as a victim of another range)
+02.07.2021.
+- removing animation code completely
+- removing unneeded music code and refactoring existing one a bit
+03.07.2021.
+- conversion of GameLoop() in progress, so annoyed by the highlights code, it's preventing me from removing
+  so many variables, I'll have to convert it too sometime
+04.07.2021.
+- converted GameLoop(), albeit poorly, with goto's, but at least it's compiling... will be working to fix it
+  up to some higher standards
+- and after minor interventions the game even works, except for the comments and game clock
+05.07.2021.
+- structured gameLoop() successfully, only broke stats display, but quickly got it back ;)
+- game time and comments fixed
+06.07.2021.
+- been bashing the bench code, managed to implement control check to catch when the bench is called, and move
+  the camera there... nothing rendered yet; I think I managed to fix a little bug in the original code: bench
+  tap timeout timer increments non-stop when no direction is pressed and once a direction is pressed for the
+  second time the timer might end up too close to 15 (max value) and expire too fast, in the middle of three
+  taps... at least that's how I see it according to the code, I've included the fix and will see if it makes
+  any difference
+07.07.2021.
+- added handling of throw-in when bench is called (player should drop the ball and run away), and when keeper
+  is holding the ball (not sure what problem would appear here if this piece of code went missing)
+- had to modify definition of players sprite array field in TeamGeneralInfo, that's actually a SWOS data
+  pointer to SWOS data pointer ;) (must also dereference it before indexing as it will be interpreted as an
+  array of arrays)
+- started with bench rendering implementation, haven't done much, sorting out all the variables is slowing
+  me down
+08.07.2021.
+- implemented coach and reserve players rendering, but used fixed menu instead of game coordinates and
+  nothing is showing... will have to leave that for tomorrow
+09.07.2021.
+- after a short fix (including subtraction of int and FixedPoint), players and coach are showing up on the
+  bench
+- been trying to implement arrow movement, but was unable to finish; damned crazy logic is making it real
+  slow, so now I'm trying out new hybrid approach, copying in detail some parts of the code, and rewriting
+  other parts from scratch from the way I know it works
+10.07.2021.
+- finished arrow movement, and debugged it, works nice
+- added logic for selecting the bench player, but currently it isn't working properly
+11.07.2021.
+- fixed the glitches, now bench player selection works properly
+- been working on substitutes menu rendering, but it isn't ready yet
+- switched menu frame rendering to floating point, but menu backgrounds are more problematic, since they need
+  to be rendered into textures with specified dimensions, which have to be truncated or rounded; I will
+  probably have to round up, and then match the alpha to the fractional part (and will need to revise assert
+  that catches off screen drawing)
+12.07.2021.
+- fixing menu textures in progress, nearly done
+13.07.2021.
+- added missing call to menu entry caching when menu is returned to
+- found an easy solution for drawing frames with thickness other than 1 pixel... simple temporary setting of
+  render scale, hope it won't backfire ;)
+- ensured the fall-back branch when texture allocation fails works, it simply draws the entry background
+  single colored
+- handled the case when entry background is larger than maximum safe texture size (2k)
+- haven't fixed asserts in play match menu, but they seem to come from two entries that have negative y
+  coordinate (perhaps the game does it to shove them away, don't know for certain yet)
+- removed scrolling images at the start
+14.07.2021.
+- seems there was a team colors mismatch, team colors weren't correctly picked, now it's fixed
+- after menu background rendering digression and other annoyances, finally returned to bench menus; got some
+  more of it rendered before the juice ran out, next is filling player menu entries with data; with things
+  going smoothly like a wounded slug up the oak tree, everything's gonna be ready in no time
+15.07.2021.
+- player list rendering done!
+- started implementing behaviour (cursor movement in the list); seems there are a few invalid memory accesses
+  in the code >_> (e.g. indexing players array with -1)
+16.07.2021.
+- most of the bench logic is in place now, but couldn't debug it, so that awaits in the future
+17.07.2021.
+- fixed sprite rendering problems
+- implemented formation menu rendering and controls handling, debugged it and it seems to work fine
+- fixed most of the bench control handling, but there are still glitches
+18.07.2021.
+- substitutes are now actually happening
+- fixed page up/down keys not triggering/returning from bench
+- fixed those damn annoying assertions in play match menu
+- rearranged code a bit better to protect from invalid player indices in bench
+- fixed team reversal in bench (not properly initialized team players pointer), but a player swapping glitch
+  still persists
+19.07.2021.
+- it seems player short and full name mismatch goes way back into DOS version (confirmed by memory dump),
+  luckily long name is never used during the game (as well as that face2 field, at least I've never seen it)
+- added asserts for allowed picture indices since the latest memory overwrite was causing some messed up
+  sprites to show up
+- no luck with fixing the glitch today, also the order of players in bench menu is incorrect
+20.07.2021.
+- fixed not properly showing selected player for swapping in bench menu when coach is selected
+- fixed invalid order of players in bench menu, as well as swapped players ending up at wrong positions
+- fixed bench player selected to go in not showing up properly on top of the menu
+- fixed 5th reserve player not being selectable
+- I think I got the memory overwrite after a substitute, it was due to old 1d array changed to 2d, but one
+  place was still accessing it linearly, this is a good lesson to prefer std::array wherever possible
+- fixed assert in menus that only string-type entries can blink (oops); I think this should also fix reported
+  Android crash when swapping players before the game
+- fixed yellow/red card bench menu icon sprites missing from the assets
+- played a couple of games, seems to be working fine, hope I'm not forgetting something
+- checked why asset packer chokes with big pitches, it seems it's working, just very slow; it starts getting
+  really slow after 600-700 patterns; not sure if it's possible to speed it up, the algorithm seems like
+  O(n^2), but will try to understand it better and then reevaluate
+21.07.2021.
+- debugged the rects packer algorithm, it seems to keep track of available space inside each atlas in form
+  of a rectangle list; I've seen this list grow to 5-6k elements, and it's scanned in a double loop --
+  O(n^2); changed packing algorithm to guillotine and it's now finishing within reasonable time, but what I
+  really should do here is create a custom packer for the pitches, that would be the fastest running solution
+  and guaranteed to be optimal (since each pattern is equal, no need to solve the general purpose packing
+  problem), will see
+22.07.2021.
+- went for it, and implemented the above idea ;) works like a charm, and is as fast as can be

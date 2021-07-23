@@ -3,8 +3,8 @@
 #include "Util.h"
 
 constexpr int kImportsCapacity = 6'000;
-constexpr int kExportsCapacity  = 7'500;
-constexpr int kExportTypesCapacity = 29'000;
+constexpr int kExportsCapacity  = 10'000;
+constexpr int kExportTypesCapacity = 33'000;
 constexpr int kMaxExportEntries = 600;
 constexpr int kMaxReplacement = 50;
 constexpr int kTypeSizesCapacity = 1'000;

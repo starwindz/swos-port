@@ -1,6 +1,6 @@
 #include "quickConfigMenu.h"
 #include "menuBackground.h"
-#include "menus.h"
+#include "renderSprites.h"
 #include "text.h"
 #include "controls.h"
 #include "scancodes.h"
@@ -129,7 +129,7 @@ static void drawControls(const QuickConfigContext& context)
 
     for (int i = 0; i < kNumDefaultGameControlEvents; i++) {
         if (context.elementNames[i][0]) {
-            drawMenuText(kControlX, y, context.elementNames[i]);
+            drawText(kControlX, y, context.elementNames[i]);
             y += kRowGap;
         }
     }
@@ -148,24 +148,24 @@ static void drawQuickConfigMenu(const QuickConfigContext& context)
     snprintf(buf, sizeof(buf), "SELECT %sS FOR PLAYER %d", context.selectWhat, context.player == kPlayer1 ? 1 : 2);
 
     drawMenuBackground();
-    drawMenuTextCentered(kRedefineKeysPromptX, kRedefineKeysHeaderY, buf);
+    drawTextCentered(kRedefineKeysPromptX, kRedefineKeysHeaderY, buf);
 
-    drawMenuText(kRedefineKeysColumn1X, kRedefineKeysStartY, "UP:");
-    drawMenuText(kRedefineKeysColumn1X, kRedefineKeysStartY + 10, "DOWN:");
-    drawMenuText(kRedefineKeysColumn1X, kRedefineKeysStartY + 20, "LEFT:");
-    drawMenuText(kRedefineKeysColumn1X, kRedefineKeysStartY + 30, "RIGHT:");
-    drawMenuText(kRedefineKeysColumn1X, kRedefineKeysStartY + 40, "FIRE:");
-    drawMenuText(kRedefineKeysColumn1X, kRedefineKeysStartY + 50, "BENCH:");
+    drawText(kRedefineKeysColumn1X, kRedefineKeysStartY, "UP:");
+    drawText(kRedefineKeysColumn1X, kRedefineKeysStartY + 10, "DOWN:");
+    drawText(kRedefineKeysColumn1X, kRedefineKeysStartY + 20, "LEFT:");
+    drawText(kRedefineKeysColumn1X, kRedefineKeysStartY + 30, "RIGHT:");
+    drawText(kRedefineKeysColumn1X, kRedefineKeysStartY + 40, "FIRE:");
+    drawText(kRedefineKeysColumn1X, kRedefineKeysStartY + 50, "BENCH:");
 
     assert(kDefaultGameControlEvents[kDefaultControlsBenchIndex] == kGameEventBench);
     if (!context.benchRequired && context.currentSlot == kDefaultControlsBenchIndex)
-        drawMenuText(kRedefineKeysColumn1X, kRedefineKeysStartY + 60, "(HOLD FIRE TO SKIP)", -1, kYellowText);
+        drawText(kRedefineKeysColumn1X, kRedefineKeysStartY + 60, "(HOLD FIRE TO SKIP)", -1, kYellowText);
 
     constexpr int kAbortY = kRedefineKeysStartY + 50 + kRedefineKeysStartY - kRedefineKeysHeaderY;
 
     static_assert(kWarningY >= kAbortY + 10, "Warning and abort labels overlap");
 
-    drawMenuTextCentered(160, kAbortY, context.abortText);
+    drawTextCentered(160, kAbortY, context.abortText);
 
     drawControls(context);
 
@@ -201,7 +201,7 @@ static void drawConfirmationMenu()
         drawLine(x, kBottomLineY, kHorizontalSegmentLength, kHorizontal);
         drawLine(x, kBottomLineY - kVerticalSegmentLength + 1, kVerticalSegmentLength - 1, kVertical);
 
-        drawMenuTextCentered(x + kSegmentLength / 2 + 1, kFinalPromptY, text);
+        drawTextCentered(x + kSegmentLength / 2 + 1, kFinalPromptY, text);
 
         drawLine(x + kSegmentLength - kHorizontalSegmentLength + 1, kTopLineY, kHorizontalSegmentLength, kHorizontal);
         drawLine(x + kSegmentLength, kTopLineY + 1, kVerticalSegmentLength - 1, kVertical);
@@ -280,7 +280,7 @@ static Uint32 printWarning(QuickConfigStatus status, const char *control, const 
     auto showWarningTicks = SDL_GetTicks() + kWarningInterval;
 
     drawMenuBackground(context.warningY, context.warningY + 13);
-    drawMenuTextCentered(kVgaWidth / 2, context.warningY, warningBuffer, -1, kYellowText);
+    drawTextCentered(kVgaWidth / 2, context.warningY, warningBuffer, -1, kYellowText);
     updateScreen();
 
     return showWarningTicks;

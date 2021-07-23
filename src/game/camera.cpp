@@ -1,5 +1,14 @@
 #include "camera.h"
+#include "bench.h"
 #include "render.h"
+#include "random.h"
+
+constexpr int kTrainingGameStartX = 168;
+constexpr int kTrainingGameStartY = 313;
+
+constexpr int kTopStartLocationY = 16;
+constexpr int kBottomStartLocationY = 664;
+constexpr int kCenterX = 176;
 
 constexpr int kPenaltyShootoutCameraX = 336;
 constexpr int kPenaltyShootoutCameraY = 107;
@@ -81,11 +90,11 @@ void moveCamera()
         params = bookingPlayerMode();
     else if (swos.playingPenalties)
         params = penaltyShootoutMode();
-    else if (swos.waitForPlayerToGoInTimer)
+    else if (swos.g_waitForPlayerToGoInTimer)
         params = benchMode(true);
-    else if (swos.g_leavingSubsMenu)
+    else if (isCameraLeavingBench())
         params = leavingBenchMode();
-    else if (swos.g_inSubstitutesMenu)
+    else if (inBench())
         params = benchMode(false);
     else
         params = standardMode();
@@ -93,9 +102,18 @@ void moveCamera()
     updateCameraCoordinates(params);
 }
 
-void SWOS::MoveCamera()
+void setCameraToInitialPosition()
 {
-    moveCamera();
+    int startX = kTrainingGameStartX;
+    int startY = kTrainingGameStartY;
+
+    if (!swos.g_trainingGame) {
+        startX = kCenterX;
+        startY = SWOS::rand() & 1 ? kBottomStartLocationY : kTopStartLocationY;
+    }
+
+    setCameraX(startX);
+    setCameraY(startY);
 }
 
 static void clipCameraDestination(FixedPoint& xDest, FixedPoint& yDest, int xLimit)
@@ -216,7 +234,7 @@ static CameraParams benchMode(bool substitutingPlayer)
 {
     int limit = substitutingPlayer ? kSubstituteCameraLimit : getBenchCameraXLimit();
 
-    return { swos.g_cameraLeavingSubsLimit, kCenterLine, limit };
+    return { benchCameraX(), kCenterLine, limit };
 }
 
 static std::pair<int, int> getGameStoppedCameraDirections()

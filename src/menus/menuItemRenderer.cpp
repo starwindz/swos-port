@@ -1,9 +1,11 @@
 #include "menuItemRenderer.h"
 #include "menus.h"
 #include "windowManager.h"
+#include "color.h"
 
 constexpr int kMaxTextureWidth = 2048;
 constexpr int kMaxTextureHeight = 2048;
+constexpr int kSafeBorder = 2;
 
 static const std::array<std::array<Color, 33>, 7> kGradients = {{
     {{
@@ -78,6 +80,7 @@ static const std::array<int, 16> kBackgroundToGradient = {{
     2, 2, 2, 0, 1, 1, 1, 2, 0, 2, 3, 4, 1, 5, 6, 6
 }};
 
+// We're counting that there will be no entries with the same top left points
 struct EntryKey {
     unsigned x;
     unsigned y;
@@ -102,38 +105,40 @@ namespace std {
 }
 
 struct EntryRenderInfo {
-    EntryRenderInfo(int destX, int destY, int x, int y, int width, int height, int color, int texture = 0)
-        : destX(destX), destY(destY), x(x), y(y), width(width), height(height), color(color), texture(texture) {}
-    SDL_Rect rect() const { return { x, y, width, height}; }
+    EntryRenderInfo() = default;
 
-    int destX;
-    int destY;
-    int x;
-    int y;
-    int width;
-    int height;
+    int srcX;
+    int srcY;
+    SDL_Rect dst;
+    struct {
+        int left;
+        int right;
+        int top;
+        int bottom;
+    } frameAlpha;
     int color;
     int texture;
 };
 
 static std::unordered_map<EntryKey, EntryRenderInfo> m_cache;
-static std::vector<SDL_Surface *> m_surfaces;
 static std::vector<SDL_Texture *> m_textures;
+static std::pair<int, int> m_cacheScreenDimensions;
 
 static std::vector<EntryRenderInfo> m_currentSurfaceEntries;
-static int m_currentSurface;
+static int m_nextTextureIndex;
 
-static int m_x;
-static int m_y;
+static int m_x = kSafeBorder;
+static int m_y = kSafeBorder;
 static int m_maxX;
 static int m_maxY;
 
 static void clearCache();
-static void addEntry(const MenuEntry& entry);
+static void ensureCacheValidity();
+static void enqueueEntryBackgroundForCaching(const MenuEntry& entry);
 static SDL_Surface *createSurface(int width, int height);
 static SDL_Texture *createTexture(SDL_Surface *surface);
-static void createAndFillSurfaceAndTexture();
-static void fillEntryBackgroundPlain(const EntryRenderInfo& surfaceEntry);
+static void createAndFillTextureAtlas();
+static void renderEntryBackgroundSingleColor(const EntryRenderInfo& surfaceEntry);
 static void fillEntryBackground(SDL_Surface *surface, const EntryRenderInfo& surfaceEntry);
 
 void cacheMenuItemBackgrounds()
@@ -145,107 +150,91 @@ void cacheMenuItemBackgrounds()
 
     for (unsigned i = 0; i < menu->numEntries; i++) {
         const auto& entry = entries[i];
-        if (entry.selectable() && entry.background == kEntryFrameAndBackColor && entry.backgroundColor() != kNoBackground) {
+        if (entry.visible() && entry.background == kEntryFrameAndBackColor && entry.backgroundColor() != kNoBackground) {
             assert(m_cache.find(entry) == m_cache.end());
-            addEntry(entry);
+            enqueueEntryBackgroundForCaching(entry);
         }
     }
 
-    createAndFillSurfaceAndTexture();
+    createAndFillTextureAtlas();
+    m_cacheScreenDimensions = getWindowSize();
 }
 
-static SDL_Rect getTransformedRect(const MenuEntry *entry)
+static SDL_FRect getTransformedRect(const MenuEntry *entry)
 {
     return mapRect(entry->x, entry->y, entry->width, entry->height);
+}
+
+static EntryRenderInfo getEntryRenderInfo(const MenuEntry& entry, int texture = 0)
+{
+    auto entryRect = getTransformedRect(&entry);
+
+    EntryRenderInfo info;
+
+    info.srcX = 0;
+    info.srcY = 0;
+
+    auto endX = entryRect.x + entryRect.w;
+    auto endY = entryRect.y + entryRect.h;
+    int endXCeil = static_cast<int>(std::ceill(endX));
+    int endYCeil = static_cast<int>(std::ceill(endY));
+
+    info.dst.x = static_cast<int>(std::floorl(entryRect.x));
+    info.dst.y = static_cast<int>(std::floorl(entryRect.y));
+    info.dst.w = static_cast<int>(endXCeil - info.dst.x);
+    info.dst.h = static_cast<int>(endYCeil - info.dst.y);
+
+    info.frameAlpha.left = static_cast<int>(std::lround(255 * (1 - (entryRect.x - info.dst.x))));
+    info.frameAlpha.top = static_cast<int>(std::lround(255 * (1 - (entryRect.y - info.dst.y))));
+    info.frameAlpha.right  = static_cast<int>(std::lround(255 * (1 - (endXCeil - endX))));
+    info.frameAlpha.bottom = static_cast<int>(std::lround(255 * (1 - (endYCeil - endY))));
+
+    info.color = entry.backgroundColor();
+    info.texture = texture;
+
+    return info;
+}
+
+static void renderBackground(const EntryRenderInfo& entry)
+{
+    if (auto texture = m_textures[entry.texture]) {
+        SDL_Rect src{ entry.srcX, entry.srcY, entry.dst.w, entry.dst.h };
+        SDL_RenderCopy(getRenderer(), texture, &src, &entry.dst);
+    } else {
+        renderEntryBackgroundSingleColor(entry);
+    }
 }
 
 void drawMenuItemSolidBackground(const MenuEntry *entry)
 {
     assert(entry);
 
-    const auto& destRect = getTransformedRect(entry);
+    ensureCacheValidity();
 
     auto it = m_cache.find(entry);
     if (it != m_cache.end()) {
-        auto texture = m_textures[it->second.texture];
-        const auto& srcRect = it->second.rect();
-        if (texture)
-            SDL_RenderCopy(getRenderer(), texture, &srcRect, &destRect);
-        else
-            fillEntryBackgroundPlain(it->second);
+        renderBackground(it->second);
     } else {
-        auto surface = createSurface(destRect.w, destRect.h);
-        EntryRenderInfo entryInfo(destRect.x, destRect.y, 0, 0, destRect.w, destRect.h, entry->backgroundColor());
-        fillEntryBackground(surface, entryInfo);
+        auto renderInfo = getEntryRenderInfo(*entry);
+        auto surface = createSurface(renderInfo.dst.w, renderInfo.dst.h);
         if (surface) {
+            fillEntryBackground(surface, renderInfo);
             m_textures.push_back(createTexture(surface));
-            entryInfo.texture = m_textures.size() - 1;
-            if (m_textures.back()) {
-                m_cache.insert({ entry, entryInfo });
-                logInfo("Created %d x %d texture for a single menu entry background (color: %d)", destRect.w, destRect.h, entry->backgroundColor());
-                const auto& srcRect = entryInfo.rect();
-                SDL_RenderCopy(getRenderer(), m_textures.back(), &srcRect, &destRect);
-            }
+            renderInfo.texture = m_textures.size() - 1;
+            m_cache.insert({ entry, renderInfo });
+            renderBackground(renderInfo);
+        } else {
+            renderEntryBackgroundSingleColor(renderInfo);
         }
     }
-}
-
-static void deflateRect(SDL_Rect& rect)
-{
-    rect.x++;
-    rect.y++;
-    rect.w -= 2;
-    rect.h -= 2;
-}
-
-static void drawFrame(SDL_Rect dstRect)
-{
-    auto renderer = getRenderer();
-
-    auto thicknessX = std::lround(getXScale());
-    auto thicknessY = std::lround(getYScale());
-
-    if (thicknessX == thicknessY) {
-        while (thicknessX--) {
-            SDL_RenderDrawRect(renderer, &dstRect);
-            deflateRect(dstRect);
-        }
-    } else {
-        while (thicknessY--) {
-            SDL_RenderDrawLine(renderer, dstRect.x, dstRect.y, dstRect.x + dstRect.w - 1, dstRect.y);
-            SDL_RenderDrawLine(renderer, dstRect.x, dstRect.y + dstRect.h - 1, dstRect.x + dstRect.w - 1, dstRect.y + dstRect.h - 1);
-            dstRect.y++;
-            dstRect.h -= 2;
-        }
-        while (thicknessX--) {
-            SDL_RenderDrawLine(renderer, dstRect.x, dstRect.y, dstRect.x, dstRect.y + dstRect.h - 1);
-            SDL_RenderDrawLine(renderer, dstRect.x + dstRect.w - 1, dstRect.y, dstRect.x + dstRect.w - 1, dstRect.y + dstRect.h - 1);
-            dstRect.x++;
-            dstRect.w -= 2;
-        }
-    }
-}
-
-static void drawFrame(const MenuEntry *entry)
-{
-    auto dstRect = getTransformedRect(entry);
-    drawFrame(dstRect);
 }
 
 void drawMenuItemInnerFrame(int x, int y, int width, int height, word color)
 {
     assert(x >= 0 && x + width <= kMenuScreenWidth && y >= 0 && y + height <= kMenuScreenHeight && color < 16);
 
-    static const std::array<Color, 16> kInnerFrameColors = { {
-        { 0, 0, 36 }, { 180, 180, 180 }, { 252, 252, 252 }, { 0, 0, 0 }, { 108, 36, 0 }, { 180, 72, 0 }, { 252, 108, 0 },
-        { 108, 108, 108 }, { 36, 36, 36 }, { 72, 72, 72 }, { 252, 0, 0 }, { 0, 0, 252 }, { 108, 0, 36 }, { 144, 144, 252 },
-        { 36, 144, 0 }, { 252, 252, 0 },
-    }};
-
-    const auto& rgbColor = kInnerFrameColors[color];
-    SDL_SetRenderDrawColor(getRenderer(), rgbColor.r, rgbColor.g, rgbColor.b, 255);
-    auto dstRect = mapRect(x, y, width, height);
-    drawFrame(dstRect);
+    const auto& rgbColor = kMenuPalette[color];
+    drawFrame(x, y, width, height, rgbColor);
 }
 
 void drawMenuItemOuterFrame(MenuEntry *entry)
@@ -259,52 +248,103 @@ void drawMenuItemOuterFrame(MenuEntry *entry)
         0, 0, 0, 0, 1, 1, 2, 0, 0, 0, 0, 3, 4, 0, 0, 0,
     }};
 
-    auto color = kOuterFrameColors[kOuterFrameColorIndices[entry->backgroundColor()]];
-    SDL_SetRenderDrawColor(getRenderer(), color.r, color.g, color.b, 255);
-
-    drawFrame(entry);
+    auto renderer = getRenderer();
+    const auto& color = kOuterFrameColors[kOuterFrameColorIndices[entry->backgroundColor()]];
+    drawFrame(entry->x, entry->y, entry->width, entry->height, color);
 }
 
 static void clearCache()
 {
+    assert(m_currentSurfaceEntries.empty());
+
     m_cache.clear();
 
     for (const auto& texture : m_textures)
-        SDL_DestroyTexture(texture);
+        if (texture)
+            SDL_DestroyTexture(texture);
 
     m_textures.clear();
 
-    m_currentSurface = 0;
-    m_x = 0;
-    m_y = 0;
-    m_maxX = 0;
-    m_maxY = 0;
+    m_nextTextureIndex = 0;
+    m_x = kSafeBorder;
+    m_y = kSafeBorder;
+    m_maxX = kSafeBorder;
+    m_maxY = kSafeBorder;
 }
 
-static void addEntry(const MenuEntry& entry)
+static void ensureCacheValidity()
 {
-    auto dstRect = getTransformedRect(&entry);
+    const auto& screenDimensions = getWindowSize();
+    if (m_cacheScreenDimensions != screenDimensions) {
+        logInfo("Screen dimensions changed, cached: %d, %d -> actual: %d, %d", m_cacheScreenDimensions.first,
+            m_cacheScreenDimensions.second, screenDimensions.first, screenDimensions.second);
+        clearCache();
+    }
+}
 
-    if (m_y + dstRect.h <= kMaxTextureHeight) {
-        if (m_x + dstRect.w <= kMaxTextureWidth) {
-            m_currentSurfaceEntries.emplace_back(dstRect.x, dstRect.y, m_x, m_y, dstRect.w, dstRect.h, entry.backgroundColor(), m_currentSurface);
-            m_x += dstRect.w;
+static void createSingleBigTexture(const MenuEntry& entry, EntryRenderInfo& info)
+{
+    SDL_Texture *texture = nullptr;
+    if (auto surface = createSurface(info.dst.w, info.dst.h)) {
+        fillEntryBackground(surface, info);
+        texture = createTexture(surface);
+    }
+
+    m_textures.push_back(texture);
+
+    info.srcX = 0;
+    info.srcY = 0;
+}
+
+static void enqueueEntryBackgroundForCaching(const MenuEntry& entry)
+{
+    assert(entry.background == kEntryFrameAndBackColor && entry.backgroundColor() != kNoBackground);
+
+    auto info = getEntryRenderInfo(entry, m_nextTextureIndex);
+
+    if (info.dst.w > kMaxTextureWidth || info.dst.h > kMaxTextureHeight) {
+        createSingleBigTexture(entry, info);
+
+        for (auto& surfaceEntry : m_currentSurfaceEntries)
+            surfaceEntry.texture++;
+        for (auto& cachEntry : m_cache)
+            if (cachEntry.second.texture == m_nextTextureIndex)
+                cachEntry.second.texture++;
+
+        m_nextTextureIndex++;
+        m_cache.insert({ entry, info });
+        return;
+    }
+
+    if (m_y + info.dst.h + kSafeBorder <= kMaxTextureHeight) {
+        if (m_x + info.dst.w + kSafeBorder <= kMaxTextureWidth) {
+            info.srcX = m_x;
+            info.srcY = m_y;
+            m_currentSurfaceEntries.push_back(info);
+
+            m_x += info.dst.w + kSafeBorder;
             m_maxX = std::max(m_maxX, m_x);
-            m_maxY = std::max(m_maxY, m_y + dstRect.h);
+            m_maxY = std::max(m_maxY, m_y + info.dst.h + kSafeBorder);
         } else {
-            m_x = dstRect.w;
+            info.srcX = kSafeBorder;
+            info.srcY = m_maxY;
+            m_currentSurfaceEntries.push_back(info);
+
+            m_x = info.dst.w + 2 * kSafeBorder;
             m_maxX = std::max(m_maxX, m_x);
             m_y = m_maxY;
-            m_maxY += dstRect.h;
-            m_currentSurfaceEntries.emplace_back(dstRect.x, dstRect.y, 0, m_y, dstRect.w, dstRect.h, entry.backgroundColor(), m_currentSurface);
+            m_maxY += info.dst.h + kSafeBorder;
         }
     } else {
-        createAndFillSurfaceAndTexture();
-        m_x = dstRect.w;
-        m_y = 0;
-        m_maxY = dstRect.h;
-        m_currentSurface++;
-        m_currentSurfaceEntries.emplace_back(dstRect.x, dstRect.y, 0, 0, dstRect.w, dstRect.h, entry.backgroundColor(), m_currentSurface);
+        createAndFillTextureAtlas();
+        m_x = info.dst.w + 2 * kSafeBorder;
+        m_y = kSafeBorder;
+        m_maxY = info.dst.h + kSafeBorder;
+        info.srcX = kSafeBorder;
+        info.srcY = kSafeBorder;
+        info.texture++;
+        m_nextTextureIndex++;
+        m_currentSurfaceEntries.push_back(info);
     }
 
     assert(!m_currentSurfaceEntries.empty());
@@ -329,41 +369,41 @@ static SDL_Texture *createTexture(SDL_Surface *surface)
     if (!texture)
         logWarn("Failed to create menu item texture, size %d x %d", surface->w, surface->h);
 
+    SDL_FreeSurface(surface);
+
     return texture;
 }
 
-void createAndFillSurfaceAndTexture()
+void createAndFillTextureAtlas()
 {
-    assert(m_maxX > 0 && m_maxY > 0);
-
-    logInfo("Creating %d x %d menu item background texture atlas", m_maxX, m_maxY);
+    if (m_maxX <= kSafeBorder && m_maxY <= kSafeBorder)
+        return;
 
     if (auto surface = createSurface(m_maxX, m_maxY)) {
         for (const auto& surfaceEntry : m_currentSurfaceEntries) {
-            assert(surfaceEntry.x < m_maxX && surfaceEntry.y < m_maxY);
+            assert(surfaceEntry.srcX < m_maxX && surfaceEntry.srcY < m_maxY);
             fillEntryBackground(surface, surfaceEntry);
         }
         m_textures.push_back(createTexture(surface));
-        SDL_FreeSurface(surface);
     } else {
+        logWarn("Failed to allocate %d x %d surface for menu item background texture atlas", m_maxX, m_maxY);
         m_textures.push_back(nullptr);
     }
 
     m_currentSurfaceEntries.clear();
-    m_maxX = 0;
-    m_maxY = 0;
+    m_maxX = kSafeBorder;
+    m_maxY = kSafeBorder;
 }
 
 // Renders plain single-color background in case surface/texture allocation fails.
-static void fillEntryBackgroundPlain(const EntryRenderInfo& surfaceEntry)
+static void renderEntryBackgroundSingleColor(const EntryRenderInfo& surfaceEntry)
 {
     assert(surfaceEntry.color >= 0 && surfaceEntry.color < 16);
 
     const auto& gradient = kGradients[kBackgroundToGradient[surfaceEntry.color]];
     SDL_SetRenderDrawColor(getRenderer(), gradient[16].r, gradient[16].g, gradient[16].b, 255);
 
-    const auto& destRect = surfaceEntry.rect();
-    SDL_RenderFillRect(getRenderer(), &destRect);
+    SDL_RenderFillRect(getRenderer(), &surfaceEntry.dst);
 }
 
 static ColorF colorAtPoint(float x, float y, float diagonalSegment, int color)
@@ -385,22 +425,46 @@ static ColorF colorAtPoint(float x, float y, float diagonalSegment, int color)
     return { r, g, b };
 }
 
+static unsigned getAlpha(const EntryRenderInfo& entry, int x, int y)
+{
+    int alpha;
+
+    if (!x && !y)
+        alpha = entry.frameAlpha.left * entry.frameAlpha.top / 255;
+    else if (x == entry.dst.w - 1 && !y)
+        alpha = entry.frameAlpha.right * entry.frameAlpha.top / 255;
+    else if (x == entry.dst.w - 1 && y == entry.dst.h - 1)
+        alpha = entry.frameAlpha.right * entry.frameAlpha.bottom / 255;
+    else if (!x && y == entry.dst.h - 1)
+        alpha = entry.frameAlpha.left * entry.frameAlpha.bottom / 255;
+    else if (!x)
+        alpha = entry.frameAlpha.left;
+    else if (!y)
+        alpha = entry.frameAlpha.top;
+    else if (x == entry.dst.w - 1)
+        alpha = entry.frameAlpha.right;
+    else if (y == entry.dst.h - 1)
+        alpha = entry.frameAlpha.bottom;
+    else
+        alpha = 255;
+
+    assert(alpha >= 0 && alpha <= 255);
+    return std::lround(alpha);
+}
+
 static void fillEntryBackground(SDL_Surface *surface, const EntryRenderInfo& surfaceEntry)
 {
-    if (!surface) {
-        fillEntryBackgroundPlain(surfaceEntry);
-        return;
-    }
-
-    assert(surfaceEntry.x >= 0 && surfaceEntry.y >= 0 &&
-        surfaceEntry.x + surfaceEntry.width <= surface->w && surfaceEntry.y + surfaceEntry.height <= surface->h);
+    assert(surfaceEntry.srcX >= 0 && surfaceEntry.srcY >= 0 &&
+        surfaceEntry.srcX + surfaceEntry.dst.w <= surface->w && surfaceEntry.srcY + surfaceEntry.dst.h <= surface->h);
     assert(surfaceEntry.color >= 0 && surfaceEntry.color < 16);
 
     int screenWidth, screenHeight;
     std::tie(screenWidth, screenHeight) = getWindowSize();
 
-    assert(surfaceEntry.destX >= 0 && surfaceEntry.destX + surfaceEntry.width <= screenWidth &&
-        surfaceEntry.destY >= 0 && surfaceEntry.destY + surfaceEntry.height <= screenHeight);
+    assert((surfaceEntry.dst.x >= 0 && surfaceEntry.dst.x + surfaceEntry.dst.w <= screenWidth ||
+        surfaceEntry.dst.x < 0 && surfaceEntry.dst.x + surfaceEntry.dst.w < 0) &&
+        (surfaceEntry.dst.y >= 0 && surfaceEntry.dst.y + surfaceEntry.dst.h <= screenHeight ||
+        surfaceEntry.dst.y < 0 && surfaceEntry.dst.y + surfaceEntry.dst.h < 0));
 
     // length of the screen diagonal divided into 32 parts (color intensities for each gradient color)
     auto diagSeg = std::sqrt(static_cast<float>(screenWidth) * screenWidth + screenHeight * screenHeight) / 32.0f;
@@ -408,10 +472,10 @@ static void fillEntryBackground(SDL_Surface *surface, const EntryRenderInfo& sur
     // only calculate exact values at the vertex points of the rectangle
     // 1 -- 2
     // 3 -- 4
-    auto y1 = static_cast<float>(screenHeight - 1 - surfaceEntry.destY);
-    auto y2 = static_cast<float>(screenHeight - surfaceEntry.destY - surfaceEntry.height);
-    auto x1 = static_cast<float>(surfaceEntry.destX);
-    auto x2 = static_cast<float>(surfaceEntry.destX + surfaceEntry.width - 1);
+    auto y1 = static_cast<float>(screenHeight - 1 - surfaceEntry.dst.y);
+    auto y2 = static_cast<float>(screenHeight - surfaceEntry.dst.y - surfaceEntry.dst.h);
+    auto x1 = static_cast<float>(surfaceEntry.dst.x);
+    auto x2 = static_cast<float>(surfaceEntry.dst.x + surfaceEntry.dst.w - 1);
 
     // calculate R, G, B values for vertex points
     const auto& c1 = colorAtPoint(x1, y1, diagSeg, surfaceEntry.color);
@@ -422,23 +486,24 @@ static void fillEntryBackground(SDL_Surface *surface, const EntryRenderInfo& sur
     if (SDL_MUSTLOCK(surface) && SDL_LockSurface(surface) != 0)
         return;
 
-    auto p = reinterpret_cast<Uint32 *>(surface->pixels) + surface->pitch / 4 * surfaceEntry.y + surfaceEntry.x;
+    auto p = reinterpret_cast<Uint32 *>(surface->pixels) + surface->pitch / 4 * surfaceEntry.srcY + surfaceEntry.srcX;
 
     // linearly interpolate between the vertex points
-    for (int y = 0; y < surfaceEntry.height; y++) {
-        auto rLeft = c1.r + (c3.r - c1.r) / (surfaceEntry.height - 1) * y;
-        auto gLeft = c1.g + (c3.g - c1.g) / (surfaceEntry.height - 1) * y;
-        auto bLeft = c1.b + (c3.b - c1.b) / (surfaceEntry.height - 1) * y;
-        auto rRight = c2.r + (c4.r - c2.r) / (surfaceEntry.height - 1) * y;
-        auto gRight = c2.g + (c4.g - c2.g) / (surfaceEntry.height - 1) * y;
-        auto bRight = c2.b + (c4.b - c2.b) / (surfaceEntry.height - 1) * y;
+    for (int y = 0; y < surfaceEntry.dst.h; y++) {
+        auto rLeft = c1.r + (c3.r - c1.r) / (surfaceEntry.dst.h - 1) * y;
+        auto gLeft = c1.g + (c3.g - c1.g) / (surfaceEntry.dst.h - 1) * y;
+        auto bLeft = c1.b + (c3.b - c1.b) / (surfaceEntry.dst.h - 1) * y;
+        auto rRight = c2.r + (c4.r - c2.r) / (surfaceEntry.dst.h - 1) * y;
+        auto gRight = c2.g + (c4.g - c2.g) / (surfaceEntry.dst.h - 1) * y;
+        auto bRight = c2.b + (c4.b - c2.b) / (surfaceEntry.dst.h - 1) * y;
 
-        for (int x = 0; x < surfaceEntry.width; x++) {
-            unsigned r = std::lround(rLeft + (rRight - rLeft) / (surfaceEntry.width - 1) * x);
-            unsigned g = std::lround(gLeft + (gRight - gLeft) / (surfaceEntry.width - 1) * x);
-            unsigned b = std::lround(bLeft + (bRight - bLeft) / (surfaceEntry.width - 1) * x);
+        for (int x = 0; x < surfaceEntry.dst.w; x++) {
+            unsigned r = std::lround(rLeft + (rRight - rLeft) / (surfaceEntry.dst.w - 1) * x);
+            unsigned g = std::lround(gLeft + (gRight - gLeft) / (surfaceEntry.dst.w - 1) * x);
+            unsigned b = std::lround(bLeft + (bRight - bLeft) / (surfaceEntry.dst.w - 1) * x);
+            unsigned a = getAlpha(surfaceEntry, x, y);
             p[y * surface->pitch / 4 + x] = (r << surface->format->Rshift) | (g << surface->format->Gshift) |
-                (b << surface->format->Bshift) | surface->format->Amask;
+                (b << surface->format->Bshift) | (a << surface->format->Ashift);
         }
     }
 

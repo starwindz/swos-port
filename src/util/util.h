@@ -47,18 +47,6 @@ struct TextInputScope {
     ~TextInputScope() { SDL_StopTextInput(); }
 };
 
-struct Color {
-    uint8_t r;
-    uint8_t g;
-    uint8_t b;
-};
-
-struct ColorF {
-    float r;
-    float g;
-    float b;
-};
-
 void save68kRegisters();
 void restore68kRegisters();
 

@@ -112,6 +112,8 @@ Menu entries, following the header:
             string is centered across the entry. If bit 9 isn't set and offset
             34 is not zero, entry is drawn without text. If bit 13 is set text
             will blink gently.
+            Apparently the blink flag can be used for non-string entries as
+            well.
        38 ; see ofs34
        42 ; onSelect function
        46 ; controls mask (gets AND-ed with control word)

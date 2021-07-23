@@ -35,21 +35,26 @@ static std::atomic<bool> m_midiMuted;
 constexpr int kMidiNumBufferedChunks = 32;
 static int16_t m_adlBuffer[kMidiNumBufferedChunks][kMenuChunkSize * 2];
 
-static void finishAdl()
+static bool noMusic();
+static void finishAdl();
+static void setAdlFadeOutData(Uint32 start, Uint32 length);
+static std::pair<Uint32, Uint32> getAdlFadeOutData();
+static void playMenuSong();
+static bool playTitleSong();
+
+void initMusic()
 {
-    if (m_adlPlayer.load()) {
-        m_adlPlayerActive = false;
+    if (noMusic())
+        return;
 
-        if (m_adlPrefetchThread.joinable())
-            m_adlPrefetchThread.join();
+    static bool s_playedAtStart;
 
-        Mix_HookMusic(nullptr, nullptr);
+    ensureMenuAudioFrequency();
 
-        if (m_adlPlayer.load()) {
-            adl_close(m_adlPlayer);
-            m_adlPlayer = nullptr;
-        }
-    }
+    if (!s_playedAtStart && (m_titleSongDone || !playTitleSong()))
+        playMenuSong();
+
+    s_playedAtStart = true;
 }
 
 void finishMusic()
@@ -62,30 +67,39 @@ void finishMusic()
     finishAdl();
 }
 
-static bool noMusic()
+// Initiates music fade and returns immediately.
+void startFadingOutMusic()
 {
-    return swos.g_soundOff || swos.g_musicOff || !swos.g_menuMusic;
+    if (!noMusic()) {
+        logInfo("Initiating music fade out");
+
+        synchronizeMixVolume();
+        Mix_FadeOutMusic(kFadeOutMenuMusicLength);
+
+        Uint32 startTicks, length;
+        std::tie(startTicks, length) = getAdlFadeOutData();
+
+        if (startTicks) {
+            auto now = SDL_GetTicks();
+            int volume = (length - (now - startTicks)) * getMusicVolume() / length;
+            length = kFadeOutMenuMusicLength * getMusicVolume() / volume;
+            startTicks = now - (length - kFadeOutMenuMusicLength);
+        } else {
+            length = kFadeOutMenuMusicLength;
+            startTicks = SDL_GetTicks();
+        }
+
+        setAdlFadeOutData(startTicks, length);
+    }
 }
 
-static void setAdlFadeOutData(Uint32 start, Uint32 length)
-{
-    auto fadeOutData = static_cast<uint64_t>(start) << 32 | length;
-    m_fadeOutData = fadeOutData;
-}
-
-static std::pair<Uint32, Uint32> getAdlFadeOutData()
-{
-    auto fadeOutData = m_fadeOutData.load();
-    Uint32 start = fadeOutData >> 32;
-    Uint32 length = fadeOutData & 0xffffffff;
-    return { start, length };
-}
-
-// Called when the game is about to start.
-void fadeOutMusic()
+// Blocks until the music fades out. Called when the match is about to start.
+void waitForMusicToFadeOut()
 {
     if (noMusic() || m_state == State::kPlaybackError)
         return;
+
+    logInfo("Waiting for music to fade out...");
 
     if (m_adlPlayerActive) {
         while (getAdlFadeOutData().first)
@@ -169,6 +183,48 @@ void stopTitleSong()
     }
 }
 
+// called once when a song needs to be played
+void startMenuSong()
+{
+    if (noMusic())
+        return;
+
+    initMusic();
+
+    if (m_state != State::kPlaybackError && m_titleSongDone) {
+        Mix_FreeMusic(m_titleMusic);
+        m_titleMusic = nullptr;
+        Mix_HookMusicFinished(nullptr);
+
+        finishAdl();
+
+        playMenuSong();
+    }
+}
+
+void SWOS::CycleMenuMusic()
+{
+    startMenuSong();
+}
+
+void restartMusic()
+{
+    if (noMusic())
+        return;
+
+    swos.g_midiPlaying = 0;
+
+    if (m_state != State::kPlayingMenuSong)
+        m_titleSongDone = true;
+
+    startMenuSong();
+}
+
+static bool noMusic()
+{
+    return swos.g_soundOff || swos.g_musicOff || !swos.g_menuMusic;
+}
+
 static std::pair<Mix_Music *, std::string> loadMixMusicFile(const char *name)
 {
     std::string nameStr(name);
@@ -250,6 +306,23 @@ static void initAdl()
     adl_setBank(m_adlPlayer, midiBankNumber());
 
     logInfo("ADLMIDI initialized");
+}
+
+static void finishAdl()
+{
+    if (m_adlPlayer.load()) {
+        m_adlPlayerActive = false;
+
+        if (m_adlPrefetchThread.joinable())
+            m_adlPrefetchThread.join();
+
+        Mix_HookMusic(nullptr, nullptr);
+
+        if (m_adlPlayer.load()) {
+            adl_close(m_adlPlayer);
+            m_adlPlayer = nullptr;
+        }
+    }
 }
 
 // keep prefetching chunks from ADL as fast as possible to keep the MIDI buffer filled to the max
@@ -349,7 +422,7 @@ static bool loadXmi(const char *filename, bool loop)
 
     auto path = rootDir() + filename;
     if (adl_openFile(m_adlPlayer, path.c_str()) >= 0) {
-        // menu song plays too fast for some reason, this will make it approximately the same as original
+        // menu song plays too fast for some reason, this will make it approximately the same as the original
         adl_setTempo(m_adlPlayer, 0.6);
 
         assert(!m_adlPrefetchThread.joinable());
@@ -397,34 +470,24 @@ static void playMenuSong()
     }
 }
 
-// called once when a song needs to be played
-void startMenuSong()
+// called each time when coming back from the match
+void SWOS::TryMidiPlay()
 {
-    if (noMusic())
-        return;
-
-    if (m_state != State::kPlaybackError && m_titleSongDone) {
-        Mix_FreeMusic(m_titleMusic);
-        m_titleMusic = nullptr;
-        Mix_HookMusicFinished(nullptr);
-
-        finishAdl();
-
-        playMenuSong();
-    }
+    playMenuSong();
 }
 
-void restartMusic()
+static void setAdlFadeOutData(Uint32 start, Uint32 length)
 {
-    if (noMusic())
-        return;
+    auto fadeOutData = static_cast<uint64_t>(start) << 32 | length;
+    m_fadeOutData = fadeOutData;
+}
 
-    swos.g_midiPlaying = 0;
-
-    if (m_state != State::kPlayingMenuSong)
-        m_titleSongDone = true;
-
-    TryRestartingMusic();
+static std::pair<Uint32, Uint32> getAdlFadeOutData()
+{
+    auto fadeOutData = m_fadeOutData.load();
+    Uint32 start = fadeOutData >> 32;
+    Uint32 length = fadeOutData & 0xffffffff;
+    return { start, length };
 }
 
 static bool playTitleSong()
@@ -447,55 +510,4 @@ static bool playTitleSong()
 
     logInfo("Couldn't find a suitable title music file");
     return false;
-}
-
-// called at startup, when initializing main menu, and each time when coming back from the game
-void SWOS::InitMenuMusic()
-{
-    static bool playedAtStart;
-
-    if (noMusic())
-        return;
-
-    ensureMenuAudioFrequency();
-
-    if (!playedAtStart && (m_titleSongDone || !playTitleSong()))
-        playMenuSong();
-
-    playedAtStart = true;
-}
-
-void SWOS::PlayMidi()
-{
-    startMenuSong();
-}
-
-void SWOS::StopMidiSequence()
-{
-    // must have a dummy function
-}
-
-void SWOS::FadeOutXmidi()
-{
-    if (!noMusic()) {
-        logInfo("Fading out music...");
-
-        synchronizeMixVolume();
-        Mix_FadeOutMusic(kFadeOutMenuMusicLength);
-
-        Uint32 startTicks, length;
-        std::tie(startTicks, length) = getAdlFadeOutData();
-
-        if (startTicks) {
-            auto now = SDL_GetTicks();
-            int volume = (length - (now - startTicks)) * getMusicVolume() / length;
-            length = kFadeOutMenuMusicLength * getMusicVolume() / volume;
-            startTicks = now - (length - kFadeOutMenuMusicLength);
-        } else {
-            length = kFadeOutMenuMusicLength;
-            startTicks = SDL_GetTicks();
-        }
-
-        setAdlFadeOutData(startTicks, length);
-    }
 }

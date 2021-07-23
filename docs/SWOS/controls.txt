@@ -4,7 +4,7 @@ Game Controls
 =============
 
 The game uses a few fields in TeamGeneralInfo structure to control the players. These fields are initialized
-from global variables each frame by TeamsControlCheck() (called inside the main loop). It will invoke
+from global variables each frame by UpdateTeamControls() (called inside the main loop). It will invoke
 Player1StatusProc/Player2StatusProc to get fresh data.
 
 Field:                 Initialized with variable: (substitute 1 with 2 for player 2)
@@ -91,7 +91,7 @@ Then a variable named pl1Direction is formed. Its values are:
 
 or -1 if none of the above
 
-These functions are called from several places, but the main ones are TeamsControlCheck() during the game,
+These functions are called from several places, but the main ones are UpdateTeamControls() during the game,
 and MenuCheckControls() during the menus.
 
 Lower level joypad routines

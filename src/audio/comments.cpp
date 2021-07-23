@@ -6,6 +6,8 @@
 #include "SoundSample.h"
 #include <dirent.h>
 
+constexpr int kEnqueuedSampleDelay = 70;
+
 static std::array<SoundSample, 76 + 52> m_originalCommentarySamples;
 
 static bool m_hasAudioDir;
@@ -91,6 +93,22 @@ static std::array<SampleTable, kNumSampleTables> m_sampleTables = {{
     { "yellow_card" },
 }};
 
+static void loadCustomCommentary();
+static void loadOriginalSamples();
+
+void loadCommentary()
+{
+    if (swos.g_soundOff || !swos.g_commentary)
+        return;
+
+    logInfo("Loading commentary...");
+
+    auto audioDirPath = pathInRootDir("audio");
+    m_hasAudioDir = dirExists(audioDirPath.c_str());
+
+    m_hasAudioDir ? loadCustomCommentary() : loadOriginalSamples();
+}
+
 void clearCommentsSampleCache()
 {
     for (auto& table : m_sampleTables)
@@ -105,6 +123,48 @@ void initCommentsBeforeTheGame()
     m_lastPlayedComment = nullptr;
 
     m_endGameCrowdSample.free();
+}
+
+void enqueueTacticsChangedSample()
+{
+    swos.tacticsChangedSampleTimer = kEnqueuedSampleDelay;
+}
+
+void enqueueSubstituteSample()
+{
+    swos.substituteSampleTimer = kEnqueuedSampleDelay;
+}
+
+void playEnqueuedSamples()
+{
+    if (swos.playingYellowCardTimer >= 0 && !--swos.playingYellowCardTimer) {
+        SWOS::PlayYellowCardSample();
+        swos.playingYellowCardTimer = -1;
+    } else if (swos.playingRedCardTimer >= 0 && !--swos.playingRedCardTimer) {
+        SWOS::PlayRedCardSample();
+        swos.playingRedCardTimer = -1;
+    } else if (swos.playingGoodPassTimer >= 0 && !--swos.playingGoodPassTimer) {
+        SWOS::PlayGoodPassComment();
+        swos.playingGoodPassTimer = -1;
+    } else if (swos.playingThrowInSample >= 0 && !--swos.playingThrowInSample) {
+        SWOS::PlayThrowInSample();
+        swos.playingThrowInSample = -1;
+    } else if (swos.playingCornerSample >= 0 && !--swos.playingCornerSample) {
+        SWOS::PlayCornerSample();
+        swos.playingCornerSample = -1;
+    } else if (swos.substituteSampleTimer >= 0 && !--swos.substituteSampleTimer) {
+        SWOS::PlaySubstituteSample();
+        swos.substituteSampleTimer = -1;
+    } else if (swos.tacticsChangedSampleTimer >= 0 && !--swos.tacticsChangedSampleTimer) {
+        SWOS::PlayTacticsChangeSample();
+        swos.tacticsChangedSampleTimer = -1;
+    }
+
+    // strange place to decrement this...
+    if (swos.goalCounter)
+        swos.goalCounter--;
+
+    playCrowdChants();
 }
 
 bool commenteryOnChannelFinished(int channel)
@@ -329,19 +389,6 @@ static void loadOriginalSamples()
     assert(i == m_originalCommentarySamples.size());
 
     mapOriginalSamples();
-}
-
-void SWOS::LoadCommentary()
-{
-    if (swos.g_soundOff || !swos.g_commentary)
-        return;
-
-    logInfo("Loading commentary...");
-
-    auto audioDirPath = pathInRootDir("audio");
-    m_hasAudioDir = dirExists(audioDirPath.c_str());
-
-    m_hasAudioDir ? loadCustomCommentary() : loadOriginalSamples();
 }
 
 static bool commentPlaying()
@@ -615,38 +662,6 @@ void SWOS::PlaySubstituteSample()
 void SWOS::PlayThrowInSample()
 {
     playComment(kThrowIn);
-}
-
-void SWOS::PlayEnqueuedSamples()
-{
-    if (swos.playingYellowCardTimer >= 0 && !--swos.playingYellowCardTimer) {
-        PlayYellowCardSample();
-        swos.playingYellowCardTimer = -1;
-    } else if (swos.playingRedCardTimer >= 0 && !--swos.playingRedCardTimer) {
-        PlayRedCardSample();
-        swos.playingRedCardTimer = -1;
-    } else if (swos.playingGoodPassTimer >= 0 && !--swos.playingGoodPassTimer) {
-        PlayGoodPassComment();
-        swos.playingGoodPassTimer = -1;
-    } else if (swos.playingThrowInSample >= 0 && !--swos.playingThrowInSample) {
-        PlayThrowInSample();
-        swos.playingThrowInSample = -1;
-    } else if (swos.playingCornerSample >= 0 && !--swos.playingCornerSample) {
-        PlayCornerSample();
-        swos.playingCornerSample = -1;
-    } else if (swos.substituteSampleTimer >= 0 && !--swos.substituteSampleTimer) {
-        PlaySubstituteSample();
-        swos.substituteSampleTimer = -1;
-    } else if (swos.tacticsChangedSampleTimer >= 0 && !--swos.tacticsChangedSampleTimer) {
-        PlayTacticsChangeSample();
-        swos.tacticsChangedSampleTimer = -1;
-    }
-
-    // strange place to decrement this...
-    if (swos.goalCounter)
-        swos.goalCounter--;
-
-    playCrowdChants();
 }
 
 static void loadAndPlayEndGameCrowdSample(int index)

@@ -13,7 +13,7 @@ constexpr int kMaxVolume = MIX_MAX_VOLUME;
 constexpr int kMinVolume = 0;
 
 static int16_t m_volume = 100;                      // master sound volume
-static std::atomic<int16_t> m_musicVolume = 100;    // atomic since ADL thread will need access to it
+static std::atomic<int16_t> m_musicVolume = 100;    // atomic since ADL thread will need to access it
 
 static int m_actualFrequency;
 static int m_actualChannels;
@@ -72,6 +72,20 @@ void finishAudio()
     Mix_CloseAudio();
 }
 
+void stopAudio()
+{
+    // SDL_mixer will crash if we call these before it's initialized
+    if (Mix_QuerySpec(nullptr, nullptr, nullptr)) {
+        Mix_HaltChannel(-1);
+        Mix_HaltMusic();
+    }
+}
+
+void SWOS::StopAudio()
+{
+    stopAudio();
+}
+
 static void channelFinished(int channel);
 
 // Called when switching from menus to the game.
@@ -80,7 +94,7 @@ void initGameAudio()
     if (swos.g_soundOff)
         return;
 
-    fadeOutMusic();
+    waitForMusicToFadeOut();
     resetGameAudio();
 
     Mix_ChannelFinished(channelFinished);
@@ -94,15 +108,6 @@ static void channelFinished(int channel)
 {
     if (!commenteryOnChannelFinished(channel) && !chantsOnChannelFinished(channel))
         logDebug("Channel %d finished playing", channel);
-}
-
-void SWOS::StopAudio()
-{
-    // SDL_mixer will crash if we call these before it's initialized
-    if (Mix_QuerySpec(nullptr, nullptr, nullptr)) {
-        Mix_HaltChannel(-1);
-        Mix_HaltMusic();
-    }
 }
 
 int playIntroSample(void *buffer, int size, int volume, int loopCount)
@@ -122,11 +127,6 @@ int playIntroSample(void *buffer, int size, int volume, int loopCount)
 
 //    return Mix_PlayChannel(0, chunk, 0);
     return -1;
-}
-
-//TODO: remove this
-void SWOS::PlaySoundSample()
-{
 }
 
 //
@@ -221,8 +221,6 @@ static void toggleMasterSound()
         if (swos.g_menuMusic)
             restartMusic();
     }
-
-    SWOS::DrawMenuItem();
 }
 
 static void toggleMenuMusic()
@@ -234,24 +232,18 @@ static void toggleMenuMusic()
         restartMusic();
     else
         finishMusic();
-
-    SWOS::DrawMenuItem();
 }
 
 static void increaseVolume()
 {
-    if (m_volume < kMaxVolume) {
+    if (m_volume < kMaxVolume)
         setMasterVolume(m_volume + 1);
-        SWOS::DrawMenuItem();
-    }
 }
 
 static void decreaseVolume()
 {
-    if (m_volume > 0) {
+    if (m_volume > 0)
         setMasterVolume(m_volume - 1);
-        SWOS::DrawMenuItem();
-    }
 }
 
 static void volumeBeforeDraw()
@@ -262,18 +254,14 @@ static void volumeBeforeDraw()
 
 static void increaseMusicVolume()
 {
-    if (m_musicVolume < kMaxVolume) {
+    if (m_musicVolume < kMaxVolume)
         setMusicVolume(getMusicVolume() + 1);
-        SWOS::DrawMenuItem();
-    }
 }
 
 static void decreaseMusicVolume()
 {
-    if (getMusicVolume() > kMinVolume) {
+    if (getMusicVolume() > kMinVolume)
         setMusicVolume(getMusicVolume() - 1);
-        SWOS::DrawMenuItem();
-    }
 }
 
 static void musicVolumeBeforeDraw()

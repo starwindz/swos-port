@@ -122,8 +122,10 @@ std::tuple<std::string, bool, bool> Tokenizer::determineBlockLimits(const TokenR
 
     assert(m_start && m_start < limits.first);
     assert(m_end && m_end <= limits.second);
-    assert(m_start->type == Token::T_PROC || m_start->isComment() || m_start->isNewLine() || m_start->isId());
-    assert(m_end == end() || m_end->type == Token::T_ENDP || m_end->isComment() || m_end->isNewLine() || m_end->isId());
+    assert(m_start->type == Token::T_PROC || m_start->type == Token::T_ALIGN ||
+        m_start->isComment() || m_start->isNewLine() || m_start->isId());
+    assert(m_end == end() || m_end->type == Token::T_ENDP || m_end->type == Token::T_ALIGN ||
+        m_end->isComment() || m_end->isNewLine() || m_end->isId());
 
     std::string error;
 
@@ -193,9 +195,8 @@ auto Tokenizer::determineBlockStart(const TokenRange& limits) -> std::tuple<Bloc
                 } else {
                     state[kInNoBreakBlock]--;
                 }
-            } else {
-                if (!comment)
-                    comment = token;
+            } else if (!comment) {
+                comment = token;
             }
         } else if (token->isEof()) {
             break;

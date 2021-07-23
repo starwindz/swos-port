@@ -1,7 +1,9 @@
 #pragma once
 
+void initMusic();
 void finishMusic();
-void fadeOutMusic();
+void startFadingOutMusic();
+void waitForMusicToFadeOut();
 void synchronizeMixVolume();
 void synchronizeSystemVolume();
 void updateSongState();

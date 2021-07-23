@@ -6,3 +6,4 @@ void setCameraX(FixedPoint value);
 void setCameraY(FixedPoint value);
 
 void moveCamera();
+void setCameraToInitialPosition();

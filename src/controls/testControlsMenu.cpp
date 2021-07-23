@@ -24,13 +24,13 @@ static void drawFixedPart(const char *title, const char *controlsTitle, bool all
     assert(controlsTitle[strlen(controlsTitle) - 1] == ':');
 
     drawMenuBackground();
-    drawMenuTextCentered(kCenterX, kHeaderY, title);
-    drawMenuTextCentered(kColumn1X, kDescriptionY, controlsTitle);
-    drawMenuTextCentered(kColumn2X, kDescriptionY, "EVENTS TRIGGERING:");
+    drawTextCentered(kCenterX, kHeaderY, title);
+    drawTextCentered(kColumn1X, kDescriptionY, controlsTitle);
+    drawTextCentered(kColumn2X, kDescriptionY, "EVENTS TRIGGERING:");
 #ifdef __ANDROID__
-    drawMenuTextCentered(kCenterX, kAbortInfoY, allowEscapeExit ? "(TAP/BACK EXITS)" : "(TAP EXITS)");
+    drawTextCentered(kCenterX, kAbortInfoY, allowEscapeExit ? "(TAP/BACK EXITS)" : "(TAP EXITS)");
 #else
-    drawMenuTextCentered(kCenterX, kAbortInfoY, allowEscapeExit ? "(MOUSE CLICK/ESCAPE EXITS)" : "(MOUSE CLICK EXITS)");
+    drawTextCentered(kCenterX, kAbortInfoY, allowEscapeExit ? "(MOUSE CLICK/ESCAPE EXITS)" : "(MOUSE CLICK EXITS)");
 #endif
     updateScreen();
 }
@@ -44,7 +44,7 @@ static void drawControls(GetControlsFn getControls)
     int numControlsToShow = controls.size();
 
     if (controls.empty()) {
-        drawMenuTextCentered(kColumn1X, y, kNothingPressed);
+        drawTextCentered(kColumn1X, y, kNothingPressed);
         return;
     }
 
@@ -54,12 +54,12 @@ static void drawControls(GetControlsFn getControls)
     }
 
     while (numControlsToShow--) {
-        drawMenuTextCentered(kColumn1X, y, controls[numControlsToShow].c_str());
+        drawTextCentered(kColumn1X, y, controls[numControlsToShow].c_str());
         y += kControlsAndEventsLineHeight;
     }
 
     if (shorten)
-        drawMenuTextCentered(kColumn1X, y, "...");
+        drawTextCentered(kColumn1X, y, "...");
 }
 
 static void drawEvents(GetEventsFn getEvents)
@@ -68,11 +68,11 @@ static void drawEvents(GetEventsFn getEvents)
     int y = kControlsAndEventsY;
 
     if (!events) {
-        drawMenuTextCentered(kColumn2X, y, kNothingPressed);
+        drawTextCentered(kColumn2X, y, kNothingPressed);
     } else {
         traverseEvents(events, [&y](auto event) {
             auto str = gameControlEventToString(event);
-            drawMenuTextCentered(kColumn2X, y, str.first);
+            drawTextCentered(kColumn2X, y, str.first);
             y += kControlsAndEventsLineHeight;
         });
     }

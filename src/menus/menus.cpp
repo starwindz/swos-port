@@ -100,8 +100,6 @@ static const char *entryText(int entryOrdinal)
 
 void showMenu(const BaseMenu& menu)
 {
-    swos.g_scanCode = 0;
-
     resetControls();
 
     menuMouseOnAboutToShowNewMenu();
@@ -211,7 +209,6 @@ void activateMenu(const void *menu)
     assert(currentMenu->numEntries < 256);
 
     cacheMenuItemBackgrounds();
-
     resetMenuMouseData();
 }
 

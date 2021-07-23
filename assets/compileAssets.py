@@ -5,19 +5,23 @@ import operator
 import traceback
 import multiprocessing
 
-from PyTexturePacker import Packer, Utils
 from typing import Final
+from PIL import Image
+from PyTexturePacker import Packer, Utils
 
-kOutDir = os.path.join('..', 'tmp', 'assets')
-k4kDir = os.path.join(kOutDir, '4k')
-kHdDir = os.path.join(kOutDir, 'hd')
-kLowResDir = os.path.join(kOutDir, 'low-res')
+kOutDir: Final = os.path.join('..', 'tmp', 'assets')
+k4kDir: Final = os.path.join(kOutDir, '4k')
+kHdDir: Final = os.path.join(kOutDir, 'hd')
+kLowResDir: Final = os.path.join(kOutDir, 'low-res')
+
+kTextureDimension: Final = 2048
+kPadding: Final = 2
 
 kPitchesDir: Final = 'pitches'
 kPitchWidth: Final = 42
 kPitchHeight: Final = 53
 
-kResMultipliers = (12, 6, 3)
+kResMultipliers: Final = (12, 6, 3)
 kNumResolutions: Final = 3
 
 kFixedSpritePrefixes = ('charset', 'gameSprites')
@@ -25,12 +29,12 @@ kVariableSpritePrefixes = ('goalkeeper', 'player', 'bench')
 
 kWrapLimit: Final = 120
 
-kWarning = r'''// auto-generated, do not edit!
+kWarning: Final = r'''// auto-generated, do not edit!
 #pragma once'''
 
-kAssert = 'static_assert(static_cast<int>(AssetResolution::kNumResolutions) == 3, "Floating through the 80s in a digital 8-bit form");'
+kAssert: Final = 'static_assert(static_cast<int>(AssetResolution::kNumResolutions) == 3, "Floating through the 80s in a digital 8-bit form");'
 
-kHeader = kWarning + '''\n
+kHeader: Final = kWarning + '''\n
 #include "PackedSprite.h"
 #include "windowManager.h"
 ''' + '\n' + kAssert
@@ -61,15 +65,20 @@ def pack(kwargs):
         kwargs['inner_padding'] = 1
 
     try:
-        packer = Packer.create(max_width=2048, max_height=2048, ignore_blank=True, border_padding=2,
-            shape_padding=2, crop_atlas=True, atlas_format=Utils.ATLAS_FORMAT_JSON, **kwargs)
+        if atlasNamePattern.startswith('pitch'):
+            return packPitch(input, atlasNamePattern, outputPath, **kwargs)
+        else:
+            packer = Packer.create(max_width=kTextureDimension, max_height=kTextureDimension,
+                ignore_blank=True, border_padding=kPadding, shape_padding=kPadding, crop_atlas=True,
+                atlas_format=Utils.ATLAS_FORMAT_JSON, **kwargs)
 
-        return packer.pack(input, atlasNamePattern, output_path=outputPath, save_atlas_data=False,
-            post_process_routine=postProcessRoutine)
-    except Exception:
+            return packer.pack(input, atlasNamePattern, output_path=outputPath, save_atlas_data=False,
+                post_process_routine=postProcessRoutine)
+    except Exception as e:
         print('Packing failed!')
         traceback.print_exc()
-        sys.exit(1)
+        print()
+        raise e
 
 def getResolutionName(res):
     return ('4k', 'HD', 'low-res')[res]
@@ -110,18 +119,19 @@ def getDirAtlasSprites(atlasData, metadata, res, atlasNamePrefixes, textureIndex
                     value = sprite['spriteSourceSize'][prop]
                     spriteData.append(value / kResMultipliers[res] if floatValue else value)
             for dim in ('w', 'h'):
+                assert sprite['sourceSize'][dim] % kResMultipliers[res] == 0
+                spriteData.append(sprite['sourceSize'][dim] // kResMultipliers[res])
+            for dim in ('w', 'h'):
                 spriteData.append(sprite['frame'][dim] / kResMultipliers[res])
-            for floatValue in (True, False):
+            for floatValue in (False, True):
                 for coord in metadata.get(index, (0, 0)):
                     value = coord / kResMultipliers[0] if floatValue else coord
                     spriteData.append(value)
-            for dim in ('w', 'h'):
-                spriteData.append(sprite['sourceSize'][dim])
             spriteData += (textureIndex + i, str(sprite['rotated']).lower())
 
             if sprite['rotated']:
                 spriteData[2], spriteData[3] = spriteData[3], spriteData[2]
-                spriteData[8], spriteData[9] = spriteData[9], spriteData[8]
+                spriteData[10], spriteData[11] = spriteData[11], spriteData[10]
 
             sprites.append((index, spriteData))
 
@@ -419,45 +429,153 @@ def getPitches():
 
     return pitches
 
-def addSinglePixelBorders(image, data):
-    pa = image.load()
-    width, height = image.size
+def getOutputPatternSize(images, scale):
+    if not all(images[0].size == image.size for image in images):
+        sys.exit('All pitch patterns must have same dimensions')
 
-    for sprite in data['frames'].values():
-        x = sprite['frame']['x']
-        y = sprite['frame']['y']
-        w = sprite['frame']['w']
-        h = sprite['frame']['h']
+    if images[0].width != images[0].height:
+        sys.exit('Pitch patterns must be squares')
 
-        if y > 0:
-            for i in range(w):
-                pa[x + i, y - 1] = pa[x + i, y]
+    patternSize = images[0].width
+    outputPatternSize = patternSize * scale
 
-        if y + h < height:
-            for i in range(w):
-                pa[x + i, y + h] = pa[x + i, y + h - 1]
+    if outputPatternSize != int(outputPatternSize):
+        sys.exit(f'Invalid pattern size {patternSize} for scale {scale}')
 
-        if x > 0:
-            for i in range(h):
-                pa[x - 1, y + i] = pa[x, y + i]
+    return int(outputPatternSize)
 
-        if x + w < width:
-            for i in range(h):
-                pa[x + w, y + i] = pa[x + w - 1, y + i]
+def getPitchAtlasSize(numPatterns, maxPatternsPerSide):
+    import math
 
-        if x > 0 and y > 0:
-            pa[x - 1, y - 1] = pa[x, y]
+    patternsX = patternsY = int(math.sqrt(numPatterns))
+    if patternsX * patternsY < numPatterns:
+        patternsY += 1
+    if patternsX * patternsY < numPatterns:
+        patternsX += 1
 
-        if x + w < width and y > 0:
-            pa[x + w, y - 1] = pa[x + w - 1, y]
+    assert patternsX * patternsY >= numPatterns
 
-        if x > 0 and y + h < height:
-            pa[x - 1, y + h] = pa[x, y + h - 1]
+    patternsX = min(patternsX, maxPatternsPerSide)
+    patternsY = min(patternsY, maxPatternsPerSide)
 
-        if x + w < width and y + h < height:
-            pa[x + w, y + h] = pa[x + w - 1, y + h - 1]
+    return patternsX, patternsY
 
-    return image
+def hashImage(image):
+    import hashlib
+
+    md5hash = hashlib.md5(image.tobytes())
+    return md5hash.hexdigest()
+
+def detectDuplicates(images):
+    hashes = {}
+    aliases = []
+    uniqueImages = []
+
+    for i, image in enumerate(images):
+        hash = hashImage(image)
+        originalIndex = hashes.get(hash, None)
+        if originalIndex is not None and uniqueImages[originalIndex].getdata() == images[i].getdata():
+            aliases.append((originalIndex, os.path.basename(images[i].filename)))
+        else:
+            hashes[hash] = i - len(aliases)
+            uniqueImages.append(image)
+
+    return uniqueImages, aliases
+
+def resizeImages(images, outputPatternSize, scale):
+    if scale == 1:
+        return images
+
+    scaledImages = []
+
+    for i, image in enumerate(images):
+        scaledImage = image.resize((outputPatternSize, outputPatternSize), Image.LANCZOS)
+        scaledImage.filename = image.filename
+        scaledImages.append(scaledImage)
+
+    return scaledImages
+
+def growPatternEdges(atlas, img, x, y):
+    borders = (
+        ((x, y - 1), (0, 0, img.width, 1)),     # top
+        ((x - 1, y), (0, 0, 1, img.height)),    # left
+        ((x + img.width, y), (img.width - 1, 0, img.width, img.height)),    # right
+        ((x, y + img.height), (0, img.height - 1, img.width, img.height)),  # bottom
+    )
+
+    for (destX, destY), border in borders:
+        region = img.crop(border)
+        atlas.paste(region, (destX, destY))
+
+    pa = atlas.load()
+    pa[x - 1, y - 1] = pa[x, y]
+    pa[x + img.width, y - 1] = pa[x + img.width - 1, y]
+    pa[x - 1, y + img.height] = pa[x, y + img.height - 1]
+    pa[x + img.width, y + img.height] = pa[x + img.width - 1, y + img.height - 1]
+
+def packPitch(input, atlasNamePattern, outputPath, **kwargs):
+    images = filter(lambda fname: fname.lower().endswith('.png'), os.listdir(input))
+    images = map(lambda fname: os.path.join(input, fname), images)
+    images = list(map(Image.open, images))
+
+    scale = kwargs.get('scale', 1)
+    outputPatternSize = getOutputPatternSize(images, scale)
+    images, aliases = detectDuplicates(images)
+    images = resizeImages(images, outputPatternSize, scale)
+
+    maxPatternsPerSide = (kTextureDimension - kPadding) // (outputPatternSize + kPadding)
+    maxPatternsPerAtlas = maxPatternsPerSide ** 2
+    numAtlases = (len(images) + (maxPatternsPerAtlas - 1)) // maxPatternsPerAtlas
+
+    result = []
+    currentPattern = 0
+
+    for i in range(numAtlases):
+        atlasName = atlasNamePattern.replace('%d', str(i)) + '.png'
+        atlasData = {'frames': {}, 'meta': {'image': atlasName, 'format': 'RGB888',
+            'size': {'w': kTextureDimension, 'h': kTextureDimension}, 'scale': 1 }}
+
+        patternsLeft = lambda: len(images) - currentPattern
+        patternsX, patternsY = getPitchAtlasSize(patternsLeft(), maxPatternsPerSide)
+
+        w = patternsX * (outputPatternSize + kPadding) + kPadding
+        h = patternsY * (outputPatternSize + kPadding) + kPadding
+
+        atlas = Image.new(mode="RGB", size=(w, h))
+
+        y = kPadding
+        for _ in range(patternsY):
+            x = kPadding
+
+            for _ in range(min(patternsX, patternsLeft())):
+                img = images[currentPattern]
+                assert img.width == outputPatternSize and img.height == outputPatternSize
+
+                atlas.paste(img, (x, y))
+                growPatternEdges(atlas, img, x, y)
+
+                atlasData['frames'][os.path.basename(img.filename)] = {
+                    'frame': { 'x': x, 'y': y, 'w': outputPatternSize, 'h': outputPatternSize },
+                    'spriteSourceSize': { 'x': x, 'y': y, 'w': outputPatternSize, 'h': outputPatternSize },
+                    'sourceSize': { 'w': outputPatternSize, 'h': outputPatternSize },
+                    'rotated': False, 'trimmed': False,
+                }
+
+                x += outputPatternSize + kPadding
+                currentPattern += 1
+
+            y += outputPatternSize + kPadding
+
+        for i, filename in aliases:
+            original = images[i]
+            atlasData['frames'][filename] = atlasData['frames'][os.path.basename(original.filename)]
+
+        atlasPath = os.path.join(outputPath, atlasName)
+        atlas.save(atlasPath)
+
+        result.append(atlasData)
+
+    return result
 
 def getOptions(pitches):
     gameSprites = tuple(map(str, pathlib.Path('sprites').joinpath('game').glob('spr*.png')))
@@ -473,8 +591,7 @@ def getOptions(pitches):
 
     for i, pitch in enumerate(pitches, 1):
         assert pitch.endswith(f'pitch{i}')
-        options.append(dict(input=pitch, enable_rotated=False, inner_padding=0,
-            post_process_routine=addSinglePixelBorders, atlasNamePattern=f'pitch{i}-%d'))
+        options.append(dict(input=pitch, enable_rotated=False, inner_padding=0, atlasNamePattern=f'pitch{i}-%d'))
 
     result = []
     for option in options:

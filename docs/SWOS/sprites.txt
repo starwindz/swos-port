@@ -370,12 +370,12 @@ offset  length  description
   92        2   direction player is facing 0..7 (0 = up, 4 = down...)
   94        2   if the player is moving, value is 255, if standing 0
                 (treated as a byte)
-  96        2   nesto u vezi faulova (setuje se na 1 pri prvom faulu i ostaje
-                tako dugo vreme, resetuje se gotovo random)
-                ako je 2, nakon krljanja ce se samo pustiti komentar za faul
-                recimo tackle state, 1 ako igrac uklizava, 2 za uspesno uklizavanje
-                (uspeva da pokupi loptu)
-  98        2   ??? nesto u vezi udaranja glavudzom
+  96        2   something about fouls (it's set to 1 at first foul and stays
+                that way for a long time, gets reset almost randomly)
+                if 2, after a tackle foul comment will be played
+                it could be tackle state, 1 if player tackling, 2 for
+                successful tackle (player manages to pick up the ball)
+  98        2   ??? something about headers
                 set to 1 after strong header
  100        2   some sort of state when game is stopped, when they're running to their positions
                 values: 0,1,2,3

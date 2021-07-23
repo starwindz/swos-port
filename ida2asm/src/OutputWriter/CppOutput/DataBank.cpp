@@ -8,7 +8,7 @@
 #include "OutputException.h"
 
 constexpr int kStructVarsCapacity = 5'000;
-constexpr int kGlobalOffsetMapCapacity = 410'000;
+constexpr int kGlobalOffsetMapCapacity = 450'000;
 
 DataBank::DataBank(const SymbolFileParser& symFileParser)
 :

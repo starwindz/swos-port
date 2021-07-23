@@ -2,3 +2,4 @@
 
 void initPitches();
 void loadPitch();
+void drawPitch();

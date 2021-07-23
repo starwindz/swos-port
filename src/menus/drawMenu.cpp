@@ -3,6 +3,7 @@
 #include "menuBackground.h"
 #include "menuItemRenderer.h"
 #include "sprites.h"
+#include "renderSprites.h"
 #include "text.h"
 #include "windowManager.h"
 
@@ -111,7 +112,7 @@ static void drawMenuItems()
         bool skipText = textBlinking && shouldBlink();
 
         if (skipText) {
-            assert(entry->type == kEntryString);
+            assert(entry->type == kEntryString || entry->type == kEntrySprite2);
 
             if (entry->bg.entryColor) {
                 auto savedText = entry->fg.string;
@@ -224,16 +225,16 @@ static void drawStringMenuItem(MenuEntry *entry, const char *string)
 
         if (entry->stringFlags & kTextLeftAligned) {
             getTextBox(x, y, width, entry, charTable->charHeight);
-            drawMenuText(x, y, string, width, color, bigFont);
+            drawText(x, y, string, width, color, bigFont);
         } else if (entry->stringFlags & kTextRightAligned) {
             getTextBox(x, y, width, entry, charTable->charHeight);
             x += width;
-            drawMenuTextRightAligned(x, y, string, width, color, bigFont);
+            drawTextRightAligned(x, y, string, width, color, bigFont);
         } else {
             // for some reason, centered text doesn't reset delta color
             getTextBox(x, y, width, entry, charTable->charHeight);
             x += (width + 1) / 2;
-            drawMenuTextCentered(x, y, string, width, color, bigFont);
+            drawTextCentered(x, y, string, width, color, bigFont);
         }
     }
 }
@@ -277,7 +278,7 @@ static void drawMultilineTextMenuItem(MenuEntry *entry)
         y = entry->y + frameThickness + spaceBetweenLines.quot + (spaceBetweenLines.rem-- > 0);
 
         while (numLines--) {
-            drawMenuTextCentered(x, y, text, width, color, bigFont);
+            drawTextCentered(x, y, text, width, color, bigFont);
             y += spaceBetweenLines.quot + charTable->charHeight + (spaceBetweenLines.rem-- > 0);
             while (*text++)
                 ;
@@ -299,11 +300,11 @@ static void drawSpriteMenuItem(MenuEntry *entry, int spriteIndex)
     assert(entry && (entry->type == kEntrySprite2 || entry->type == kEntryColorConvertedSprite));
 
     if (spriteIndex) {
-        int spriteWidth, spriteHeight;
-        std::tie(spriteWidth, spriteHeight) = getSpriteDimensions(spriteIndex);
-        int x = entry->x + entry->width / 2 - spriteWidth / 2;
-        int y = entry->y + entry->height / 2 - spriteHeight / 2;
-        drawSprite(spriteIndex, x, y);
+        const auto& sprite = getSprite(spriteIndex);
+
+        int x = entry->x + entry->width / 2 - sprite.width / 2;
+        int y = entry->y + entry->height / 2 - sprite.height / 2;
+        drawMenuSprite(spriteIndex, x, y);
     }
 }
 
@@ -317,7 +318,7 @@ static void drawColorConvertedSpriteMenuItem(MenuEntry *entry)
 
     D0 = srcIndex;
     D1 = dstIndex;
-    CopyWholeSprite();
+    //CopyWholeSprite();
 
 //TODO
 

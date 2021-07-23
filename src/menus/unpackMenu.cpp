@@ -2,6 +2,7 @@
 #include "menus.h"
 #include "menuCodes.h"
 #include "menuMouse.h"
+#include "menuItemRenderer.h"
 #include "menuControls.h"
 
 // last menu sent here for unpacking
@@ -344,7 +345,6 @@ void restoreMenu(const void *menu, int selectedEntry)
     if (!menu)
         return;
 
-    swos.g_scanCode = 0;
     m_currentMenu = menu;
 
     resetControls();
@@ -364,6 +364,7 @@ void restoreMenu(const void *menu, int selectedEntry)
     }
 
     resetMenuMouseData();
+    cacheMenuItemBackgrounds();
 }
 
 void initMenuEntry(MenuEntry& entry)

@@ -38,7 +38,7 @@
     <Filter Include="Source Files\project-files\video">
       <UniqueIdentifier>{7527cdcc-d53b-4982-ad23-0cde7f1757e2}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\project-files\substitutes">
+    <Filter Include="Source Files\project-files\game\bench">
       <UniqueIdentifier>{941e50fa-03f2-4b5d-ada9-e4feba89904d}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\project-files\controls\joypads">
@@ -64,6 +64,9 @@
     </Filter>
     <Filter Include="Source Files\project-files\game">
       <UniqueIdentifier>{7faf3c71-8b02-439f-b399-f5b9c143ec24}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\project-files\util">
+      <UniqueIdentifier>{033969d6-2ddd-4ec8-a3b7-83ee40f2e138}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -157,8 +160,8 @@
     <ClCompile Include="..\..\src\replays\replays.cpp">
       <Filter>Source Files\project-files\replays</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\substitutes\substitutes.cpp">
-      <Filter>Source Files\project-files\substitutes</Filter>
+    <ClCompile Include="..\..\src\game\bench\bench.cpp">
+      <Filter>Source Files\project-files\game\bench</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\replays\ReplayData.cpp">
       <Filter>Source Files\project-files\replays</Filter>
@@ -340,10 +343,19 @@
     <ClCompile Include="..\..\src\game\gameTime.cpp">
       <Filter>Source Files\project-files\game</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\game\updateBall.cpp">
+      <Filter>Source Files\project-files\game</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\game\replayExitMenu.cpp">
       <Filter>Source Files\project-files\game</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\sprites\colorizeSprites.cpp">
+      <Filter>Source Files\project-files\sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\sprites\gameSprites.cpp">
+      <Filter>Source Files\project-files\sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\sprites\renderSprites.cpp">
       <Filter>Source Files\project-files\sprites</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\game\pitch.cpp">
@@ -356,6 +368,33 @@
       <Filter>Source Files\project-files\game</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\game\result.cpp">
+      <Filter>Source Files\project-files\game</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\game\darkRectangle.cpp">
+      <Filter>Source Files\project-files\game</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\game\stats.cpp">
+      <Filter>Source Files\project-files\game</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\game\playerNameDisplay.cpp">
+      <Filter>Source Files\project-files\game</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\sprites\spinningLogo.cpp">
+      <Filter>Source Files\project-files\sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\game\gameLoop.cpp">
+      <Filter>Source Files\project-files\game</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\util\random.cpp">
+      <Filter>Source Files\project-files\util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\game\bench\benchControls.cpp">
+      <Filter>Source Files\project-files\game\bench</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\game\bench\drawBench.cpp">
+      <Filter>Source Files\project-files\game\bench</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\game\color.cpp">
       <Filter>Source Files\project-files\game</Filter>
     </ClCompile>
   </ItemGroup>
@@ -580,6 +619,12 @@
     <ClInclude Include="..\..\src\sprites\colorizeSprites.h">
       <Filter>Source Files\project-files\sprites</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\sprites\renderSprites.h">
+      <Filter>Source Files\project-files\sprites</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\sprites\gameSprites.h">
+      <Filter>Source Files\project-files\sprites</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\game\pitch.h">
       <Filter>Source Files\project-files\game</Filter>
     </ClInclude>
@@ -587,6 +632,33 @@
       <Filter>Source Files\project-files\sprites</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\game\camera.h">
+      <Filter>Source Files\project-files\game</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\game\darkRectangle.h">
+      <Filter>Source Files\project-files\game</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\game\playerNameDisplay.h">
+      <Filter>Source Files\project-files\game</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\sprites\spinningLogo.h">
+      <Filter>Source Files\project-files\sprites</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\game\gameLoop.h">
+      <Filter>Source Files\project-files\game</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\game\bench\bench.h">
+      <Filter>Source Files\project-files\game\bench</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\util\random.h">
+      <Filter>Source Files\project-files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\game\bench\benchControls.h">
+      <Filter>Source Files\project-files\game\bench</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\game\bench\drawBench.h">
+      <Filter>Source Files\project-files\game\bench</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\game\color.h">
       <Filter>Source Files\project-files\game</Filter>
     </ClInclude>
   </ItemGroup>

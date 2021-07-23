@@ -9,6 +9,7 @@ void saveAudioOptions(CSimpleIni& ini) {}
 void loadAudioOptions(const CSimpleIniA& ini) {}
 
 void initAudio() {}
+void stopAudio() {}
 void finishAudio() {}
 void initGameAudio() {}
 void resetGameAudio() {}
@@ -22,4 +23,3 @@ int playIntroSample(void *buffer, int size, int volume, int loopCount)
 void showAudioOptionsMenu() {}
 
 void SWOS::StopAudio() {}
-void SWOS::PlaySoundSample() {}

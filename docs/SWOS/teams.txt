@@ -282,8 +282,9 @@ offset:  size:  desc.
                 bit 0 - yellow card
                 bit 1 - red card (direct, or via double yellow)
                 range seems to be 0..4
-  11       1    not sure what it is, but if it's negative a player can not be
-                substituted
+  11       1    not sure what it is, but if it's negative the player can not be
+                substituted -- that is only in the case bench state is 3, which
+                never happens, so this might be unused
   12      14    player number + name (or first letter of name + surname)
   26       1    probably zero terminator for field above
   27       1    passing (values 0..7)
@@ -300,7 +301,7 @@ offset:  size:  desc.
                 is injured; if this is zero player is not injured; if whole
                 field is not zero, and bit 5 isn't set, seems to be permanent
                 injury
-                5th bit marks light injury (0x20)
+                5th bit marks serious injury (0x20)
                 bits 5, 6 and 7 represent degree of injury, and based on their
                 value player speed value gets handicapped via the table:
                 0, -96, -128, -160, -192, -224, -256, -288
@@ -344,7 +345,7 @@ offset:  size:  desc.
   10       4    pointer to in-game team structure
   14       4    pointer to statistics data
   18       2    team number (1 or 2)
-  20       4    pointer to a table of pointers to sprites of its players
+  20       4    pointer to a table of pointers to sprites of team players
                 (in-game Sprites), there are exactly 11 of them
   24       4    based on a direction which the goalkeeper is facing (0..7) a
                 pointer to some table is written here

@@ -27,7 +27,71 @@ static bool m_interestingGame;
 static Mix_Chunk *m_chantsSample;
 static int m_chantsChannel = -1;
 
+static void playChant(SfxSampleIndex index);
 static void setVolumeOrStopChants(int volume);
+static int getChantSampleIndex();
+static void loadChantSample(int sampleIndex);
+static void fadeOutChantsIfGameTurnedBoring(bool wasInteresting);
+
+// Called when initializing the game loop.
+void loadIntroChant()
+{
+    if (swos.g_soundOff)
+        return;
+
+    auto color = swos.topTeamIngame.prShirtCol;
+    assert(color < 16);
+
+    static const int8_t kIntroTeamChantIndices[16] = {
+        -1, -1, 3, -1, 0, 0, 0, 1, -1, 1, 2, 5, -1, 5, 1, 4
+    };
+    auto chantIndex = kIntroTeamChantIndices[color];
+
+    std::string prefix;
+    bool hasAudioDir = dirExists(kAudioDir);
+    if (hasAudioDir)
+        prefix = "audio"s + getDirSeparator();
+
+    if (chantIndex >= 0) {
+        assert(chantIndex < 6);
+        auto introChantFile = swos.introTeamChantsTable[chantIndex].asPtr();
+        m_introChantSample.free();
+
+        logInfo("Picked intro chant %d `%s'", chantIndex, introChantFile);
+
+        if (hasAudioDir)
+            introChantFile += 4;    // skip "sfx\" prefix
+
+        m_introChantSample.loadFromFile(hasAudioDir ? (prefix + introChantFile).c_str() : introChantFile);
+        m_chants[kPlayIntroChant] = SWOS::PlayIntroChantSample;
+    } else {
+        logInfo("Not playing intro chant");
+        m_introChantSample.free();
+
+        m_chants[kPlayIntroChant] = playFansChant4lSample;
+    }
+
+    m_chants[kPlayFansChant8l] = SWOS::PlayFansChant8lSample;
+    m_chants[kPlayFansChant10l] = SWOS::PlayFansChant10lSample;
+    m_chants[kPlayFansChant4l] = playFansChant4lSample;
+}
+
+void loadCrowdChantSample()
+{
+    if (swos.g_soundOff || !swos.g_commentary)
+        return;
+
+    bool wasInteresting = m_interestingGame;
+
+    int sampleIndex = getChantSampleIndex();
+    loadChantSample(sampleIndex);
+
+    // a change from the original SWOS: we will reset chant function after each goal (SWOS would only reset if "interesting" game)
+    // this is to prevent fans chanting "three nil" after the result has changed to 3-1
+    m_playCrowdChantsFunction = nullptr;
+
+    fadeOutChantsIfGameTurnedBoring(wasInteresting);
+}
 
 void initChantsBeforeTheGame()
 {
@@ -96,47 +160,9 @@ void playCrowdChants()
     }
 }
 
-// Called when initializing the game loop.
-void SWOS::LoadIntroChant()
+void playFansChant4lSample()
 {
-    if (swos.g_soundOff)
-        return;
-
-    auto color = swos.topTeamIngame.prShirtCol;
-    assert(color < 16);
-
-    static const int8_t kIntroTeamChantIndices[16] = {
-        -1, -1, 3, -1, 0, 0, 0, 1, -1, 1, 2, 5, -1, 5, 1, 4
-    };
-    auto chantIndex = kIntroTeamChantIndices[color];
-
-    std::string prefix;
-    bool hasAudioDir = dirExists(kAudioDir);
-    if (hasAudioDir)
-        prefix = "audio"s + getDirSeparator();
-
-    if (chantIndex >= 0) {
-        assert(chantIndex < 6);
-        auto introChantFile = swos.introTeamChantsTable[chantIndex].asPtr();
-        m_introChantSample.free();
-
-        logInfo("Picked intro chant %d `%s'", chantIndex, introChantFile);
-
-        if (hasAudioDir)
-            introChantFile += 4;    // skip "sfx\" prefix
-
-        m_introChantSample.loadFromFile(hasAudioDir ? (prefix + introChantFile).c_str() : introChantFile);
-        m_chants[kPlayIntroChant] = PlayIntroChantSample;
-    } else {
-        logInfo("Not playing intro chant");
-        m_introChantSample.free();
-
-        m_chants[kPlayIntroChant] = PlayFansChant4lSample;
-    }
-
-    m_chants[kPlayFansChant8l] = PlayFansChant8lSample;
-    m_chants[kPlayFansChant10l] = PlayFansChant10lSample;
-    m_chants[kPlayFansChant4l] = PlayFansChant4lSample;
+    playChant(kChant4l);
 }
 
 static void playChant(Mix_Chunk *chunk)
@@ -181,11 +207,6 @@ void SWOS::PlayIntroChantSample()
     }
 }
 
-void SWOS::PlayFansChant4lSample()
-{
-    playChant(kChant4l);
-}
-
 void SWOS::PlayFansChant8lSample()
 {
     playChant(kChant8l);
@@ -223,36 +244,6 @@ void SWOS::EnqueueCrowdChantsReload()
 {
     // fix SWOS bug where crowd chants only get reloaded when auto replays are on
     swos.loadCrowdChantSampleFlag = 1;
-}
-
-void SWOS::LoadCrowdChantSampleIfNeeded()
-{
-    // the code doesn't even get to test the flag unless the replay is started
-    if (swos.loadCrowdChantSampleFlag) {
-        LoadCrowdChantSample();
-        swos.loadCrowdChantSampleFlag = 0;
-    }
-}
-
-static int getChantSampleIndex();
-static void loadChantSample(int sampleIndex);
-static void fadeOutChantsIfGameTurnedBoring(bool wasInteresting);
-
-void SWOS::LoadCrowdChantSample()
-{
-    if (swos.g_soundOff || !swos.g_commentary)
-        return;
-
-    bool wasInteresting = m_interestingGame;
-
-    int sampleIndex = getChantSampleIndex();
-    loadChantSample(sampleIndex);
-
-    // a change from the original SWOS: we will reset chant function after each goal (SWOS would only reset if "interesting" game)
-    // this is to prevent fans chanting "three nil" after the result has changed to 3-1
-    m_playCrowdChantsFunction = nullptr;
-
-    fadeOutChantsIfGameTurnedBoring(wasInteresting);
 }
 
 static int getChantSampleIndex()
@@ -340,7 +331,7 @@ void SWOS::TurnCrowdChantsOn()
     swos.g_crowdChantsOn = 1;
 
     if (swos.screenWidth == kGameScreenWidth)
-        playCrowdNoiseSample();
+        playCrowdNoise();
 }
 
 void SWOS::TurnCrowdChantsOff()

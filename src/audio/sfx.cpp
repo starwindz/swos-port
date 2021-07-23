@@ -5,6 +5,40 @@
 SfxSamplesArray m_sfxSamples;
 static int m_crowdLoopChannel = -1;
 
+void loadSoundEffects()
+{
+    if (swos.g_soundOff)
+        return;
+
+    logInfo("Loading sound effects...");
+
+    swos.goodPassTimer = 0;  // why is this here... >_<
+
+    std::string prefix;
+    bool hasAudioDir = dirExists(kAudioDir);
+    if (hasAudioDir)
+        prefix = std::string(kAudioDir) + getDirSeparator();
+
+    int i = 0;
+    for (auto p = swos.soundEffectsTable; *p != kSentinel; p++, i++) {
+        if (m_sfxSamples[i].hasData())
+            continue;
+
+        auto filename = p->asPtr();
+        if (hasAudioDir)
+            filename += 4;  // skip "sfx\" prefix
+
+        m_sfxSamples[i].loadFromFile(hasAudioDir ? (prefix + filename).c_str() : filename);
+    }
+
+    assert(i == m_sfxSamples.size());
+}
+
+void SWOS::LoadSoundEffects()
+{
+    loadSoundEffects();
+}
+
 void clearSfxSamplesCache()
 {
     for (auto& sample : m_sfxSamples)
@@ -38,9 +72,15 @@ static int playSfx(SfxSampleIndex index, int volume = MIX_MAX_VOLUME, int loopCo
     }
 }
 
-void playCrowdNoiseSample()
+void playCrowdNoise()
 {
-    m_crowdLoopChannel = playSfx(kBackgroundCrowd, 100, -1);
+    if (swos.g_crowdChantsOn)
+        m_crowdLoopChannel = playSfx(kBackgroundCrowd, 100, -1);
+}
+
+void SWOS::PlayCrowdNoiseSample()
+{
+    playCrowdNoise();
 }
 
 void stopBackgroudCrowdNoise()
@@ -50,44 +90,6 @@ void stopBackgroudCrowdNoise()
         Mix_HaltChannel(m_crowdLoopChannel);
         m_crowdLoopChannel = -1;
     }
-}
-
-void SWOS::LoadSoundEffects()
-{
-    if (swos.g_soundOff)
-        return;
-
-    logInfo("Loading sound effects...");
-
-    swos.goodPassTimer = 0;  // why is this here... >_<
-
-    std::string prefix;
-    bool hasAudioDir = dirExists(kAudioDir);
-    if (hasAudioDir)
-        prefix = std::string(kAudioDir) + getDirSeparator();
-
-    int i = 0;
-    for (auto p = swos.soundEffectsTable; *p != kSentinel; p++, i++) {
-        if (m_sfxSamples[i].hasData())
-            continue;
-
-        auto filename = p->asPtr();
-        if (hasAudioDir)
-            filename += 4;  // skip "sfx\" prefix
-
-        m_sfxSamples[i].loadFromFile(hasAudioDir ? (prefix + filename).c_str() : filename);
-    }
-
-    assert(i == m_sfxSamples.size());
-}
-
-void SWOS::PlayCrowdNoiseSample()
-{
-    // this is the first audio function to be called right before the game
-    initGameAudio();
-
-    if (swos.g_crowdChantsOn)
-        playCrowdNoiseSample();
 }
 
 void SWOS::PlayMissGoalSample()

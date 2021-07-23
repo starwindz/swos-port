@@ -7,12 +7,13 @@
 - source sprites are assumed to be sprites for 4k resolution (3840x2160), the script will automatically scale
   them down and create 3 directories: 4k, hd and low-res; currently they need to be copied manually to game
   directory/assets directory
+- screen background during menus is loaded from assets/<res>/swtitle.jpg
 - menu item backgrounds have special rendering, and they are also cached in run-time built textures
 - sprites for characters (from fonts) will have to stay in the same proportions as the original, since the
   menus were designed with fixed font size
 - other sprites don't have to be strictly in proportions to the original, but any larger deviations will have
   to be thoroughly tested
-- sprites that need to be colorized (containing variable colors for skin, hair, shirt, shorts, shocks...) are
+- sprites that need to be colorized (containing variable colors for skin, hair, shirt, shorts, socks...) are
   broken into gray-scale layers, before the game each layer is colored to proper color and pasted onto a
   resulting sprite
 - only exception is shirts layer, which contain two colors, they are represented with pixels containing red

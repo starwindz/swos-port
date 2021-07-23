@@ -14,6 +14,11 @@ void updateScreen()
         m_updateHook();
 }
 
+void updateFrame()
+{
+    updateScreen();
+}
+
 void initRendering() {}
 void finishRendering() {}
 SDL_Renderer *getRenderer() { return nullptr; }
@@ -25,6 +30,7 @@ void frameDelay(double) {}
 void timerProc() {}
 void fadeIfNeeded() {}
 void makeScreenshot() {}
+void drawFrame(int x, int y, int width, int height, const Color& color) {}
 bool getLinearFiltering() { return false; }
 void setLinearFiltering(bool) {}
 

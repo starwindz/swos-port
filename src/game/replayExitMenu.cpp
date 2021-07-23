@@ -8,7 +8,7 @@
 #include "replays.h"
 #include "replayExit.mnu.h"
 
-void SWOS::ReplayExitMenuAfterFriendly()
+void showReplayExitMenuAfterFriendly()
 {
     showMenu(replayExitMenu);
 }
@@ -20,16 +20,13 @@ static void replayExitMenuOnInit()
     drawMenu();     // redraw menu so it's ready for the fade-in
     fadeIfNeeded();
 
-    swos.g_cameraX = 0;
-    swos.g_cameraY = 0;
-
     SDL_ShowCursor(SDL_ENABLE);
 }
 
 static void replayExitMenuDone(bool replay = false)
 {
     swos.replaySelected = replay;
-    FadeOutToBlack();
+//    FadeOutToBlack();
     SetExitMenuFlag();
 
     if (replay)

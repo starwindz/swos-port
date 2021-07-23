@@ -3,16 +3,11 @@
 #include "sprites.h"
 #include "file.h"
 #include "util.h"
+#include "color.h"
 
 constexpr int kNumFaces = 3;
 
 static_assert(kPlayerBackground.size() == kNumFaces, "The air is dry");
-
-static const std::array<Color, 16> kGamePalette = {{
-    { 0, 0, 36 }, { 180, 180, 180 }, { 252, 252, 252 }, { 0, 0, 0 }, { 108, 36, 0 }, { 180, 72, 0 },
-    { 252, 108, 0 }, { 108, 108, 108 }, { 36, 36, 36 }, { 72, 72, 72 }, { 252, 0, 0 }, { 0, 0, 252 },
-    { 108, 0, 36 }, { 144, 144, 252 }, { 36, 144, 0 }, { 252, 252, 0 },
-}};
 
 using ColorPerFace = std::array<Color, kNumFaces>;
 
@@ -96,33 +91,10 @@ void colorizeGameSprites(int res, const TeamGame *topTeam, const TeamGame *botto
     }
 }
 
-void initializePlayerSpriteFrameIndices()
+int getGoalkeeperIndexFromFace(bool topTeam, int face)
 {
-    const auto kTeamData = { std::make_tuple(swos.team1SpritesTable, m_topTeam, m_topTeamGoalkeeperFaceToIndex),
-        std::make_tuple(swos.team2SpritesTable, m_bottomTeam, m_bottomTeamGoalkeeperFaceToIndex) };
-
-    for (const auto& teamData : kTeamData) {
-        auto team = std::get<1>(teamData);
-        auto spriteTable = std::get<0>(teamData);
-        const auto& goalkeeperFaces = std::get<2>(teamData);
-
-        auto goalie = goalkeeperFaces[team[0].players[0].face];
-        assert(goalie == 0 || goalie == 1);
-        spriteTable[0]->frameOffset = goalie * kNumGoalkeeperSprites;
-
-        for (size_t i = 1; i < std::size(swos.team1SpritesTable); i++) {
-            auto& player = team->players[i];
-            auto& sprite = spriteTable[i];
-
-            assert(player.face <= 3);
-            sprite->frameOffset = player.face * kNumPlayerSprites;
-        }
-    }
-}
-
-void SWOS::InitializePlayerSpriteFrameIndices()
-{
-    initializePlayerSpriteFrameIndices();
+    assert(face >= 0 && face <= 2);
+    return topTeam ? m_topTeamGoalkeeperFaceToIndex[face] : m_bottomTeamGoalkeeperFaceToIndex[face];
 }
 
 static void colorizePlayers()
@@ -184,6 +156,9 @@ static void colorizeGoalkeepers()
         auto surfaces = createGoalkeeperSurfaces(faces);
 
         for (size_t i = 0; i < faces.size(); i++) {
+            if (faces[i] < 0)
+                continue;
+
             assert(faces[i] <= 3);
 
             const std::pair<const Color&, const decltype(kGoalkeeperSkin)&> kLayers[] = {
@@ -369,12 +344,6 @@ static void pastePlayerLayer(SDL_Surface *dstSurface, SDL_Surface *srcSurface,
 static void copyShirtPixels(int baseColor, int stripesColor, const PackedSprite& back, const PackedSprite& shirt,
     const SDL_Surface *backSurface, const SDL_Surface *shirtSurface)
 {
-    static const std::array<Color, 16> kTeamPalette = {{
-        { 60, 184, 0 }, { 152, 152, 152 }, { 252, 252, 252 }, { 0, 0, 0 }, { 100, 32, 0 }, { 184, 68, 0 },
-        { 252, 100, 0 }, { 140, 184, 0 }, { 0, 32, 0 }, { 60, 184, 0 }, { 252, 0, 0 }, { 0, 0, 252 },
-        { 100, 0, 32 }, { 152, 152, 152 }, { 0, 220, 0 }, { 252, 252, 0 },
-    }};
-
     const auto& format = *backSurface->format;
     auto src = reinterpret_cast<Uint32 *>(shirtSurface->pixels) + shirtSurface->pitch / 4 * shirt.frame.y + shirt.frame.x;
     auto dst = reinterpret_cast<Uint32 *>(backSurface->pixels) + backSurface->pitch / 4 * (back.frame.y + shirt.yOffset) + back.frame.x + shirt.xOffset;
@@ -469,18 +438,17 @@ GoalkeeperFaces determineGoalkeeperFaces(const TeamGame *team, FacesArray& faceT
 
     for (int i = 0; i < 16; i++) {
         const auto& player = team->players[i];
-        if (player.position >= 0) {
+        int playerPos = static_cast<int>(player.position);
+        if (playerPos >= 0) {
             auto face = player.face;
-            bool mainGoalkeeper = player.position == 0;
+            bool mainGoalkeeper = playerPos == 0;
 
             if (face != faces[0] && (mainGoalkeeper || face != faces[1])) {
                 assert(face <= 3);
                 faceToGoalkeeper[face] = goalieIndex;
                 faces[goalieIndex] = face;
-                if (i == 0 || mainGoalkeeper) {
-                    if (++goalieIndex == 2)
-                        break;
-                }
+                if ((i == 0 || mainGoalkeeper) && ++goalieIndex == 2)
+                    break;
             }
         }
     }

@@ -147,7 +147,8 @@ std::vector<int> InputConverter::connectRanges()
         const auto& parser = m_workers[i]->parser();
 
         if (missingSymbol.empty()) {
-            assert(parser.foundEndRangeSymbol().empty());
+            if (!parser.foundEndRangeSymbol().empty())
+                Util::exit("Missing starting range symbol for end range symbol `%s'", 1, parser.foundEndRangeSymbol().c_str());
 
             activeChunks[i] = true;
             missingSymbol = parser.missingEndRangeSymbol();

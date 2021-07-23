@@ -2,6 +2,15 @@
 #include "keyboard.h"
 #include "mouse.h"
 #include "joypads.h"
+#include "bench.h"
+
+struct SwosGameControls {
+    byte& fire;
+    byte& secondaryFire;
+    int& fireCounter;
+    word& direction;
+    byte shortFire;
+};
 
 // fire counter starts from -1 and counts downwards while the fire button is pressed
 // if 0 don't touch it
@@ -10,60 +19,85 @@
 static int m_pl1FireCounter;
 static int m_pl2FireCounter;
 
-bool getShortFireAndUpdateFireCounter(bool currentFire, PlayerNumber player /* = kPlayer1 */)
+static GameControlEvents filterOverlappedEvents(PlayerNumber player, GameControlEvents events);
+static SwosGameControls updateGameControls(PlayerNumber player);
+static bool handleStatsFireExit();
+static void updateTeamControls(TeamGeneralInfo *team, const SwosGameControls& controls);
+
+// Sets control related fields in team structure. Called once per frame.
+// Handles one team per frame (next team in next frame).
+//
+void updateTeamControls()
 {
-    static bool s_pl1LastFired;
-    static bool s_pl2LastFired;
+    RunStoppageEventsAndSetAnimationTables();
 
-    auto& fireCounter = player == kPlayer1 ? m_pl1FireCounter : m_pl2FireCounter;
-    auto& lastFired = player == kPlayer1 ? s_pl1LastFired : s_pl2LastFired;
+    processControlEvents();
 
-    bool shortFire = false;
+    if (handleStatsFireExit())
+        return;
 
-    if (lastFired) {
-        if (currentFire) {
-            if (fireCounter)
-                fireCounter--;
-        } else {
-            lastFired = false;
-            fireCounter = -fireCounter;
-        }
-    } else if (currentFire) {
-        shortFire = true;
-        lastFired = true;
-        fireCounter = -1;
+    static int s_teamSwitchCounter;
+    auto team = ++s_teamSwitchCounter & 1 ? &swos.topTeamData : &swos.bottomTeamData;
+
+    A6 = team;
+    UpdateControlledPlayer();
+    UpdatePlayerBeingPassedTo();
+
+    if (team->playerNumber) {
+        auto player = team->playerNumber == 2 ? kPlayer2 : kPlayer1;
+        const auto& controls = updateGameControls(player);
+
+        updateTeamControls(team, controls);
     }
 
-    return shortFire;
+    if (!team->resetControls) {
+        if (inBench()) {
+            team->currentAllowedDirection = -1;
+            team->quickFire = 0;
+            team->normalFire = 0;
+            team->firePressed = 0;
+            team->fireThisFrame = 0;
+            team->fireCounter = 0;
+        }
+
+        UpdatePlayersAndBall();
+
+        if (team->headerOrTackle) {
+            team->headerOrTackle = 0;
+            auto& fireCounter = team->playerNumber == 2 ? m_pl2FireCounter : m_pl1FireCounter;
+            fireCounter = 0;
+        }
+    }
 }
 
-int16_t eventsToDirection(GameControlEvents events)
+GameControlEvents getPlayerEvents(PlayerNumber player)
 {
-    int16_t direction = -1;
+    assert(player == kPlayer1 || player == kPlayer2);
 
-    bool left = (events & kGameEventLeft) != 0;
-    bool right = (events & kGameEventRight) != 0;
-    bool up = (events & kGameEventUp) != 0;
-    bool down = (events & kGameEventDown) != 0;
+    auto events = kNoGameEvents;
 
-    if (up && right)
-        direction = 1;
-    else if (down && right)
-        direction = 3;
-    else if (down && left)
-        direction = 5;
-    else if (up && left)
-        direction = 7;
-    else if (up)
-        direction = 0;
-    else if (right)
-        direction = 2;
-    else if (down)
-        direction = 4;
-    else if (left)
-        direction = 6;
+    auto controls = player == kPlayer1 ? getPl1Controls() : getPl2Controls();
 
-    return direction;
+    switch (controls) {
+    case kKeyboard1:
+        assert(player == kPlayer1);
+        events = keyboard1Events();
+        break;
+    case kKeyboard2:
+        assert(player == kPlayer2);
+        events = keyboard2Events();
+        break;
+    case kMouse:
+        events = mouseEvents();
+        break;
+    case kJoypad:
+        events = player == kPlayer1 ? pl1JoypadEvents() : pl2JoypadEvents();
+        break;
+    default:
+        return events;
+    }
+
+    return filterOverlappedEvents(player, events);
 }
 
 // We must do this since without it there are problems with doing long kicks (seems the game processes
@@ -109,45 +143,6 @@ static GameControlEvents filterOverlappedEvents(PlayerNumber player, GameControl
 
     return oldEvents = events;
 }
-
-static GameControlEvents getPlayerEvents(PlayerNumber player)
-{
-    assert(player == kPlayer1 || player == kPlayer2);
-
-    auto events = kNoGameEvents;
-
-    auto controls = player == kPlayer1 ? getPl1Controls() : getPl2Controls();
-
-    switch (controls) {
-    case kKeyboard1:
-        assert(player == kPlayer1);
-        events = keyboard1Events();
-        break;
-    case kKeyboard2:
-        assert(player == kPlayer2);
-        events = keyboard2Events();
-        break;
-    case kMouse:
-        events = mouseEvents();
-        break;
-    case kJoypad:
-        events = player == kPlayer1 ? pl1JoypadEvents() : pl2JoypadEvents();
-        break;
-    default:
-        return events;
-    }
-
-    return filterOverlappedEvents(player, events);
-}
-
-struct SwosGameControls
-{
-    byte& fire;
-    byte& secondaryFire;
-    int& fireCounter;
-    word& direction;
-    byte shortFire;
-};
 
 SwosGameControls getGameControls(PlayerNumber player)
 {
@@ -212,7 +207,7 @@ static bool handleStatsFireExit()
     return false;
 }
 
-static void updateTeamControls(TeamGeneralInfo *team, const SwosGameControls& controls)
+void updateTeamControls(TeamGeneralInfo *team, const SwosGameControls& controls)
 {
     assert(team->playerNumber);
 
@@ -246,48 +241,89 @@ static void updateTeamControls(TeamGeneralInfo *team, const SwosGameControls& co
     }
 }
 
-// Sets control related fields in team structure. Called once per frame.
-// Handles one team per frame (next team in next frame).
-//
-void SWOS::TeamsControlCheck()
+bool getShortFireAndUpdateFireCounter(bool currentFire, PlayerNumber player /* = kPlayer1 */)
 {
-    RunStoppageEventsAndSetAnimationTables();
+    static bool s_pl1LastFired;
+    static bool s_pl2LastFired;
 
-    processControlEvents();
+    auto& fireCounter = player == kPlayer1 ? m_pl1FireCounter : m_pl2FireCounter;
+    auto& lastFired = player == kPlayer1 ? s_pl1LastFired : s_pl2LastFired;
 
-    if (handleStatsFireExit())
-        return;
+    bool shortFire = false;
 
-    static int s_teamSwitchCounter;
-    auto team = ++s_teamSwitchCounter & 1 ? &swos.topTeamData : &swos.bottomTeamData;
-
-    A6 = team;
-    UpdateControlledPlayer();
-    UpdatePlayerBeingPassedTo();
-
-    if (team->playerNumber) {
-        auto player = team->playerNumber == 2 ? kPlayer2 : kPlayer1;
-        const auto& controls = updateGameControls(player);
-
-        updateTeamControls(team, controls);
+    if (lastFired) {
+        if (currentFire) {
+            if (fireCounter)
+                fireCounter--;
+        } else {
+            lastFired = false;
+            fireCounter = -fireCounter;
+        }
+    } else if (currentFire) {
+        shortFire = true;
+        lastFired = true;
+        fireCounter = -1;
     }
 
-    if (!team->resetControls) {
-        if (swos.g_inSubstitutesMenu) {
-            team->currentAllowedDirection = -1;
-            team->quickFire = 0;
-            team->normalFire = 0;
-            team->firePressed = 0;
-            team->fireThisFrame = 0;
-            team->fireCounter = 0;
-        }
+    return shortFire;
+}
 
-        UpdatePlayersAndBall();
+int16_t eventsToDirection(GameControlEvents events)
+{
+    int16_t direction = -1;
 
-        if (team->headerOrTackle) {
-            team->headerOrTackle = 0;
-            auto& fireCounter = team->playerNumber == 2 ? m_pl2FireCounter : m_pl1FireCounter;
-            fireCounter = 0;
-        }
+    bool left = (events & kGameEventLeft) != 0;
+    bool right = (events & kGameEventRight) != 0;
+    bool up = (events & kGameEventUp) != 0;
+    bool down = (events & kGameEventDown) != 0;
+
+    if (up && right)
+        direction = 1;
+    else if (down && right)
+        direction = 3;
+    else if (down && left)
+        direction = 5;
+    else if (up && left)
+        direction = 7;
+    else if (up)
+        direction = 0;
+    else if (right)
+        direction = 2;
+    else if (down)
+        direction = 4;
+    else if (left)
+        direction = 6;
+
+    return direction;
+}
+
+GameControlEvents directionToEvents(int16_t direction)
+{
+    switch (direction) {
+    case 0:
+        return kGameEventUp;
+    case 1:
+        return kGameEventUp | kGameEventRight;
+    case 2:
+        return kGameEventRight;
+    case 3:
+        return kGameEventDown | kGameEventRight;
+    case 4:
+        return kGameEventDown;
+    case 5:
+        return kGameEventDown | kGameEventLeft;
+    case 6:
+        return kGameEventLeft;
+    case 7:
+        return kGameEventUp | kGameEventLeft;
+    default:
+        assert(false);
+    case -1:
+        return kNoGameEvents;
     }
+}
+
+bool isAnyPlayerFiring()
+{
+    return ((getPlayerEvents(kPlayer1) | getPlayerEvents(kPlayer2)) & kGameEventKick) != 0;
 }

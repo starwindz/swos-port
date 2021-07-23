@@ -32,7 +32,6 @@ bool setFullScreenResolution(int width, int height);
 bool isInFullScreenMode();
 std::pair<int, int> getFullScreenDimensions();
 std::pair<int, int> getVisibleFieldSize();
-int getVisibleFieldWidth();
 
 void switchToWindow();
 void switchToBorderlessMaximized();
@@ -46,7 +45,7 @@ bool hasMouseFocus();
 bool mapCoordinatesToGameArea(int& x, int& y);
 float getXScale();
 float getYScale();
-SDL_Rect mapRect(int x, int y, int width, int height);
+SDL_FRect mapRect(int x, int y, int width, int height);
 
 #ifdef VIRTUAL_JOYPAD
 bool getShowTouchTrails();

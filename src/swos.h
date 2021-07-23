@@ -344,14 +344,45 @@ struct SpriteGraphics {
 
 static_assert(sizeof(SpriteGraphics) == 24, "SpriteGraphics is invalid");
 
+enum class PlayerState : byte
+{
+    kNormal = 0,
+    kTackling = 1,
+    kTackled = 3,
+    kGoalieCatchingBall = 4,
+    kThrowIn = 5,
+    kGoalieDivingHigh = 6,
+    kGoalieDivingLow = 7,
+    kNormal2 = 8,
+    kHeading = 9,
+    kDown = 10,
+    kGoalieClaimed = 11,
+    kBooked = 12,
+    kInjured = 13,
+    kSad = 14,
+    kHappy = 15,
+};
+
+struct ImageIndicesTable
+{
+    int16_t index[1];
+};
+
+struct AnimationTable
+{
+    word numCycles;
+    // indexed as: indicesTable[player/goalkeeper][team1/2][direction]
+    SwosDataPointer<ImageIndicesTable> indicesTable[2][2][8];
+};
+
 struct Sprite
 {
     word teamNumber;    // 1 or 2 for player controls, 0 for CPU
-    word shirtNumber;   // 1-11 for players, 0 for other sprites
+    word playerOrdinal; // 1-11 for players, 0 for other sprites
     word frameOffset;
-    SwosDataPointer<void> animTablePtr;
+    SwosDataPointer<AnimationTable> animTablePtr;
     word startingDirection;
-    byte playerState;
+    PlayerState state;
     byte playerDownTimer;
     word unk001;
     word unk002;
@@ -400,13 +431,26 @@ struct Sprite
     }
 };
 
+enum class PlayerPosition : int8_t
+{
+    kSubstituted = -1,
+    kGoalkeeper = 0,
+    kRightBack = 1,
+    kLeftBack = 2,
+    kDefender = 3,
+    kRightWing = 4,
+    kLeftWing = 5,
+    kMidfielder = 6,
+    kAttacker = 7,
+};
+
 struct PlayerGame
 {
     byte substituted;
     byte index;
     byte goalsScored;
     byte shirtNumber;
-    int8_t position;
+    PlayerPosition position;
     byte face;
     byte isInjured;
     byte field_7;
@@ -427,7 +471,13 @@ struct PlayerGame
     byte hasPlayed;
     byte face2;
     char fullName[23];
+
+    bool canBeSubstituted() const {
+        return !substituted && static_cast<int>(position) >= 0 && cards < 2;
+    }
 };
+
+static_assert(sizeof(PlayerGame) == 61, "PlayerGame is invalid");
 
 struct TeamStatsData
 {
@@ -447,6 +497,8 @@ enum TeamControls : byte
     kPlayerCoach = 2,
     kCoach = 3,
 };
+
+constexpr int kNumPlayersInTeam = 16;
 
 struct TeamFile
 {
@@ -471,7 +523,7 @@ struct TeamFile
     byte secSocksColor;
     byte coachName[23];
     byte someFlag;
-    byte playerNumbers[16];
+    byte playerNumbers[kNumPlayersInTeam];
 };
 
 static_assert(sizeof(TeamFile) == 76, "TeamFile is invalid");
@@ -520,7 +572,7 @@ struct TeamGame
     byte unk_1;
     byte numOwnGoals;
     byte unk_2;
-    PlayerGame players[16];
+    PlayerGame players[kNumPlayersInTeam];
     byte unknownTail[686];
 };
 
@@ -538,7 +590,7 @@ struct TeamGeneralInfo
     SwosDataPointer<TeamGame> inGameTeamPtr;
     SwosDataPointer<TeamStatsData> teamStatsPtr;
     word teamNumber;
-    SwosDataPointer<Sprite[11]> players;
+    SwosDataPointer<SwosDataPointer<Sprite>> players;   // 11
     SwosDataPointer<void> someTablePtr;
     word tactics;
     word tensTimer;
@@ -603,8 +655,26 @@ struct TeamGeneralInfo
     word resetControls;
     byte secondaryFire;
 };
-constexpr int xsrf = sizeof(TeamGeneralInfo);
 static_assert(sizeof(TeamGeneralInfo) == 145, "TeamGeneralInfo is invalid");
+
+using PositionsTable = std::array<SwosDataPointer<byte>, 18>;
+static_assert(sizeof(PositionsTable) == 72, "PositionsTable is invalid");
+
+struct PlayerPositions
+{
+    byte positions[35];
+};
+
+struct TeamTactics
+{
+    char name[9];
+    PlayerPositions positions[10];
+    byte unkTable[10];
+    byte ballOutOfPlayTactics;
+};
+
+static_assert(sizeof(TeamTactics) == 370, "Tactics are invalid");
+
 #pragma pack(pop)
 
 enum ShirtTypes
@@ -618,6 +688,7 @@ enum ShirtTypes
 enum SpriteIndices
 {
     kSmallZeroSprite = 8,
+    kSmallNineSprite = 17,
     kBlockSprite = 44,
     kLeftArrowSprite = 179,
     kRightArrowSprite = 175,
@@ -625,20 +696,84 @@ enum SpriteIndices
     kDownArrowSprite = 184,
     kMaxMenuSprite = 226,
     kSquareGridForResultSprite = 252,
+    kRedCardSprite = 253,
+    kYellowCardSprite = 254,
+    kTeam1PlayerNamesStartSprite = 255,
+    kTeam1PlayerNamesEndSprite = 270,
+    kTeam2PlayerNamesStartSprite = 271,
+    kTeam2PlayerNamesEndSprite = 286,
     kBigZeroSprite = 287,
+    kBigNineSprite = 296,
     kBigZero2Sprite = 297,
     kTeam1NameSprite = 307,
     kTeam2NameSprite = 308,
     kBigDashSprite = 309,
+    kTeam1Scorer1NameSprite = 310,
+    kTeam1Scorer8NameSprite = 317,
+    kTeam2Scorer1NameSprite = 318,
+    kTeam2Scorer8NameSprite = 325,
+    kHalfTimeSprite = 326,
+    kFullTimeSprite = 327,
     kTimeSprite8Mins = 328,
     kTimeSprite88Mins = 329,
     kTimeSprite118Mins = 330,
     kBigTimeDigitSprite0 = 331,
-    kTeam1PlayerSpriteStart = 341,
-    kTeam2PlayerSpriteStart = 644,
-    kTeam1GoalkeeperSpriteStart = 947,
+    kBigTimeDigitSprite1 = 332,
+    kTeam1WhitePlayerSpriteStart = 341,
+    kTeam1GingerPlayerSpriteStart = 442,
+    kTeam1BlackPlayerSpriteStart = 542,
+    kTeam1BlackPlayerSpriteEnd = 643,
+    kTeam2WhitePlayerSpriteStart = 644,
+    kTeam2BlackPlayerSpriteEnd = 946,
+    kTeam1MainGoalkeeperSpriteStart = 947,
+    kTeam1MainGoalkeeperSpriteEnd = 1004,
+    kTeam1ReserveGoalkeeperSpriteStart = 1005,
+    kTeam1ReserveGoalkeeperSpriteEnd = 1062,
+    kTeam2MainGoalkeeperSpriteStart = 1063,
+    kTeam2MainGoalkeeperSpriteEnd = 1020,
+    kTeam2ReserveGoalkeeperSpriteStart = 1121,
+    kTeam2ReserveGoalkeeperSpriteEnd = 1178,
+    kBallSprite1 = 1179,
+    kBallSprite2 = 1180,
+    kBallSprite3 = 1181,
+    kBallSprite4 = 1182,
+    kBallShadowSprite = 1183,
+    kCornerFlagSpriteStart = 1184,
+    kCornerFlagSpriteEnd = 1187,
+    kSmallDigit1 = 1188,
+    kSmallDigit16 = 1203,
+    kPlayerMarkSprite = 1204,
+    kTopGoalSprite = 1205,
+    kBottomGoalSprite = 1206,
     kReplayFrame00Sprite = 1209,
+    kBigSSpriteStart = 1241,
+    kBigSSpriteEnd = 1272,
+    kRefereeSpriteStart = 1273,
+    kRefereeSpriteEnd = 1283,
+    kSubstitutesArrowSprite = 1284,
+    kSubstitutesLegendSprite = 1288,
+    kTacticsLegendSprite = 1289,
+    kRedCrossInjurySprite = 1290,
+    kWhiteFaceSprite = 1293,
+    kGingerFaceSprite = 1294,
+    kBlackFaceSprite = 1295,
+    kCoach1SittingStartSprite = 1296,
+    kCoach1StandingStartSprite = 1299,
+    kCoach2SittingStartSprite = 1303,
     kTeam1BenchPlayerSpriteStart = 1310,
+    kBenchGoalkeeperSittingWhite = 1310,
+    kBenchGoalkeeperSittingGinger = 1311,
+    kBenchGoalkeeperSittingBlack = 1312,
+    kBenchPlayerSittingWhite = 1313,
+    kBenchPlayerSittingGinger = 1314,
+    kBenchPlayerSittingBlack = 1315,
+    kBenchGoalkeeperStandingWhite = 1316,
+    kBenchGoalkeeperStandingGinger = 1317,
+    kBenchGoalkeeperStandingBlack = 1318,
+    kBenchPlayerStandingWhite = 1319,
+    kBenchPlayerStandingGinger = 1320,
+    kBenchPlayerStandingBlack = 1321,
+    kTeam2BenchPlayerSpriteStart = 1322,
     kNumSprites = 1334,
 };
 
@@ -768,7 +903,8 @@ enum Tactics
 
 enum class GameState : word
 {
-    kGameStarting = 0,
+    kPlayersGoingToInitialPositions = 0,
+    kKeeperHoldsTheBall = 3,
     kCornerLeft = 4,
     kCornerRight = 5,
     kThrowInForwardRight = 15,

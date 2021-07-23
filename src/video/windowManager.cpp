@@ -253,11 +253,6 @@ std::pair<int, int> getVisibleFieldSize()
     return { m_fieldWidth, m_fieldHeight };
 }
 
-int getVisibleFieldWidth()
-{
-    return m_fieldWidth;
-}
-
 static bool setDisplayMode(int width, int height)
 {
     assert(m_window);
@@ -468,19 +463,9 @@ float getYScale()
     return m_scaleY;
 }
 
-static std::pair<int, int> mapPoint(int x, int y)
+SDL_FRect mapRect(int x, int y, int width, int height)
 {
-    x = std::lround(x * m_scaleX);
-    y = std::lround(y * m_scaleY);
-    return { x, y };
-}
-
-SDL_Rect mapRect(int x, int y, int width, int height)
-{
-    std::tie(x, y) = mapPoint(x, y);
-    width = std::lround(width * m_scaleX);
-    height = std::lround(height * m_scaleY);
-    return { x, y, width, height };
+    return { x * m_scaleX, y * m_scaleY, width * m_scaleX, height * m_scaleY };
 }
 
 #ifdef VIRTUAL_JOYPAD

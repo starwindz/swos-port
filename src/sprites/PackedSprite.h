@@ -8,21 +8,14 @@ struct PackedSprite
     int16_t yOffset;
     float xOffsetF;
     float yOffsetF;
+    int16_t width;
+    int16_t height;
     float widthF;
     float heightF;
-    float centerXF;
-    float centerYF;
     int16_t centerX;
     int16_t centerY;
-    int16_t originalWidth;
-    int16_t originalHeight;
+    float centerXF;
+    float centerYF;
     int8_t texture;
     bool rotated;
-
-    float width() const {
-        return rotated ? heightF : widthF;
-    }
-    float height() const {
-        return rotated ? widthF : heightF;
-    }
 };
