@@ -156,7 +156,7 @@ Static menu header:
 
         See screen menu header (first 16 bytes)
         Only thing that differs is offset 12 - in static menu that is the index
-        of current entry, while screen menu holds it as a pointer
+        of the initial entry, while the screen menu holds it as a pointer
 
 sizeof(StaticMenuHeader) = 16
 
@@ -229,7 +229,8 @@ When entry is drawn, this function is invoked, and no background is drawn
 TYPE 4:  (entry frame)
 
 ofs28 = 2
-ofs30 = word (background and frame color)
+ofs30 = word (lo nibble: background and frame color
+              hi nibble: inner frame color)
 ofs32 = 0
 ---------------------------
 TYPE 5:  (sprite 1 (background))
@@ -275,7 +276,8 @@ TYPE 11: (multi-line text)
 
 ofs34 = 5
 ofs36 = word (string flags)
-ofs38 = dword (pointer to a byte - number of strings, followed by the strings)
+ofs38 = dword (pointer to a byte - number of strings, followed by the strings,
+               not pointers, strings are null-terminated)
 ---------------------------
 TYPE 12: (number)
 

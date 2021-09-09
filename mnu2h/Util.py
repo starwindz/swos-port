@@ -176,25 +176,6 @@ def formatToken(result, text):
 
     return result
 
-# getStringTableName
-#
-# in:
-#     menuName - name of parent menu
-#     entry    - entry for which we're deciding string table name
-#
-# Forms and returns a unique string table name for the entry.
-#
-def getStringTableName(menuName, entry):
-    assert isinstance(menuName, str)
-    assert isinstance(entry, Entry)
-
-    name = menuName + '_' + entry.name
-
-    if not entry.name:
-        name += f'{entry.ordinal:02}'
-
-    return name + '_stringTable'
-
 # limitRotateTo32Bit
 #
 # Decorator in charge of normalizing input and output values of rotation routines,
@@ -315,6 +296,8 @@ def getNumericValue(text, token):
 
     try:
         text = removeEnclosingParentheses(text)
+        if text.startswith('-'):
+            text = '-' + removeEnclosingParentheses(text[1:])
         value = int(text, 0)
     except ValueError:
         error(f"`{text}' is not a numeric value'", token)

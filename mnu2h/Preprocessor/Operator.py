@@ -15,6 +15,7 @@ class Operator:
 
     def __repr__(self):
         return f'Operator {self.text}, operands: {self.numOperands}'
+
                              # n.ops. lvalue int-only
 kBitwiseNot     = Operator('~',    1, False, True,  lambda v: ~v)
 kLogicalNot     = Operator('!',    1, False, True,  lambda v: int(not v))

@@ -1,5 +1,6 @@
 #include "sfx.h"
 #include "audio.h"
+#include "chants.h"
 #include "file.h"
 
 SfxSamplesArray m_sfxSamples;
@@ -7,36 +8,25 @@ static int m_crowdLoopChannel = -1;
 
 void loadSoundEffects()
 {
-    if (swos.g_soundOff)
+    if (!soundEnabled())
         return;
 
     logInfo("Loading sound effects...");
 
     swos.goodPassTimer = 0;  // why is this here... >_<
 
-    std::string prefix;
-    bool hasAudioDir = dirExists(kAudioDir);
-    if (hasAudioDir)
-        prefix = std::string(kAudioDir) + getDirSeparator();
+    auto prefix = std::string(kAudioDir) + getDirSeparator();
 
     int i = 0;
     for (auto p = swos.soundEffectsTable; *p != kSentinel; p++, i++) {
         if (m_sfxSamples[i].hasData())
             continue;
 
-        auto filename = p->asPtr();
-        if (hasAudioDir)
-            filename += 4;  // skip "sfx\" prefix
-
-        m_sfxSamples[i].loadFromFile(hasAudioDir ? (prefix + filename).c_str() : filename);
+        auto filename = p->asPtr() + 4; // skip "sfx\" prefix
+        m_sfxSamples[i].loadFromFile((prefix + filename).c_str());
     }
 
     assert(i == m_sfxSamples.size());
-}
-
-void SWOS::LoadSoundEffects()
-{
-    loadSoundEffects();
 }
 
 void clearSfxSamplesCache()
@@ -55,9 +45,15 @@ SfxSamplesArray& sfxSamples()
     return m_sfxSamples;
 }
 
+static bool isCrowdSample(SfxSampleIndex index)
+{
+    return index == kBackgroundCrowd || index == kHomeGoal || index == kMissGoal || index == kChant4l ||
+        index == kChant10l || index == kChant8l;
+}
+
 static int playSfx(SfxSampleIndex index, int volume = MIX_MAX_VOLUME, int loopCount = 0)
 {
-    if (swos.g_soundOff)
+    if (!soundEnabled() || swos.g_trainingGame && isCrowdSample(index))
         return -1;
 
     assert(index >= 0 && index < kNumSoundEffects);
@@ -74,13 +70,8 @@ static int playSfx(SfxSampleIndex index, int volume = MIX_MAX_VOLUME, int loopCo
 
 void playCrowdNoise()
 {
-    if (swos.g_crowdChantsOn)
+    if (areCrowdChantsEnabled() && !swos.g_trainingGame)
         m_crowdLoopChannel = playSfx(kBackgroundCrowd, 100, -1);
-}
-
-void SWOS::PlayCrowdNoiseSample()
-{
-    playCrowdNoise();
 }
 
 void stopBackgroudCrowdNoise()
@@ -90,6 +81,11 @@ void stopBackgroudCrowdNoise()
         Mix_HaltChannel(m_crowdLoopChannel);
         m_crowdLoopChannel = -1;
     }
+}
+
+void playEndGameWhistleSample()
+{
+    playSfx(kEndGameWhistle, 42);
 }
 
 void SWOS::PlayMissGoalSample()
@@ -111,11 +107,6 @@ void SWOS::PlayAwayGoalSample()
 void SWOS::PlayRefereeWhistleSample()
 {
     playSfx(kWhistle, 42);
-}
-
-void SWOS::PlayEndGameWhistleSample()
-{
-    playSfx(kEndGameWhistle, 42);
 }
 
 void SWOS::PlayFoulWhistleSample()

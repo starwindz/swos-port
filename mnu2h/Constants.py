@@ -4,11 +4,12 @@ kInitialEntry = 'initialEntry'
 kOnInit = 'onInit'
 kOnReturn = 'onReturn'
 kOnDraw = 'onDraw'
+kOnDestroy = 'onDestroy'
 
 kMaxEntries = 30_000    # just a random big number to avoid clashes with non-templates
 kPreprocReservedWords = ('include', 'textWidth', 'textHeight', 'repeat', 'endRepeat', 'join', 'print')
 kPreprocValueDirectives = ( 'eval', '{', 'textWidth', 'textHeight' )
-kMenuFunctions = (kOnInit, kOnReturn, kOnDraw)
+kMenuFunctions = (kOnInit, kOnReturn, kOnDraw, kOnDestroy)
 
 kMenuDefaults = (   # expansion of these is delayed, so that they can have different values for different entries
     'x', 'y', 'width', 'height', 'color', 'textFlags', 'leftEntry', 'rightEntry', 'upEntry', 'downEntry',
@@ -20,7 +21,7 @@ kDefaultPropertyAliases = {
 kMenuProperties = kMenuFunctions + (kInitialEntry, 'x', 'y')
 
 kNextEntryProperties = ('leftEntry', 'rightEntry', 'upEntry', 'downEntry', 'skipLeft', 'skipRight', 'skipUp', 'skipDown')
-kEntryTypeProperties = ('text', 'stringTable', 'number', 'sprite', 'customDrawForeground')
+kEntryTypeProperties = ('text', 'stringTable', 'multilineText', 'number', 'sprite', 'menuSpecificSprite', 'customDrawForeground')
 kEntryFunctions = ('onSelect', 'beforeDraw', 'onReturn', 'customDrawBackground', 'customDrawForeground')
 kImmutableEntryProperties = ('name', 'ordinal')
 kPreviousEntryFields = ('ordinal', 'x', 'y', 'width', 'height', 'color', 'textFlags')

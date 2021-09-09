@@ -147,7 +147,7 @@ Menu selectGameControlEvents {
 
     TemplateEntry {
         color: @kGray
-        text: swos.aOff
+        text: @kAlloc
         onSelect: toggleEventFromStatus
     }
 

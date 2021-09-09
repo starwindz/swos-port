@@ -49,15 +49,15 @@ void References::addReference(CToken *ref)
         m_references.add(ref);
 }
 
-void References::addReference(const String& str)
+void References::addReference(const String& str, CToken *refProc)
 {
     if (isReference(str))
-        m_references.add(str.data(), str.length());
+        m_references.add(str.data(), str.length(), kNone, nullptr, refProc);
 }
 
 void References::markImport(const String& str)
 {
-    if (auto ref = m_references.get(str))
+    for (auto ref : m_references.getAll(str))
         ref->type = kNear;
 }
 
@@ -172,7 +172,7 @@ std::vector<String> References::publics() const
     return result;
 }
 
-auto References::externs() const -> std::vector<std::tuple<String, ReferenceType, String>>
+auto References::externs() const -> std::vector<std::tuple<String, ReferenceType, String, String>>
 {
     decltype(externs()) result;
     result.reserve(m_references.count() + kNumAmigaRegisters);
@@ -180,11 +180,12 @@ auto References::externs() const -> std::vector<std::tuple<String, ReferenceType
     // make things simple, always import Amiga registers, except if they're defined here
     for (int i = 0; i < kNumAmigaRegisters; i++)
         if (!m_amigaRegisters[i])
-            result.emplace_back(std::make_tuple(indexToAmigaRegister(i), kDword, String()));
+            result.emplace_back(std::make_tuple(indexToAmigaRegister(i), kDword, String{}, String{}));
 
     for (auto& ext : m_references)
         if (ext.cargo->type != kIgnore)
-            result.emplace_back(std::make_tuple(ext.text, ext.cargo->type, ext.cargo->structName()));
+            result.emplace_back(std::make_tuple(ext.text, ext.cargo->type,
+                ext.cargo->structName(), ext.cargo->refProcName()));
 
     return result;
 }

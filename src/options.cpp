@@ -8,17 +8,15 @@
 #include "replayOptions.h"
 #include "controlOptionsMenu.h"
 #include "videoOptionsMenu.h"
-#include <adlmidi.h>
 
 static int16_t m_gameStyle;         // 0 = PC, 1 = Amiga
+static int16_t m_showPreMatchMenus;
+static int16_t m_spinBigS;
 
 #include "options.mnu.h"
 
 enum SoundEnabledState { kUnspecified, kOn, kOff, } static m_soundState;
 static bool m_noIntro;
-static bool m_noReels;
-static bool m_noLoadPause;
-static int m_bankNo;
 
 using OptionalControls = std::pair<bool, Controls>;
 using OptionalJoypadGuid = std::pair<bool, std::string>;
@@ -35,12 +33,12 @@ static constexpr char kStandardSection[] = "standardOptions";
 static const std::array<Option<int16_t>, 9> kStandardOptions = {
     "gameLength",  &swos.g_gameLength, 0, 3, 0,
     "autoReplays",  &swos.g_autoReplays, 0, 1, 0,
-    "menuMusic",  &swos.g_menuMusic, 0, 1, 1,
     "autoSaveHighlights",  &swos.g_autoSaveHighlights, 0, 1, 1,
     "allPlayerTeamsEqual", &swos.g_allPlayerTeamsEqual, 0, 1, 0,
     "pitchType", &swos.g_pitchType, -2, 6, 4,
     "chairmanScenes", &swos.g_chairmanScenes, 0, 1, 1,
-    "showBigLetterS", &swos.g_spinBigS, 0, 1, 0,
+    "preMatchMenus", &m_showPreMatchMenus, 0, 1, 1,
+    "showBigLetterS", &m_spinBigS, 0, 1, 0,
     "gameStyle", &m_gameStyle, 0, 1, 0,
 };
 
@@ -105,15 +103,15 @@ void saveOptions()
 
 static void setDefaultOptions()
 {
-    swos.g_spinBigS = 0;
+    m_spinBigS = 0;
     swos.g_autoReplays = 1;
-    swos.g_menuMusic = 1;
     swos.g_autoSaveHighlights = 1;
     swos.g_pitchType = -1;
     swos.g_chairmanScenes = 0;
-    swos.g_soundOff = 0;
-    swos.g_musicOff = 0;
-    swos.g_commentary = 1;
+    setSoundEnabled(true);
+    setMusicEnabled(true);
+    setCommentaryEnabled(true);
+    m_showPreMatchMenus = 1;
 }
 
 static SI_Error safeSaveIniFile(CSimpleIni& ini, const std::string& path)
@@ -232,10 +230,7 @@ std::vector<LogItem> parseCommandLine(int argc, char **argv)
     const char kSwosDir[] = "--swos-dir=";
     const char kSound[] = "--sound=";
     const char kNoIntro[] = "--no-intro";
-    const char kNoReels[] = "--no-image-reels";
-    const char kNoLoadPause[] = "--no-load-pause";
-    const char kMaxBank[] = "--max-bank";
-    const char kBankNum[] = "--bank-number=";
+    const char kNoPreMatchMenus[] = "--no-pre-match-menus";
     const char kPl1Controls[] = "--pl1controls=";
     const char kPl2Controls[] = "--pl2controls=";
     const char kPl1Joypad[] = "--pl1joypad=";
@@ -253,23 +248,8 @@ std::vector<LogItem> parseCommandLine(int argc, char **argv)
             m_soundState = (tolower(setting[0]) != 'o' || tolower(setting[1]) != 'n') && setting[0] != '1' ? kOff : kOn;
         } else if (!strcmp(argv[i], kNoIntro)) {
             m_noIntro = true;
-        } else if (!strcmp(argv[i], kNoReels)) {
-            m_noReels = true;
-        } else if (!strcmp(argv[i], kNoLoadPause)) {
-            m_noLoadPause = true;
-        } else if (!strcmp(argv[i], kMaxBank)) {
-            log("Maximum bank number is " + std::to_string(adl_getBanksCount() - 1), kInfo);
-        } else if (strstr(argv[i], kBankNum) == argv[i]) {
-            auto bankNumStr = argv[i] + sizeof(kBankNum) - 1;
-            auto bankNo = atoi(bankNumStr);
-            auto maxBankNo = adl_getBanksCount() - 1;
-            if (bankNo >= 0 && bankNo <= maxBankNo) {
-                m_bankNo = bankNo;
-            } else {
-                auto warningText = "Invalid bank number " + std::to_string(bankNo) +
-                    ", range is [0.." + std::to_string(maxBankNo) + "]";
-                log(warningText);
-            }
+        } else if (!strcmp(argv[i], kNoPreMatchMenus)) {
+            m_showPreMatchMenus = 1;
         } else if (strstr(argv[i], kPl1Controls) == argv[i] || strstr(argv[i], kPl2Controls)) {
             assert(argv[i][4] == '1' || argv[i][4] == '2');
 
@@ -303,10 +283,9 @@ std::vector<LogItem> parseCommandLine(int argc, char **argv)
 void normalizeOptions()
 {
     if (m_soundState != kUnspecified) {
-        auto soundOff = m_soundState == kOff;
-        swos.g_soundOff = soundOff;
-        swos.g_musicOff = soundOff;
-        swos.g_menuMusic = !swos.g_musicOff;
+        auto soundOn = m_soundState != kOff;
+        setSoundEnabled(soundOn);
+        setMusicEnabled(soundOn);
     }
 
     if (!keyboardPresent())
@@ -318,19 +297,19 @@ bool disableIntro()
     return m_noIntro;
 }
 
-bool disableImageReels()
+bool showPreMatchMenus()
 {
-    return m_noReels;
+    return m_showPreMatchMenus != 0;
 }
 
-bool doNotPauseLoadingScreen()
+bool showSpinningLetterS()
 {
-    return m_noLoadPause;
+    return m_spinBigS != 0;
 }
 
-int midiBankNumber()
+void toggleSpinningLetterS()
 {
-    return m_bankNo;
+    m_spinBigS = !m_spinBigS;
 }
 
 //
@@ -380,6 +359,12 @@ static void showGameplayOptions()
     showMenu(gameplayOptionsMenu);
 }
 
+static void toggleShowPreMatchMenus()
+{
+    logInfo("%showing pre-match menus", m_showPreMatchMenus ? "S" : "Not s");
+    m_showPreMatchMenus = !m_showPreMatchMenus;
+}
+
 static void changeGameStyle()
 {
     logInfo("Game style changed to %s", m_gameStyle ? "AMIGA" : "PC");
@@ -388,8 +373,7 @@ static void changeGameStyle()
 
 static void initGamePlayOptions()
 {
-    auto autoSaveReplaysEntry = getMenuEntry(GameplayOptionsMenu::autoSaveReplays);
-    strcpy(autoSaveReplaysEntry->string(), getAutoSaveReplays() ? swos.aOn : swos.aOff);
+    GameplayOptionsMenu::autoSaveReplaysEntry.copyString(getAutoSaveReplays() ? "ON" : "OFF");
 }
 
 static void toggleAutoSaveReplays()

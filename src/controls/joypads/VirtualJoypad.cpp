@@ -4,6 +4,7 @@
 #include "JoypadConfig.h"
 #include "windowManager.h"
 #include "render.h"
+#include "options.h"
 #include "game.h"
 #include "util.h"
 
@@ -430,7 +431,7 @@ void VirtualJoypad::toggleSpinningS()
 
             if (x >= kSpriteX && x < kSpriteX + kSpriteWidth && y >= kSpriteY && y < kSpriteY + kSpriteHeight) {
                 if (!s_holding)
-                    swos.g_spinBigS ^= 1;
+                    toggleSpinningLetterS();
 
                 s_holding = true;
                 return;

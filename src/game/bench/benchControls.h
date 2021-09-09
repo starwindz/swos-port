@@ -14,6 +14,8 @@ bool benchCheckControls();
 BenchState getBenchState();
 bool trainingTopTeam();
 void setTrainingTopTeam(bool value);
+void requestBench1();
+void requestBench2();
 int getBenchPlayerIndex();
 int getBenchPlayerShirtNumber(bool topTeam, int index);
 int getBenchMenuSelectedPlayer();

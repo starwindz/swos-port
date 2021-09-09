@@ -130,6 +130,19 @@ class Tokenizer:
         self.tokens.insert(index, token)
         self.updateEofFlag()
 
+    def insertTokensAt(self, index, tokens):
+        assert isinstance(index, int)
+        assert isinstance(tokens, (list, tuple))
+
+        self.tokens[index:index] = tokens
+        self.updateEofFlag()
+
+    def replaceCurrentTokenWithTokens(self, tokens):
+        assert isinstance(tokens, (list, tuple))
+
+        self.tokens[self.currentTokenIndex:self.currentTokenIndex] = tokens
+        self.updateEofFlag()
+
     def peekTokenAt(self, index):
         return self.tokens[index] if 0 <= index < len(self.tokens) else None
 
@@ -258,7 +271,8 @@ class Tokenizer:
 
     @staticmethod
     def removeApostrophesFromNumbers(tokens):
-        if tokens[-1].startswith('0x') or Tokenizer.kAllowedInDecimal.issuperset(tokens[-1]):
+        if not Util.isString(tokens[-1]) and \
+            (tokens[-1].startswith('0x') or Tokenizer.kAllowedInDecimal.issuperset(tokens[-1])):
             tokens[-1] = tokens[-1].replace("'", '')
 
     # expect
@@ -383,7 +397,8 @@ class Tokenizer:
     #
     #  Tokenizes the given string and returns resulting tokens array.
     #
-    def tokenizeString(self, inputString, templateToken):
+    @staticmethod
+    def tokenizeString(inputString, templateToken):
         assert isinstance(inputString, str)
         assert isinstance(templateToken, Token)
 
@@ -391,7 +406,7 @@ class Tokenizer:
         lines = inputString.split()
 
         for line in lines:
-            for string in self.splitLine(line):
+            for string in Tokenizer.splitLine(line):
                 tokens.append(Token(string, templateToken.path, templateToken.line))
 
         return tokens

@@ -1,6 +1,7 @@
 #include "bench.h"
 #include "benchControls.h"
 #include "drawBench.h"
+#include "pitchConstants.h"
 
 constexpr int kBenchX = 27;
 
@@ -10,7 +11,7 @@ constexpr int kBottomBenchY = 485;
 constexpr int kTrainingPitchBenchY = 456;
 
 constexpr int kPlayerGoingInX = 39;
-constexpr int kPlayerGoingInY = 449;
+constexpr int kPlayerGoingInY = kPitchCenterY;
 
 static bool m_benchOff;
 static bool m_leavingBench;
@@ -37,12 +38,16 @@ void updateBench()
 {
     if (benchCheckControls())
         invokeBench();
-    drawBench();
 }
 
 bool inBench()
 {
     return swos.g_inSubstitutesMenu != 0;
+}
+
+bool inBenchMenus()
+{
+    return inBench() && getBenchState() == BenchState::kInitial;
 }
 
 bool isCameraLeavingBench()
@@ -116,7 +121,7 @@ static void invokeBench()
     swos.stateGoal = 0;
     swos.g_inSubstitutesMenu = 1;
     swos.resultTimer = -swos.resultTimer;
-    swos.statsTimeout = -swos.statsTimeout;
+    swos.statsTimer = -swos.statsTimer;
 
     m_benchY = kTopBenchY;
     m_opponentBenchY = kBottomBenchY;

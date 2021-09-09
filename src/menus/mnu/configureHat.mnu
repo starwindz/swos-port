@@ -191,7 +191,7 @@ Menu configureHatMenu
 
     TemplateEntry {
         color: kOffColor
-        text: swos.aOff
+        text: @kAlloc
     }
 
     Entry leftStatus {
@@ -283,7 +283,7 @@ Menu configureHatMenu
         height: kBigButtonHeight
 
         color: kExitColor
-        text: swos.aExit
+        text: "EXIT"
 
         onSelect: ~SetExitMenuFlag
 

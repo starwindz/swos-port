@@ -178,13 +178,13 @@
     <None Include="..\..\..\mnu2h\VariableStorage.py" />
     <CustomBuild Include="..\..\..\src\menus\mnu\audioOptions.mnu">
       <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compiling %(Filename) menu...</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compiling %(Filename) menu...</Message>
@@ -206,13 +206,13 @@ python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Exte
     <None Include="..\..\..\src\menus\mnu\common.mh" />
     <CustomBuild Include="..\..\..\src\menus\mnu\controlOptions.mnu">
       <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compiling %(Filename) menu...</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compiling %(Filename) menu...</Message>
@@ -233,13 +233,13 @@ python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Exte
     </CustomBuild>
     <CustomBuild Include="..\..\..\src\menus\mnu\joypadConfig.mnu">
       <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compiling %(Filename) menu...</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compiling %(Filename) menu...</Message>
@@ -260,13 +260,13 @@ python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Exte
     </CustomBuild>
     <CustomBuild Include="..\..\..\src\menus\mnu\main.mnu">
       <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compiling %(Filename) menu...</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compiling %(Filename) menu...</Message>
@@ -287,13 +287,13 @@ python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Exte
     </CustomBuild>
     <CustomBuild Include="..\..\..\src\menus\mnu\options.mnu">
       <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compiling %(Filename) menu...</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compiling %(Filename) menu...</Message>
@@ -314,13 +314,13 @@ python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Exte
     </CustomBuild>
     <CustomBuild Include="..\..\..\src\menus\mnu\quit.mnu">
       <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compiling %(Filename) menu...</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compiling %(Filename) menu...</Message>
@@ -341,13 +341,13 @@ python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Exte
     </CustomBuild>
     <CustomBuild Include="..\..\..\src\menus\mnu\replayExit.mnu">
       <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compiling %(Filename) menu...</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compiling %(Filename) menu...</Message>
@@ -368,13 +368,13 @@ python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Exte
     </CustomBuild>
     <CustomBuild Include="..\..\..\src\menus\mnu\replays.mnu">
       <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compiling %(Filename) menu...</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compiling %(Filename) menu...</Message>
@@ -395,13 +395,13 @@ python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Exte
     </CustomBuild>
     <CustomBuild Include="..\..\..\src\menus\mnu\selectFiles.mnu">
       <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compiling %(Filename) menu...</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compiling %(Filename) menu...</Message>
@@ -422,13 +422,13 @@ python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Exte
     </CustomBuild>
     <CustomBuild Include="..\..\..\src\menus\mnu\selectGameControlEvents.mnu">
       <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</LinkObjects>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
@@ -449,13 +449,13 @@ python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Exte
     </CustomBuild>
     <CustomBuild Include="..\..\..\src\menus\mnu\setupKeyboard.mnu">
       <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compiling %(Filename) menu...</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compiling %(Filename) menu...</Message>
@@ -476,13 +476,13 @@ python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Exte
     </CustomBuild>
     <CustomBuild Include="..\..\..\src\menus\mnu\videoOptions.mnu">
       <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compiling %(Filename) menu...</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compiling %(Filename) menu...</Message>
@@ -584,13 +584,13 @@ python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Exte
     </CustomBuild>
     <CustomBuild Include="..\..\..\src\menus\mnu\selectMatchControls.mnu">
       <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compiling %(Filename) menu...</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compiling %(Filename) menu...</Message>
@@ -611,13 +611,13 @@ python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Exte
     </CustomBuild>
     <CustomBuild Include="..\..\..\src\menus\mnu\windowMode.mnu">
       <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">@set PYTHONPYCACHEPREFIX=C:\swos-port\project\vc++\..\..\tmp\pycache
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
 python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compiling %(Filename) menu...</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compiling %(Filename) menu...</Message>
@@ -631,6 +631,114 @@ python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Exte
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)..\..\mnu2h\mnu2h.py;$(SolutionDir)..\..\mnu2h\CodeGenerator.py;$(SolutionDir)..\..\mnu2h\Constants.py;$(SolutionDir)..\..\mnu2h\Entry.py;$(SolutionDir)..\..\mnu2h\Menu.py;$(SolutionDir)..\..\mnu2h\StringTable.py;$(SolutionDir)..\..\mnu2h\Token.py;$(SolutionDir)..\..\mnu2h\Tokenizer.py;$(SolutionDir)..\..\mnu2h\Util.py;$(SolutionDir)..\..\mnu2h\Variable.py;$(SolutionDir)..\..\mnu2h\VariableStorage.py;$(SolutionDir)..\..\mnu2h\Parser\Common.py;$(SolutionDir)..\..\mnu2h\Parser\EntryParser.py;$(SolutionDir)..\..\mnu2h\Parser\ExpressionParser.py;$(SolutionDir)..\..\mnu2h\Parser\MenuParser.py;$(SolutionDir)..\..\mnu2h\Parser\Parser.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionEvaluator.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionHandler.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionParser.py;$(SolutionDir)..\..\mnu2h\Preprocessor\OperandNode.py;$(SolutionDir)..\..\mnu2h\Preprocessor\Operator.py;$(SolutionDir)..\..\mnu2h\Preprocessor\OperatorNode.py;$(SolutionDir)..\..\mnu2h\Preprocessor\Preprocessor.py;$(SolutionDir)..\..\src\menus\mnu\common.mh</AdditionalInputs>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)..\..\mnu2h\mnu2h.py;$(SolutionDir)..\..\mnu2h\CodeGenerator.py;$(SolutionDir)..\..\mnu2h\Constants.py;$(SolutionDir)..\..\mnu2h\Entry.py;$(SolutionDir)..\..\mnu2h\Menu.py;$(SolutionDir)..\..\mnu2h\StringTable.py;$(SolutionDir)..\..\mnu2h\Token.py;$(SolutionDir)..\..\mnu2h\Tokenizer.py;$(SolutionDir)..\..\mnu2h\Util.py;$(SolutionDir)..\..\mnu2h\Variable.py;$(SolutionDir)..\..\mnu2h\VariableStorage.py;$(SolutionDir)..\..\mnu2h\Parser\Common.py;$(SolutionDir)..\..\mnu2h\Parser\EntryParser.py;$(SolutionDir)..\..\mnu2h\Parser\ExpressionParser.py;$(SolutionDir)..\..\mnu2h\Parser\MenuParser.py;$(SolutionDir)..\..\mnu2h\Parser\Parser.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionEvaluator.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionHandler.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionParser.py;$(SolutionDir)..\..\mnu2h\Preprocessor\OperandNode.py;$(SolutionDir)..\..\mnu2h\Preprocessor\Operator.py;$(SolutionDir)..\..\mnu2h\Preprocessor\OperatorNode.py;$(SolutionDir)..\..\mnu2h\Preprocessor\Preprocessor.py;$(SolutionDir)..\..\src\menus\mnu\common.mh</AdditionalInputs>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)..\..\mnu2h\mnu2h.py;$(SolutionDir)..\..\mnu2h\CodeGenerator.py;$(SolutionDir)..\..\mnu2h\Constants.py;$(SolutionDir)..\..\mnu2h\Entry.py;$(SolutionDir)..\..\mnu2h\Menu.py;$(SolutionDir)..\..\mnu2h\StringTable.py;$(SolutionDir)..\..\mnu2h\Token.py;$(SolutionDir)..\..\mnu2h\Tokenizer.py;$(SolutionDir)..\..\mnu2h\Util.py;$(SolutionDir)..\..\mnu2h\Variable.py;$(SolutionDir)..\..\mnu2h\VariableStorage.py;$(SolutionDir)..\..\mnu2h\Parser\Common.py;$(SolutionDir)..\..\mnu2h\Parser\EntryParser.py;$(SolutionDir)..\..\mnu2h\Parser\ExpressionParser.py;$(SolutionDir)..\..\mnu2h\Parser\MenuParser.py;$(SolutionDir)..\..\mnu2h\Parser\Parser.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionEvaluator.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionHandler.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionParser.py;$(SolutionDir)..\..\mnu2h\Preprocessor\OperandNode.py;$(SolutionDir)..\..\mnu2h\Preprocessor\Operator.py;$(SolutionDir)..\..\mnu2h\Preprocessor\OperatorNode.py;$(SolutionDir)..\..\mnu2h\Preprocessor\Preprocessor.py;$(SolutionDir)..\..\src\menus\mnu\common.mh</AdditionalInputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</LinkObjects>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkObjects>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+    </CustomBuild>
+    <CustomBuild Include="..\..\..\src\menus\mnu\continueAbort.mnu">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
+python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
+python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
+python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
+python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compiling %(Filename) menu...</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compiling %(Filename) menu...</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compiling %(Filename) menu...</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compiling %(Filename) menu...</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename)%(Extension).h</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename)%(Extension).h</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)%(Extension).h</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)%(Extension).h</Outputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)..\..\mnu2h\mnu2h.py;$(SolutionDir)..\..\mnu2h\CodeGenerator.py;$(SolutionDir)..\..\mnu2h\Constants.py;$(SolutionDir)..\..\mnu2h\Entry.py;$(SolutionDir)..\..\mnu2h\Menu.py;$(SolutionDir)..\..\mnu2h\StringTable.py;$(SolutionDir)..\..\mnu2h\Token.py;$(SolutionDir)..\..\mnu2h\Tokenizer.py;$(SolutionDir)..\..\mnu2h\Util.py;$(SolutionDir)..\..\mnu2h\Variable.py;$(SolutionDir)..\..\mnu2h\VariableStorage.py;$(SolutionDir)..\..\mnu2h\Parser\Common.py;$(SolutionDir)..\..\mnu2h\Parser\EntryParser.py;$(SolutionDir)..\..\mnu2h\Parser\ExpressionParser.py;$(SolutionDir)..\..\mnu2h\Parser\MenuParser.py;$(SolutionDir)..\..\mnu2h\Parser\Parser.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionEvaluator.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionHandler.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionParser.py;$(SolutionDir)..\..\mnu2h\Preprocessor\OperandNode.py;$(SolutionDir)..\..\mnu2h\Preprocessor\Operator.py;$(SolutionDir)..\..\mnu2h\Preprocessor\OperatorNode.py;$(SolutionDir)..\..\mnu2h\Preprocessor\Preprocessor.py</AdditionalInputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)..\..\mnu2h\mnu2h.py;$(SolutionDir)..\..\mnu2h\CodeGenerator.py;$(SolutionDir)..\..\mnu2h\Constants.py;$(SolutionDir)..\..\mnu2h\Entry.py;$(SolutionDir)..\..\mnu2h\Menu.py;$(SolutionDir)..\..\mnu2h\StringTable.py;$(SolutionDir)..\..\mnu2h\Token.py;$(SolutionDir)..\..\mnu2h\Tokenizer.py;$(SolutionDir)..\..\mnu2h\Util.py;$(SolutionDir)..\..\mnu2h\Variable.py;$(SolutionDir)..\..\mnu2h\VariableStorage.py;$(SolutionDir)..\..\mnu2h\Parser\Common.py;$(SolutionDir)..\..\mnu2h\Parser\EntryParser.py;$(SolutionDir)..\..\mnu2h\Parser\ExpressionParser.py;$(SolutionDir)..\..\mnu2h\Parser\MenuParser.py;$(SolutionDir)..\..\mnu2h\Parser\Parser.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionEvaluator.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionHandler.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionParser.py;$(SolutionDir)..\..\mnu2h\Preprocessor\OperandNode.py;$(SolutionDir)..\..\mnu2h\Preprocessor\Operator.py;$(SolutionDir)..\..\mnu2h\Preprocessor\OperatorNode.py;$(SolutionDir)..\..\mnu2h\Preprocessor\Preprocessor.py</AdditionalInputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)..\..\mnu2h\mnu2h.py;$(SolutionDir)..\..\mnu2h\CodeGenerator.py;$(SolutionDir)..\..\mnu2h\Constants.py;$(SolutionDir)..\..\mnu2h\Entry.py;$(SolutionDir)..\..\mnu2h\Menu.py;$(SolutionDir)..\..\mnu2h\StringTable.py;$(SolutionDir)..\..\mnu2h\Token.py;$(SolutionDir)..\..\mnu2h\Tokenizer.py;$(SolutionDir)..\..\mnu2h\Util.py;$(SolutionDir)..\..\mnu2h\Variable.py;$(SolutionDir)..\..\mnu2h\VariableStorage.py;$(SolutionDir)..\..\mnu2h\Parser\Common.py;$(SolutionDir)..\..\mnu2h\Parser\EntryParser.py;$(SolutionDir)..\..\mnu2h\Parser\ExpressionParser.py;$(SolutionDir)..\..\mnu2h\Parser\MenuParser.py;$(SolutionDir)..\..\mnu2h\Parser\Parser.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionEvaluator.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionHandler.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionParser.py;$(SolutionDir)..\..\mnu2h\Preprocessor\OperandNode.py;$(SolutionDir)..\..\mnu2h\Preprocessor\Operator.py;$(SolutionDir)..\..\mnu2h\Preprocessor\OperatorNode.py;$(SolutionDir)..\..\mnu2h\Preprocessor\Preprocessor.py</AdditionalInputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)..\..\mnu2h\mnu2h.py;$(SolutionDir)..\..\mnu2h\CodeGenerator.py;$(SolutionDir)..\..\mnu2h\Constants.py;$(SolutionDir)..\..\mnu2h\Entry.py;$(SolutionDir)..\..\mnu2h\Menu.py;$(SolutionDir)..\..\mnu2h\StringTable.py;$(SolutionDir)..\..\mnu2h\Token.py;$(SolutionDir)..\..\mnu2h\Tokenizer.py;$(SolutionDir)..\..\mnu2h\Util.py;$(SolutionDir)..\..\mnu2h\Variable.py;$(SolutionDir)..\..\mnu2h\VariableStorage.py;$(SolutionDir)..\..\mnu2h\Parser\Common.py;$(SolutionDir)..\..\mnu2h\Parser\EntryParser.py;$(SolutionDir)..\..\mnu2h\Parser\ExpressionParser.py;$(SolutionDir)..\..\mnu2h\Parser\MenuParser.py;$(SolutionDir)..\..\mnu2h\Parser\Parser.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionEvaluator.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionHandler.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionParser.py;$(SolutionDir)..\..\mnu2h\Preprocessor\OperandNode.py;$(SolutionDir)..\..\mnu2h\Preprocessor\Operator.py;$(SolutionDir)..\..\mnu2h\Preprocessor\OperatorNode.py;$(SolutionDir)..\..\mnu2h\Preprocessor\Preprocessor.py</AdditionalInputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</LinkObjects>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkObjects>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+    </CustomBuild>
+    <CustomBuild Include="..\..\..\src\menus\mnu\versus.mnu">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
+python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
+python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
+python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
+python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compiling %(Filename) menu...</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compiling %(Filename) menu...</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compiling %(Filename) menu...</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compiling %(Filename) menu...</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename)%(Extension).h</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename)%(Extension).h</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)%(Extension).h</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)%(Extension).h</Outputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)..\..\mnu2h\mnu2h.py;$(SolutionDir)..\..\mnu2h\CodeGenerator.py;$(SolutionDir)..\..\mnu2h\Constants.py;$(SolutionDir)..\..\mnu2h\Entry.py;$(SolutionDir)..\..\mnu2h\Menu.py;$(SolutionDir)..\..\mnu2h\StringTable.py;$(SolutionDir)..\..\mnu2h\Token.py;$(SolutionDir)..\..\mnu2h\Tokenizer.py;$(SolutionDir)..\..\mnu2h\Util.py;$(SolutionDir)..\..\mnu2h\Variable.py;$(SolutionDir)..\..\mnu2h\VariableStorage.py;$(SolutionDir)..\..\mnu2h\Parser\Common.py;$(SolutionDir)..\..\mnu2h\Parser\EntryParser.py;$(SolutionDir)..\..\mnu2h\Parser\ExpressionParser.py;$(SolutionDir)..\..\mnu2h\Parser\MenuParser.py;$(SolutionDir)..\..\mnu2h\Parser\Parser.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionEvaluator.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionHandler.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionParser.py;$(SolutionDir)..\..\mnu2h\Preprocessor\OperandNode.py;$(SolutionDir)..\..\mnu2h\Preprocessor\Operator.py;$(SolutionDir)..\..\mnu2h\Preprocessor\OperatorNode.py;$(SolutionDir)..\..\mnu2h\Preprocessor\Preprocessor.py</AdditionalInputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)..\..\mnu2h\mnu2h.py;$(SolutionDir)..\..\mnu2h\CodeGenerator.py;$(SolutionDir)..\..\mnu2h\Constants.py;$(SolutionDir)..\..\mnu2h\Entry.py;$(SolutionDir)..\..\mnu2h\Menu.py;$(SolutionDir)..\..\mnu2h\StringTable.py;$(SolutionDir)..\..\mnu2h\Token.py;$(SolutionDir)..\..\mnu2h\Tokenizer.py;$(SolutionDir)..\..\mnu2h\Util.py;$(SolutionDir)..\..\mnu2h\Variable.py;$(SolutionDir)..\..\mnu2h\VariableStorage.py;$(SolutionDir)..\..\mnu2h\Parser\Common.py;$(SolutionDir)..\..\mnu2h\Parser\EntryParser.py;$(SolutionDir)..\..\mnu2h\Parser\ExpressionParser.py;$(SolutionDir)..\..\mnu2h\Parser\MenuParser.py;$(SolutionDir)..\..\mnu2h\Parser\Parser.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionEvaluator.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionHandler.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionParser.py;$(SolutionDir)..\..\mnu2h\Preprocessor\OperandNode.py;$(SolutionDir)..\..\mnu2h\Preprocessor\Operator.py;$(SolutionDir)..\..\mnu2h\Preprocessor\OperatorNode.py;$(SolutionDir)..\..\mnu2h\Preprocessor\Preprocessor.py</AdditionalInputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)..\..\mnu2h\mnu2h.py;$(SolutionDir)..\..\mnu2h\CodeGenerator.py;$(SolutionDir)..\..\mnu2h\Constants.py;$(SolutionDir)..\..\mnu2h\Entry.py;$(SolutionDir)..\..\mnu2h\Menu.py;$(SolutionDir)..\..\mnu2h\StringTable.py;$(SolutionDir)..\..\mnu2h\Token.py;$(SolutionDir)..\..\mnu2h\Tokenizer.py;$(SolutionDir)..\..\mnu2h\Util.py;$(SolutionDir)..\..\mnu2h\Variable.py;$(SolutionDir)..\..\mnu2h\VariableStorage.py;$(SolutionDir)..\..\mnu2h\Parser\Common.py;$(SolutionDir)..\..\mnu2h\Parser\EntryParser.py;$(SolutionDir)..\..\mnu2h\Parser\ExpressionParser.py;$(SolutionDir)..\..\mnu2h\Parser\MenuParser.py;$(SolutionDir)..\..\mnu2h\Parser\Parser.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionEvaluator.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionHandler.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionParser.py;$(SolutionDir)..\..\mnu2h\Preprocessor\OperandNode.py;$(SolutionDir)..\..\mnu2h\Preprocessor\Operator.py;$(SolutionDir)..\..\mnu2h\Preprocessor\OperatorNode.py;$(SolutionDir)..\..\mnu2h\Preprocessor\Preprocessor.py</AdditionalInputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)..\..\mnu2h\mnu2h.py;$(SolutionDir)..\..\mnu2h\CodeGenerator.py;$(SolutionDir)..\..\mnu2h\Constants.py;$(SolutionDir)..\..\mnu2h\Entry.py;$(SolutionDir)..\..\mnu2h\Menu.py;$(SolutionDir)..\..\mnu2h\StringTable.py;$(SolutionDir)..\..\mnu2h\Token.py;$(SolutionDir)..\..\mnu2h\Tokenizer.py;$(SolutionDir)..\..\mnu2h\Util.py;$(SolutionDir)..\..\mnu2h\Variable.py;$(SolutionDir)..\..\mnu2h\VariableStorage.py;$(SolutionDir)..\..\mnu2h\Parser\Common.py;$(SolutionDir)..\..\mnu2h\Parser\EntryParser.py;$(SolutionDir)..\..\mnu2h\Parser\ExpressionParser.py;$(SolutionDir)..\..\mnu2h\Parser\MenuParser.py;$(SolutionDir)..\..\mnu2h\Parser\Parser.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionEvaluator.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionHandler.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionParser.py;$(SolutionDir)..\..\mnu2h\Preprocessor\OperandNode.py;$(SolutionDir)..\..\mnu2h\Preprocessor\Operator.py;$(SolutionDir)..\..\mnu2h\Preprocessor\OperatorNode.py;$(SolutionDir)..\..\mnu2h\Preprocessor\Preprocessor.py</AdditionalInputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</LinkObjects>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkObjects>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+    </CustomBuild>
+    <CustomBuild Include="..\..\..\src\menus\mnu\stadium.mnu">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
+python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
+python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compiling %(Filename) menu...</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compiling %(Filename) menu...</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)%(Extension).h</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)%(Extension).h</Outputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)..\..\mnu2h\mnu2h.py;$(SolutionDir)..\..\mnu2h\CodeGenerator.py;$(SolutionDir)..\..\mnu2h\Constants.py;$(SolutionDir)..\..\mnu2h\Entry.py;$(SolutionDir)..\..\mnu2h\Menu.py;$(SolutionDir)..\..\mnu2h\StringTable.py;$(SolutionDir)..\..\mnu2h\Token.py;$(SolutionDir)..\..\mnu2h\Tokenizer.py;$(SolutionDir)..\..\mnu2h\Util.py;$(SolutionDir)..\..\mnu2h\Variable.py;$(SolutionDir)..\..\mnu2h\VariableStorage.py;$(SolutionDir)..\..\mnu2h\Parser\Common.py;$(SolutionDir)..\..\mnu2h\Parser\EntryParser.py;$(SolutionDir)..\..\mnu2h\Parser\ExpressionParser.py;$(SolutionDir)..\..\mnu2h\Parser\MenuParser.py;$(SolutionDir)..\..\mnu2h\Parser\Parser.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionEvaluator.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionHandler.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionParser.py;$(SolutionDir)..\..\mnu2h\Preprocessor\OperandNode.py;$(SolutionDir)..\..\mnu2h\Preprocessor\Operator.py;$(SolutionDir)..\..\mnu2h\Preprocessor\OperatorNode.py;$(SolutionDir)..\..\mnu2h\Preprocessor\Preprocessor.py;%(AdditionalInputs)</AdditionalInputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)..\..\mnu2h\mnu2h.py;$(SolutionDir)..\..\mnu2h\CodeGenerator.py;$(SolutionDir)..\..\mnu2h\Constants.py;$(SolutionDir)..\..\mnu2h\Entry.py;$(SolutionDir)..\..\mnu2h\Menu.py;$(SolutionDir)..\..\mnu2h\StringTable.py;$(SolutionDir)..\..\mnu2h\Token.py;$(SolutionDir)..\..\mnu2h\Tokenizer.py;$(SolutionDir)..\..\mnu2h\Util.py;$(SolutionDir)..\..\mnu2h\Variable.py;$(SolutionDir)..\..\mnu2h\VariableStorage.py;$(SolutionDir)..\..\mnu2h\Parser\Common.py;$(SolutionDir)..\..\mnu2h\Parser\EntryParser.py;$(SolutionDir)..\..\mnu2h\Parser\ExpressionParser.py;$(SolutionDir)..\..\mnu2h\Parser\MenuParser.py;$(SolutionDir)..\..\mnu2h\Parser\Parser.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionEvaluator.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionHandler.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionParser.py;$(SolutionDir)..\..\mnu2h\Preprocessor\OperandNode.py;$(SolutionDir)..\..\mnu2h\Preprocessor\Operator.py;$(SolutionDir)..\..\mnu2h\Preprocessor\OperatorNode.py;$(SolutionDir)..\..\mnu2h\Preprocessor\Preprocessor.py;%(AdditionalInputs)</AdditionalInputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
+python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
+python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compiling %(Filename) menu...</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compiling %(Filename) menu...</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename)%(Extension).h</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename)%(Extension).h</Outputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)..\..\mnu2h\mnu2h.py;$(SolutionDir)..\..\mnu2h\CodeGenerator.py;$(SolutionDir)..\..\mnu2h\Constants.py;$(SolutionDir)..\..\mnu2h\Entry.py;$(SolutionDir)..\..\mnu2h\Menu.py;$(SolutionDir)..\..\mnu2h\StringTable.py;$(SolutionDir)..\..\mnu2h\Token.py;$(SolutionDir)..\..\mnu2h\Tokenizer.py;$(SolutionDir)..\..\mnu2h\Util.py;$(SolutionDir)..\..\mnu2h\Variable.py;$(SolutionDir)..\..\mnu2h\VariableStorage.py;$(SolutionDir)..\..\mnu2h\Parser\Common.py;$(SolutionDir)..\..\mnu2h\Parser\EntryParser.py;$(SolutionDir)..\..\mnu2h\Parser\ExpressionParser.py;$(SolutionDir)..\..\mnu2h\Parser\MenuParser.py;$(SolutionDir)..\..\mnu2h\Parser\Parser.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionEvaluator.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionHandler.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionParser.py;$(SolutionDir)..\..\mnu2h\Preprocessor\OperandNode.py;$(SolutionDir)..\..\mnu2h\Preprocessor\Operator.py;$(SolutionDir)..\..\mnu2h\Preprocessor\OperatorNode.py;$(SolutionDir)..\..\mnu2h\Preprocessor\Preprocessor.py;%(AdditionalInputs)</AdditionalInputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</LinkObjects>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)..\..\mnu2h\mnu2h.py;$(SolutionDir)..\..\mnu2h\CodeGenerator.py;$(SolutionDir)..\..\mnu2h\Constants.py;$(SolutionDir)..\..\mnu2h\Entry.py;$(SolutionDir)..\..\mnu2h\Menu.py;$(SolutionDir)..\..\mnu2h\StringTable.py;$(SolutionDir)..\..\mnu2h\Token.py;$(SolutionDir)..\..\mnu2h\Tokenizer.py;$(SolutionDir)..\..\mnu2h\Util.py;$(SolutionDir)..\..\mnu2h\Variable.py;$(SolutionDir)..\..\mnu2h\VariableStorage.py;$(SolutionDir)..\..\mnu2h\Parser\Common.py;$(SolutionDir)..\..\mnu2h\Parser\EntryParser.py;$(SolutionDir)..\..\mnu2h\Parser\ExpressionParser.py;$(SolutionDir)..\..\mnu2h\Parser\MenuParser.py;$(SolutionDir)..\..\mnu2h\Parser\Parser.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionEvaluator.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionHandler.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionParser.py;$(SolutionDir)..\..\mnu2h\Preprocessor\OperandNode.py;$(SolutionDir)..\..\mnu2h\Preprocessor\Operator.py;$(SolutionDir)..\..\mnu2h\Preprocessor\OperatorNode.py;$(SolutionDir)..\..\mnu2h\Preprocessor\Preprocessor.py;%(AdditionalInputs)</AdditionalInputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkObjects>
+    </CustomBuild>
+    <CustomBuild Include="..\..\..\src\menus\mnu\continue.mnu">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
+python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
+python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
+python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">@set PYTHONPYCACHEPREFIX=$(SolutionDir)..\..\tmp\pycache
+python $(SolutionDir)..\..\mnu2h\mnu2h.py %(FullPath) $(IntDir)%(Filename)%(Extension).h</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compiling %(Filename) menu...</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compiling %(Filename) menu...</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compiling %(Filename) menu...</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compiling %(Filename) menu...</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename)%(Extension).h</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename)%(Extension).h</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)%(Extension).h</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)%(Extension).h</Outputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)..\..\mnu2h\mnu2h.py;$(SolutionDir)..\..\mnu2h\CodeGenerator.py;$(SolutionDir)..\..\mnu2h\Constants.py;$(SolutionDir)..\..\mnu2h\Entry.py;$(SolutionDir)..\..\mnu2h\Menu.py;$(SolutionDir)..\..\mnu2h\StringTable.py;$(SolutionDir)..\..\mnu2h\Token.py;$(SolutionDir)..\..\mnu2h\Tokenizer.py;$(SolutionDir)..\..\mnu2h\Util.py;$(SolutionDir)..\..\mnu2h\Variable.py;$(SolutionDir)..\..\mnu2h\VariableStorage.py;$(SolutionDir)..\..\mnu2h\Parser\Common.py;$(SolutionDir)..\..\mnu2h\Parser\EntryParser.py;$(SolutionDir)..\..\mnu2h\Parser\ExpressionParser.py;$(SolutionDir)..\..\mnu2h\Parser\MenuParser.py;$(SolutionDir)..\..\mnu2h\Parser\Parser.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionEvaluator.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionHandler.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionParser.py;$(SolutionDir)..\..\mnu2h\Preprocessor\OperandNode.py;$(SolutionDir)..\..\mnu2h\Preprocessor\Operator.py;$(SolutionDir)..\..\mnu2h\Preprocessor\OperatorNode.py;$(SolutionDir)..\..\mnu2h\Preprocessor\Preprocessor.py;%(AdditionalInputs)</AdditionalInputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)..\..\mnu2h\mnu2h.py;$(SolutionDir)..\..\mnu2h\CodeGenerator.py;$(SolutionDir)..\..\mnu2h\Constants.py;$(SolutionDir)..\..\mnu2h\Entry.py;$(SolutionDir)..\..\mnu2h\Menu.py;$(SolutionDir)..\..\mnu2h\StringTable.py;$(SolutionDir)..\..\mnu2h\Token.py;$(SolutionDir)..\..\mnu2h\Tokenizer.py;$(SolutionDir)..\..\mnu2h\Util.py;$(SolutionDir)..\..\mnu2h\Variable.py;$(SolutionDir)..\..\mnu2h\VariableStorage.py;$(SolutionDir)..\..\mnu2h\Parser\Common.py;$(SolutionDir)..\..\mnu2h\Parser\EntryParser.py;$(SolutionDir)..\..\mnu2h\Parser\ExpressionParser.py;$(SolutionDir)..\..\mnu2h\Parser\MenuParser.py;$(SolutionDir)..\..\mnu2h\Parser\Parser.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionEvaluator.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionHandler.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionParser.py;$(SolutionDir)..\..\mnu2h\Preprocessor\OperandNode.py;$(SolutionDir)..\..\mnu2h\Preprocessor\Operator.py;$(SolutionDir)..\..\mnu2h\Preprocessor\OperatorNode.py;$(SolutionDir)..\..\mnu2h\Preprocessor\Preprocessor.py;%(AdditionalInputs)</AdditionalInputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)..\..\mnu2h\mnu2h.py;$(SolutionDir)..\..\mnu2h\CodeGenerator.py;$(SolutionDir)..\..\mnu2h\Constants.py;$(SolutionDir)..\..\mnu2h\Entry.py;$(SolutionDir)..\..\mnu2h\Menu.py;$(SolutionDir)..\..\mnu2h\StringTable.py;$(SolutionDir)..\..\mnu2h\Token.py;$(SolutionDir)..\..\mnu2h\Tokenizer.py;$(SolutionDir)..\..\mnu2h\Util.py;$(SolutionDir)..\..\mnu2h\Variable.py;$(SolutionDir)..\..\mnu2h\VariableStorage.py;$(SolutionDir)..\..\mnu2h\Parser\Common.py;$(SolutionDir)..\..\mnu2h\Parser\EntryParser.py;$(SolutionDir)..\..\mnu2h\Parser\ExpressionParser.py;$(SolutionDir)..\..\mnu2h\Parser\MenuParser.py;$(SolutionDir)..\..\mnu2h\Parser\Parser.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionEvaluator.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionHandler.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionParser.py;$(SolutionDir)..\..\mnu2h\Preprocessor\OperandNode.py;$(SolutionDir)..\..\mnu2h\Preprocessor\Operator.py;$(SolutionDir)..\..\mnu2h\Preprocessor\OperatorNode.py;$(SolutionDir)..\..\mnu2h\Preprocessor\Preprocessor.py;%(AdditionalInputs)</AdditionalInputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)..\..\mnu2h\mnu2h.py;$(SolutionDir)..\..\mnu2h\CodeGenerator.py;$(SolutionDir)..\..\mnu2h\Constants.py;$(SolutionDir)..\..\mnu2h\Entry.py;$(SolutionDir)..\..\mnu2h\Menu.py;$(SolutionDir)..\..\mnu2h\StringTable.py;$(SolutionDir)..\..\mnu2h\Token.py;$(SolutionDir)..\..\mnu2h\Tokenizer.py;$(SolutionDir)..\..\mnu2h\Util.py;$(SolutionDir)..\..\mnu2h\Variable.py;$(SolutionDir)..\..\mnu2h\VariableStorage.py;$(SolutionDir)..\..\mnu2h\Parser\Common.py;$(SolutionDir)..\..\mnu2h\Parser\EntryParser.py;$(SolutionDir)..\..\mnu2h\Parser\ExpressionParser.py;$(SolutionDir)..\..\mnu2h\Parser\MenuParser.py;$(SolutionDir)..\..\mnu2h\Parser\Parser.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionEvaluator.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionHandler.py;$(SolutionDir)..\..\mnu2h\Preprocessor\ExpressionParser.py;$(SolutionDir)..\..\mnu2h\Preprocessor\OperandNode.py;$(SolutionDir)..\..\mnu2h\Preprocessor\Operator.py;$(SolutionDir)..\..\mnu2h\Preprocessor\OperatorNode.py;$(SolutionDir)..\..\mnu2h\Preprocessor\Preprocessor.py;%(AdditionalInputs)</AdditionalInputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</LinkObjects>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkObjects>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>

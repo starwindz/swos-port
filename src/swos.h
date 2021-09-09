@@ -198,18 +198,6 @@ enum MenuEntryBackgrounds
     kYellow = 15,
 };
 
-enum MenuEntryContent : word
-{
-    kEntryNoForeground = 0,
-    kEntryContentFunction = 1,
-    kEntryString = 2,
-    kEntrySprite2 = 3,
-    kEntryStringTable = 4,
-    kEntryMultilineText = 5,
-    kEntryNumber = 6,
-    kEntryColorConvertedSprite = 7,
-};
-
 enum TextColors
 {
     kWhiteText = 0,
@@ -241,12 +229,12 @@ const char **getTrailingStrings(const T *t)
 struct StringTable
 {
     SwosDataPointer<int16_t> index;
-    int16_t initialValue;
+    int16_t startIndex;
     // followed by char pointers
 
-    StringTable(int16_t *index, int16_t initialValue) : index(index), initialValue(initialValue) {}
+    StringTable(int16_t *index, int16_t startIndex) : index(index), startIndex(startIndex) {}
 
-    char *operator[](size_t index) const {
+    char *operator[](int index) const {
         auto stringOffset = fetch((dword *)(this + 1) + index);
         return SwosVM::offsetToPtr(stringOffset);
     }
@@ -259,49 +247,20 @@ struct StringTable
     }
 };
 
-struct StringTableNative
-{
-    union {
-        int16_t *nativeIndex;
-        SwosDataPointer<int16_t> index;
-    };
-    int16_t initialValue;
-    int16_t numPointers;
-    // followed by char pointers
-    // followed by bool array marking which pointer is native
-
-    constexpr StringTableNative(int16_t *indexPtr, int16_t initialValue, int16_t numPointers)
-        : nativeIndex(indexPtr), initialValue(initialValue), numPointers(numPointers) {}
-
-    const char *operator[](size_t index) const {
-        assert(index < static_cast<size_t>(numPointers));
-        return fetch<char *>(getTrailingStrings(this) + index);
-    }
-
-    const bool *getNativeFlags() const {
-        return reinterpret_cast<const bool *>(getTrailingStrings(this) + numPointers);
-    }
-
-    bool isIndexPointerNative() const {
-        return getNativeFlags()[0];
-    }
-
-    bool isNativeString(size_t index) const {
-        assert(index < static_cast<size_t>(numPointers));
-        return getNativeFlags()[index + 1];
-    }
-};
-
-struct MultilineTextNative
+struct MultilineText
 {
     byte numLines;
-    // followed by char pointers
+    char text[1];
 
-    const char *operator[](size_t index) const {
-        assert(index < numLines);
-        assert(reinterpret_cast<uintptr_t>(this) % sizeof(void *) == 0);
+    int totalLenght() const {
+        int len = 1;
+        auto p = text;
 
-        return getTrailingStrings(this)[index];
+        for (unsigned i = 0; i < numLines; i++)
+            while (*p++)
+                len++;
+
+        return len;
     }
 };
 
@@ -396,9 +355,9 @@ struct Sprite
     FixedPoint z;
     int16_t direction;
     int16_t speed;
-    dword deltaX;
-    dword deltaY;
-    dword deltaZ;
+    FixedPoint deltaX;
+    FixedPoint deltaY;
+    FixedPoint deltaZ;
     int16_t destX;
     int16_t destY;
     byte unk003[6];
@@ -409,7 +368,7 @@ struct Sprite
     word unk004;
     word unk005;
     word fullDirection;
-    word beenDrawn;
+    word onScreen;
     word unk006;
     word unk007;
     word unk008;

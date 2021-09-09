@@ -8,6 +8,9 @@
 #include "camera.h"
 #include "gameTime.h"
 #include "darkRectangle.h"
+#include "spinningLogo.h"
+
+static Sprite m_cornerFlagSpriteTopLeft, m_cornerFlagSpriteTopRight, m_cornerFlagSpriteBottomLeft, m_cornerFlagSpriteBottomRight;
 
 static Sprite * const kAllSprites[] = {
     &swos.ballShadowSprite,
@@ -39,7 +42,7 @@ static Sprite * const kAllSprites[] = {
     &swos.team1CurPlayerNumSprite,
     &swos.team2CurPlayerNumSprite,
     &swos.playerMarkSprite,
-    &swos.bookedPlayerSprite,
+    &swos.bookedPlayerCardOrNumberSprite,
     &swos.currentTimeSprite,
     &swos.resultOnHalftimeSprite,
     &swos.resultAfterTheGameSprite,
@@ -63,8 +66,11 @@ static Sprite * const kAllSprites[] = {
     &swos.team1Scorer1Sprite,
     &swos.team2Scorer1Sprite,
     &swos.refereeSprite,
-    &swos.cornerFlagSprite,
-    &swos.big_S_Sprite,
+    &m_cornerFlagSpriteTopLeft,
+    &m_cornerFlagSpriteTopRight,
+    &m_cornerFlagSpriteBottomLeft,
+    &m_cornerFlagSpriteBottomRight,
+    spinningLogoSprite(),
     &swos.currentPlayerNameSprite,
 };
 
@@ -75,13 +81,14 @@ static const TeamGame *m_topTeam;
 static const TeamGame *m_bottomTeam;
 
 static void sortDisplaySprites();
-static std::pair<float, float> transformCamera(const Sprite& sprite, float cameraX, float cameraY);
-static bool handleSpecialSprites(const Sprite *sprite, int& i, int screenWidth, int screenHeight, float cameraX, float cameraY);
+static bool handleSpecialSprites(const Sprite *sprite, int& i, int screenWidth, int screenHeight, FixedPoint cameraX, FixedPoint cameraY);
 
 void initGameSprites(const TeamGame *topTeam, const TeamGame *bottomTeam)
 {
     m_topTeam = topTeam;
     m_bottomTeam = bottomTeam;
+
+    spinningLogoSprite()->show();
 
     initializePlayerSpriteFrameIndices();
 }
@@ -98,11 +105,13 @@ void initDisplaySprites()
     sortDisplaySprites();
 }
 
+void SWOS::InitDisplaySprites()
+{
+    initDisplaySprites();
+}
+
 void initializePlayerSpriteFrameIndices()
 {
-    constexpr int kNumGoalkeeperSprites = kTeam1ReserveGoalkeeperSpriteStart - kTeam1MainGoalkeeperSpriteStart;
-    constexpr int kNumPlayerSprites = kTeam1GingerPlayerSpriteStart - kTeam1WhitePlayerSpriteStart;
-
     const auto kTeamData = {
         std::make_tuple(swos.team1SpritesTable, m_topTeam, true),
         std::make_tuple(swos.team2SpritesTable, m_bottomTeam, false)
@@ -113,16 +122,14 @@ void initializePlayerSpriteFrameIndices()
         auto spriteTable = std::get<0>(teamData);
         bool topTeam = std::get<2>(teamData);
 
-        auto goalie = getGoalkeeperIndexFromFace(topTeam, team[0].players[0].face);
-        assert(goalie == 0 || goalie == 1);
-        spriteTable[0]->frameOffset = goalie * kNumGoalkeeperSprites;
+        spriteTable[0]->frameOffset = getGoalkeeperSpriteOffset(topTeam, team[0].players[0].face);
 
         for (size_t i = 1; i < std::size(swos.team1SpritesTable); i++) {
             auto& player = team->players[i];
             auto& sprite = spriteTable[i];
 
             assert(player.face <= 3);
-            sprite->frameOffset = player.face * kNumPlayerSprites;
+            sprite->frameOffset = getPlayerSpriteOffsetFromFace(player.face);
         }
     }
 }
@@ -164,7 +171,7 @@ static void verifySprites()
             assertIn(kSmallDigit1, kSmallDigit16, true);
         else if (sprite == &swos.playerMarkSprite)
             assert(sprite->pictureIndex == kPlayerMarkSprite || sprite->pictureIndex == -1);
-        else if (sprite == &swos.bookedPlayerSprite)
+        else if (sprite == &swos.bookedPlayerCardOrNumberSprite)
             assert(sprite->pictureIndex >= kSmallDigit1 && sprite->pictureIndex <= kSmallDigit16 ||
                 sprite->pictureIndex == kRedCardSprite || sprite->pictureIndex == kYellowCardSprite ||
                 sprite->pictureIndex == -1);
@@ -196,9 +203,10 @@ static void verifySprites()
             assertIn(kTeam2Scorer1NameSprite, kTeam2Scorer8NameSprite);
         else if (sprite == &swos.refereeSprite)
             assertIn(kRefereeSpriteStart, kRefereeSpriteEnd, true);
-        else if (sprite == &swos.cornerFlagSprite)
+        else if (sprite == &m_cornerFlagSpriteTopLeft || sprite == &m_cornerFlagSpriteTopRight ||
+            sprite == &m_cornerFlagSpriteBottomLeft || sprite == &m_cornerFlagSpriteBottomRight)
             assertIn(kCornerFlagSpriteStart, kCornerFlagSpriteEnd);
-        else if (sprite == &swos.big_S_Sprite)
+        else if (sprite == spinningLogoSprite())
             assertIn(kBigSSpriteStart, kBigSSpriteEnd, true);
         else if (sprite == &swos.currentPlayerNameSprite)
             assertIn(kTeam1PlayerNamesStartSprite, kTeam2PlayerNamesEndSprite, true);
@@ -227,29 +235,70 @@ void drawSprites()
         if (handleSpecialSprites(sprite, i, screenWidth, screenHeight, cameraX, cameraY))
             continue;
 
-        float x, y;
-        std::tie(x, y) = transformCamera(*sprite, cameraX, cameraY);
+        auto x = sprite->x - cameraX;
+        auto y = sprite->y - cameraY - sprite->z;
 
-        const auto& spriteImage = drawSprite(sprite->pictureIndex, x, y, screenWidth, screenHeight);
+        sprite->onScreen = drawSprite(sprite->pictureIndex, x, y, screenWidth, screenHeight);
 
         // since screen can potentially be huge don't reject any sprites for highlights, just dump them all there
-        if (sprite != &swos.big_S_Sprite && sprite->teamNumber)
-            saveCoordinatesForHighlights(sprite->pictureIndex, std::lround(x), std::lround(y));
-
-        int iX = std::lround(x);
-        int iY = std::lround(y);
-
-        // check if this is correct
-        if (iX < 336 && iY < 200 && iX > -spriteImage.width && iY > -spriteImage.height)
-            sprite->beenDrawn = 1;
-        else
-            sprite->beenDrawn = 0;
+        if (sprite != spinningLogoSprite() && sprite->teamNumber)
+            saveCoordinatesForHighlights(sprite->pictureIndex, x, y);
     }
 }
 
-void SWOS::InitDisplaySprites()
+int getGoalkeeperSpriteOffset(bool topTeam, int face)
 {
-    initDisplaySprites();
+    constexpr int kNumGoalkeeperSprites = kTeam1ReserveGoalkeeperSpriteStart - kTeam1MainGoalkeeperSpriteStart;
+
+    assert(face >= 0 && face <= 3);
+
+    auto goalie = getGoalkeeperIndexFromFace(topTeam, face);
+    assert(goalie == 0 || goalie == 1);
+
+    return goalie * kNumGoalkeeperSprites;
+}
+
+int getPlayerSpriteOffsetFromFace(int face)
+{
+    constexpr int kNumPlayerSprites = kTeam1GingerPlayerSpriteStart - kTeam1WhitePlayerSpriteStart;
+
+    assert(face >= 0 && face <= 3);
+
+    return face * kNumPlayerSprites;
+}
+
+void updateCornerFlags()
+{
+    constexpr int kLeftCornerFlagX = 81;
+    constexpr int kRightCornerFlagX = 590;
+    constexpr int kTopCornerFlagY = 129;
+    constexpr int kBottomCornerFlagY = 769;
+
+    static const std::array<Sprite *, 4> kCornerFlagSprites = {
+        &m_cornerFlagSpriteTopLeft, &m_cornerFlagSpriteTopRight,
+        &m_cornerFlagSpriteBottomLeft, &m_cornerFlagSpriteBottomRight
+    };
+
+    static const std::array<std::pair<int, int>, 4> kCornerFlagCoordinates = {{
+        { kLeftCornerFlagX, kTopCornerFlagY }, { kRightCornerFlagX, kTopCornerFlagY },
+        { kLeftCornerFlagX, kBottomCornerFlagY }, { kRightCornerFlagX, kBottomCornerFlagY },
+    }};
+
+    static const std::array<uint8_t, 32> kCornerFlagFrameOffsets = {
+        0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3
+    };
+
+    for (size_t i = 0; i < kCornerFlagSprites.size(); i++) {
+        auto& sprite = kCornerFlagSprites[i];
+
+        sprite->x = kCornerFlagCoordinates[i].first;
+        sprite->y = kCornerFlagCoordinates[i].second;
+
+        int frame = (swos.stoppageTimer >> 1) & 0x1f;
+        sprite->pictureIndex = kCornerFlagSpriteStart + kCornerFlagFrameOffsets[frame];
+
+        sprite->show();
+    }
 }
 
 static void sortDisplaySprites()
@@ -284,25 +333,13 @@ static void growRectangle(SDL_FRect& rect, float x, float y, int screenWidth, in
         rect.h = y + height;
 }
 
-static std::pair<float, float> transformCamera(const Sprite& sprite, float cameraX, float cameraY)
-{
-    float x = sprite.x;
-    float y = sprite.y;
-    float z = sprite.z;
-
-    x -= cameraX;
-    y -= cameraY + z;
-
-    return { x, y };
-}
-
 // SWOS draws darkened rectangles using special sprite which has a fixed width and height. That's why this
 // sprite is drawn many times to cover larger areas. The problem is that these areas overlap in the game
 // which causes problems since we're drawing it in blended mode (while they simply set high bit in the pixel
 // to take advantage of specially constructed palette). The solution is to combine the area into a single
 // rect first, and then draw this rect. It has to be done immediately and not at the end since it would
 // disrupt z-order.
-static void drawDarkRectangles(int& i, int screenWidth, int screenHeight, float cameraX, float cameraY)
+static void drawDarkRectangles(int& i, int screenWidth, int screenHeight, FixedPoint cameraX, FixedPoint cameraY)
 {
     assert(m_sortedSprites[i]->pictureIndex == kSquareGridForResultSprite);
 
@@ -314,8 +351,8 @@ static void drawDarkRectangles(int& i, int screenWidth, int screenHeight, float 
         if (sprite->pictureIndex != kSquareGridForResultSprite)
             break;
 
-        float x, y;
-        std::tie(x, y) = transformCamera(*sprite, cameraX, cameraY);
+        auto x = sprite->x - cameraX;
+        auto y = sprite->y - cameraY - sprite->z;
 
         growRectangle(darkRectangle, x, y, screenWidth, screenHeight);
     }
@@ -323,7 +360,7 @@ static void drawDarkRectangles(int& i, int screenWidth, int screenHeight, float 
     drawDarkRectangle(darkRectangle, screenWidth, screenHeight);
 }
 
-static bool handleSpecialSprites(const Sprite *sprite, int& i, int screenWidth, int screenHeight, float cameraX, float cameraY)
+static bool handleSpecialSprites(const Sprite *sprite, int& i, int screenWidth, int screenHeight, FixedPoint cameraX, FixedPoint cameraY)
 {
     assert(sprite && (sprite->pictureIndex == -1 || sprite->visible));
 

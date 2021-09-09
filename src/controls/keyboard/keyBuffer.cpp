@@ -1,28 +1,27 @@
 #include "keyBuffer.h"
 
-static std::deque<SDL_Scancode> m_keyBuffer;
-SDL_Scancode m_lastKey;
+static std::deque<std::pair<SDL_Scancode, SDL_Keymod>> m_keyBuffer;
 
 void registerKey(SDL_Scancode scanCode)
 {
-    m_keyBuffer.push_back(scanCode);
+    m_keyBuffer.push_back({ scanCode, SDL_GetModState() });
 }
 
 SDL_Scancode getKey()
 {
-    auto key = SDL_SCANCODE_UNKNOWN;
+    return getKeyAndModifier().first;
+}
+
+std::pair<SDL_Scancode, SDL_Keymod> getKeyAndModifier()
+{
+    auto keyAndModifier = std::make_pair(SDL_SCANCODE_UNKNOWN, KMOD_NONE);
 
     if (!m_keyBuffer.empty()) {
-        key = m_keyBuffer.front();
+        keyAndModifier = m_keyBuffer.front();
         m_keyBuffer.pop_front();
     }
 
-    return m_lastKey = key;
-}
-
-SDL_Scancode lastKey()
-{
-    return m_lastKey;
+    return keyAndModifier;
 }
 
 size_t numKeysInBuffer()
@@ -40,5 +39,5 @@ bool isLastKeyPressed(SDL_Scancode scanCode)
     if (m_keyBuffer.empty())
         return false;
 
-    return m_keyBuffer.back() == scanCode;
+    return m_keyBuffer.back().first == scanCode;
 }

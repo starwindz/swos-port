@@ -1,5 +1,6 @@
 #include "result.h"
 #include "gameSprites.h"
+#include "gameTime.h"
 #include "camera.h"
 #include "text.h"
 
@@ -50,11 +51,11 @@ struct GoalInfo
     GoalType type;
     char time[3];
 
-    void update(GoalType goalType, const byte *gameTime) {
+    void update(GoalType goalType, const std::tuple<int, int, int>& gameTime) {
         type = goalType;
-        time[0] = gameTime[1] + '0';
-        time[1] = gameTime[2] + '0';
-        time[2] = gameTime[3] + '0';
+        time[0] = std::get<0>(gameTime) + '0';
+        time[1] = std::get<1>(gameTime) + '0';
+        time[2] = std::get<2>(gameTime) + '0';
     }
     int storeTime(char *buf) const {
         int i = 0;
@@ -90,7 +91,6 @@ static int m_team1NameLength;
 
 static void resetResultTimer();
 static void showResultSprites();
-static void hideResult();
 static void hideResultSprites();
 static int getScorerListOffsetY();
 static void positionTeamNameSprites(int scorerListOffsetY);
@@ -130,9 +130,10 @@ void showAndPositionResult()
             showResultSprites();
         }
 
-        if (swos.resultTimer <= swos.timerDifference) {
+        swos.resultTimer -= swos.timerDifference;
+        if (swos.resultTimer <= 0) {
             if (swos.gameState == GameState::kResultOnHalftime || swos.gameState == GameState::kResultAfterTheGame)
-                swos.statsTimeout = 32'000;
+                swos.statsTimer = kMaxResultTicks;
             hideResult();
         } else {
             int scorerListOffsetY = getScorerListOffsetY();
@@ -144,6 +145,14 @@ void showAndPositionResult()
             positionResultSprites();
         }
     }
+}
+
+void hideResult()
+{
+    swos.resultTimer = 0;
+
+    if (swos.team1NameSprite.visible)
+        hideResultSprites();
 }
 
 void registerScorer(const Sprite& scorer, int teamNum, GoalType goalType)
@@ -188,7 +197,8 @@ void registerScorer(const Sprite& scorer, int teamNum, GoalType goalType)
             scorerInfo.shirtNum = shirtNum;
             if (scorerInfo.numGoals != kMaxGoalsPerScorer) {
                 auto& goal = scorerInfo.goals[scorerInfo.numGoals++];
-                goal.update(goalType, swos.gameTime);
+                const auto& gameTime = gameTimeAsBcd();
+                goal.update(goalType, gameTime);
                 updateScorersText(scorer, *scoringTeam, teamNum, scorerInfo, currentLine);
             }
             break;
@@ -297,14 +307,6 @@ static void showResultSprites()
     }
 
     initDisplaySprites();
-}
-
-static void hideResult()
-{
-    swos.resultTimer = 0;
-
-    if (swos.team1NameSprite.visible)
-        hideResultSprites();
 }
 
 static void hideResultSprites()

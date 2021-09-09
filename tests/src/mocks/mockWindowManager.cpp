@@ -38,6 +38,11 @@ const char *getAssetDir()
     return nullptr;
 }
 
+std::string getPathInAssetDir(const char *)
+{
+    return {};
+}
+
 void setWindowSize(int width, int height)
 {
     m_windowWidth = width;

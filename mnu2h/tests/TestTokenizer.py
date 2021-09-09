@@ -347,6 +347,12 @@ class TestTokenizer(unittest.TestCase):
         ("10'000 + 10'000 + 0x56 + -0x33 * @kVars",
             ['10000', '+', '10000', '+', '0x56', '+', '-', '0x33', '*', '@kVars']),
         ('25_33', ['25', '_33']),
+        ("'Ken sent me'", ["'Ken sent me'"]),
+        ('"Ken sent me"', ['"Ken sent me"']),
+        ("1'993", ['1993']),
+        ("'1993'", ["'1993'"]),
+        ("'8391NN32'", ["'8391NN32'"]),
+        ("6'000'000", ['6000000']),
     )
     def testSplitLine(self, inputData):
         line, expectedResult = inputData

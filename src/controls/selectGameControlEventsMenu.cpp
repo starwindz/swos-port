@@ -119,7 +119,7 @@ static void initEventEntriesColorAndStatus()
 
             auto statusEntry = getMenuEntry(i - firstEventToggle + firstEventStatus);
             statusEntry->setBackgroundColor(on ? kOnColor : kOffColor);
-            statusEntry->setString(on ? swos.aOn : swos.aOff);
+            statusEntry->copyString(on ? "ON" : "OFF");
         }
     }
 }
@@ -163,7 +163,7 @@ static void setRow(MenuEntry *statusEntry, MenuEntry *toggleEntry, bool turningO
 {
     toggleEntry->setBackgroundColor(turningOn ? kOnColor : kOffColor);
 
-    statusEntry->setString(turningOn ? swos.aOn : swos.aOff);
+    statusEntry->copyString(turningOn ? "ON" : "OFF");
     statusEntry->setBackgroundColor(turningOn ? kOnColor : kOffColor);
 }
 
@@ -252,7 +252,7 @@ static void toggleEventFromStatus()
 static void toggleInverted()
 {
     assert(m_showInverted);
-    assert(m_inverted == (getMenuEntry(invertedStatus)->string() == swos.aOn));
+    assert(m_inverted == (strcmp(getMenuEntry(invertedStatus)->string(), "ON") == 0));
 
     m_inverted = !m_inverted;
 

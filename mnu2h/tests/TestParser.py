@@ -129,8 +129,15 @@ class TestParser(unittest.TestCase):
         ('Menu Djoker`{`Entry { stringTable: [`25`} }', 4, "`25' is not a valid identifier"),
         ('Menu Djoker`{`Entry { stringTable: [ abrakadabra`DJ } }', 4, "expected `,', but got `DJ' instead"),
         ('Menu Djoker`{`Entry { stringTable: [ abrakadabra,`12 } }', 4, "expected `,', but got `}' instead"),
-        ('Menu Djoker`{`Entry { stringTable: [ abrakadabra,`DJ, } }', 4, "expecting string or identifier, got `}'"),
+        ('Menu Djoker`{`Entry { stringTable: [ abrakadabra,`DJ, } }', 4, "expected string or identifier, got `}'"),
         ('Menu Djoker`{`Entry { stringTable: [ abrakadabra,`DJ, "HMM" } }', 4, "expected `,', but got `}' instead"),
+
+        # multiline text errors
+        ('Menu Romerquelle`{`Entry { multilineText: [ "AS", swos.aOn ] }`}', 3, 'SWOS variables not supported'),
+        ('Menu Romerquelle`{`Entry { multilineText: [ "GAS", klas ] }`}', 3, "expected string literal, got `klas'"),
+        ('Menu Romerquelle`{`Entry { multilineText: oops }`}', 3, "expected `[', but got `oops' instead"),
+        ('Menu Romerquelle`{`Entry { multilineText: [ "Hagaard" ] text: "Tombeek" }`}', 3,
+            "can't use properties `text' and `multilineText' at the same time"),
 
         # function errors
         ('Menu Hightower`{`onInit:', 3, "missing property value for `onInit'"),
@@ -308,6 +315,7 @@ class TestParser(unittest.TestCase):
             whichEntry = 'e2'
             Menu m1
             {
+                x: -27
                 onInit: wakeUpInTheMorning
                 defaultWidth: 50
                 defaultX: @prevX + 1
@@ -365,6 +373,7 @@ class TestParser(unittest.TestCase):
                 }
                 #repeat 3 => entryIndex
                     Entry #join(e, #entryIndex) {
+                        x: #{entryIndex >= 1 ? "@prevX + 9" : 13 * entryIndex + 11}:t
                         y: @prevEndY + 2
                         width: @currentOrd * 5
                         textFlags: @previousOrd * 7
@@ -424,7 +433,9 @@ class TestParser(unittest.TestCase):
 
                 entryAlias brain4 = krang4
                 brain4.width = 20
-            }''', {
+            }
+            #{"Menu m4 { Entry hrkljus { x: 91 } }"}:t
+            ''', {
                 'func': { 'wakeUpInTheMorning', 'takeMeHome', 'thinkYoureLuckyPunk', 'iJustGotBack', 'IamBakckToo' },
                 'st': {
                     'm1': (
@@ -449,8 +460,8 @@ class TestParser(unittest.TestCase):
                     'm2': (
                         ('numba1', (('x', 50), ('y', 25), ('height', 10), ('text', '"Hey you!"'))),
                         ('e0', (('x', 72), ('y', 37), ('width', '1 * 5'), ('height', 5), ('textFlags', '0 * 7'), ('upEntry', -1))),
-                        ('e1', (('x', 50), ('y', 44), ('width', '2 * 5'), ('height', 5), ('textFlags', '1 * 7'), ('upEntry', -1))),
-                        ('e2', (('x', 50), ('y', 51), ('width', '3 * 5'), ('height', 5), ('textFlags', '2 * 7'))),
+                        ('e1', (('x', 20), ('y', 44), ('width', '2 * 5'), ('height', 5), ('textFlags', '1 * 7'), ('upEntry', -1))),
+                        ('e2', (('x', 29), ('y', 51), ('width', '3 * 5'), ('height', 5), ('textFlags', '2 * 7'))),
                         ('numba2', (('x', 50), ('y', 25), ('height', 5), ('width', 100), ('rightEntry', 21))),
                     ),
                     'm3': (
@@ -458,6 +469,9 @@ class TestParser(unittest.TestCase):
                         ('krang2', (('x', 5), ('y', 6), ('width', 11), ('height', 12), ('color', 14))),
                         ('krang3', (('x', 5), ('y', 6), ('width', 700), ('height', 800), ('color', 14), ('leftEntry', 18))),
                         ('krang4', (('x', 50), ('y', 31), ('width', 20))),
+                    ),
+                    'm4': (
+                        ('hrkljus', (('x', 91), ('y', 0), ('width', 0), ('height', 0))),
                     ),
                 },
             }
@@ -530,7 +544,8 @@ class TestParser(unittest.TestCase):
                     actualValue = getattr(entry, property)
                     if isinstance(actualValue, str) and not Util.isString(actualValue) and '(' in actualValue:
                         actualValue = eval(actualValue)
-                    self.assertEqual(str(actualValue), str(expectedValue))
+                    self.assertEqual((menu.name, entryName, property, str(actualValue)),
+                        (menu.name, entryName, property, str(expectedValue)))
 
     @mock.patch('builtins.print')
     @data(
@@ -547,6 +562,8 @@ class TestParser(unittest.TestCase):
         ('a=b+c Menu Santana { Entry { x:#{a+6} } }', "from variable `a': using uninitialized variables: `b', `c'"),
         ('a=b+c b=3 c=6 Menu Santana { Entry { x:#{a+7+c} } }', None),
         ('#warningsOff a=b+c Menu Santana { Entry { x:#{a+8} } }', None),
+        ('Menu Kluz { #repeat 3 Entry { x: #{i > 0 ? @prevX + 10 : @prevX + 20 } } #endRepeat }',
+            'entry dependant expression inside a loop'),
     )
     def testWarnings(self, testData, mockPrint):
         input, expectedWarning = testData

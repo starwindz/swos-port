@@ -23,7 +23,8 @@ compatibility forcing a version freeze. `mnu2h` builds upon this foundation and 
 
 ## Command line usage
 
-`mnu2h` requires two command line parameters, path to input file and path to output file.
+`mnu2h` is a command line tool, and requires two parameters: path to the input file and path to the output
+file.
 ```
 python mnu2h.py <input path> <output path>
 ```
@@ -83,8 +84,10 @@ Function properties are:
 - `onInit`
 - `onReturn`
 - `onDraw`
+- `onDestroy`
 
-They correspond to SWOS menu even handler functions. Value is expected to be a proper C++ function
+`onInit`, `onReturn` and `onDraw` correspond to SWOS menu even handler functions. `onDestroy` is an
+addition and is executed when the menu is about to be destroyed. Value is expected to be a proper C++ function
 identifier. The function will be declared as `static void functionName()`, and the user is expected to
 supply the definition in a C++ file. If the function already exists elsewhere, and doesn't require a
 prototype, declaration can be suppressed by prefixing the function name with tilde (`~`). To use one of the
@@ -95,7 +98,8 @@ suppressed. To force an unprocessed literal name to be passed to C++, put it in 
 onSelect: ~"SWOS::OptionsMenuSelected"
 ```
 
-Without the quotes, the function name would be broken into tokens at the colons.
+Without the quotes, the function name would be broken into tokens at the colons. System will correctly handle
+any mixture of SWOS and native functions which is enabled by using v2 of the menu header.
 
 There are no parameters to the functions, and one way of getting the menu is to invoke `getCurrentMenu()`.
 
@@ -209,6 +213,57 @@ through out the SWOS when the entries are dynamically populated with some string
 `@kNull`/`@kNullText` will
 leave entry pointer as null. Without intervention this would cause the game to crash, so it is used when the
 entry text pointer will be dynamically assigned.
+
+##### `stringTable` property
+
+These kinds of entries have a string table associated with them. Only one string from the table can be active,
+and is shown within the entry in the manner of standard text entry. Inside the SWOS, this table is represented
+by the following variable sized structure:
+
+<table>
+    <tr><th>offset</th><th>size</th><th>name</th><th>description</th></tr>
+    <tr><td>0</td><td>4</td><td>pointer to index variable</td>
+        <td>this will determine which string is displayed within the entry</td></tr>
+    <tr><td>4</td><td>2</td><td>starting index</td>
+        <td>initial value, as well as the value which will get subtracted from the current index
+            when fetching the string
+        </td></tr>
+    <tr><td>6</td><td>4*n</td><td>string pointers array</td>
+        <td>array of pointers to actual strings (4 bytes each), this array  is indexed as:
+            current index - starting index
+        </td>
+</table>
+
+Declaration syntax grammar:
+```'stringTable' ':' ('~' | 'swos.') <variable name> | <stringTable>
+stringTable ::= '[' ['~' | 'extern'] <index variable>, [<starting index> ','] <stringList> ']'
+stringList ::= <stringListElement>, {',' <stringListElement>}
+stringListElement ::= <string>|<id>
+```
+
+If a variable is supplied, it will be used as an already constructed string table, and no additional code will
+be emitted. It has to be prefixed with "~" or "swos.". "~" will identify the variable as available elsewhere
+in C++ code, and "swos." prefix means the table comes from SWOS.
+
+If the string table body is supplied, it comes within the square brackets. First the index variable is
+expected, optionally followed by a starting index value, and finally followed by a list of strings, each of
+which can be specified as string constant or a variable (C++ or SWOS).
+
+If the starting index is not present, it is assumed to be zero.
+
+`mnu2h` will declare string table structure, a variable, initialize it with the given data and connect it
+with the appropriate menu entry.
+
+Some examples:
+```
+stringTable: [ swos.g_allPlayerTeamsEqual, swos.aOff, swos.aOn ]
+stringTable: [ ~m_gameStyle, "PC", "AMIGA" ]
+stringTable: [
+    swos.g_pitchType, -2,
+    "SEASONAL", "RANDOM", "FROZEN", "MUDDY", "WET", "SOFT", "NORMAL", "DRY", "HARD"
+]
+stringTable: swos.pitchTypeStrTable
+```
 
 #### Entry references
 
@@ -472,6 +527,29 @@ x: #{kWidth / 2 - 20}
 
 If a value of non-preprocessor variable couldn't be evaluated, an error will be reported.
 
+#### Format specification
+
+A preprocessor expression can be followed by a format specification, which can modify the expression output
+which will be seen by the parser. It has a format:
+```
+#{<expression>}:<format specification>
+```
+or
+```
+#eval(<expression>):<format specification>
+```
+It can be letter 'q', which will instruct the preprocessor to quote the result of the expression.
+It can be letter 't', which will result in expression result being tokenized (by default no tokenization
+occurs and strings get passed to the parser untouched).
+If not 'q' or 't', format is expected to be a Python string specifier, and works in exactly the same way.
+
+Examples:
+```
+#{"Surface " + "Slam"}:q        // "Surface Slam"
+#{"Masters of the Universe"}:t  // parser gets 4 tokens: Masters, of, the, Universe
+#{10}:b                         // 1010
+```
+
 #### Digit separator
 
 Optional single quote (`'`) may be inserted between the digits as a separator. The quotes are ignored by the
@@ -527,7 +605,6 @@ lowerCaseStringsWarningOff
 ... However, in case of some testing or experiments it might be useful to let such code run.
 standard default entry values are =? [table]
 about exports
-menu v2 header, mixed type functions
 dot variables + endX/Y
 menu property aliases
 parser expressions
@@ -535,5 +612,4 @@ standard strings indexing & operations
 onRestore <~> onReturn alias
 a word about tokenization?
 da li templejt kopira width? ne, cini mi se
-command line parametri, ulaz, izlaz, osnovno kako se koristi
 -->

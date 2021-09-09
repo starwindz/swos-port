@@ -1,5 +1,6 @@
 #include "benchControls.h"
 #include "bench.h"
+#include "pitchConstants.h"
 #include "gameControlEvents.h"
 #include "gameControls.h"
 #include "gameSprites.h"
@@ -45,6 +46,9 @@ TeamGame *m_teamData;
 
 static BenchState m_state;
 static int m_goToBenchTimer;
+
+static bool m_bench1Called;
+static bool m_bench2Called;
 
 static bool m_blockDirections;
 static int m_fireTimer;
@@ -144,7 +148,7 @@ bool benchCheckControls()
         if (!benchBlocked() && !benchUnavailable()) {
             updateBenchTeam();
 
-            auto benchCalled = swos.bench1Called || swos.bench2Called;
+            auto benchCalled = m_bench1Called || m_bench2Called;
             if (benchCalled || updateNonBenchControls() && benchInvoked()) {
                 initBenchVars();
                 return true;
@@ -168,6 +172,16 @@ bool trainingTopTeam()
 void setTrainingTopTeam(bool value)
 {
     m_trainingTopTeam = value;
+}
+
+void requestBench1()
+{
+    m_bench1Called = true;
+}
+
+void requestBench2()
+{
+    m_bench2Called = true;
 }
 
 int getBenchPlayerIndex()
@@ -265,8 +279,8 @@ static void handleMenuControls()
 
 static void initBenchVars()
 {
-    swos.bench1Called = 0;
-    swos.bench2Called = 0;
+    m_bench1Called = false;
+    m_bench2Called = false;
 
     m_teamData = m_team->teamNumber == 2 ? swos.bottomTeamPtr : swos.topTeamPtr;
 
@@ -282,7 +296,7 @@ static void initBenchVars()
 
 static void handleBenchArrowSelection()
 {
-    auto benchRecalled = m_team == &swos.topTeamData ? swos.bench1Called : swos.bench2Called;
+    auto benchRecalled = m_team == &swos.topTeamData ? m_bench1Called : m_bench2Called;
 
     if (benchRecalled || (m_controls & (kGameEventLeft | kGameEventRight))) {
         leaveBench();
@@ -492,7 +506,7 @@ static void updatePlayerToBeSubstitutedPosition()
 static void initiateSubstitution()
 {
     constexpr int kSubstitutedPlayerX = 39;
-    constexpr int kSubstitutedPlayerY = 449;
+    constexpr int kSubstitutedPlayerY = kPitchCenterY;
 
     assert(m_playerToBeSubstitutedPos >= 0 && m_playerToBeSubstitutedPos <= 10);
 
@@ -555,11 +569,14 @@ static void leaveBench()
     setBenchOff();
     setCameraLeavingBench();
     swos.g_cameraLeavingSubsTimer = kLeavingSubsDelay;
-    swos.bench1Called = 0;
-    swos.bench2Called = 0;
+
+    m_bench1Called = false;
+    m_bench2Called = false;
+
     m_teamsSwapped = false;
     m_state = BenchState::kInitial;
     m_playerToBeSubstitutedPos = -1;
+
     m_pl1TapState.reset();
     m_pl2TapState.reset();
 }
@@ -580,7 +597,7 @@ static bool benchBlocked()
         swos.g_cameraLeavingSubsTimer--;
         return true;
     } else {
-        return swos.g_substituteInProgress || swos.refVar || swos.statsTimeout;
+        return swos.g_substituteInProgress || swos.refVar || swos.statsTimer;
     }
 }
 
@@ -590,8 +607,8 @@ static bool benchUnavailable()
         swos.gameState >= GameState::kStartingGame && swos.gameState <= GameState::kGameEnded) {
         m_pl1TapState.reset();
         m_pl2TapState.reset();
-        swos.bench1Called = 0;
-        swos.bench2Called = 0;
+        m_bench1Called = false;
+        m_bench2Called = false;
         return true;
     }
 
@@ -602,9 +619,9 @@ static void updateBenchTeam()
 {
     static int s_alternateTeamsTimer;
 
-    if (swos.bench1Called)
+    if (m_bench1Called)
         m_team = &swos.topTeamData;
-    else if (swos.bench2Called)
+    else if (m_bench2Called)
         m_team = &swos.bottomTeamData;
     else
         m_team = ++s_alternateTeamsTimer & 1 ? &swos.topTeamData : &swos.bottomTeamData;

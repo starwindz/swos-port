@@ -12,7 +12,7 @@ static void turnOnDebugHeap()
 #ifndef NDEBUG
 # ifdef _WIN32
     auto flags = _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG);
-    _CrtSetDbgFlag(flags | _CRTDBG_ALLOC_MEM_DF | _CRTDBG_DELAY_FREE_MEM_DF | _CRTDBG_CHECK_ALWAYS_DF);
+    _CrtSetDbgFlag(flags | _CRTDBG_ALLOC_MEM_DF | _CRTDBG_DELAY_FREE_MEM_DF | _CRTDBG_DELAY_FREE_MEM_DF);
 # endif
 #endif
 }
@@ -41,6 +41,7 @@ int main(int argc, char **argv)
 
     installCrashHandler();
     loadOptions();
+    parseCommandLine(argc, argv);   // parse command line options again to override ini settings
     setSdlHints();
 
     auto flags = IMG_INIT_JPG | IMG_INIT_PNG;

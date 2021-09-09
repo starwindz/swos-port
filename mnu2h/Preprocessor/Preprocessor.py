@@ -26,13 +26,13 @@ class Preprocessor:
         self.varStorage = varStorage
         self.parseExpression = parseExpression
 
-        self.warningsState = True
+        self.warningState = True
         self.disallowZeroWidthHeightEntriesState = True
 
         self.expressionHandler = ExpressionHandler(tokenizer, varStorage, self.showWarnings)
 
     def showWarnings(self):
-        return self.warningsState
+        return self.warningState
 
     def disallowZeroWidthHeightEntries(self):
         return self.disallowZeroWidthHeightEntriesState
@@ -85,7 +85,10 @@ class Preprocessor:
         elif directive != '{':
             self.tokenizer.expectIdentifier(token, fetchNextToken=False)
 
-        result = handler(menu)
+        if directive in ('{', 'eval'):
+            result = handler(menu, onlyNonVoid)
+        else:
+            result = handler(menu)
 
         if onlyNonVoid and directive == 'join':
             self.tokenizer.getNextToken()
@@ -357,29 +360,44 @@ class Preprocessor:
         self.tokenizer.expect('{', token, fetchNextToken=False)
 
         self.varStorage.setLoopVariablesAsUnreferenced()
-        expressionNodes, formatSpec = self.parseEvalDirective(menu)
+        expressionNodes, formatSpec, specToken = self.parseEvalDirective(menu)
 
-        self.evaluateOrDeferLoopBodyExpression(exprStart, expressionNodes, formatSpec)
+        exprStart = self.evaluateOrDeferLoopBodyExpression(exprStart, expressionNodes, formatSpec, specToken)
         self.removeExpressionFromLoopBody(exprStart)
 
-    # Evaluates the expression immediately if it's not dependant on any loop variable. If it is then stores
+    # Evaluates the expression immediately if it's not dependent on any loop variable. If it is then stores
     # the expression tree in the token stream so we at least don't have to parse it again.
-    def evaluateOrDeferLoopBodyExpression(self, exprStart, nodes, formatSpec):
+    # Another thing to watch out for are preprocessor variables that depend on some value from the previous/
+    # current/next entries, such as @prevY. We'll issue a warning since it most likely won't do what's expected.
+    def evaluateOrDeferLoopBodyExpression(self, exprStart, nodes, formatSpec, specToken):
         assert isinstance(exprStart, int)
         assert isinstance(nodes, list)
 
         referencedLoopVars = self.varStorage.getReferencedLoopVariables()
         exprToken = self.tokenizer.peekTokenAt(exprStart)
 
+        if self.warningState:
+            token = self.expressionHandler.containsEntryDependentPreprocessorVariable(nodes)
+            if token:
+                Util.warning('entry dependant expression inside a loop', token)
+
         if not referencedLoopVars:
             value = self.expressionHandler.evaluate(nodes)[0]
-            value = self.formatValueWithSpecification(value, formatSpec)
-            exprToken.string = str(value)
+            value = self.formatValueWithSpecification(value, formatSpec, specToken)
+            if isinstance(value, list):
+                self.tokenizer.insertTokensAt(exprStart, value)
+                self.tokenizer.setCurrentTokenIndex(self.tokenizer.getCurrentTokenIndex() + len(value))
+                exprStart += len(value) - 1
+            else:
+                exprToken.string = str(value)
         else:
             assert nodes
             exprToken.string = nodes
             exprToken.referencedLoopVars = referencedLoopVars
             exprToken.spec = formatSpec
+            exprToken.specToken = specToken
+
+        return exprStart
 
     def removeExpressionFromLoopBody(self, exprStart):
         assert isinstance(exprStart, int)
@@ -412,6 +430,7 @@ class Preprocessor:
         loopVarToken = self.tokenizer.peekTokenAt(hashIndex)
         loopVarToken.referencedLoopVars = { loopVariable }
         loopVarToken.spec = None
+        loopVarToken.specToken = None
 
         self.tokenizer.deleteToken(hashIndex + 1)
         self.tokenizer.setCurrentTokenIndex(hashIndex + 1)
@@ -425,7 +444,7 @@ class Preprocessor:
     #     repeatCount  - number of times to repeat
     #     level        - nesting level of the loop
     #
-    # Duplicates block as many times as specified and goes through gathered list of tokens forming the loop
+    # Duplicates block as many times as specified and goes through gathered list of tokens from the loop
     # resolving references to the loop variable, as well as expressions, which are expected in parsed form
     # (as a list of evaluation nodes).
     #
@@ -438,19 +457,19 @@ class Preprocessor:
 
         loopVariable.value = 0
 
-        for i in range(0, repeatCount):
-            insertIndex = start + i * len(repeatBlock)
+        insertIndex = start
+        for _ in range(0, repeatCount):
             expressionCache = {}
 
-            for j, token in enumerate(repeatBlock):
-                destToken = token
-
+            for token in repeatBlock:
                 if isinstance(token.string, list):
-                    destToken = self.tryEvaluatingExpressionReferencingLoopVariables(token, loopVariable, expressionCache, level)
+                    tokens = self.tryEvaluatingExpressionReferencingLoopVariables(token, loopVariable, expressionCache, level)
+                    self.tokenizer.insertTokensAt(insertIndex, tokens)
+                    insertIndex += len(tokens)
                 else:
                     assert isinstance(token, Token)
-
-                self.tokenizer.insertTokenAt(insertIndex + j, destToken)
+                    self.tokenizer.insertTokenAt(insertIndex, token)
+                    insertIndex += 1
 
             loopVariable.value += 1
 
@@ -462,6 +481,7 @@ class Preprocessor:
 
         assert hasattr(token, 'referencedLoopVars')
         assert hasattr(token, 'spec')
+        assert hasattr(token, 'specToken')
         assert isinstance(token.referencedLoopVars, set)
         assert token.referencedLoopVars
 
@@ -469,16 +489,21 @@ class Preprocessor:
         nodes = token.string
         assert nodes
         spec = token.spec
+        specToken = token.specToken
 
         if not level or len(token.referencedLoopVars) == 1 and loopVariable in token.referencedLoopVars:
-            self.evaluateStoredExpression(destToken, nodes, spec, expressionCache)
+            value = self.evaluateStoredExpression(nodes, spec, specToken, expressionCache)
+            if isinstance(value, list):
+                return value
+            else:
+                destToken.string = value
         elif loopVariable in token.referencedLoopVars:
-            self.replaceLoopVariableWithConstant(destToken, nodes, loopVariable, expressionCache)
+            nodes = self.replaceLoopVariableWithConstant(nodes, loopVariable, expressionCache)
+            destToken.string = nodes
 
-        return destToken
+        return [destToken]
 
-    def evaluateStoredExpression(self, destToken, nodes, formatSpec, expressionCache):
-        assert isinstance(destToken,Token)
+    def evaluateStoredExpression(self, nodes, formatSpec, specToken, expressionCache):
         assert isinstance(nodes, list)
         assert isinstance(formatSpec, (str, type(None)))
         assert isinstance(expressionCache, dict)
@@ -486,13 +511,14 @@ class Preprocessor:
         value = expressionCache.get(id(nodes))
         if value is None:
             value = self.expressionHandler.evaluate(nodes)[0]
-            value = self.formatValueWithSpecification(value, formatSpec)
-        destToken.string = str(value)
-        expressionCache[id(nodes)] = value
+            value = self.formatValueWithSpecification(value, formatSpec, specToken)
+            if not isinstance(value, list):
+                value = str(value)
+            expressionCache[id(nodes)] = value
+        return value
 
     @staticmethod
-    def replaceLoopVariableWithConstant(destToken, nodes, loopVariable, expressionCache):
-        assert isinstance(destToken,Token)
+    def replaceLoopVariableWithConstant(nodes, loopVariable, expressionCache):
         assert isinstance(nodes, list)
         assert isinstance(loopVariable, Variable)
         assert isinstance(expressionCache, dict)
@@ -513,7 +539,7 @@ class Preprocessor:
             expressionCache[id(nodes)] = nodesFork
 
         assert nodesFork
-        destToken.string = nodesFork
+        return nodesFork
 
     # parseJoinDirective
     #
@@ -650,18 +676,25 @@ class Preprocessor:
     # parseAndEvaluateEvalDirective
     #
     # in:
-    #     menu  - parent menu, if any
+    #     menu             - parent menu, if any
+    #     needsReturnValue - is return value expected or not
     #
     # Parses and evaluates a compile time expression, and returns the result and the token that follows it.
     #
-    def parseAndEvaluateEvalDirective(self, menu):
+    def parseAndEvaluateEvalDirective(self, menu, needsReturnValue):
         assert isinstance(menu, (Menu, type(None)))
 
-        nodes, formatSpec = self.parseEvalDirective(menu)
+        nodes, formatSpec, specToken = self.parseEvalDirective(menu)
         value, nodes, _ = self.expressionHandler.evaluate(nodes)
         assert not nodes
 
-        value = self.formatValueWithSpecification(value, formatSpec)
+        value = self.formatValueWithSpecification(value, formatSpec, specToken)
+        if isinstance(value, list):
+            tokens = value
+            if needsReturnValue:
+                tokens = tokens[1:]
+            self.tokenizer.replaceCurrentTokenWithTokens(tokens)
+            value = value[0].string # make the first token's string into the return value
         return value
 
     # parseEvalDirective
@@ -670,7 +703,7 @@ class Preprocessor:
     #     menu - parent menu, if any
     #
     # Does parsing-only of a given `eval' directive. Returns a complete evaluation tree of the expression and
-    # its format specification (if present).
+    # its format specification and (if present) + spec's token.
     #
     def parseEvalDirective(self, menu):
         assert isinstance(menu, (Menu, type(None)))
@@ -680,9 +713,9 @@ class Preprocessor:
         token = self.tokenizer.getNextToken("`}'")
         token = self.tokenizer.expect('}', token, fetchNextToken=False)
 
-        formatSpecification = self.parseFormatSpecification()
+        formatSpecification, specToken = self.parseFormatSpecification()
 
-        return nodes, formatSpecification
+        return nodes, formatSpecification, specToken
 
     def parseFormatSpecification(self):
         spec = None
@@ -693,36 +726,38 @@ class Preprocessor:
             token = self.tokenizer.getNextToken('format specification')
             spec = token.string
 
-            if token.string in '+-#':
+            if spec in '+-#':
                 token = self.tokenizer.getNextToken('format specification')
                 spec += token.string
 
-            if token.string != 'q':
+            if token.string not in ('q', 't'):
                 try:
-                    self.formatValueWithSpecification(0, token.string)
+                    self.formatValueWithSpecification(0, token.string, token)
                 except ValueError:
                     Util.error(f"invalid format specifier: `{token.string}'", token)
 
-        return spec
+        return spec, token
 
-    @staticmethod
-    def formatValueWithSpecification(value, formatSpec):
+    def formatValueWithSpecification(self, value, formatSpec, specToken):
         assert isinstance(value, (int, str))
         assert isinstance(formatSpec, (str, type(None)))
 
         if formatSpec:
             if formatSpec == 'q':
                 value = f'"{value}"'
+            elif formatSpec == 't':
+                tokens = self.tokenizer.tokenizeString(str(value), specToken)
+                value = tokens
             else:
                 value = '{:{}}'.format(value, formatSpec)
 
         return value
 
     def warningsOn(self, _menu):
-        self.warningsState = True
+        self.warningState = True
 
     def warningsOff(self, _menu):
-        self.warningsState = False
+        self.warningState = False
 
     def zeroWidthHeightEntriesOn(self, _menu):
         self.disallowZeroWidthHeightEntriesState = False

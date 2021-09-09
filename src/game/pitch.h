@@ -2,4 +2,5 @@
 
 void initPitches();
 void loadPitch();
-void drawPitch();
+void drawPitch(FixedPoint cameraX, FixedPoint cameraY);
+void drawPitchAtCurrentCamera();

@@ -68,6 +68,9 @@
     <Filter Include="Source Files\project-files\util">
       <UniqueIdentifier>{033969d6-2ddd-4ec8-a3b7-83ee40f2e138}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\project-files\menus\engine">
+      <UniqueIdentifier>{30536200-27f0-49b4-b4f3-63fac38e2771}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\main.cpp">
@@ -75,9 +78,6 @@
     </ClCompile>
     <ClCompile Include="..\..\src\stdinc.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\menus\menus.cpp">
-      <Filter>Source Files\project-files\menus</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\controls\controlOptionsMenu.cpp">
       <Filter>Source Files\project-files\controls</Filter>
@@ -154,16 +154,13 @@
     <ClCompile Include="..\src\tests\ControlOptionsMenuTest.cpp">
       <Filter>Source Files\tests</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\menus\menuMouse.cpp">
-      <Filter>Source Files\project-files\menus</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\replays\replays.cpp">
       <Filter>Source Files\project-files\replays</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\game\bench\bench.cpp">
       <Filter>Source Files\project-files\game\bench</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\replays\ReplayData.cpp">
+    <ClCompile Include="..\..\src\replays\ReplayDataStorage.cpp">
       <Filter>Source Files\project-files\replays</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\replays\replayOptions.cpp">
@@ -210,12 +207,6 @@
     </ClCompile>
     <ClCompile Include="..\..\src\controls\mouse\mouse.cpp">
       <Filter>Source Files\project-files\controls\mouse</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\menus\drawMenu.cpp">
-      <Filter>Source Files\project-files\menus</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\menus\unpackMenu.cpp">
-      <Filter>Source Files\project-files\menus</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\text\text.cpp">
       <Filter>Source Files\project-files\text</Filter>
@@ -268,9 +259,6 @@
     <ClCompile Include="..\..\src\controls\keyboard\testKeyboardMenu.cpp">
       <Filter>Source Files\project-files\controls\keyboard</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\menus\menuProc.cpp">
-      <Filter>Source Files\project-files\menus</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\controls\menuControls.cpp">
       <Filter>Source Files\project-files\controls</Filter>
     </ClCompile>
@@ -321,18 +309,6 @@
     </ClCompile>
     <ClCompile Include="..\..\src\video\windowModeMenu.cpp">
       <Filter>Source Files\project-files\video</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\menus\menuAlloc.cpp">
-      <Filter>Source Files\project-files\menus</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\menus\menuItemRenderer.cpp">
-      <Filter>Source Files\project-files\menus</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\menus\menuBackground.cpp">
-      <Filter>Source Files\project-files\menus</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\menus\MenuEntry.cpp">
-      <Filter>Source Files\project-files\menus</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\sprites\sprites.cpp">
       <Filter>Source Files\project-files\sprites</Filter>
@@ -397,13 +373,55 @@
     <ClCompile Include="..\..\src\game\color.cpp">
       <Filter>Source Files\project-files\game</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\menus\continueAbortMenu.cpp">
+      <Filter>Source Files\project-files\menus</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\menus\engine\drawMenu.cpp">
+      <Filter>Source Files\project-files\menus\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\menus\engine\menuAlloc.cpp">
+      <Filter>Source Files\project-files\menus\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\menus\engine\menuBackground.cpp">
+      <Filter>Source Files\project-files\menus\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\menus\engine\MenuEntry.cpp">
+      <Filter>Source Files\project-files\menus\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\menus\engine\menuItemRenderer.cpp">
+      <Filter>Source Files\project-files\menus\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\menus\engine\menuMouse.cpp">
+      <Filter>Source Files\project-files\menus\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\menus\engine\menuProc.cpp">
+      <Filter>Source Files\project-files\menus\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\menus\engine\menus.cpp">
+      <Filter>Source Files\project-files\menus\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\menus\engine\unpackMenu.cpp">
+      <Filter>Source Files\project-files\menus\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\menus\versusMenu.cpp">
+      <Filter>Source Files\project-files\menus</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\menus\stadiumMenu.cpp">
+      <Filter>Source Files\project-files\menus</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\menus\continueMenu.cpp">
+      <Filter>Source Files\project-files\menus</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\replays\LegacyReplayConverter.cpp">
+      <Filter>Source Files\project-files\replays</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\mocks\mockTimer.cpp">
+      <Filter>Source Files\mocks</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\stdinc.h">
       <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\menus\menus.h">
-      <Filter>Source Files\project-files\menus</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\controls\controlOptionsMenu.h">
       <Filter>Source Files\project-files\controls</Filter>
@@ -459,9 +477,6 @@
     <ClInclude Include="..\src\mocks\mockLog.h">
       <Filter>Source Files\mocks</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\menus\menuMouse.h">
-      <Filter>Source Files\project-files\menus</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\mocks\mockSdlMixer.h">
       <Filter>Source Files\mocks</Filter>
     </ClInclude>
@@ -471,7 +486,7 @@
     <ClInclude Include="..\..\src\replays\replays.h">
       <Filter>Source Files\project-files\replays</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\replays\ReplayData.h">
+    <ClInclude Include="..\..\src\replays\ReplayDataStorage.h">
       <Filter>Source Files\project-files\replays</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\replays\replayOptions.h">
@@ -521,9 +536,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\text\text.h">
       <Filter>Source Files\project-files\text</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\menus\drawMenu.h">
-      <Filter>Source Files\project-files\menus</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\menus\mainMenu.h">
       <Filter>Source Files\project-files\menus</Filter>
@@ -592,21 +604,6 @@
     <ClInclude Include="..\..\src\video\windowModeMenu.h">
       <Filter>Source Files\project-files\video</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\menus\menuAlloc.h">
-      <Filter>Source Files\project-files\menus</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\menus\menuItemRenderer.h">
-      <Filter>Source Files\project-files\menus</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\menus\menuProc.h">
-      <Filter>Source Files\project-files\menus</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\menus\menuBackground.h">
-      <Filter>Source Files\project-files\menus</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\menus\MenuEntry.h">
-      <Filter>Source Files\project-files\menus</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\sprites\sprites.h">
       <Filter>Source Files\project-files\sprites</Filter>
     </ClInclude>
@@ -660,6 +657,54 @@
     </ClInclude>
     <ClInclude Include="..\..\src\game\color.h">
       <Filter>Source Files\project-files\game</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\menus\continueAbortMenu.h">
+      <Filter>Source Files\project-files\menus</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\replays\hilFile.h">
+      <Filter>Source Files\project-files\replays</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\game\stats.h">
+      <Filter>Source Files\project-files\game</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\menus\engine\drawMenu.h">
+      <Filter>Source Files\project-files\menus\engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\menus\engine\menuAlloc.h">
+      <Filter>Source Files\project-files\menus\engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\menus\engine\menuBackground.h">
+      <Filter>Source Files\project-files\menus\engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\menus\engine\MenuEntry.h">
+      <Filter>Source Files\project-files\menus\engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\menus\engine\menuItemRenderer.h">
+      <Filter>Source Files\project-files\menus\engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\menus\engine\menuMouse.h">
+      <Filter>Source Files\project-files\menus\engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\menus\engine\menuProc.h">
+      <Filter>Source Files\project-files\menus\engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\menus\engine\menus.h">
+      <Filter>Source Files\project-files\menus\engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\menus\versusMenu.h">
+      <Filter>Source Files\project-files\menus</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\menus\stadiumMenu.h">
+      <Filter>Source Files\project-files\menus</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\menus\continueMenu.h">
+      <Filter>Source Files\project-files\menus</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\game\pitchConstants.h">
+      <Filter>Source Files\project-files\game</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\replays\LegacyReplayConverter.h">
+      <Filter>Source Files\project-files\replays</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

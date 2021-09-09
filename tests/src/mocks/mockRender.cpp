@@ -8,15 +8,10 @@ void setUpdateHook(UpdateHook updateHook)
     m_updateHook = updateHook;
 }
 
-void updateScreen()
+void updateScreen(bool)
 {
     if (m_updateHook)
         m_updateHook();
-}
-
-void updateFrame()
-{
-    updateScreen();
 }
 
 void initRendering() {}
@@ -29,9 +24,10 @@ void skipFrameUpdate() {}
 void frameDelay(double) {}
 void timerProc() {}
 void fadeIfNeeded() {}
+void fadeIn() {}
+void fadeOut() {}
+void fadeInAndOut(void (*)()) {}
 void makeScreenshot() {}
-void drawFrame(int x, int y, int width, int height, const Color& color) {}
+void drawRectangle(int x, int y, int width, int height, const Color& color) {}
 bool getLinearFiltering() { return false; }
 void setLinearFiltering(bool) {}
-
-void SWOS::Flip() {}

@@ -7,31 +7,27 @@
 @remove
 # procs
 __int_3 - SelectAndShowSquadToView
-Initialization - RingABell
 cseg_1994F
 ExitOptions - SaveOptions
 OptionsMenuBeforeDraw
-ValidateHilPointerAdd - SaveHighlightsPointers
 FindFiles
-ShowRestOfPics - StartingMatch
 InitMenuEntry - Int2Ascii
 QuitToDosPromptLoop - SWOSMainMenuInit
 SetCameraCoordinates - ScrollToCurrent
 
-# game loop
-GameLoop
-SpinBig_S_Sprite
-KeepStatisticsOnScreen
-UpdateTeamControls
+# game loop + intro pics + animations
+UpdateCornerFlagSprite - FadeAndPlayWinCupAnimation
+FadeAndPlayRelegatedAnimation - PlayNewSeasonAnimations
+ShowRestOfPics - StartingMatch
 ClearSaveFlagForGoalSprites - BookPlayer
 copySpriteAllowAND - stateGoal
-commentaryOff
+big_S_Sprite - advertIngameSprites
 
 # advertisements
 CopyAdvertisementsData - BumpAllPlayersLastPlayedHalfAtGameStart
 
 # result
-team1Scorers - resultTimer
+isGoalAttempt - resultTimer
 team1Scorer2Sprite - team2Scorer1Sprite
 team2Scorer2Sprite - playerMarkSprite
 team1NameLength - dseg_114C96
@@ -39,12 +35,12 @@ team1NameLength - dseg_114C96
 # sprites
 aSprite_dat
 UnchainSpriteInMenus - DrawEmptyMenuItem
-ClearSprite - ClearBackground
-DrawTeamNameSprites - PrepareMenuForFadeIn
+ClearSprite - ShowMenu
 SortSprites
+DrawSprite_entry2
 MakeSpritesFromPlayerNames - AI_SetControlsDirection
-chainfontDestBuffer
-dseg_17D8EB - secondsSwitchAccumulator
+# + game time + pitch type color tables
+dseg_17D8EB - pitchTypeSeasonalProbabilities
 dseg_166760 - menuItemColorTable
 numberBuffer - prevLastPlayer
 allSpritesArray - lastSelectedTeam
@@ -52,40 +48,34 @@ numSpritesToRender
 
 # game init & sprite coloring
 LoadSpritesAndFixOffsets
-ConvertColorsAndTextSprites - DrawControlledPlayerNumbers
 teamFilenamesTable - ingameTeamPlayerOffsets
-team1Filename - fireCounter
+useIndividualPlayerSkinColor - fireCounter
 team1Ptr - aCharset_dat
 spriteFixupFlag - g_skipNonCompetitionFiles
 # do not touch these, they overlap with DIY competition buffer
 #topTeamSaved - numSpritesToRender
 playerCardChances3min - ballOutOfGameTimer
 unreferencedTeamDatTable - yellowCardTable
-gameLenSecondsTable - pitchTypeSeasonalProbabilities
-team1MostFrequentFace - showingStats
+team1MostFrequentFace - statsTimer
 #whiteGuyConvertTable - pitchNumberAndType #ref: FillSkinColorConversionTable
 ballSpeedBounceFactorTable - gravityConstant
-dseg_17184E
 
 # pitches
 ReadPitchFile - ActivateReferee
 ResetAnimatedPatterns - cseg_63919
-ScrollPitch - InitBackground
 SwapTwoRandomIndicesFromAnimPatternsTable
+DrawPatternFromIndex
 # also removes game initialization error strings
 aChris_0 - aDataPoolplyr_d
-aGrafsLoader00_ - convertKeysTable
-g_pitchPatterns - setupDatBuffer
-#g_pitchPatterns - EGA_graphics
-aPitch1_blk - big_S_pictureIndexArray
+# + convertKeysTable + outerFrameColorsTable + nextEntryDirectionOffsets
+aGrafsLoader00_ - g_pitchDatBuffer
+# remove intro image reel data too
+aSfxFlcWincup_r - big_S_pictureIndexArray
 fansSidesSwapped
-pitchFansConvertTable
 drawSpritesWriteOnly - vsPtr
-animPatternsRandomTable - patternsGoalCounter
 animPatternsIndex - animPatternsState
 
 # color palette
-cseg_1761C - PlayCrowdNoiseSample
 dseg_17192A - optionsMenu
 
 # InputText
@@ -93,135 +83,149 @@ InputTextKeyLoop - InitUserTactics
 g_inputtingText
 g_allowExtraCharsFlag
 inMenuKeyboardBuffer
-g_videoSpeedIndex
 
 # menus
-SWOS
 MainMenu
-InitMainMenu
+InitMainMenu - ReadTimerDelta
 InitMainMenuStuff
+LoadFillAndSwtitle
 MenuProc
 UnpackMenu
 RestorePreviousMenu
-DrawSelected - DrawMenuItemBackground
+DrawSelectedMenuItemFrame - DrawMenuItemBackground
 DrawMenuItemOuterFrame
+EuropeanChampionshipInit - DrawAnimatedPatterns
+continueMenu - DesignDIYTournamentInit
+continueAbortMenu - designDiyTournamentMenu
+errorPromptsEnabled - dseg_114BE0
 cseg_1E1A6
-outerFrameColorsTable
 g_currentMenuPtr
-menuStatus
+menuStatus - controlMask
 menuTextBlinkCounter
 deadInputTextVar - shirtColorTable
-DrawMenuText - GetTextWidth
+DrawMenuText - ZeroOutStars
 controlsHeldTimer
 lastControls
+replaySelected
+# select files menu
+dta - dseg_17FCB8
 
 # CD ROM routines
 # removes select files menu functions as well
 FindFirstFile - SelectFileToSaveDialog
 
 # controls/joypads
-VerifyJoypadControls - InitMenuMusic
-JoyKeyOrCtrlPressed - cseg_87D60
-#pl1LastFired - pl2ShortFireCounter
+# + FadeOut & SetPalette
+FadeOut - InitMenuMusic
+# + camera vars
+# restore when ActivateReferee is converted
+#cameraXMod320 - pl1Fire
+cameraXMod320 - g_cameraYFraction
 pl1LastFired - pl1Fire
-pl1UpRight - pl1Direction
-pl2LastFired - pl2Fire
-pl2UpRight - pl2Direction
-pl2FireCounter
-# this currently only lives as write only, to be removed when possible
-#keyboardControlFlags
+pl1SecondaryFire - pl2Fire
+pl2SecondaryFire - fadingMenuDeadVar01
+# pitch patterns + setup.dat vars
+dstBytesDiv4 - g_joy1Fire1
+g_joy1Fire2 - dosMemOfs60c00h
 
 # commentary & SFX
 PlayCommentarySample
 PlaySampleFromTable
-commentarySampleHandle
 PlayHitFrameComment
-SetVolumeOrStopChants
+ChangeCommentary
+SetVolumeOrStopChants - EnqueueCornerSample
 PlayGoodJumpHeaderComment
 PlayFansChant4lSample
+PlayEndGameWhistleSample
+#g_commentary   # career file buffer
+# + intro stuff
+g_muteCommentary - goodPassTimer
+deletedSampleTimer
+itsAnInterestingGame - soundEffectsTable
 
 # music
 ChangeMenuMusic
-LoadTitleAndStartMusic
+#g_menuMusic    # career file buffer
 
-# intro, chairman and win/lose animations
-LoadChairmanAnimation - LoadAndPlayEndGameComment
-InitIntroAnimation - SWOS
-FadeAndPlayRelegatedAnimation - PlayNewSeasonAnimations
+# intro, chairman and win/lose animations, sample loading
+LoadChairmanAnimation - RingABell
+# + SWOS(), game loop, statistics
+InitIntroAnimation - Rand
 # merge with top range
-PlayChairmanAnimation - JoyKeyOrCtrlPressed
-soccerBinHandle
-soccerBinPtr
+introSampleStarted - menuCursorFrame
+g_gotExtraMemoryForSamples - playingRedCardTimer
+
+# big S sprite + some misc.
+big_S_pictureIndexArray - passingState
+bumpBigSFrame
 
 # big removal: all the EGA crap + AIL + C-lib
-EGAFlip - SetEGAPalette
-EGA_GetVisibleScreenPtr - dseg
+nullsub_F10 - dseg
 dataStart - aChairmanScenes
-introTeamChantIndices - aSfxPierceM158_
-headerSamples - PIT_countdown
-aSwos_xmi - timerBoolean
-aAsave_256 - dosMemSegment
+# get rid of comments too
+introTeamChantIndices - PIT_countdown
+aSwos_xmi - dosMemSegment
 # this removes CD-ROM and pitch routines too
 PlaySwosXmi - ConvertSpriteColors
-cseg_18236 - TurnCrowdChantsOn
 dseg_16AECB
 dosVariablesStart - dseg_185BA8
 dseg_185BA8
-PlayStartGameSample - EnqueueCornerSample
 sfxLowerQualityTable - introTeamChantsTable
 aSfxFx11Bgcrd3l - aSfxFxCombrown_
 
 # bench
-InitCurrentGoalHighlight
 EnqueueTacticsChangedSample - EnqueueRedCardSample
 subsWriteOnly
-subControlsSwapped - g_inSubstitutesMenu
+subTeamsSwapped - g_inSubstitutesMenu
 benchOff - g_waitForPlayerToGoInTimer
-g_benchXLimit - plComingX
+g_goToSubsTimer - plComingX
 benchWriteOnly02 - g_substituteInProgress
 g_benchPlayerIndex - seed
-g_goToSubsTimer
-benchTeamCheckTimer
+# + camera and some of hil variables
+benchPickTeamTimer - currentScorer
 # also includes goal minute placeholder strings
-playerNumberString - pitchNumbersTable
 substitutedPlX - passOrKick
 tacticsStringTable - avgTeamValueBases
 
-# stats + bench
-WriteStatsNumber - SaveCoordinatesForHighlights
+# stats + bench, highlights, sprite coloring
+WriteStatsNumber - UpdateControlledPlayerNumbers
+AllowStatistics - DrawStatistics
 
-# random number generator
-randXorIndex - paused
+# random number generator and some MainKeysCheck() variables
+randXorIndex - playerPositionsScoringChances
 
 # misc. variables
-prevVideoMode
 linAdr120k - linAdr982k
 handle982k - g_workingPalette
-maxKbInMaxBlock
-nextEntryDirectionOffsets
-g_fadePalette - convertedKey
-# select files menu
-dta - dseg_17FCB8
+dosMemOfs4fc00h - poolplyrDatBuffer
+g_midiPlaying - instantReplayFlag
+# also removes chain font buffer and keyboard variables
+g_fadePalette - playGame
 aBenc2_dat
 aDemo_dat
-# extend this range when removing options menu
-aDemo1_car - friendlyGameMenu
-optionsMenu - pitchTypeStrTable
+optionsMenu - friendlyGameMenu
 menuX - g_spriteGraphicsPtr
 menuSize - g_exitMenu
-europeanChampionshipMenu - versusMenu
-teamSwitchCounter
-currentLine
+# + pitch patterns
+europeanChampionshipMenu - patternsGoalCounter
 nextCameraDirections
-cameraXMod320 - g_oldCameraX
+lastKey
 
 # highlights
 HighlightsMenu
-HighlightsMenuInit - ViewHighlightsWrapper
+# + chairman animations + controls/joypads
+HighlightsMenuInit - cseg_87D60
 LoadHilFile - SetTeamGlobalNumbers
-IncrementHilBufferPointer
-DrawReplayOrExitMenu - PlayInstantReplayLoop
+# gets rid of darkened calculation and some of the sample loading routines too
+MainKeysCheck - AssignFakeGoalsToScorers
+ReplayExitMenuAfterFriendly - PlayMissGoalSample
+SetPitchTypeAndNumber - cseg_67646
 dseg_1327EE
+hilStarted
+currentHilBuffer - menuCycleTimer
+goalBasePtr - userRequestedReplay
+currentGoalPtr - cameraCoordinatesValid
+hilLeftTeamGoals - winningTeamPtr
 
 # CD ROM variables
 dosMemSegment
@@ -234,34 +238,31 @@ dosMemLinAdr - aSensibleWorldOfSoccerV2_0
 #
 
 @null
-DummyProc01
 ProgramPIT
 cseg_67646
 
 # sound
 InitMenuMusic
+CycleMenuMusic
+EnqueueDeletedSample
 
 # sprites
-ChainFont
-InitSavedSprites
 ConvertSpriteColors
-ClearBackground
 CopyWholeSprite
+DrawSprite
+DrawSpriteCentered
 
 # pitch patterns
-InitBackground
 ResetAnimatedPatternsForBothTeams
 
 # color palette
-SetEGAPalette
 FadeOutToBlack
-FadeOut
 
 # animations
 FadeAndPlayWinCupAnimation
+FadeAndPlayLoseCupAnimation
 FadeAndPlayWinMatchAnimation
 FadeAndPlayLoseMatchAnimation
-FadeAndPlayLoseCupAnimation
 PlayNewSeasonAnimations
 PlayChairmanScene
 
@@ -273,14 +274,7 @@ PlayChairmanScene
 @replace
 # be careful when changing strings in string pool, as offsets must not change
 
-# make sounds/music/commentary all ON by default
-g_soundOff, 0
-g_musicOff, 0
-g_menuMusic, 1
-g_commentary, 1
-
 # make room for long filenames (though it will be limited by the UI)
-hilFilename, 256 dup(0)
 competitionFilename, 256 dup(0)
 importTacticsFilename, 256 dup(0)
 
@@ -296,11 +290,6 @@ importTacticsFilename, 256 dup(0)
 #
 
 @save-regs
-MainKeysCheck
-HandleInstantReplayStateSwitch
-RestoreCameraPosition
-FadeIn
-FadeAndSaveReplay
 CommonMenuExit
 CalcMenuEntryAddress
 SetCurrentEntry
@@ -308,7 +297,6 @@ ZeroOutStars
 SetDefaultNameAndSurname
 InitHighestScorersTable
 InitUserTactics
-SetHilFileHeader
 InitDisplaySprites
 EndFirstHalf
 BumpAllPlayersLastPlayedHalfAtGameStart
@@ -341,20 +329,7 @@ left, byte
 right, byte
 pl1Fire, byte
 pl2Fire, byte
-pl1SecondaryFire, byte
-pl2SecondaryFire, byte
-pl1Direction, word
-pl2Direction, word
-g_pl1ControlFlags, word
-g_pl2ControlFlags, word
-g_joy1X, word
-g_joy1Y, word
-g_joy2X, word
-g_joy2Y, word
-lastKey, word
-convertedKey, byte
-convertKeysTable, array const char[110]
-statsFireExit, word
+fireBlocked, word
 fireCounter, int16_t
 skipFireEveryOtherFrame, word
 pl1SkipFireCounter, word
@@ -365,19 +340,16 @@ pl2SkipFireCounter, word
 CommonMenuExit, function
 SetExitMenuFlag, function
 CalcMenuEntryAddress, function
-ShowErrorMenu, function
-DoContinueAbortMenu, function
 # enforce dword alignment
 g_currentMenu, array char[6500] (align: 4)
 previousMenuItem, MenuEntry *
 g_exitMenu, word
-menuFade, word
 menuCycleTimer, word
 kColorTableShine, array word[8]
 menuCursorFrame, word
+g_allowShorterMenuItemsWithFrames, word
 
 # main menu
-SWOSMainMenuInit, function
 EditTacticsMenu, function
 FriendlyMenu, function
 DIYCompetitionMenu, function
@@ -394,6 +366,7 @@ teamsType, word
 choosingPreset, word
 chosenTactics, word
 diySelected, word
+currentTeamNumber, word
 diyCompetitionMenu, PackedMenu
 
 aEditTactics, array const char
@@ -431,20 +404,14 @@ ChangeAutoReplays, function
 ChangeAllPlTeamsEqual, function
 ChangeAutoSaveHighlights, function
 ChangeChairmanScenes, function
-g_menuMusic, int16_t
-g_musicOff, int16_t
 g_gameLength, int16_t
 g_autoReplays, int16_t
 g_autoSaveHighlights, int16_t
 g_allPlayerTeamsEqual, int16_t
 g_pitchType, int16_t
-g_commentary, int16_t
 g_chairmanScenes, int16_t
-g_spinBigS, int16_t
-g_crowdChantsOn, int16_t
 
 # options menu
-ChangeCommentary, function
 aOptions, array const char
 aExit, array const char
 aReplay, array const char
@@ -454,44 +421,13 @@ aFixPitchType, array const char
 aAutoReplays, array const char
 aAllPlayerTeams, array const char
 aAutoSaveHighli, array const char
-gameLengthStrTable, void *
-pitchTypeStrTable, void *
-autoReplaysStrTable, void *
-allPlTeamsEqualStrTable, void *
-autoSaveHlStrTable, void *
-chairmanScenesStrTable, void *
-aOn, array const char
-aOff, array const char
 aMenuMusic, array const char
 aCommentary, array const char
 aPlus, array const char
 aMinus, array const char
-menuMusicStrTable, void *
-commentaryStrTable, void *
 aCustom, array const char
 aOk, array const char
 aCancel, array const char
-
-# intro
-aArcSoccer_bin, array const char
-introCurrentSoundBuffer, char *
-soccerBinSoundChunkBuffer, char *
-soccerBinSoundDataPtr, char *
-introCurrentSoundBufferChunk, char *
-introScreenBuffer, char *
-introAborted, byte
-introFrameDataOffset, dword
-introFirstChunkLoaded, byte
-introNumFrames, dword
-introFrameDataChunkRemainder, dword
-introSoundBufferIndex, dword
-introCurrentSoundBufferNum, byte
-introFrameDataSize, dword
-introCurrentFrameDataPtr, char *
-introAnimationTimer, byte
-introCountDownTimer, byte
-introWaitInterval, byte
-skipIntro, word
 
 # sprites
 spritesIndex, array SpriteGraphics *
@@ -502,7 +438,6 @@ bookedPlayer, Sprite *
 ballSprite, Sprite
 goal1TopSprite, Sprite
 goal2BottomSprite, Sprite
-big_S_Sprite, Sprite
 ballShadowSprite, Sprite
 goalie1Sprite, Sprite
 team1Player2Sprite, Sprite
@@ -529,9 +464,8 @@ team2Player11Sprite, Sprite
 team1CurPlayerNumSprite, Sprite
 team2CurPlayerNumSprite, Sprite
 playerMarkSprite, Sprite
-bookedPlayerSprite, Sprite
+bookedPlayerCardOrNumberSprite, Sprite
 refereeSprite, Sprite
-cornerFlagSprite, Sprite
 
 # pitch
 pitchNumberAndType, word
@@ -539,35 +473,16 @@ g_pitchDatBuffer, array char[10032]
 pitchBallSpeedFactor, word
 
 # highlights
-RestoreHighlightPointers, function
-HandleInstantReplayStateSwitch, function
-FadeAndSaveReplay, function
-ViewHighlights, function
-SetHilFileHeader, function
-hilStartOfGoalsBuffer, array char
-hilFileBuffer, array char
-hilFilename, array char[256]
-currentHilBuffer, array dword
-goalBasePtr, dword *
-currentGoalPtr, dword *
-nextGoalPtr, dword *
-currentHilPtr, dword *
-instantReplayFlag, word
-hilNumGoals, word
-hilLeftTeamGoals, word
-hilRightTeamGoals, word
-replayState, word
-hilSceneNumber, word
-numReplaysInHilFile, word
 playHighlightFlag, word
 userRequestedReplay, word
-fadeAndSaveReplay, word
+saveHighlightScene, word
+instantReplayFlag, word
+fadeAndSaveHighlightScene, word
 gameMinSubstitutes, word
 gameMaxSubstitutes, word
-hilMaxSubstitutes, word
-hilStarted, word
-saveHighlights, word
 spaceReplayTimer, word
+gameName, array char[40]
+gameRound, array char[40]
 
 # highlights menu
 aViewHighlights, array const char
@@ -576,15 +491,8 @@ aSaveHighlights, array const char
 aNotAHighlights, array const char
 
 # camera
-RestoreCameraPosition, function
-g_cameraX, word
-g_cameraXFraction, word
 g_cameraY, word
 g_cameraYFraction, word
-g_oldCameraX, word
-g_oldCameraY, word
-savedCameraX, word
-savedCameraY, word
 cameraCoordinatesValid, word
 cameraDirection, word
 cameraXVelocity, int16_t
@@ -592,61 +500,6 @@ cameraYVelocity, int16_t
 breakCameraMode, word
 
 # comments
-g_muteCommentary, word
-commentaryTable, array const char *
-aHardM10_v__raw, array const char
-aHardM10_w__raw, array const char
-aHardM10_y__raw, array const char
-aHardM313_1__ra, array const char
-aHardM313_2__ra, array const char
-aHardM313_3__ra, array const char
-aHardM10_5__raw, array const char
-aHardM10_7__raw, array const char
-aHardM10_8__raw, array const char
-aHardM10_9__raw, array const char
-aHardM10_a__raw, array const char
-aHardM10_b__raw, array const char
-aHardM233_j__ra, array const char
-aHardM233_k__ra, array const char
-aHardM233_l__ra, array const char
-aHardM233_m__ra, array const char
-aHardM10_3__raw, array const char
-aHardM10_4__raw, array const char
-aHardM196_8__ra, array const char
-aHardM196_9__ra, array const char
-aHardM196_a__ra, array const char
-aHardM196_b__ra, array const char
-aHardM196_c__ra, array const char
-aHardM196_d__ra, array const char
-aHardM196_e__ra, array const char
-aHardM196_f__ra, array const char
-aHardM196_g__ra, array const char
-aHardM196_h__ra, array const char
-aHardM196_i__ra, array const char
-aHardM196_j__ra, array const char
-aHardM406_f__ra, array const char
-aHardM406_g__ra, array const char
-aHardM406_h__ra, array const char
-aHardM406_i__ra, array const char
-aHardM406_j__ra, array const char
-aHardM443_7__ra, array const char
-aHardM443_8__ra, array const char
-aHardM443_9__ra, array const char
-aHardM443_a__ra, array const char
-aHardM443_b__ra, array const char
-aHardM443_c__ra, array const char
-aHardM443_d__ra, array const char
-aHardM443_e__ra, array const char
-aHardM443_f__ra, array const char
-aHardM443_g__ra, array const char
-aHardM443_h__ra, array const char
-aHardM443_i__ra, array const char
-aHardM443_j__ra, array const char
-aHardM406_3__ra, array const char
-aHardM406_8__ra, array const char
-aHardM406_7__ra, array const char
-aHardM406_9__ra, array const char
-
 playingYellowCardTimer, int16_t
 playingRedCardTimer, int16_t
 playingGoodPassTimer, int16_t
@@ -661,7 +514,6 @@ soundEffectsTable, array const char *
 introTeamChantsTable, array const char *
 loadCrowdChantSampleFlag, word
 
-performingPenalty, word
 penaltiesState, int16_t
 
 resultChantFilenames, array const char *
@@ -671,8 +523,6 @@ endGameCrowdSamples, array const char *
 SetAnimationTable, function
 GoalkeeperClaimedTheBall, function
 StopAllPlayers, function
-bench1Called, word
-bench2Called, word
 g_inSubstitutesMenu, word
 g_substituteInProgress, int16_t
 plComingX, word
@@ -698,41 +548,52 @@ GetSurname, function
 currentPlayerNameSprite, Sprite
 nobodysBallTimer, word
 
-# fades & palettes
-FadeIn, function
-skipFade, word
-g_workingPalette, array char[768]
-
 # memory buffers
-dosMemOfs30000h, char *
-dosMemOfs4fc00h, char *
 dosMemOfs60c00h, char *
 linAdr384k, char *
 
 # game loop
-SetPitchTypeAndNumber, function
-UpdateStatistics, function
 UpdateBall, function
 MovePlayers, function
-DrawReferee, function
-SetCornerFlagSprite, function
+UpdateReferee, function
 DoGoalKeeperSprites, function
-DrawControlledPlayerNumbers, function
 MarkPlayer, function
 BookPlayer, function
-SaveHighlight, function
+UpdateControlledPlayerNumbers, function
+SetBallPosition, function
 frameCount, word
-goIntoHighlightsLoop, word
 goalCameraMode, word
 isGameFriendly, word
 team1NumAllowedInjuries, word
 team2NumAllowedInjuries, word
+stoppageEventTimer, word
+ballInGoalkeeperArea, word
 
 # game
-RunStoppageEventsAndSetAnimationTables, function
+UpdateCameraBreakMode, function
 UpdateControlledPlayer, function
 UpdatePlayerBeingPassedTo, function
 UpdatePlayersAndBall, function
+UpdatePlayerInjuries, function
+AssignFakeGoalsToScorers, function
+cseg_2F0E2, function
+cseg_2F194, function
+cseg_2F3AB, function
+cseg_2FB5E, function
+cseg_30BD1, function
+cseg_8F66C, function
+SetTeamSecondaryColors, function
+GetAveragePlayerPriceInSelectedTeams, function
+GetNumberOfAvailablePlayers, function
+InitIngameTeamStructure, function
+team1AppPercent, word
+team2AppPercent, word
+averagePlayerPrice, word
+g_gameType, word
+plg_D0_param, word
+plg_D3_param, word
+team1Computer, word
+team2Computer, word
 whichCard, word
 refVar, word
 lastTeamBooked, TeamGeneralInfo *
@@ -741,6 +602,7 @@ lastTeamScored, TeamGeneralInfo *
 lastPlayerPlayed, Sprite *
 lastPlayerBeforeGoalkeeper, Sprite *
 penalty, word
+strikeDestX, word
 
 # result
 resultTimer, int16_t
@@ -783,6 +645,8 @@ team1PenaltyGoals, word
 team2PenaltyGoals, word
 
 # teams
+gameTeam1, TeamFile *
+gameTeam2, TeamFile *
 topTeamIngame, TeamGame
 bottomTeamIngame, TeamGame
 topTeamPtr, TeamGame *
@@ -791,7 +655,7 @@ topTeamData, TeamGeneralInfo
 bottomTeamData, TeamGeneralInfo
 lastTeamPlayed, TeamGeneralInfo *
 lastTeamPlayedBeforeBreak, TeamGeneralInfo *
-teamDataPtr, TeamGeneralInfo *
+teamScoredDataPtr, TeamGeneralInfo *
 chooseTacticsTeamPtr, void *
 winningTeamPtr, TeamGame *
 team1StatsData, TeamStatsData
@@ -808,9 +672,7 @@ gameRandValue, word
 ballSpeedBounceFactor, word
 ballBounceFactor, word
 dontShowScorers, word
-statsTimeout, int16_t
-showStats, word
-showingStats, word
+statsTimer, int16_t
 g_cameraLeavingSubsTimer, word
 g_waitForPlayerToGoInTimer, word
 team1NumSubs, word
@@ -818,43 +680,33 @@ team2NumSubs, word
 team1GoalkeeperReplaced, word
 team2GoalkeeperReplaced, word
 showFansCounter, word
-isGoalAttempt, word
 
 # random number generator
 randomSeed, word
 seed, byte
 randomTable, array byte[256]
 
+# versus/stadium menus
+leftTeamCoachNo, word
+rightTeamCoachNo, word
+leftTeamPlayerNo, word
+rightTeamPlayerNo, word
+
 # misc
 Randomize2, function
 ReadTimerDelta, function
-MainKeysCheck, function
 ZeroOutStars, function
-CopyTeamsAndHeader, function
 StartingMatch, function
 
-stadiumMenu, PackedMenu
-setupDatBuffer, word
 aSensibleWorldOfSoccerV2_0, array const char
-partOneImages, array const char *
-partTwoImages, array const char *
-useIndividualPlayerSkinColor, word
 vsPtr, char *
 screenWidth, dword
 skillsPerQuadrant, array char[245]
 currentTick, word
-paused, word
 stoppageTimer, word
 lastStoppageTimerValue, word
-timerBoolean, word
-bumpBigSFrame, word
 aChairmanScenes, array const char
-g_soundOff, int16_t
-g_memAllOk, word
-g_gotExtraMemoryForSamples, word
-g_midiPlaying, word
 animPatternsState, word
-normalReplayRunning, word
 playGame, word
 smallCharsTable, CharTable
 bigCharsTable, CharTable
@@ -876,11 +728,12 @@ g_trainingGame, word
 # careful, a member of load competition buffer here
 trainingGameCopy, word (align: 1)
 
+# added for career file buffer continuity check
+careerFileBuffer, word
+
 g_exitGameFlag, word
 gameCanceled, word
-isCareer, word
 careerTeam, array char[1292]
-replaySelected, word
 
 # play match menu
 playerNumThatStarted, word
@@ -907,11 +760,7 @@ EndOfGame, function
 StartFirstExtraTime, function
 currentTimeSprite, Sprite
 timerDifference, word
-timeDelta, word
 extraTimeState, word
-gameSeconds, int16_t
-secondsSwitchAccumulator, int16_t
-gameTime, array byte[4]
 ingameGameLength, word
 
 # update ball
@@ -934,8 +783,6 @@ g_selectedTeams, array char[68400]
 #
 
 @on-enter
-MainKeysCheck
-ShowStadiumInit
 
 
 #
@@ -956,7 +803,7 @@ ReturnFromViewOpponent, 9, RecalculateReachableEntries
 CheckIfBallOutOfPlay, 252, FixPenaltyBug
 PlayerDoingHeader, 161, PlayHeaderComment
 PlayerTackled, 59, PlayInjuryComment
-RunStoppageEventsAndSetAnimationTables, 339, EnqueueCrowdChantsReload
+UpdateCameraBreakMode, 321, EnqueueCrowdChantsReload
 
 
 #
@@ -967,7 +814,6 @@ RunStoppageEventsAndSetAnimationTables, 339, EnqueueCrowdChantsReload
 
 @import
 WaitRetrace
-Flip
 DrawAnimatedPatterns
 Rand
 
@@ -978,7 +824,7 @@ GetFilenameAndExtension, int
 SelectFileToSaveDialog, int
 
 # main menu
-LoadFillAndSwtitle
+SWOSMainMenuInit
 
 # menus
 MenuCheckControls
@@ -987,14 +833,22 @@ DrawMenu
 DrawMenuItem
 ActivateMenu
 SetCurrentEntry
+DoContinueAbortMenu
+ShowErrorMenu
+
+# fades
+FadeIn
 
 # controls
 Player1StatusProc
 Player2StatusProc
 
 # game
+InitializeIngameTeamsAndStartGame
 ToMainGameLoop
 GoalScored
+UpdateAndApplyTeamControls
+GameOver
 
 # sprites/game graphics
 DrawSprites
@@ -1003,31 +857,17 @@ CopySprite
 DrawStatistics
 ScrollToCurrent
 
-# init game
-InitGameSaveTeams
-InitGameRestoreTeams
-
 # text
 InputText
 GetTextSize
-GetKey
 
 # music
-StopAudio
-CycleMenuMusic
 TryMidiPlay
 
 # intro
 IntroEnsureFrameDataLoaded
 IntroDrawFrame
 CloseSoccerBin
-
-# replays
-PlayHighlightsLoop
-ReplayFrame
-PlayInstantReplayLoop
-SaveCoordinatesForHighlights
-ViewHighlightsWrapper
 
 # current player indicator
 SetCurrentPlayerName
@@ -1037,7 +877,6 @@ OptionsMenuSelected
 PlayMatchSelected
 
 # commentary/sfx
-LoadSoundEffects
 PlayPenaltyGoalComment
 PlayPenaltyMissComment
 PlayPenaltySavedComment
@@ -1060,31 +899,22 @@ PlayTacticsChangeSample
 PlaySubstituteSample
 PlayThrowInSample
 PlaySensationalGameComment
-PlayCrowdNoiseSample
 PlayMissGoalSample
 PlayHomeGoalSample
 PlayAwayGoalSample
 PlayRefereeWhistleSample
-PlayEndGameWhistleSample
 PlayFoulWhistleSample
 PlayKickSample
 PlayBallBounceSample
-LoadAndPlayEndGameComment
 PlayFansChant8lSample
 PlayFansChant10lSample
 PlayIntroChantSample
 PlayResultSample
-TurnCrowdChantsOn
-TurnCrowdChantsOff
 PlayDrawComment
 PlayItsBeenACompleteRoutComment
-PlayCrowdChants
 
 EndProgram
-StartMainGameLoop
-ReplayExitMenuAfterFriendly
 Int2Ascii
-ExitEuropeanChampionshipMenu
 
 #
 # Let ida2asm know about the sizes of types used in the export section so it can generate offsets properly.

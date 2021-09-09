@@ -83,25 +83,30 @@
     <ClCompile Include="..\..\..\src\game\stats.cpp" />
     <ClCompile Include="..\..\..\src\game\updateBall.cpp" />
     <ClCompile Include="..\..\..\src\init.cpp" />
+    <ClCompile Include="..\..\..\src\menus\continueAbortMenu.cpp" />
+    <ClCompile Include="..\..\..\src\menus\continueMenu.cpp" />
+    <ClCompile Include="..\..\..\src\menus\stadiumMenu.cpp" />
+    <ClCompile Include="..\..\..\src\menus\versusMenu.cpp" />
+    <ClCompile Include="..\..\..\src\replays\LegacyReplayConverter.cpp" />
     <ClCompile Include="..\..\..\src\sprites\gameSprites.cpp" />
     <ClCompile Include="..\..\..\src\sprites\loadTexture.cpp" />
     <ClCompile Include="..\..\..\src\sprites\renderSprites.cpp" />
     <ClCompile Include="..\..\..\src\sprites\spinningLogo.cpp" />
     <ClCompile Include="..\..\..\src\util\log.cpp" />
     <ClCompile Include="..\..\..\src\main.cpp" />
-    <ClCompile Include="..\..\..\src\menus\drawMenu.cpp" />
+    <ClCompile Include="..\..\..\src\menus\engine\drawMenu.cpp" />
     <ClCompile Include="..\..\..\src\menus\mainMenu.cpp" />
-    <ClCompile Include="..\..\..\src\menus\menuAlloc.cpp" />
-    <ClCompile Include="..\..\..\src\menus\menuBackground.cpp" />
-    <ClCompile Include="..\..\..\src\menus\MenuEntry.cpp" />
-    <ClCompile Include="..\..\..\src\menus\menuItemRenderer.cpp" />
-    <ClCompile Include="..\..\..\src\menus\menuProc.cpp" />
-    <ClCompile Include="..\..\..\src\menus\unpackMenu.cpp" />
-    <ClCompile Include="..\..\..\src\menus\menus.cpp" />
-    <ClCompile Include="..\..\..\src\menus\menuMouse.cpp" />
+    <ClCompile Include="..\..\..\src\menus\engine\menuAlloc.cpp" />
+    <ClCompile Include="..\..\..\src\menus\engine\menuBackground.cpp" />
+    <ClCompile Include="..\..\..\src\menus\engine\MenuEntry.cpp" />
+    <ClCompile Include="..\..\..\src\menus\engine\menuItemRenderer.cpp" />
+    <ClCompile Include="..\..\..\src\menus\engine\menuProc.cpp" />
+    <ClCompile Include="..\..\..\src\menus\engine\unpackMenu.cpp" />
+    <ClCompile Include="..\..\..\src\menus\engine\menus.cpp" />
+    <ClCompile Include="..\..\..\src\menus\engine\menuMouse.cpp" />
     <ClCompile Include="..\..\..\src\options.cpp" />
     <ClCompile Include="..\..\..\src\game\pitch.cpp" />
-    <ClCompile Include="..\..\..\src\replays\ReplayData.cpp" />
+    <ClCompile Include="..\..\..\src\replays\ReplayDataStorage.cpp" />
     <ClCompile Include="..\..\..\src\replays\replayOptions.cpp" />
     <ClCompile Include="..\..\..\src\replays\replays.cpp" />
     <ClCompile Include="..\..\..\src\replays\replaysMenu.cpp" />
@@ -121,6 +126,7 @@
     <ClCompile Include="..\..\..\src\util\util.cpp" />
     <ClCompile Include="..\..\..\src\video\render.cpp" />
     <ClCompile Include="..\..\..\src\sprites\sprites.cpp" />
+    <ClCompile Include="..\..\..\src\video\timer.cpp" />
     <ClCompile Include="..\..\..\src\video\videoOptionsMenu.cpp" />
     <ClCompile Include="..\..\..\src\video\windowManager.cpp" />
     <ClCompile Include="..\..\..\src\video\windowModeMenu.cpp" />
@@ -251,6 +257,7 @@
     <ClInclude Include="..\..\..\src\game\bench\drawBench.h" />
     <ClInclude Include="..\..\..\src\game\camera.h" />
     <ClInclude Include="..\..\..\src\game\color.h" />
+    <ClInclude Include="..\..\..\src\game\pitchConstants.h" />
     <ClInclude Include="..\..\..\src\game\playerNameDisplay.h" />
     <ClInclude Include="..\..\..\src\game\darkRectangle.h" />
     <ClInclude Include="..\..\..\src\game\game.h" />
@@ -260,25 +267,32 @@
     <ClInclude Include="..\..\..\src\game\replayExitMenu.h" />
     <ClInclude Include="..\..\..\src\game\result.h" />
     <ClInclude Include="..\..\..\src\game\bench\bench.h" />
+    <ClInclude Include="..\..\..\src\game\stats.h" />
     <ClInclude Include="..\..\..\src\init.h" />
+    <ClInclude Include="..\..\..\src\menus\continueAbortMenu.h" />
+    <ClInclude Include="..\..\..\src\menus\continueMenu.h" />
+    <ClInclude Include="..\..\..\src\menus\stadiumMenu.h" />
+    <ClInclude Include="..\..\..\src\menus\versusMenu.h" />
+    <ClInclude Include="..\..\..\src\replays\hilFile.h" />
+    <ClInclude Include="..\..\..\src\replays\LegacyReplayConverter.h" />
     <ClInclude Include="..\..\..\src\sprites\gameSprites.h" />
     <ClInclude Include="..\..\..\src\sprites\loadTexture.h" />
     <ClInclude Include="..\..\..\src\sprites\renderSprites.h" />
     <ClInclude Include="..\..\..\src\sprites\spinningLogo.h" />
     <ClInclude Include="..\..\..\src\util\FixedPoint.h" />
     <ClInclude Include="..\..\..\src\util\log.h" />
-    <ClInclude Include="..\..\..\src\menus\drawMenu.h" />
+    <ClInclude Include="..\..\..\src\menus\engine\drawMenu.h" />
     <ClInclude Include="..\..\..\src\menus\mainMenu.h" />
-    <ClInclude Include="..\..\..\src\menus\menuAlloc.h" />
-    <ClInclude Include="..\..\..\src\menus\menuBackground.h" />
-    <ClInclude Include="..\..\..\src\menus\MenuEntry.h" />
-    <ClInclude Include="..\..\..\src\menus\menuItemRenderer.h" />
-    <ClInclude Include="..\..\..\src\menus\menuProc.h" />
-    <ClInclude Include="..\..\..\src\menus\menus.h" />
-    <ClInclude Include="..\..\..\src\menus\menuCodes.h" />
-    <ClInclude Include="..\..\..\src\menus\menuMouse.h" />
+    <ClInclude Include="..\..\..\src\menus\engine\menuAlloc.h" />
+    <ClInclude Include="..\..\..\src\menus\engine\menuBackground.h" />
+    <ClInclude Include="..\..\..\src\menus\engine\MenuEntry.h" />
+    <ClInclude Include="..\..\..\src\menus\engine\menuItemRenderer.h" />
+    <ClInclude Include="..\..\..\src\menus\engine\menuProc.h" />
+    <ClInclude Include="..\..\..\src\menus\engine\menus.h" />
+    <ClInclude Include="..\..\..\src\menus\engine\menuCodes.h" />
+    <ClInclude Include="..\..\..\src\menus\engine\menuMouse.h" />
     <ClInclude Include="..\..\..\src\options.h" />
-    <ClInclude Include="..\..\..\src\replays\ReplayData.h" />
+    <ClInclude Include="..\..\..\src\replays\ReplayDataStorage.h" />
     <ClInclude Include="..\..\..\src\replays\replayOptions.h" />
     <ClInclude Include="..\..\..\src\replays\replays.h" />
     <ClInclude Include="..\..\..\src\replays\replaysMenu.h" />
@@ -294,6 +308,7 @@
     <ClInclude Include="..\..\..\src\util\util.h" />
     <ClInclude Include="..\..\..\src\video\render.h" />
     <ClInclude Include="..\..\..\src\sprites\sprites.h" />
+    <ClInclude Include="..\..\..\src\video\timer.h" />
     <ClInclude Include="..\..\..\src\video\videoOptionsMenu.h" />
     <ClInclude Include="..\..\..\src\video\windowManager.h" />
     <ClInclude Include="..\..\..\src\video\windowModeMenu.h" />
@@ -344,7 +359,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(SolutionDir)..\..\tmp\mnu2h;$(VC_IncludePath);$(WindowsSDK_IncludePath);..\..\..\include;..\..\..\include\SDL2;..\..\..\include\SDL2_image;..\..\..\include\SDL_net;..\..\..\include\adlmidi;..\..\..\include\crashrpt;..\..\..\include\simpleini;..\..\..\include\dirent;$(SolutionDir)..\..\src;$(SolutionDir)..\..\src\audio;$(SolutionDir)..\..\src\controls;$(SolutionDir)..\..\src\debug;$(SolutionDir)..\..\src\files;$(SolutionDir)..\..\src\game;$(SolutionDir)..\..\src\game\bench;$(SolutionDir)..\..\src\menus;$(SolutionDir)..\..\src\replays;$(SolutionDir)..\..\src\sprites;$(SolutionDir)..\..\src\text;$(SolutionDir)..\..\src\video;$(SolutionDir)..\..\src\util;$(SolutionDir)..\..\src\controls\joypads;$(SolutionDir)..\..\src\controls\joypads\ui;$(SolutionDir)..\..\src\controls\keyboard;$(SolutionDir)..\..\src\controls\mouse;$(SolutionDir)..\..\tmp\swos-cpp-gen-32;$(SolutionDir)..\..\tmp\assets;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)..\..\tmp\mnu2h;$(VC_IncludePath);$(WindowsSDK_IncludePath);..\..\..\include;..\..\..\include\SDL2;..\..\..\include\SDL2_image;..\..\..\include\SDL_net;..\..\..\include\crashrpt;..\..\..\include\simpleini;..\..\..\include\dirent;$(SolutionDir)..\..\src;$(SolutionDir)..\..\src\audio;$(SolutionDir)..\..\src\controls;$(SolutionDir)..\..\src\debug;$(SolutionDir)..\..\src\files;$(SolutionDir)..\..\src\game;$(SolutionDir)..\..\src\game\bench;$(SolutionDir)..\..\src\menus;$(SolutionDir)..\..\src\menus\engine;$(SolutionDir)..\..\src\replays;$(SolutionDir)..\..\src\sprites;$(SolutionDir)..\..\src\text;$(SolutionDir)..\..\src\video;$(SolutionDir)..\..\src\util;$(SolutionDir)..\..\src\controls\joypads;$(SolutionDir)..\..\src\controls\joypads\ui;$(SolutionDir)..\..\src\controls\keyboard;$(SolutionDir)..\..\src\controls\mouse;$(SolutionDir)..\..\tmp\swos-cpp-gen-32;$(SolutionDir)..\..\tmp\assets;$(IncludePath)</IncludePath>
     <LibraryPath>..\..\..\lib\win32\$(Configuration);$(LibraryPath)</LibraryPath>
     <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <RunCodeAnalysis>false</RunCodeAnalysis>
@@ -353,7 +368,7 @@
     <OutDir>$(SolutionDir)..\..\bin\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>$(SolutionDir)..\..\tmp\mnu2h;$(VC_IncludePath);$(WindowsSDK_IncludePath);..\..\..\include;..\..\..\include\SDL2;..\..\..\include\SDL2_image;..\..\..\include\SDL_net;..\..\..\include\adlmidi;..\..\..\include\crashrpt;..\..\..\include\simpleini;..\..\..\include\dirent;$(SolutionDir)..\..\src;$(SolutionDir)..\..\src\audio;$(SolutionDir)..\..\src\controls;$(SolutionDir)..\..\src\debug;$(SolutionDir)..\..\src\files;$(SolutionDir)..\..\src\game;$(SolutionDir)..\..\src\game\bench;$(SolutionDir)..\..\src\menus;$(SolutionDir)..\..\src\replays;$(SolutionDir)..\..\src\sprites;$(SolutionDir)..\..\src\text;$(SolutionDir)..\..\src\video;$(SolutionDir)..\..\src\util;$(SolutionDir)..\..\src\controls\joypads;$(SolutionDir)..\..\src\controls\joypads\ui;$(SolutionDir)..\..\src\controls\keyboard;$(SolutionDir)..\..\src\controls\mouse;$(SolutionDir)..\..\tmp\swos-cpp-gen-32;$(SolutionDir)..\..\tmp\assets;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)..\..\tmp\mnu2h;$(VC_IncludePath);$(WindowsSDK_IncludePath);..\..\..\include;..\..\..\include\SDL2;..\..\..\include\SDL2_image;..\..\..\include\SDL_net;..\..\..\include\crashrpt;..\..\..\include\simpleini;..\..\..\include\dirent;$(SolutionDir)..\..\src;$(SolutionDir)..\..\src\audio;$(SolutionDir)..\..\src\controls;$(SolutionDir)..\..\src\debug;$(SolutionDir)..\..\src\files;$(SolutionDir)..\..\src\game;$(SolutionDir)..\..\src\game\bench;$(SolutionDir)..\..\src\menus;$(SolutionDir)..\..\src\menus\engine;$(SolutionDir)..\..\src\replays;$(SolutionDir)..\..\src\sprites;$(SolutionDir)..\..\src\text;$(SolutionDir)..\..\src\video;$(SolutionDir)..\..\src\util;$(SolutionDir)..\..\src\controls\joypads;$(SolutionDir)..\..\src\controls\joypads\ui;$(SolutionDir)..\..\src\controls\keyboard;$(SolutionDir)..\..\src\controls\mouse;$(SolutionDir)..\..\tmp\swos-cpp-gen-32;$(SolutionDir)..\..\tmp\assets;$(IncludePath)</IncludePath>
     <LibraryPath>..\..\..\lib\win32\$(Configuration);$(LibraryPath)</LibraryPath>
     <IntDir>$(SolutionDir)..\..\tmp\$(ProjectName)-$(Platform)-$(Configuration)\</IntDir>
     <TargetName>$(ProjectName)-$(Platform)-$(Configuration)</TargetName>
@@ -392,7 +407,7 @@
       <EnablePREfast>false</EnablePREfast>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>SDL2d.lib;SDL2maind.lib;SDL2_image.lib;SDL2_net.lib;SDL2_mixer.lib;ADLMIDI.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;winmm.lib;CrashRpt1403d.lib;CrashRptProbe1403d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2d.lib;SDL2maind.lib;SDL2_image.lib;SDL2_net.lib;SDL2_mixer.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;winmm.lib;CrashRpt1403d.lib;CrashRptProbe1403d.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
@@ -427,7 +442,7 @@
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_image.lib;SDL2_net.lib;SDL2_mixer.lib;ADLMIDI.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;winmm.lib;CrashRpt1403.lib;CrashRptProbe1403.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_image.lib;SDL2_net.lib;SDL2_mixer.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;winmm.lib;CrashRpt1403.lib;CrashRptProbe1403.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
@@ -442,7 +457,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PreprocessorDefinitions>SWOS_VM;NOMINMAX;DEBUG;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <UndefinePreprocessorDefinitions>NDEBUG</UndefinePreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\..\tmp\mnu2h;$(VC_IncludePath);$(WindowsSDK_IncludePath);..\..\..\include;..\..\..\include\SDL2;..\..\..\include\SDL2_image;..\..\..\include\SDL_net;..\..\..\include\adlmidi;..\..\..\include\crashrpt;..\..\..\include\simpleini;..\..\..\include\dirent;$(SolutionDir)..\..\src;$(SolutionDir)..\..\src\audio;$(SolutionDir)..\..\src\controls;$(SolutionDir)..\..\src\debug;$(SolutionDir)..\..\src\files;$(SolutionDir)..\..\src\game;$(SolutionDir)..\..\src\game\bench;$(SolutionDir)..\..\src\menus;$(SolutionDir)..\..\src\replays;$(SolutionDir)..\..\src\sprites;$(SolutionDir)..\..\src\text;$(SolutionDir)..\..\src\video;$(SolutionDir)..\..\src\util;$(SolutionDir)..\..\src\controls\joypads;$(SolutionDir)..\..\src\controls\joypads\ui;$(SolutionDir)..\..\src\controls\keyboard;$(SolutionDir)..\..\src\controls\mouse;$(SolutionDir)..\..\tmp\swos-cpp-gen-64;$(SolutionDir)..\..\tmp\assets;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\..\tmp\mnu2h;$(VC_IncludePath);$(WindowsSDK_IncludePath);..\..\..\include;..\..\..\include\SDL2;..\..\..\include\SDL2_image;..\..\..\include\SDL_net;..\..\..\include\crashrpt;..\..\..\include\simpleini;..\..\..\include\dirent;$(SolutionDir)..\..\src;$(SolutionDir)..\..\src\audio;$(SolutionDir)..\..\src\controls;$(SolutionDir)..\..\src\debug;$(SolutionDir)..\..\src\files;$(SolutionDir)..\..\src\game;$(SolutionDir)..\..\src\game\bench;$(SolutionDir)..\..\src\menus;$(SolutionDir)..\..\src\menus\engine;$(SolutionDir)..\..\src\replays;$(SolutionDir)..\..\src\sprites;$(SolutionDir)..\..\src\text;$(SolutionDir)..\..\src\video;$(SolutionDir)..\..\src\util;$(SolutionDir)..\..\src\controls\joypads;$(SolutionDir)..\..\src\controls\joypads\ui;$(SolutionDir)..\..\src\controls\keyboard;$(SolutionDir)..\..\src\controls\mouse;$(SolutionDir)..\..\tmp\swos-cpp-gen-64;$(SolutionDir)..\..\tmp\assets;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>$(SolutionDir)..\..\src\stdinc.h</ForcedIncludeFiles>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>$(SolutionDir)..\..\src\stdinc.h</PrecompiledHeaderFile>
@@ -451,7 +466,7 @@
       <CallingConvention>FastCall</CallingConvention>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>SDL2d.lib;SDL2maind.lib;SDL2_image.lib;SDL2_net.lib;SDL2_mixer.lib;ADLMIDI.lib;winmm.lib;CrashRpt1403d.lib;CrashRptProbe1403d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2d.lib;SDL2maind.lib;SDL2_image.lib;SDL2_net.lib;SDL2_mixer.lib;winmm.lib;CrashRpt1403d.lib;CrashRptProbe1403d.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>false</OptimizeReferences>
       <EnableCOMDATFolding>false</EnableCOMDATFolding>
@@ -464,7 +479,7 @@
     <ClCompile>
       <ConformanceMode>true</ConformanceMode>
       <PreprocessorDefinitions>SWOS_VM;NOMINMAX;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\..\tmp\mnu2h;$(VC_IncludePath);$(WindowsSDK_IncludePath);..\..\..\include;..\..\..\include\SDL2;..\..\..\include\SDL2_image;..\..\..\include\SDL_net;..\..\..\include\adlmidi;..\..\..\include\crashrpt;..\..\..\include\simpleini;..\..\..\include\dirent;$(SolutionDir)..\..\src;$(SolutionDir)..\..\src\audio;$(SolutionDir)..\..\src\controls;$(SolutionDir)..\..\src\debug;$(SolutionDir)..\..\src\files;$(SolutionDir)..\..\src\game;$(SolutionDir)..\..\src\game\bench;$(SolutionDir)..\..\src\menus;$(SolutionDir)..\..\src\replays;$(SolutionDir)..\..\src\sprites;$(SolutionDir)..\..\src\text;$(SolutionDir)..\..\src\video;$(SolutionDir)..\..\src\util;$(SolutionDir)..\..\src\controls\joypads;$(SolutionDir)..\..\src\controls\joypads\ui;$(SolutionDir)..\..\src\controls\keyboard;$(SolutionDir)..\..\src\controls\mouse;$(SolutionDir)..\..\tmp\swos-cpp-gen-64;$(SolutionDir)..\..\tmp\assets;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\..\tmp\mnu2h;$(VC_IncludePath);$(WindowsSDK_IncludePath);..\..\..\include;..\..\..\include\SDL2;..\..\..\include\SDL2_image;..\..\..\include\SDL_net;..\..\..\include\crashrpt;..\..\..\include\simpleini;..\..\..\include\dirent;$(SolutionDir)..\..\src;$(SolutionDir)..\..\src\audio;$(SolutionDir)..\..\src\controls;$(SolutionDir)..\..\src\debug;$(SolutionDir)..\..\src\files;$(SolutionDir)..\..\src\game;$(SolutionDir)..\..\src\game\bench;$(SolutionDir)..\..\src\menus;$(SolutionDir)..\..\src\menus\engine;$(SolutionDir)..\..\src\replays;$(SolutionDir)..\..\src\sprites;$(SolutionDir)..\..\src\text;$(SolutionDir)..\..\src\video;$(SolutionDir)..\..\src\util;$(SolutionDir)..\..\src\controls\joypads;$(SolutionDir)..\..\src\controls\joypads\ui;$(SolutionDir)..\..\src\controls\keyboard;$(SolutionDir)..\..\src\controls\mouse;$(SolutionDir)..\..\tmp\swos-cpp-gen-64;$(SolutionDir)..\..\tmp\assets;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>$(SolutionDir)..\..\src\stdinc.h</ForcedIncludeFiles>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>$(SolutionDir)..\..\src\stdinc.h</PrecompiledHeaderFile>
@@ -477,7 +492,7 @@
       <CallingConvention>FastCall</CallingConvention>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_image.lib;SDL2_net.lib;SDL2_mixer.lib;ADLMIDI.lib;winmm.lib;CrashRpt1403.lib;CrashRptProbe1403.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_image.lib;SDL2_net.lib;SDL2_mixer.lib;winmm.lib;CrashRpt1403.lib;CrashRptProbe1403.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <OptimizeReferences>true</OptimizeReferences>

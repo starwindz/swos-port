@@ -47,4 +47,4 @@ void saveControlOptions(CSimpleIni& ini);
 void initGameControls();
 
 bool gotMousePlayer();
-bool testForPlayerKeys();
+bool testForPlayerKeys(SDL_Scancode key);

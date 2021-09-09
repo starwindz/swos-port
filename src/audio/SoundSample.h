@@ -12,8 +12,6 @@ public:
     SoundSample& operator=(SoundSample&& other);
     SoundSample& operator=(const SoundSample& other) = delete;
 
-    static SoundSample createNullSample();
-
     void free();
     bool loadFromFile(const char *path);
 

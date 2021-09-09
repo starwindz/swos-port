@@ -32,6 +32,7 @@ kTestData = (
             onInit: someCoolInit
             onReturn: hereIAm
             onDraw: danceSnake
+            onDestroy: DirtWeydaar
             initialEntry: CasaBrava
 
             export kBlazeOfGlory = 1990
@@ -54,6 +55,9 @@ kTestData = (
                 downEntry: >
                 upEntry: <
             }
+            TemplateEntry {
+                stringTable: [ four, "1", "2", '3', '4' ]
+            }
             Entry CasaBrava {
                 invisible: true
                 onReturn: returnOfThePhantom
@@ -68,6 +72,7 @@ kTestData = (
                 upEntry: CasaNostra
             }
             Entry MoreThanMeetsTheEye {
+                y: #{2 * @prevY + 100}
                 text: swos.aMenuMusic
             }
         }
@@ -80,6 +85,7 @@ kTestData = (
             defaultTopEntry: Spacy
 
             Entry {
+                x: #{0x64} + 2
                 width: 25
                 height: 36
                 stringTable: [ mirror, 'WARM', MY, "HEART" ]
@@ -87,6 +93,7 @@ kTestData = (
                 onSelect: uncleSamNeedsYOU
             }
             Entry MoonLander {
+                x: #{"3 + @prevX"}:t
                 number: 1969
             }
             Entry Secret {
@@ -114,6 +121,10 @@ kTestData = (
             }
             Entry Durmitor {
                 color: @kRed
+                multilineText: [ 'Gael', 'Monfils' ]
+            }
+            Entry Jerry {
+                menuSpecificSprite: 0x100
             }
 
             ResetTemplate {}
@@ -126,6 +137,7 @@ kTestData = (
                 skipLeft: 2
                 directionRight: 1
                 skipRight: 0
+                multilineText: 0
             }
 
             entryAlias Landslide = Avalanche
@@ -136,28 +148,34 @@ kTestData = (
                 directionRight: @kDown
             }
             Entry {
-                stringTable: [ extern flannel, 0, "WOOPTEE", "DOO" ]
+                stringTable: [ extern flannel, -2, "WOOPTEE", "DOO" ]
+            }
+            Entry {
+                text: @kNull
+            }
+            Entry {
+                multilineText: @kNull
             }
         }
         Menu Delta {}
         Menu mali {}
     ''', {
         'functions': (
-            'someCoolInit', 'hereIAm', 'danceSnake', 'uncleSamNeedsYOU', 'drawYellow',
+            'someCoolInit', 'hereIAm', 'danceSnake', 'DirtWeydaar', 'uncleSamNeedsYOU', 'drawYellow',
             'returnOfThePhantom', 'prepareWell', 'pumpItUp', 'aperitif',
         ),
         'menus': ['Charlie', 'Bravo', 'Tango', 'Delta', 'mali'],
-        'stringTables': ((2, 3), (  # lengths when declared
+        'stringTables': ((2, 3, 4), (  # lengths when declared
             # declared / extern / elements
             (False, False, 'Charlie_CasaNostra', 'reinterpret_cast<int16_t *>(SwosVM::Offsets::start)', '0', "'HOLD'", '"ME"', '"NOW"'),
             (True, False, 'Bravo_00', '&mirror', '0', '"WARM"', 'MY', '"HEART"'),
             (False, False, 'Tango_30000', '&Indianapolis', '2002', '"1"', 'reinterpret_cast<const char *>(SwosVM::Offsets::aWinners)'),
-            (False, True, 'Tango_04', '&flannel', 0, '"WOOPTEE"', '"DOO"'),
+            (False, True, 'Tango_05', '&flannel', -2, '"WOOPTEE"', '"DOO"'),
         )),
         'namedEntries': {
             'Charlie': (('CasaNostra', 0), ('CasaBrava', 2), ('MoreThanMeetsTheEye', 3)),
             'Bravo': (('MoonLander', 1),),
-            'Tango': (('Madera', 0), ('Durmitor', 1), ('Avalanche', 2), ('Lovac', 0), ('Landslide', 2),),
+            'Tango': (('Madera', 0), ('Durmitor', 1), ('Jerry', 2), ('Avalanche', 3), ('Lovac', 0), ('Landslide', 3),),
         },
         'exportedVariables': {
             'Charlie': (('kBlazeOfGlory', '1990'), ('SantaFe', '2194'),),
@@ -167,14 +185,14 @@ kTestData = (
             'Bravo': [
                 {'id': 'header', 'type': 'MenuHeader',  'params': ['SwosVM::Procs::someCoolInit', '0', '0', '1']},
 
-                {'id': 'eb00',   'type': 'Entry',       'params': ['0', '0', '25', '36']},
+                {'id': 'eb00',   'type': 'Entry',       'params': ['102', '0', '25', '36']},
                 {'id': 'est00',  'type': 'EntryStringTableNative', 'params': ['0', '&Bravo_00_stringTable']},
                 {'id': 'ec00',   'type': 'EntryColor',  'params': ['10']},
                 {'id': 'ep00',   'type': 'EntryNextPositions', 'params': ['12', '15', '3', '255']},
                 {'id': 'eosf00', 'type': 'EntryOnSelectFunctionNative', 'params': ['uncleSamNeedsYOU']},
                 {'id': 'ee00',   'type': 'EntryEnd',    'params': []},
 
-                {'id': 'eb01',   'type': 'Entry',       'params': ['0', '0', '0', '0']},
+                {'id': 'eb01',   'type': 'Entry',       'params': ['105', '0', '0', '0']},
                 {'id': 'en01',   'type': 'EntryNumber', 'params': ['0', '1969']},
                 {'id': 'ep01',   'type': 'EntryNextPositions', 'params': ['12', '15', '3', '255']},
                 {'id': 'ee01',   'type': 'EntryEnd',    'params': []},
@@ -192,7 +210,8 @@ kTestData = (
                 {'id': 'menuEnd', 'type': 'MenuEnd',    'params': []},
             ],
             'Charlie': [
-                {'id': 'header', 'type': 'MenuHeaderV2', 'params': ['kMenuHeaderV2Mark', 'someCoolInit', 'hereIAm', 'danceSnake', '2', 'true', 'true', 'true']},
+                {'id': 'header', 'type': 'MenuHeaderV2', 'params': ['kMenuHeaderV2Mark', 'someCoolInit',
+                    'hereIAm', 'danceSnake', 'DirtWeydaar', '2', 'true', 'true', 'true', 'true']},
 
                 {'id': 'eb00',   'type': 'Entry',       'params': ['49', '158', '99', '17']},
                 {'id': 'est00',  'type': 'EntryStringTableNative', 'params': ['0', '&Charlie_CasaNostra_stringTable']},
@@ -205,6 +224,11 @@ kTestData = (
                 {'id': 'ep01',   'type': 'EntryNextPositions', 'params': ['255', '255', '0', '2']},
                 {'id': 'ee01',   'type': 'EntryEnd',    'params': []},
 
+                {'id': 'te00',   'type': 'TemplateEntry', 'params': []},
+                {'id': 'eb30002', 'type': 'Entry',       'params': ['0', '0', '1', '1']},
+                {'id': 'est30002', 'type': 'EntryStringTableNative', 'params': ['0', '&Charlie_30002_stringTable']},
+                {'id': 'ee30002', 'params': [], 'type': 'EntryEnd'},
+
                 {'id': 'eb02',   'type': 'Entry',       'params': ['69', '178', '99', '17']},
                 {'id': 'et02',   'type': 'EntryText',   'params': ['16', '-1']},
                 {'id': 'ei02',   'type': 'EntryInvisible', 'params': []},
@@ -214,14 +238,14 @@ kTestData = (
                 {'id': 'eadf02', 'type': 'EntryOnReturnFunctionNative', 'params': ['returnOfThePhantom']},
                 {'id': 'ee02',   'type': 'EntryEnd',              'params': [], },
 
-                {'id': 'eb03',   'type': 'Entry',       'params': ['79', '188', '99', '17']},
+                {'id': 'eb03',   'type': 'Entry',       'params': ['79', '456', '99', '17']},
                 {'id': 'et03',   'type': 'EntryText',   'params': ['0', 'SwosVM::Offsets::aMenuMusic']},
                 {'id': 'ee03',   'type': 'EntryEnd',    'params': []},
 
                 {'id': 'menuEnd', 'type': 'MenuEnd',    'params': []},
             ],
             'Tango': [
-                {'id': 'header',  'type': 'MenuHeaderV2', 'params': ['kMenuHeaderV2Mark', 'specialForces', '0', '0', '0', 'true', 'false', 'false']},
+                {'id': 'header',  'type': 'MenuHeaderV2', 'params': ['kMenuHeaderV2Mark', 'specialForces', '0', '0', '0', '0', 'true', 'false', 'false', 'false']},
                 {'id': 'menuXY00', 'type': 'MenuXY',    'params': ['123', '55'],},
 
                 {'id': 'te00',    'type': 'TemplateEntry', 'params': []},
@@ -237,26 +261,40 @@ kTestData = (
                 {'id': 'ee00',    'type': 'EntryEnd',   'params': []},
 
                 {'id': 'eb01',    'type': 'Entry',      'params': ['0', '0', '0', '0']},
+                {'id': 'emt01',   'type': 'EntryMultilineTextNative', 'params': ['0', 'reinterpret_cast<MultilineText *>(&Tango_Durmitor_multilineText)']},
                 {'id': 'ec01',    'type': 'EntryColor', 'params': ['10']},
                 {'id': 'ee01',    'type': 'EntryEnd',   'params': []},
 
+                {'id': 'eb02',    'type': 'Entry',      'params': ['0', '0', '0', '0']},
+                {'id': 'emss02',  'type': 'EntryMenuSpecificSprite', 'params': []},
+                {'id': 'ee02',    'type': 'EntryEnd',    'params': []},
+
                 {'id': 'rte00',   'type': 'ResetTemplateEntry', 'params': []},
 
-                {'id': 'menuXY02', 'type': 'MenuXY',    'params': ['125', '35']},
-
-                {'id': 'eb02',    'type': 'Entry',      'params': ['0', '0', '0', '0']},
-                {'id': 'els02',   'type': 'EntryLeftSkip', 'params': ['2', '0']},
-                {'id': 'ers02',   'type': 'EntryRightSkip', 'params': ['0', '1']},
-                {'id': 'ee02',    'type': 'EntryEnd',   'params': []},
+                {'id': 'menuXY03', 'type': 'MenuXY',    'params': ['125', '35']},
 
                 {'id': 'eb03',    'type': 'Entry',      'params': ['0', '0', '0', '0']},
-                {'id': 'est03',   'type': 'EntryStringTable', 'params': ['0', 'SwosVM::Offsets::SmoothJazz101DaPierre']},
-                {'id': 'ers03',   'type': 'EntryRightSkip',   'params': ['255', '3']},
+                {'id': 'emt03',   'type': 'EntryMultilineText', 'params': ['0', 'nullptr']},
+                {'id': 'els03',   'type': 'EntryLeftSkip', 'params': ['2', '0']},
+                {'id': 'ers03',   'type': 'EntryRightSkip', 'params': ['0', '1']},
                 {'id': 'ee03',    'type': 'EntryEnd',   'params': []},
 
                 {'id': 'eb04',    'type': 'Entry',      'params': ['0', '0', '0', '0']},
-                {'id': 'est04',   'type': 'EntryStringTableNative', 'params': ['0', '&Tango_04_stringTable']},
+                {'id': 'est04',   'type': 'EntryStringTable', 'params': ['0', 'SwosVM::Offsets::SmoothJazz101DaPierre']},
+                {'id': 'ers04',   'type': 'EntryRightSkip',   'params': ['255', '3']},
                 {'id': 'ee04',    'type': 'EntryEnd',   'params': []},
+
+                {'id': 'eb05',    'type': 'Entry',      'params': ['0', '0', '0', '0']},
+                {'id': 'est05',   'type': 'EntryStringTableNative', 'params': ['0', '&Tango_05_stringTable']},
+                {'id': 'ee05',    'type': 'EntryEnd',   'params': []},
+
+                {'id': 'eb06',    'type': 'Entry',      'params': ['0', '0', '0', '0']},
+                {'id': 'et06',    'type': 'EntryText',  'params': ['0', 'nullptr']},
+                {'id': 'ee06',    'type': 'EntryEnd',   'params': []},
+
+                {'id': 'eb07',    'type': 'Entry',      'params': ['0', '0', '0', '0']},
+                {'id': 'emt07',   'type': 'EntryMultilineText', 'params': ['0', 'nullptr']},
+                {'id': 'ee07',    'type': 'EntryEnd',   'params': []},
 
                 {'id': 'menuEnd', 'type': 'MenuEnd',    'params': []},
             ],
@@ -276,7 +314,7 @@ kInputFile = 'Ibn'
 kOutputFile = 'Khaldun'
 
 kMenuRegex = re.compile(r'''
-    struct\s+SWOS_Menu_(?P<name>\w+)\s* : \s*public\s+BaseMenu\b\s*
+    struct\s+SwosMenu_(?P<name>\w+)\s* : \s*public\s+BaseMenu\b\s*
     (?P<contents>{[^#]+(?=\#ifndef\s*SWOS_STUB_MENU_DATA)).*?
     \#ifndef\s+SWOS_STUB_MENU_DATA
     \s*static\s+const\s+(?P<declarationName>\w+)\n
@@ -324,7 +362,7 @@ class TestCodeGenerator(unittest.TestCase):
         self.assertTrue(lines[0].startswith('//'))
         self.assertIn(f'automatically generated from {kInputFile}', lines[0])
         self.assertEqual(lines[1], '#pragma once')
-        start = output.find('using namespace SWOS_Menu;')
+        start = output.find('using namespace SwosMenu;')
         self.assertNotRegex(output[:start], kMenuRegex)
 
     @mock.patch('CodeGenerator.open')
@@ -473,7 +511,7 @@ class TestCodeGenerator(unittest.TestCase):
 
                     index = enumEntryNames.index(entryName)
                     actualEntryIndex = enumValues[index][1]
-                    self.assertEqual(int(actualEntryIndex), expectedIndex)
+                    self.assertEqual((entryName, int(actualEntryIndex)), (entryName, expectedIndex))
                     self.assertEqual(actualEntryIndex, entryReferenceValues[index][1])
         else:
             self.assertFalse(menusWithNamedEntries)
@@ -604,7 +642,7 @@ class TestCodeGenerator(unittest.TestCase):
 
         kRegexStateChange = (
             # regex, other fields contain booleans for expected & new values for inMenu & inEntry (if changing)
-            (r'struct\s+SWOS_Menu_\w+\s*:\s*public\s*BaseMenu', False, False, True,  None),
+            (r'struct\s+SwosMenu_\w+\s*:\s*public\s*BaseMenu', False, False, True,  None),
             (r'#ifndef SWOS_STUB_MENU_DATA',                    True,  False, False, None),
             (r'Entry\s+\w+\s*{[^}]+}\s*;',                      True,  False, None,  True),
             (r'EntryEnd\s+\w+\s*{\s*}\s*;',                     True,  True,  None,  False),

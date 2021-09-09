@@ -57,7 +57,7 @@ Menu audioOptionsMenu
     Entry masterSound {
         y: kOptionsStartY
 
-        stringTable: [ swos.g_soundOff, swos.aOn, swos.aOff ]  // notice backward order
+        stringTable: [ ~m_soundEnabled, "OFF", "ON" ]
 
         onSelect: toggleMasterSound
 
@@ -65,7 +65,7 @@ Menu audioOptionsMenu
     }
 
     Entry menuMusic {
-        stringTable: swos.menuMusicStrTable
+        stringTable: [ ~m_musicEnabled, "OFF", "ON" ]
 
         onSelect: toggleMenuMusic
 
@@ -74,16 +74,16 @@ Menu audioOptionsMenu
     }
 
     Entry commentary {
-        stringTable: swos.commentaryStrTable
+        stringTable: [ ~m_commentaryEnabled, "OFF", "ON" ]
 
-        onSelect: ~ChangeCommentary
+        onSelect: toggleCommentary
 
         upEntry: <
         downEntry: >
     }
 
     Entry crowdChants {
-        stringTable: [ swos.g_crowdChantsOn, swos.aOff, swos.aOn ]
+        stringTable: [ m_crowdChantsEnabled, "OFF", "ON" ]
 
         onSelect: toggleCrowdChants
 

@@ -1,12 +1,11 @@
 #include "mainMenu.h"
 #include "drawMenu.h"
-#include "replays.h"
+#include "replaysMenu.h"
 #include "render.h"
 #include "music.h"
 #include "main.mnu.h"
 
 static void initMainMenu();
-static void activateMainMenu();
 static void initMainMenuGlobals();
 
 void showMainMenu()
@@ -34,10 +33,8 @@ static void initMainMenu()
     initMainMenuGlobals();
 
     // speed up starting up in debug mode
-#ifdef DEBUG
-    swos.menuFade = 0;
-#else
-    swos.menuFade = 1;
+#ifndef DEBUG
+    enqueueMenuFadeIn();
 #endif
 }
 
@@ -52,7 +49,6 @@ void initMainMenuGlobals()
     D0 = kGameTypeNoGame;
     InitCareerVariables();
 
-    swos.menuFade = 0;
     swos.g_exitMenu = 0;
     swos.fireResetFlag = 0;
     swos.dseg_10E848 = 0;
@@ -70,14 +66,10 @@ void initMainMenuGlobals()
     InitUserTactics();
 }
 
-static void activateMainMenu()
+static void mainMenuOnInit()
 {
-    activateMenu(&mainMenu);
-}
-
-void SWOS::ExitEuropeanChampionshipMenu()
-{
-    activateMainMenu();
+    swos.currentTeamNumber = -1;
+    CommonMenuExit();
 }
 
 //
@@ -97,27 +89,24 @@ constexpr char kQuitToOS[] = "QUIT TO "
 
 static void showQuitMenu()
 {
+    drawMenu(false);
+    fadeOut();
+    enqueueMenuFadeIn();
     showMenu(quitMenu);
     CommonMenuExit();
 }
 
-static void quitMenuOnInit()
-{
-//    FadeOutToBlack();
-    drawMenu();     // redraw menu so it's ready for the fade-in
-    FadeIn();
-    swos.skipFade = -1;
-}
-
 static void quitGame()
 {
-//    FadeOutToBlack();
+    drawMenu(false);
+    fadeOut();
     std::exit(EXIT_SUCCESS);
 }
 
 static void returnToGame()
 {
-//    FadeOutToBlack();
+    drawMenu(false);
+    fadeOut();
+    enqueueMenuFadeIn();
     SetExitMenuFlag();
-    swos.menuFade = 1;
 }

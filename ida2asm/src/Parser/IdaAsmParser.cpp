@@ -455,7 +455,9 @@ CToken *IdaAsmParser::parseInstruction(CToken *token, TokenList& comments)
     if (m_restoreRegsProc && instructionToken->type == Token::T_RETN)
         outputRestoreCppRegistersInstructions();
 
-    m_outputItems.addInstruction(comments, comment, prefix, instructionToken, opSizes, opTypes, opTokens);
+    if (m_currentProc)
+        m_outputItems.addInstruction(comments, comment, prefix, instructionToken, opSizes, opTypes, opTokens);
+
     return token;
 }
 
@@ -964,6 +966,9 @@ bool IdaAsmParser::isLocalVariable(const char *str, size_t len)
 
 void IdaAsmParser::addReference(CToken *token, bool sizeOperator)
 {
+    if (!m_currentProc)
+        return;
+
     auto ptr = token->text();
     auto len = token->textLength;
 
@@ -978,7 +983,7 @@ void IdaAsmParser::addReference(CToken *token, bool sizeOperator)
         }
 
         if (!isLocalVariable(ptr, len))
-            m_references.addReference({ ptr, len });
+            m_references.addReference(String{ ptr, len }, m_currentProc);
     }
 }
 
@@ -1092,19 +1097,19 @@ CToken *IdaAsmParser::skipUntilNewLine(CToken *token)
 
 CToken *IdaAsmParser::skipUntilEof(CToken *token)
 {
-    while (!token->isEof())
+    while (token < m_tokenizer.end())
         advance(token);
 
     return token;
 }
 
-CToken *IdaAsmParser::skipUntilSymbol(CToken *token, const String& sym)
+std::pair<CToken *, bool> IdaAsmParser::skipUntilSymbol(CToken *token, const String& sym)
 {
     CToken *prevLeadingNewLine{}, *prevNewLine{};
     int prevLineNo;
 
     // don't skip leading comments of the terminating symbol
-    while (!token->isEof()) {
+    while (token < m_tokenizer.end()) {
         if (token->isNewLine()) {
             prevNewLine = token;
             auto next = token->next();
@@ -1125,7 +1130,8 @@ CToken *IdaAsmParser::skipUntilSymbol(CToken *token, const String& sym)
         advance(token);
     }
 
-    if (token->isEof()) {
+    bool found = token < m_tokenizer.end();
+    if (!found) {
         assert(prevNewLine && prevNewLine->next() == token);
         token = prevNewLine;
         m_lineNo--;
@@ -1134,7 +1140,7 @@ CToken *IdaAsmParser::skipUntilSymbol(CToken *token, const String& sym)
         token = prevLeadingNewLine;
     }
 
-    return token;
+    return { token, found };
 }
 
 std::pair<CToken *, size_t> IdaAsmParser::getNextSignificantToken(CToken *token)
@@ -1181,12 +1187,15 @@ CToken *IdaAsmParser::handleSymbolRemoval(CToken *token, SymbolAction action, co
         if (sym == SymbolFileParser::kEndMarker) {
             token = skipUntilEof(token);
         } else {
-            token = skipUntilSymbol(token, sym);
+            bool found;
+            std::tie(token, found) = skipUntilSymbol(token, sym);
 
-            if (!token->next()->isEof())
+            if (found) {
                 m_symbolTable.clearAction(sym, ~kRemoveEndRange);
-            else
+            } else {
+                assert(m_missingEndRangeSymbol.empty());
                 m_missingEndRangeSymbol = sym;
+            }
         }
     }
 
@@ -1195,6 +1204,10 @@ CToken *IdaAsmParser::handleSymbolRemoval(CToken *token, SymbolAction action, co
 
 void IdaAsmParser::clearCollectedOutput(CToken *token)
 {
+    if (!m_foundEndRangeSymbol.empty())
+        error("Unable to find starting symbol for " + tokenToString(token) + ", while looking for missing starting symbol `" +
+            m_foundEndRangeSymbol.string() + "', check for overlapping regions", token);
+
     m_foundEndRangeSymbol = token;
 
     m_outputItems.clear();

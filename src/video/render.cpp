@@ -1,22 +1,24 @@
 #include "render.h"
+#include "timer.h"
+#include "game.h"
 #include "windowManager.h"
-#include "util.h"
-#include "file.h"
-#include "dump.h"
 #include "joypads.h"
 #include "VirtualJoypad.h"
+#include "dump.h"
+#include "file.h"
+#include "util.h"
 #include "color.h"
 
 static SDL_Renderer *m_renderer;
+static Uint32 m_windowPixelFormat;
 
 static bool m_useLinearFiltering;
 
-static Uint64 m_lastRenderStartTime;
-static Uint64 m_lastRenderEndTime;
+static bool m_pendingScreenshot;
 
-static bool m_delay;
-static std::deque<int> m_lastFramesDelay;
-static constexpr int kMaxLastFrames = 16;
+static void fade(bool out, bool doubleFade = false, SDL_Surface *surface = nullptr, void (*callback)() = nullptr);
+static void doMakeScreenshot();
+static SDL_Surface *getScreenSurface();
 
 void initRendering()
 {
@@ -24,6 +26,12 @@ void initRendering()
         sdlErrorExit("Could not initialize SDL");
 
     auto window = createWindow();
+    if (!window)
+        sdlErrorExit("Could not create main window");
+
+    m_windowPixelFormat = SDL_GetWindowPixelFormat(window);
+    if (m_windowPixelFormat == SDL_PIXELFORMAT_UNKNOWN)
+        sdlErrorExit("Failed to query window pixel format");
 
     m_renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     if (!m_renderer)
@@ -68,28 +76,8 @@ SDL_Rect getViewport()
     return viewport;
 }
 
-static void determineIfDelayNeeded()
+void updateScreen(bool delay /* = false */)
 {
-    auto delay = m_lastRenderEndTime > m_lastRenderStartTime && m_lastRenderEndTime - m_lastRenderStartTime >= 10;
-
-    if (m_lastFramesDelay.size() >= kMaxLastFrames)
-        m_lastFramesDelay.pop_front();
-
-    m_lastFramesDelay.push_back(delay);
-
-    size_t sum = std::accumulate(m_lastFramesDelay.begin(), m_lastFramesDelay.end(), 0);
-    m_delay = 2 * sum >= m_lastFramesDelay.size();
-}
-
-void skipFrameUpdate()
-{
-    m_lastRenderStartTime = m_lastRenderEndTime = SDL_GetPerformanceCounter();
-}
-
-void updateScreen()
-{
-    m_lastRenderStartTime = SDL_GetPerformanceCounter();
-
 #ifdef VIRTUAL_JOYPAD
     getVirtualJoypad().render(m_renderer);
 #endif
@@ -98,98 +86,39 @@ void updateScreen()
     dumpVariables();
 #endif
 
-    SDL_RenderPresent(m_renderer);
+    if (m_pendingScreenshot) {
+        doMakeScreenshot();
+        m_pendingScreenshot = false;
+    }
+
+    if (delay)
+        frameDelay();
+
+    measureRendering([]() {
+        SDL_RenderPresent(m_renderer);
+    });
+
     // must clear the renderer or there will be display artifacts on Samsung phone
     SDL_SetRenderDrawColor(m_renderer, 0, 0, 0, 255);
     SDL_RenderClear(m_renderer);
-
-    m_lastRenderEndTime = SDL_GetPerformanceCounter();
-    determineIfDelayNeeded();
 }
 
-void updateFrame()
+void fadeIn()
 {
-    processControlEvents();
-    frameDelay();
-    updateScreen();
+    fade(false);
 }
 
-void SWOS::Flip()
+void fadeOut()
 {
-    updateFrame();
+    fade(true);
 }
 
-void frameDelay(double factor /* = 1.0 */)
+void fadeInAndOut(void (*callback)() /* = nullptr */)
 {
-    timerProc();
-
-    if (!m_delay) {
-        SDL_Delay(3);
-        return;
-    }
-
-    constexpr double kTargetFps = 70;
-
-    if (factor > 1.0) {
-        // don't use busy wait in menus
-        auto delay = std::lround(1'000 * factor / kTargetFps);
-        SDL_Delay(delay);
-        return;
-    }
-
-    static const Sint64 kFrequency = SDL_GetPerformanceFrequency();
-
-    Uint64 delay = std::llround(kFrequency * factor / kTargetFps);
-
-    auto startTicks = SDL_GetPerformanceCounter();
-    auto diff = startTicks - m_lastRenderStartTime;
-
-    if (diff < delay) {
-        constexpr int kNumFramesForSlackValue = 64;
-        static std::array<Uint64, kNumFramesForSlackValue> slackValues;
-        static int slackValueIndex;
-
-        auto slackValue = std::accumulate(std::begin(slackValues), std::end(slackValues), 0LL);
-        slackValue = (slackValue + (slackValue > 0 ? kNumFramesForSlackValue : -kNumFramesForSlackValue) / 2) / kNumFramesForSlackValue;
-
-        if (static_cast<Sint64>(delay - diff) > slackValue) {
-            auto intendedDelay = 1'000 * (delay - diff - slackValue) / kFrequency;
-            auto delayStart = SDL_GetPerformanceCounter();
-            SDL_Delay(static_cast<Uint32>(intendedDelay));
-
-            auto actualDelay = SDL_GetPerformanceCounter() - delayStart;
-            slackValues[slackValueIndex] = actualDelay - intendedDelay * kFrequency / 1'000;
-            slackValueIndex = (slackValueIndex + 1) % kNumFramesForSlackValue;
-        }
-
-        do {
-            startTicks = SDL_GetPerformanceCounter();
-        } while (m_lastRenderStartTime + delay > startTicks);
-    }
+    fade(false, true, nullptr, callback);
 }
 
-// simulate SWOS procedure executed at each interrupt 8 tick
-void timerProc()
-{
-    swos.currentTick++;
-    swos.menuCycleTimer++;
-    if (!swos.paused) {
-        swos.stoppageTimer++;
-        swos.timerBoolean = (swos.timerBoolean + 1) & 1;
-        if (!swos.timerBoolean)
-            swos.bumpBigSFrame = -1;
-    }
-}
-
-void fadeIfNeeded()
-{
-    if (!swos.skipFade) {
-        FadeIn();
-        swos.skipFade = -1;
-    }
-}
-
-void drawFrame(int x, int y, int width, int height, const Color& color)
+void drawRectangle(int x, int y, int width, int height, const Color& color)
 {
     SDL_SetRenderDrawColor(m_renderer, color.r, color.g, color.b, 255);
     SDL_RenderSetScale(m_renderer, getXScale(), getYScale());
@@ -222,6 +151,57 @@ std::string ensureScreenshotsDirectory()
 
 void makeScreenshot()
 {
+    m_pendingScreenshot = true;
+}
+
+static void fade(bool out, bool doubleFade /* = false */, SDL_Surface *surface /* = nullptr */, void (*callback)() /* = nullptr */)
+{
+    constexpr int kFadeDelayMs = 900;
+    constexpr int kNumSteps = 255;
+
+    auto start = SDL_GetPerformanceCounter();
+    auto freq = SDL_GetPerformanceFrequency();
+    auto step = freq * kFadeDelayMs / 1'000 / kNumSteps;
+
+    surface = surface ? surface : getScreenSurface();
+
+    if (surface) {
+        if (auto texture = SDL_CreateTextureFromSurface(m_renderer, surface)) {
+            SDL_SetRenderDrawBlendMode(m_renderer, SDL_BLENDMODE_BLEND);
+            for (int i = 0; i < static_cast<int>(doubleFade) + 1; i++) {
+                for (int j = 0; j < kNumSteps; j++) {
+                    SDL_RenderCopy(m_renderer, texture, nullptr, nullptr);
+                    SDL_RenderFillRect(m_renderer, nullptr);
+                    SDL_SetRenderDrawColor(m_renderer, 0, 0, 0, out ? j + 1 : kNumSteps - j);
+
+                    auto now = SDL_GetPerformanceCounter();
+                    if (now < start + step) {
+                        auto sleepInterval = (start + step - now) * 1'000 / freq;
+                        SDL_Delay(static_cast<Uint32>(sleepInterval));
+                        do {
+                            now = SDL_GetPerformanceCounter();
+                        } while (now < start + step);
+                    }
+                    start = now;
+
+                    SDL_RenderPresent(m_renderer);
+                }
+                out = !out;
+                if (callback)
+                    callback();
+            }
+
+            SDL_SetRenderDrawBlendMode(m_renderer, SDL_BLENDMODE_NONE);
+            SDL_DestroyTexture(texture);
+        } else {
+            logWarn("Failed to create a texture for the fade: %s", SDL_GetError());
+        }
+        SDL_FreeSurface(surface);
+    }
+}
+
+static void doMakeScreenshot()
+{
     char filename[256];
 
     auto t = time(nullptr);
@@ -233,19 +213,30 @@ void makeScreenshot()
     const auto& screenshotsPath = ensureScreenshotsDirectory();
     const auto& path = joinPaths(screenshotsPath.c_str(), filename);
 
+    if (auto surface = getScreenSurface()) {
+        if (IMG_SavePNG(surface, path.c_str()) >= 0)
+            logInfo("Screenshot created: %s", filename);
+        else
+            logWarn("Failed to save screenshot %s: %s", filename, IMG_GetError());
+
+        SDL_FreeSurface(surface);
+    }
+}
+
+static SDL_Surface *getScreenSurface()
+{
+    SDL_Surface *surface = nullptr;
     auto viewPort = getViewport();
 
-    if (auto surface = SDL_CreateRGBSurface(0, viewPort.w, viewPort.h, 32, 0, 0, 0, 0)) {
-        if (SDL_RenderReadPixels(m_renderer, nullptr, surface->format->format, surface->pixels, surface->pitch)) {
-            if (IMG_SavePNG(surface, path.c_str()) >= 0)
-                logInfo("Screenshot created: %s", filename);
-            else
-                logWarn("Failed to save screenshot %s: %s", filename, IMG_GetError());
-        } else {
-            logWarn("Failed to read the data from the renderer: %s", SDL_GetError());
+    if (surface = SDL_CreateRGBSurfaceWithFormat(0, viewPort.w, viewPort.h, 32, m_windowPixelFormat)) {
+        if (SDL_RenderReadPixels(m_renderer, nullptr, m_windowPixelFormat, surface->pixels, surface->pitch) < 0) {
+            SDL_FreeSurface(surface);
+            surface = nullptr;
+            logWarn("Failed to read the pixels from the renderer: %s", SDL_GetError());
         }
-        SDL_FreeSurface(surface);
     } else {
-        logWarn("Failed to create a surface for the screenshot: %s", SDL_GetError());
+        logWarn("Failed to create a surface for the screen: %s", SDL_GetError());
     }
+
+    return surface;
 }

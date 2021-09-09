@@ -1,7 +1,7 @@
 #include "Struct.h"
 #include "Util.h"
 
-constexpr int kStructBufferSize = 34'000;
+constexpr int kStructBufferSize = 37'000;
 
 static bool structStrCmp(const String& s1, const String& s2)
 {

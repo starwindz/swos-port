@@ -24,6 +24,7 @@ std::pair<int, int> getWindowSize();
 AssetResolution getAssetResolution();
 void registerAssetResolutionChangeHandler(AssetResolutionChangeHandler handler);
 const char *getAssetDir();
+std::string getPathInAssetDir(const char *path);
 void setWindowSize(int width, int height);
 bool getWindowResizable();
 WindowMode getWindowMode();

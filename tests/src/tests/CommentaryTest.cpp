@@ -1,4 +1,5 @@
 #include "CommentaryTest.h"
+#include "audio.h"
 #include "comments.h"
 #include "sfx.h"
 #include "chants.h"
@@ -15,13 +16,13 @@ static CommentaryTest t;
 
 static void disablePenalties()
 {
-    swos.performingPenalty = false;
+//    swos.performingPenalty = false;
     swos.penaltiesState = 0;
 }
 
 static void setupKeeperClaimedComment()
 {
-    swos.performingPenalty = false;
+//    swos.performingPenalty = false;
     // make sure no comments are playing
     Mix_HaltChannel(-1);
 }
@@ -355,9 +356,9 @@ const std::array<const char *, 5> kEndGameComments = {
 
 void CommentaryTest::init()
 {
-    swos.g_soundOff = false;
-    swos.g_commentary = true;
-    swos.g_muteCommentary = false;
+    setSoundEnabled(true);
+    setCommentaryEnabled(true);
+//    swos.g_muteCommentary = false;
 
     enableFileMocking(true);
 }
@@ -402,54 +403,8 @@ constexpr int kFilenameAreaSize = 13;
 static char m_fileDataBuffer[kNumFileDataSlots][kFilenameAreaSize];
 static int m_currentFileSlot = 0;
 
-static void addFakeSampleFile(MockFileList& fakeFiles, const char *path)
-{
-    auto baseName = getBasename(path);
-    assert(strlen(baseName) < kFilenameAreaSize);
-    assert(m_currentFileSlot < kNumFileDataSlots);
-
-    auto& data = m_fileDataBuffer[m_currentFileSlot];
-    strcpy(data, baseName);
-
-    fakeFiles.emplace_back(path, data, strlen(baseName) + 1);
-    m_currentFileSlot++;
-}
-
-static void gatherFakeOriginalCommentsAndSfx(MockFileList& fakeFiles)
-{
-    m_currentFileSlot = 0;
-
-    for (auto table : { swos.commentaryTable, getOnDemandSampleTable() })
-        for (auto ptr = table; *ptr != kSentinel; ptr++)
-            addFakeSampleFile(fakeFiles, *ptr);
-
-    static const std::pair<SwosDataPointer<const char> *, int> kResultSampleTables[] = {
-        { swos.resultChantFilenames, 8 },
-        { swos.endGameCrowdSamples, 3 },
-    };
-
-    for (const auto& table : kResultSampleTables)
-        for (int i = 0; i < table.second; i++)
-            addFakeSampleFile(fakeFiles, table.first[i]);
-
-    for (auto p = swos.soundEffectsTable; *p != kSentinel; p++)
-        addFakeSampleFile(fakeFiles, *p);
-}
-
-static void addFakeOriginalComments()
-{
-    MockFileList fakeFiles;
-
-    gatherFakeOriginalCommentsAndSfx(fakeFiles);
-    assert(m_currentFileSlot <= kNumFileDataSlots);
-
-    resetFakeFiles();
-    addFakeFiles(fakeFiles);
-}
-
 void CommentaryTest::setupOriginalSamplesLoadingTest()
 {
-    addFakeOriginalComments();
     clearCommentsSampleCache();
     loadCommentary();
     loadIntroChant();
@@ -579,9 +534,9 @@ static void testCustomSfx()
         const char *expectedString;
         int offset = 0;
     } static const kSfxTestData[] = {
-        { PlayCrowdNoiseSample, "bgcrd3l.mp3" },
+//        { PlayCrowdNoiseSample, "bgcrd3l.mp3" },
         { PlayRefereeWhistleSample, "whistle.raw", kSizeofWaveHeader },
-        { PlayEndGameWhistleSample, "endgamew.mp3" },
+//        { PlayEndGameWhistleSample, "endgamew.mp3" },
         { PlayFoulWhistleSample, "foul.mp3" },
         { PlayKickSample, "kickx.mp3" },
         { PlayBallBounceSample, "bouncex.ogg" },
@@ -745,7 +700,6 @@ static const MockFileList kFakeCustomFiles = {
 
 void CommentaryTest::setupLoadingCustomExtensionsTest()
 {
-    addFakeOriginalComments();
     deleteFakeFile("sfx\\pierce\\m158_1_.raw");
     deleteFakeFile("sfx\\pierce\\m158_2_.raw");
     deleteFakeFile("sfx\\pierce\\m158_3_.raw");
@@ -776,7 +730,6 @@ void CommentaryTest::testLoadingCustomExtensions()
 
 void CommentaryTest::setupAudioOverridingOriginalCommentsTest()
 {
-    addFakeOriginalComments();
     loadFakeCustomSamples();
 }
 
@@ -856,14 +809,14 @@ void CommentaryTest::testMutingComments()
     assertEqual(numTimesPlayChunkCalled(), 1);
 
     static const std::vector<std::pair<int16_t *, int>> kSoundControlVariables = {
-        { &swos.g_soundOff, 1 },
-        { &swos.g_commentary, 0 },
-        { reinterpret_cast<int16_t *>(&swos.g_muteCommentary), 1 },
+//        { &swos.g_soundOff, 1 },
+//        { &swos.g_commentary, 0 },
+//        { reinterpret_cast<int16_t *>(&swos.g_muteCommentary), 1 },
     };
 
-    swos.g_soundOff = 0;
-    swos.g_commentary = 1;
-    swos.g_muteCommentary = 0;
+    setSoundEnabled(true);
+    setCommentaryEnabled(true);
+//    swos.g_muteCommentary = 0;
 
     for (const auto& var : kSoundControlVariables) {
         for (int i = 0; i < 2; i++) {
@@ -1063,7 +1016,7 @@ void CommentaryTest::testEndGameCrowdSample()
         swos.team2GoalsDigit2 = testData.team2Goals;
 
         resetMockSdlMixer();
-        LoadAndPlayEndGameComment();
+        loadAndPlayEndGameComment();
 
         assertEqual(numTimesPlayChunkCalled(), 2);
         const auto& playedChunks = getLastPlayedChunks();
@@ -1102,7 +1055,7 @@ void CommentaryTest::testEndGameComment()
 
         for (auto index : testData.indices) {
             resetMockSdlMixer();
-            LoadAndPlayEndGameComment();
+            loadAndPlayEndGameComment();
 
             assertEqual(numTimesPlayChunkCalled(), 2);
             const auto& playedChunks = getLastPlayedChunks();

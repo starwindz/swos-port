@@ -5,7 +5,7 @@ installed and available in the system path:
 
 [Windows]
 - Visual Studio 2019 for the tests, 2015 for the rest (maybe older would work too)
-- Python 3.6+
+- Python 3.8+
   - ddt (for mnu2h tests)
   - PyTexturePacker, for building sprite maps
 - MASM at least version 8

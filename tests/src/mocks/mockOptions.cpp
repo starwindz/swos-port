@@ -1,2 +1,4 @@
 void SWOS::OptionsMenuSelected() {}
-bool doNotPauseLoadingScreen() { return true; }
+bool showPreMatchMenus() { return false; }
+bool showSpinningLetterS() { return false; }
+void toggleSpinningLetterS() {}

@@ -151,7 +151,7 @@ static void loadFileImp()
 // Load file contents into given buffer. If the file can't be found, or some error happens,
 // writes the name of the file to the console, and terminates the program.
 //
-__declspec(naked) int SWOS::LoadFile()
+int SWOS::LoadFile()
 {
     loadFileImp();
     D0 = 0;
@@ -194,7 +194,7 @@ static int writeFileImp()
 //      zero flag set - all OK
 //        -||-  clear - error
 //
-__declspec(naked) int SWOS::WriteFile()
+int SWOS::WriteFile()
 {
     auto result = writeFileImp();
     SwosVM::flags.zero = result != 0;

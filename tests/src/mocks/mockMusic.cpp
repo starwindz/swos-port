@@ -11,5 +11,4 @@ void stopTitleSong() {}
 void startMenuSong() {}
 void restartMusic() {}
 
-void SWOS::CycleMenuMusic() {}
 void SWOS::TryMidiPlay() {}

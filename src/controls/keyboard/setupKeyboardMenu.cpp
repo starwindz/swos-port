@@ -7,6 +7,7 @@
 #include "selectGameControlEventsMenu.h"
 #include "redefineKeysMenu.h"
 #include "testKeyboardMenu.h"
+#include "continueAbortMenu.h"
 #include "setupKeyboard.mnu.h"
 
 using namespace SetupKeyboardMenu;

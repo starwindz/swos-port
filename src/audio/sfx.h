@@ -15,3 +15,4 @@ void initSfxBeforeTheGame();
 SfxSamplesArray& sfxSamples();
 void playCrowdNoise();
 void stopBackgroudCrowdNoise();
+void playEndGameWhistleSample();

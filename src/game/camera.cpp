@@ -2,6 +2,7 @@
 #include "bench.h"
 #include "render.h"
 #include "random.h"
+#include "pitchConstants.h"
 
 constexpr int kTrainingGameStartX = 168;
 constexpr int kTrainingGameStartY = 313;
@@ -19,8 +20,6 @@ constexpr int kBenchSlideAreaStartY = 339;
 constexpr int kBenchSlideAreaEndY = 359;
 
 constexpr int kRightThrowInLine = 590;
-constexpr int kCenterLine = 449;
-constexpr int kPitchMiddleX = 336;
 constexpr int kTopGoalLine = 129;
 
 constexpr int kPitchMaxX = 352;
@@ -38,9 +37,11 @@ constexpr int kCameraMaxX = kPitchMaxX;
 constexpr int kCameraMinY = kPitchMinY;
 constexpr int kCameraMaxY = 680;
 
+static FixedPoint m_cameraX;
+
 FixedPoint getCameraX()
 {
-    return FixedPoint(swos.g_cameraX, swos.g_cameraXFraction);
+    return m_cameraX;
 }
 
 FixedPoint getCameraY()
@@ -50,8 +51,7 @@ FixedPoint getCameraY()
 
 void setCameraX(FixedPoint value)
 {
-    swos.g_cameraX = value.whole();
-    swos.g_cameraXFraction = value.fraction();
+    m_cameraX = value;
 }
 
 void setCameraY(FixedPoint value)
@@ -162,12 +162,10 @@ static void boundCameraToPitch(FixedPoint& cameraX, FixedPoint& cameraY)
         cameraY = kCameraMaxY;
 }
 
-static void updateCameraCoordinates(FixedPoint& cameraX, FixedPoint& cameraY)
+static void updateCameraCoordinates(const FixedPoint& cameraX, const FixedPoint& cameraY)
 {
-    swos.g_cameraX = cameraX.whole();
-    swos.g_cameraXFraction = cameraX.fraction();
-    swos.g_cameraY = cameraY.whole();
-    swos.g_cameraYFraction = cameraY.fraction();
+    setCameraX(cameraX);
+    setCameraY(cameraY);
 }
 
 static void updateCameraCoordinates(const CameraParams& params)
@@ -182,8 +180,8 @@ static void updateCameraCoordinates(const CameraParams& params)
 
     clipCameraDestination(xDest, yDest, params.xLimit);
 
-    auto cameraX = FixedPoint(swos.g_cameraX, swos.g_cameraXFraction);
-    auto cameraY = FixedPoint(swos.g_cameraY, swos.g_cameraYFraction);
+    auto cameraX = getCameraX();
+    auto cameraY = getCameraY();
 
     auto deltaX = xDest - cameraX;
     auto deltaY = yDest - cameraY;
@@ -212,19 +210,19 @@ static CameraParams penaltyShootoutMode()
 
 static CameraParams leavingBenchMode()
 {
-    return { kLeavingBenchCameraDestX, kCenterLine, kPitchSideCameraLimitDuringBreak };
+    return { kLeavingBenchCameraDestX, kPitchCenterY, kPitchSideCameraLimitDuringBreak };
 }
 
 static int getBenchCameraXLimit()
 {
     int limit = kPitchSideCameraLimitDuringBreak;
 
-    bool cameraAtBenchLevel = swos.g_cameraY >= kBenchSlideAreaStartY && swos.g_cameraY <= kBenchSlideAreaEndY;
+    bool cameraAtBenchLevel = getCameraY() >= kBenchSlideAreaStartY && getCameraY() <= kBenchSlideAreaEndY;
 
     // these sprite conditions are weird, I don't fully understand them so leaving them in
     if (cameraAtBenchLevel &&
-        (swos.goal1TopSprite.pictureIndex == -1 || !swos.goal1TopSprite.beenDrawn) &&
-        (swos.goal2BottomSprite.pictureIndex == -1 || !swos.goal2BottomSprite.beenDrawn))
+        (swos.goal1TopSprite.pictureIndex == -1 || !swos.goal1TopSprite.onScreen) &&
+        (swos.goal2BottomSprite.pictureIndex == -1 || !swos.goal2BottomSprite.onScreen))
         limit = swos.g_substituteInProgress ? kSubstituteCameraLimit : kCameraMinX;
 
     return limit;
@@ -234,7 +232,7 @@ static CameraParams benchMode(bool substitutingPlayer)
 {
     int limit = substitutingPlayer ? kSubstituteCameraLimit : getBenchCameraXLimit();
 
-    return { benchCameraX(), kCenterLine, limit };
+    return { benchCameraX(), kPitchCenterY, limit };
 }
 
 static std::pair<int, int> getGameStoppedCameraDirections()
@@ -285,17 +283,17 @@ static std::pair<int, int> getStandardModeCameraVelocity(int xDirection, int yDi
 
 static CameraParams waitingForPlayersToLeaveCameraLocation(int limit)
 {
-    return { kRightThrowInLine, kCenterLine, limit };
+    return { kRightThrowInLine, kPitchCenterY, limit };
 }
 
 static CameraParams showResultAtCenter(int limit)
 {
-    return { kPitchMiddleX, kCenterLine, limit };
+    return { kPitchCenterX, kPitchCenterY, limit };
 }
 
 static CameraParams showResultAtTop(int limit)
 {
-    return { kPitchMiddleX, kTopGoalLine, limit };
+    return { kPitchCenterX, kTopGoalLine, limit };
 }
 
 static CameraParams followTheBall(int limit, int xVelocity, int yVelocity)
@@ -310,8 +308,8 @@ static CameraParams standardMode()
     if (swos.gameStatePl != GameState::kInProgress) {
         std::tie(xDirection, yDirection) = getGameStoppedCameraDirections();
     } else {
-        xDirection = swos.ballSprite.deltaX;
-        yDirection = swos.ballSprite.deltaY;
+        xDirection = swos.ballSprite.deltaX.whole();
+        yDirection = swos.ballSprite.deltaY.whole();
     }
 
     int xVelocity, yVelocity;

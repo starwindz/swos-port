@@ -7,6 +7,10 @@ struct FixedPoint {
     constexpr FixedPoint(int value, bool raw = false) : m_value(raw ? value : value << 16) {}
     constexpr FixedPoint(unsigned value) : m_value(value) {}
     constexpr FixedPoint(int whole, int fraction) : m_value((whole << 16) | fraction) {}
+    static FixedPoint fromFloat(float value) {
+        float whole, fraction = std::modf(value, &whole);
+        return FixedPoint(static_cast<int>(whole), static_cast<int>(fraction * 0xffff));
+    }
     FixedPoint& operator=(const FixedPoint& other) {
         m_value = other.m_value;
         return *this;
@@ -20,6 +24,9 @@ struct FixedPoint {
     }
     int32_t raw() const {
         return m_value;
+    }
+    void setRaw(int32_t value) {
+        m_value = value;
     }
     int16_t whole() const {
         return m_value >> 16;

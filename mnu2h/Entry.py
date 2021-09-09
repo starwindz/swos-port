@@ -25,8 +25,10 @@ class Entry:
         self.number = None
         self.sprite = None
         self.stringTable = None
+        self.multilineText = None
         self.customDrawBackground = None
         self.customDrawForeground = None
+        self.menuSpecificSprite = None
 
         self.textFlags = 0
 

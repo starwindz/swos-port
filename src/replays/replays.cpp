@@ -1,225 +1,452 @@
-// Implementation of highlights and replays is here. Highlights have a fixed buffer for each scene which holds
-// bit-packed coordinates of sprites and camera (and some other things). Replays hook the moment when the buffer
-// overflows and refill it with the next data. They are essentially one big highlight scene.
+// Implementation of highlights and replays is here. Replays are essentially one big highlights scene.
 
 #include "replays.h"
-#include "ReplayData.h"
+#include "ReplayDataStorage.h"
 #include "replayOptions.h"
-#include "benchControls.h"
-#include "menus.h"
-#include "music.h"
-#include "comments.h"
-#include "drawMenu.h"
-#include "game.h"
-#include "file.h"
-#include "renderSprites.h"
+#include "hilFile.h"
 #include "render.h"
+#include "timer.h"
+#include "audio.h"
+#include "comments.h"
+#include "music.h"
+#include "windowManager.h"
+#include "pitch.h"
 #include "controls.h"
+#include "gameControls.h"
+#include "keyBuffer.h"
+#include "options.h"
+#include "game.h"
+#include "gameLoop.h"
+#include "gameTime.h"
+#include "benchControls.h"
+#include "camera.h"
+#include "sprites.h"
+#include "renderSprites.h"
+#include "text.h"
+#include "stats.h"
+#include "menus.h"
+#include "menuBackground.h"
+#include "drawMenu.h"
+#include "stadiumMenu.h"
+#include "file.h"
+#include "util.h"
 
-enum ReplayState
+constexpr int kStandardFrameOffset = 70;
+constexpr int kLargeFrameOffset = 5 * kStandardFrameOffset;
+constexpr int kExtraLargeFrameOffset = 60 * kStandardFrameOffset;
+
+enum class Status
 {
-    kNotReplaying = 0,
-    kFadingIn = 1,
-    kReplaying = 2,
-    kSlowMotionPlayback = 3,
+    kNormal,
+    kPaused,
+    kAborted,
+    kNext,
+    kPrevious,
 };
 
-static ReplayData m_replayData;
-static bool m_hilValid;
-static bool m_playing;
-static int m_fastReplay;
+static HilV2Header m_header;
+static ReplayDataStorage m_replayData;
 
+static bool m_replaying;
+static bool m_paused;
+
+static bool m_gotReplay;
+static bool m_gotHighlight;
+
+static bool m_instantReplay;
+
+static bool m_fastReplay;
+static bool m_slowMotion;
+
+static void runReplay(bool inGame, bool isReplay);
+static Status replayScene(bool inGame, bool isReplay, bool userRequested = false);
+static Status checkReplayControlKeys(bool inGame, bool userRequested);
+static void showIntroMenus();
+static void drawResultAndTime(const ReplayDataStorage::FrameData& frameData, bool replay);
+static void drawResult(int leftTeamGoals, int rightTeamGoals, bool showTime);
+static void drawOverlayAndUpdateScreen(const ReplayDataStorage::FrameData& frameData, bool isReplay, bool& doFadeIn, bool aborted);
+static void drawBigRotatingLetterR();
+static void drawPercentage(bool isReplay);
+static void replaysUpdateScreen(bool& doFadeIn, bool aborted, bool skipFrame = false);
+static bool shouldAbortCurrentScene(Status status);
+static bool isReplayAborted(bool blockNonScorerFire);
+static bool shouldRecordReplayData();
+static void createDirectories();
 static void autoSaveReplay();
+static int getGameTime();
+static void unpackTime(int time, int& digit1, int& digit2, int& digit3);
 
 void initReplays()
 {
-    auto dirPath = pathInRootDir(ReplayData::kReplaysDir);
-    if (!createDir(dirPath.c_str()))
-        errorExit("Failed to create %s directory", ReplayData::kReplaysDir);
+    createDirectories();
 
     atexit([]() {
         // only fetch replay data if we're interrupting a game (otherwise it will be caught by a regular call)
-        if (isMatchRunning()) {
-            SetHilFileHeader();     // this may have not had a chance to execute
+        if (isMatchRunning())
             finishCurrentReplay();
-        }
     });
 }
 
 void initNewReplay()
 {
-    m_replayData.startNewReplay();
-    swos.replayState = kNotReplaying;
-    swos.currentHilPtr = swos.goalBasePtr;
+    m_replayData.startRecordingNewReplay();
+    m_replaying = false;
+    m_gotHighlight = true;
+    m_gotReplay = true;
 }
 
-// Called when game or program end.
+// Gets the necessary data from the game to have everything the replay file requires locally. It must be
+// called at the proper time, right after the game is finished, so the data is valid and fresh.
+void refreshReplayGameData()
+{
+    m_header.team1 = swos.topTeamIngame;
+    m_header.team2 = swos.bottomTeamIngame;
+
+    // using strncpy here so the buffer gets cleared and we don't get any garbage in the file
+    strncpy(m_header.gameName, swos.gameName, sizeof(m_header.gameName));
+    strncpy(m_header.gameRound, swos.gameRound, sizeof(m_header.gameRound));
+
+    m_header.team1Goals = swos.statsTeam1Goals;
+    m_header.team2Goals = swos.statsTeam2Goals;
+    m_header.pitchNumber = swos.pitchNumberAndType >> 8;
+    m_header.pitchType = swos.pitchNumberAndType & 0xff;
+    m_header.numMaxSubstitutes = swos.gameMaxSubstitutes;
+}
+
+// Called when a match ends or the whole program exits.
 void finishCurrentReplay()
 {
-    if (!m_playing) {
-        m_replayData.finishCurrentReplay();
-
-        if (getAutoSaveReplays() && m_replayData.gotReplay())
-            autoSaveReplay();
-
-        m_hilValid = true;
+    if (!m_replaying) {
+        refreshReplayGameData();
+        autoSaveReplay();
     }
 }
 
-void startReplay()
+void startNewHighlightsFrame()
 {
-    logInfo("Starting replay");
+    if (shouldRecordReplayData()) {
+        int gameTime = getGameTime();
+        ReplayDataStorage::FrameData data(getCameraX(), getCameraY(), swos.team1TotalGoals, swos.team2TotalGoals, gameTime);
+        m_replayData.recordFrame(data);
+    }
+}
 
-    m_replayData.replayStarting();
-    showHighlights();
+void saveCoordinatesForHighlights(int spriteIndex, FixedPoint x, FixedPoint y)
+{
+    assert(spriteIndex >= 0 && spriteIndex < kNumSprites);
 
-    swos.hilNumGoals = 0;
+    if (shouldRecordReplayData())
+        m_replayData.recordSprite(spriteIndex, x, y);
+}
 
-    logInfo("Replay done");
+void showStatsForHighlights(const GameStats& stats)
+{
+    if (shouldRecordReplayData())
+        m_replayData.recordStats(stats);
+}
+
+bool replayingNow()
+{
+    return m_replaying;
 }
 
 bool gotReplay()
 {
-    return m_replayData.gotReplay();
+    return m_gotReplay && !m_replayData.empty();
 }
 
-bool highlightsValid()
+bool gotHighlights()
 {
-    return m_hilValid;
+    return m_gotHighlight && !m_replayData.empty();
 }
 
-bool loadReplayFile(const char *path)
+void saveHighlightScene()
 {
-    return m_replayData.load(path);
+    if (!m_replaying)
+        m_replayData.saveHighlightsScene();
+}
+
+void playInstantReplay(bool userRequested)
+{
+    assert(!m_replaying);
+
+    logInfo("Starting instant replay (%s)...", userRequested ? "user requested" : "auto");
+
+    m_instantReplay = true;
+    m_replaying = true;
+    m_slowMotion = false;
+
+    m_replayData.setupForCurrentSceneReplay();
+    replayScene(true, false, userRequested);
+
+    m_replaying = false;
+    m_instantReplay = false;
+    logInfo("Instant replay done");
+}
+
+void playHighlights(bool inGame)
+{
+    m_instantReplay = false;
+    runReplay(inGame, false);
+}
+
+void playFullReplay()
+{
+    m_instantReplay = false;
+    runReplay(false, true);
+}
+
+FileStatus loadHighlightsFile(const char *path)
+{
+    auto status = m_replayData.load(path, kHighlightsDir, m_header, false);
+
+    if (status == FileStatus::kOk) {
+        m_gotHighlight = true;
+        m_gotReplay = false;
+    }
+
+    return status;
+}
+
+FileStatus loadReplayFile(const char *path)
+{
+    auto status = m_replayData.load(path, kReplaysDir, m_header, true);
+
+    if (status == FileStatus::kOk) {
+        m_gotHighlight = m_replayData.numScenes() > 0;
+        m_gotReplay = true;
+    }
+
+    return status;
+}
+
+bool saveHighlightsFile(const char *path, bool overwrite /* = true */)
+{
+    return m_replayData.save(path, m_header, false, overwrite);
 }
 
 bool saveReplayFile(const char *path, bool overwrite /* = true */)
 {
-    return m_replayData.save(path, overwrite);
+    return m_replayData.save(path, m_header, true, overwrite);
 }
 
-bool loadHighlightsFile(const char *path)
+static void runReplay(bool inGame, bool isReplay)
 {
-    return m_hilValid = loadFile(path, swos.hilFileBuffer, -1, 0, false) != -1;
-}
+    assert(!m_replaying && !m_replayData.empty());
 
-static void autoSaveReplay()
-{
-    if (getAutoSaveReplays() && !m_playing && m_replayData.gotReplay()) {
-        char filename[256];
+    swos.teamsLoaded = 0;
+    swos.poolplyrLoaded = 0;
 
-        auto t = time(nullptr);
-        strftime(filename, sizeof(filename), "%Y-%m-%d-%H-%M-%S-auto-save.rpl", localtime(&t));
+    logInfo("Starting highlights replay...");
 
-        // let's not overwrite the file (append to it) if it somehow already exists
-        auto success = saveReplayFile(filename, false);
-        logInfo("Automatically saved replay %s, result: %s", filename, success ? "success" : "failure!");
+    m_paused = false;
+    m_replaying = true;
+
+    m_fastReplay = false;
+    m_slowMotion = false;
+
+    if (!inGame && showPreMatchMenus())
+        showIntroMenus();
+
+    unloadMenuBackground();
+    initGameAudio();
+
+    if (isReplay) {
+        m_replayData.setupForFullReplay();
+        replayScene(inGame, isReplay);
+    } else {
+        for (int i = 0; i < m_replayData.numScenes(); i++) {
+            m_replayData.setupForStoredSceneReplay(i);
+            auto status = replayScene(inGame, isReplay);
+
+            if (status == Status::kAborted) {
+                break;
+            } else if (status == Status::kNext) {
+                assert(i < m_replayData.numScenes() - 1);
+            } else if (status == Status::kPrevious) {
+                assert(i > 0);
+                i -= 2;
+            } else {
+                assert(status == Status::kNormal);
+            }
+        }
     }
+
+    setStandardMenuBackgroundImage();
+
+    if (showPreMatchMenus())
+        enqueueMenuFadeIn();
+
+    stopAudio();
+    startMenuSong();
+
+    m_replaying = false;
+
+    logInfo("Highlights replay done");
 }
 
-void saveCoordinatesForHighlights(int spriteIndex, int x, int y)
+static Status replayScene(bool inGame, bool isReplay, bool userRequested /* = false */)
 {
-    D0 = spriteIndex;
-    D4 = x;
-    D5 = y;
-    SWOS::SaveCoordinatesForHighlights();
-}
+    int screenWidth, screenHeight;
+    std::tie(screenWidth, screenHeight) = getWindowSize();
 
-static void highlightsPausedLoop()
-{
-    while (swos.paused) {
-        SWOS::GetKey();
-        MainKeysCheck();
+    ReplayDataStorage::FrameData frameData;
+    bool doFadeIn = true;
+    bool aborted = false;
+    auto status = Status::kNormal;
+
+    do {
+        status = checkReplayControlKeys(inGame, userRequested);
+        aborted = shouldAbortCurrentScene(status);
+
+        ReadTimerDelta();
         playEnqueuedSamples();
+
+        // prevent pause on first/last frames when the screen has to fade in or has already faded to black
+        if (m_replayData.hasAnotherFullFrame() && !doFadeIn && status == Status::kPaused) {
+            SDL_Delay(100);
+            continue;
+        }
+
+        if (!m_replayData.fetchFrameData(frameData))
+            break;
+
+        drawPitch(frameData.cameraX, frameData.cameraY);
+
+        ReplayDataStorage::ObjectType type;
+        int pictureIndex;
+        FixedPoint x, y;
+        GameStats stats;
+        bool gotStats = false;
+
+        while (m_replayData.fetchObject(type, pictureIndex, x, y, stats)) {
+            switch (type) {
+            case ReplayDataStorage::ObjectType::kSprite:
+                if (m_replayData.isLegacyFormat()) {
+                    const auto& sprite = getSprite(pictureIndex);
+                    x += FixedPoint::fromFloat(sprite.centerXF) + FixedPoint::fromFloat(sprite.xOffsetF);
+                    y += FixedPoint::fromFloat(sprite.centerYF) + FixedPoint::fromFloat(sprite.yOffsetF);
+                }
+                drawSprite(pictureIndex, x, y, screenWidth, screenHeight);
+                break;
+
+            case ReplayDataStorage::ObjectType::kStats:
+                gotStats = true;
+                break;
+
+            default:
+                logWarn("Unknown replay object type %d", type);
+            }
+        }
+
+        if (gotStats)
+            drawStats(frameData.team1Goals, frameData.team2Goals, stats);
+
+        drawOverlayAndUpdateScreen(frameData, isReplay, doFadeIn, aborted);
+    } while (!aborted);
+
+    return status;
+}
+
+static Status checkReplayControlKeys(bool inGame, bool userRequested)
+{
+    processControlEvents();
+
+    SDL_Scancode key;
+    SDL_Keymod mod;
+
+    while (std::get<0>(std::tie(key, mod) = getKeyAndModifier()) != SDL_SCANCODE_UNKNOWN) {
+        switch (key) {
+        case SDL_SCANCODE_ESCAPE:
+            return Status::kAborted;
+
+        case SDL_SCANCODE_LEFT:
+        case SDL_SCANCODE_RIGHT:
+            {
+                int frameOffset = kStandardFrameOffset;
+
+                if (mod & KMOD_CTRL)
+                    frameOffset = mod & KMOD_ALT ? kExtraLargeFrameOffset : kLargeFrameOffset;
+                else if (mod & KMOD_SHIFT)
+                    frameOffset = 1;
+
+                if (key == SDL_SCANCODE_LEFT)
+                    frameOffset = -frameOffset;
+
+                m_replayData.skipFrames(frameOffset);
+            }
+            return Status::kNormal;
+
+        case SDL_SCANCODE_P:
+            return (m_paused = !m_paused) ? Status::kPaused : Status::kNormal;
+
+        case SDL_SCANCODE_PERIOD:
+            return Status::kNext;
+
+        case SDL_SCANCODE_COMMA:
+            return Status::kPrevious;
+
+        case SDL_SCANCODE_R:
+            if (m_slowMotion = !m_slowMotion)
+                m_fastReplay = false;
+            break;
+
+        case SDL_SCANCODE_I:
+            if (!m_instantReplay)
+                toggleShowReplayPercentage();
+            break;
+
+        case SDL_SCANCODE_F:
+            if (!m_instantReplay && (m_fastReplay = !m_fastReplay))
+                m_slowMotion = false;
+            break;
+        }
+    }
+
+    if (inGame && isReplayAborted(m_instantReplay && !userRequested))
+        return Status::kAborted;
+
+    return m_paused ? Status::kPaused : Status::kNormal;
+}
+
+static void showIntroMenus()
+{
+    startFadingOutMusic();
+
+    drawMenu(false);
+    fadeOut();
+
+    auto currentMenu = getCurrentPackedMenu();
+    auto currentEntry = getCurrentMenu()->selectedEntry->ordinal;
+
+    initMatch(&m_header.team1, &m_header.team2, true);
+    showStadiumScreenAndFadeOutMusic(&m_header.team1, &m_header.team2, m_header.numMaxSubstitutes);
+
+    restoreMenu(currentMenu, currentEntry);
+}
+
+static void drawResultAndTime(const ReplayDataStorage::FrameData& frameData, bool isReplay)
+{
+    bool showTime = isReplay && frameData.gameTime >= 0;
+
+    drawResult(frameData.team1Goals, frameData.team2Goals, showTime);
+
+    if (showTime) {
+        int digit1, digit2, digit3;
+        unpackTime(frameData.gameTime, digit1, digit2, digit3);
+        drawGameTime(digit1, digit2, digit3);
     }
 }
 
-static bool highlightsAborted()
+static void drawResult(int leftTeamGoals, int rightTeamGoals, bool showTime)
 {
-    if (!swos.skipFade)
-        return false;
-
-    SWOS::Player1StatusProc();
-    if (!swos.pl1Fire) {
-        SWOS::Player2StatusProc();
-        if (!swos.pl2Fire)
-            return false;
-    }
-
-    swos.statsFireExit = 1;
-    swos.replayState = kNotReplaying;
-    swos.paused = 0;
-//    FadeOutToBlack();
-    RestoreCameraPosition();
-
-    return true;
-}
-
-static void highlightsMoveToNextScene()
-{
-    swos.goalBasePtr = reinterpret_cast<dword *>(swos.hilStartOfGoalsBuffer + swos.hilSceneNumber * kSingleHighlightBufferSize);
-    swos.currentHilPtr = swos.goalBasePtr - 1;
-    swos.nextGoalPtr = reinterpret_cast<dword *>(swos.goalBasePtr.asCharPtr() + kSingleHighlightBufferSize);
-
-    HandleInstantReplayStateSwitch();
-}
-
-dword *validateHilPointerAdd(dword *ptr)
-{
-    if (ptr >= swos.nextGoalPtr) {
-        // if we are recording the game, do not save the buffer when it overflows
-        // during instant replays (when the player presses 'R')
-        if (m_playing || swos.replayState == kNotReplaying)
-            m_replayData.handleHighglightsBufferOverflow(ptr, m_playing);
-        ptr = swos.goalBasePtr;
-    }
-
-    return ptr;
-}
-
-dword *validateHilPointerSub(dword *ptr)
-{
-    if (ptr < swos.goalBasePtr)
-        ptr = swos.nextGoalPtr;
-
-    return ptr;
-}
-
-// Initializes things to start in-game replay, if it was in initializing state.
-static void initInstantReplayFrame(dword packedCoordinates)
-{
-    if (swos.replayState != kFadingIn)
-        return;
-
-    swos.replayState = kReplaying;
-
-//TODO: save full 32-bit coordinates
-    swos.savedCameraX = swos.g_cameraX;
-    swos.savedCameraY = swos.g_cameraY;
-
-    swos.g_oldCameraX = 0;
-    swos.g_cameraX = 176;
-    swos.g_oldCameraY = 0;
-    swos.g_cameraY = 349;
-
-//    SWOS::ResetAnimatedPatternsForBothTeams();
-
-    SWOS::ScrollToCurrent();
-
-    clearHiBit(packedCoordinates);
-
-    swos.g_cameraX = loWord(packedCoordinates);
-    swos.g_cameraY = hiWord(packedCoordinates);
-
-    SWOS::ScrollToCurrent();
-}
-
-static void drawResult()
-{
-    int x = 13;
+    int x = 12;
     int y = 13;
 
-    auto leftScoreDigits = std::div(swos.hilLeftTeamGoals, 10);
+    if (showTime)
+        y += 8;
+
+    auto leftScoreDigits = std::div(leftTeamGoals, 10);
     auto leftScoreDigit1 = leftScoreDigits.quot;
     auto leftScoreDigit2 = leftScoreDigits.rem;
 
@@ -237,7 +464,7 @@ static void drawResult()
     x += 8;
     y -= 8;
 
-    auto rightScoreDigits = std::div(swos.hilRightTeamGoals, 10);
+    auto rightScoreDigits = std::div(rightTeamGoals, 10);
     auto rightScoreDigit1 = rightScoreDigits.quot;
     auto rightScoreDigit2 = rightScoreDigits.rem;
 
@@ -249,303 +476,148 @@ static void drawResult()
     drawMenuSprite(rightScoreDigit2 + kBigZero2Sprite, x, y);
 }
 
-static void replayPausedLoop()
+static void drawOverlayAndUpdateScreen(const ReplayDataStorage::FrameData& frameData, bool isReplay, bool& doFadeIn, bool aborted)
 {
-    while (swos.paused) {
-        SWOS::GetKey();
-        if (!swos.skipFade)
-            break;
-        MainKeysCheck();
+    if (m_instantReplay)
+        drawBigRotatingLetterR();
+    else
+        drawResultAndTime(frameData, isReplay);
+
+    if (!m_instantReplay && getShowReplayPercentage())
+        drawPercentage(isReplay);
+
+    bool frameSkip = false;
+
+    if (!m_paused && m_fastReplay) {
+        static bool s_frameSkip;
+        s_frameSkip = !s_frameSkip;
+        frameSkip = s_frameSkip;
+    } else if (!m_paused && m_slowMotion) {
+        frameDelay();
+        skipFrameUpdate();
     }
+
+    replaysUpdateScreen(doFadeIn, aborted, frameSkip);
 }
 
-static bool instantReplayAborted()
+static void drawBigRotatingLetterR()
 {
-    int checkWhichPlayerFire = 1 + 2;
+    int spriteIndex = ((swos.stoppageTimer >> 1) & 0x1f) + kReplayFrame00Sprite;
+    drawMenuSprite(spriteIndex, 11, 14);
+}
 
-    if (!swos.userRequestedReplay) {
-        if (!swos.teamDataPtr)
-            return false;
+static void drawPercentage(bool isReplay)
+{
+    char buf[32];
+    if (isReplay)
+        sprintf(buf, "%.2f%%", m_replayData.percentageAt());
+    else
+        sprintf(buf, "(%d/%d) %.2f%%", m_replayData.currentScene() + 1, m_replayData.numScenes(), m_replayData.percentageAt());
+    drawText(isReplay ? 276 : 254, 190, buf, -1, kGrayText);
+}
 
-        if (swos.teamDataPtr->playerNumber == 1)
-            checkWhichPlayerFire = 1;
-        else if (swos.teamDataPtr->playerNumber == 2)
-            checkWhichPlayerFire = 2;
-        else if (swos.teamDataPtr->plCoachNum == 1)
-            checkWhichPlayerFire = 1;
-        else if (swos.teamDataPtr->plCoachNum == 2)
-            checkWhichPlayerFire = 2;
+static void replaysUpdateScreen(bool& doFadeIn, bool aborted, bool skipFrame /* = false */)
+{
+    if (doFadeIn) {
+        fadeIn();
+        doFadeIn = false;
     }
 
-    if (checkWhichPlayerFire & 1) {
-        SWOS::Player1StatusProc();
-        if (swos.pl1Fire)
-            return true;
-    }
+    if (!m_replayData.hasAnotherFullFrame() || aborted)
+        fadeOut();
+    else if (!skipFrame)
+        updateScreen(true);
+}
 
-    if (checkWhichPlayerFire & 2) {
-        SWOS::Player2StatusProc();
-        if (swos.pl2Fire)
+static bool shouldAbortCurrentScene(Status status)
+{
+    switch (status) {
+    case Status::kAborted:
+        return true;
+    case Status::kNext:
+        if (m_replayData.currentScene() < m_replayData.numScenes() - 1)
             return true;
+        break;
+    case Status::kPrevious:
+        if (m_replayData.currentScene() > 0)
+            return true;
+        break;
     }
 
     return false;
 }
 
-static void registerPackedCoordinates(dword packedCoordinates)
+static bool isReplayAborted(bool blockNonScorerFire)
 {
-    *swos.currentHilPtr = packedCoordinates;
-    if (packedCoordinates != -1)
-        swos.currentHilPtr = validateHilPointerAdd(swos.currentHilPtr + 1);
+    int checkWhichPlayerFire = 1 + 2;
+
+    if (blockNonScorerFire) {
+        if (!swos.teamScoredDataPtr)
+            return false;
+
+        if (swos.teamScoredDataPtr->playerNumber == 1)
+            checkWhichPlayerFire = 1;
+        else if (swos.teamScoredDataPtr->playerNumber == 2)
+            checkWhichPlayerFire = 2;
+        else if (swos.teamScoredDataPtr->plCoachNum == 1)
+            checkWhichPlayerFire = 1;
+        else if (swos.teamScoredDataPtr->plCoachNum == 2)
+            checkWhichPlayerFire = 2;
+    }
+
+    if ((checkWhichPlayerFire & 1) && isPlayerFiring(kPlayer1) ||
+        (checkWhichPlayerFire & 2) && isPlayerFiring(kPlayer2))
+        return true;
+
+    return false;
 }
 
-void showHighlights()
+static bool shouldRecordReplayData()
 {
-    assert(swos.hilNumGoals > 0);
-
-    m_playing = true;
-    m_fastReplay = 0;
-
-    swos.hilStarted = 1;
-    swos.gameMaxSubstitutes = swos.hilMaxSubstitutes;
-    swos.teamsLoaded = 0;
-    swos.poolplyrLoaded = 0;
-
-    CopyTeamsAndHeader();
-
-    invokeWithSaved68kRegisters([] {
-        showMenu(swos.stadiumMenu);
-    });
-
-    SWOS::ViewHighlightsWrapper();
-
-    startMenuSong();
-
-    swos.screenWidth = kMenuScreenWidth;
-    swos.g_cameraX = 0;
-    swos.g_cameraY = 0;
-
-    m_playing = false;
-
-    swos.menuFade = 1;
-    drawMenu();
+    return !m_replaying && !inBenchOrGoingTo();
 }
 
-void toggleFastReplay()
+static void createDirectories()
 {
-    if (m_playing)
-        m_fastReplay ^= 1;
-}
-
-void SWOS::ViewHighlightsWrapper()
-{
-    save68kRegisters();
-    auto currentMenu = getCurrentPackedMenu();
-    auto currentEntry = getCurrentMenu()->selectedEntry->ordinal;
-
-    ViewHighlights();
-    restore68kRegisters();
-
-    restoreMenu(currentMenu, currentEntry);
-}
-
-void SWOS::SaveCoordinatesForHighlights()
-{
-    // reject save coordinates requests while in substitutes menu
-    if (inBenchOrGoingTo())
-        return;
-
-    auto spriteIndex = D0.asInt16();
-    auto x = D4.asInt16();
-    auto y = D5.asInt16();
-
-    if (spriteIndex >= 0) {
-        dword packedCoordinates = spriteIndex << 10;
-        packedCoordinates |= x & 0x3ff;
-        packedCoordinates <<= 10;
-        packedCoordinates |= y & 0x3ff;
-        clearHiBit(packedCoordinates);
-        registerPackedCoordinates(packedCoordinates);
-    } else if (spriteIndex == -2) {
-        registerPackedCoordinates(-1);
-    } else {
-        dword packedCoordinates = (y << 16) | x | 0x80000000;
-        registerPackedCoordinates(packedCoordinates);
-
-        dword packedGoals = (swos.team2TotalGoals << 16) | swos.team1TotalGoals;
-        registerPackedCoordinates(packedGoals);
-
-        // repeated two times, probably to keep it aligned
-        dword packedAnimPatternsState = (swos.animPatternsState << 16) | swos.animPatternsState;
-        registerPackedCoordinates(packedAnimPatternsState);
-
-        registerPackedCoordinates(-1);
+    for (auto dir : { kReplaysDir, kHighlightsDir }) {
+        auto dirPath = pathInRootDir(dir);
+        if (!createDir(dirPath.c_str()))
+            errorExit("Failed to create %s directory", dir);
     }
 }
 
-void SWOS::PlayInstantReplayLoop()
+static void autoSaveReplay()
 {
-    while (true) {
-        ReadTimerDelta();
+    if (getAutoSaveReplays() && !m_replaying && !m_replayData.empty()) {
+        char filename[256];
 
-        replayPausedLoop();
+        auto t = time(nullptr);
+        strftime(filename, sizeof(filename), "%Y-%m-%d-%H-%M-%S-auto-save.rpl", localtime(&t));
 
-        SWOS::GetKey();
-        if (swos.skipFade)
-            MainKeysCheck();
+        auto path = joinPaths(kReplaysDir, filename);
 
-        if (swos.replayState == kNotReplaying)
-            return;
-
-        if (swos.skipFade && instantReplayAborted()) {
-            swos.statsFireExit = 1;
-            swos.replayState = kNotReplaying;
-            break;
-        }
-
-        ReplayFrame();
-
-        if (swos.replayState == kNotReplaying)
-            break;
-
-        if (swos.fadeAndSaveReplay) {
-            FadeAndSaveReplay();
-            swos.fadeAndSaveReplay = 0;
-        }
-
-        if (swos.instantReplayFlag) {
-            HandleInstantReplayStateSwitch();
-            swos.instantReplayFlag = 0;
-        }
-
-        Flip();
-
-        fadeIfNeeded();
+        // let's not overwrite the file (append to it) if it somehow already exists
+        auto success = saveReplayFile(path.c_str(), false);
+        logInfo("Automatically saved replay %s, result: %s", filename, success ? "success" : "failure!");
     }
-
-//    FadeOutToBlack();
-    RestoreCameraPosition();
 }
 
-// Takes over highlights rendering to avoid clearing background last frame before fade,
-// which was causing players to disappear.
-void SWOS::PlayHighlightsLoop()
+static int getGameTime()
 {
-    int drawFrame = 1;
+    int gameTime = -1;
 
-    while (true) {
-        ReadTimerDelta();
-
-        highlightsPausedLoop();
-
-        GetKey();
-        MainKeysCheck();
-
-        if (swos.replayState != kNotReplaying) {
-            if (highlightsAborted())
-                break;
-
-            ReplayFrame();
-
-            if (swos.replayState != kNotReplaying) {
-                if (drawFrame ^= m_fastReplay)
-                    Flip();
-                fadeIfNeeded();
-                continue;
-            } else {
-//                FadeOutToBlack();
-                RestoreCameraPosition();
-                swos.paused = 0;
-            }
-        }
-
-        if (++swos.hilSceneNumber == swos.numReplaysInHilFile)
-            break;
-
-        highlightsMoveToNextScene();
+    if (swos.currentTimeSprite.visible) {
+        int digit1, digit2, digit3;
+        std::tie(digit1, digit2, digit3) = gameTimeAsBcd();
+        gameTime = (digit1 << 16) | (digit2 << 8) | digit3;
     }
 
-    RestoreHighlightPointers();
-    swos.paused = 0;
+    return gameTime;
 }
 
-// Handles initial frame stuff: camera coordinates, result and animated patterns.
-static std::pair<dword *, dword> handleCameraPositionAndResult(dword *p, dword d)
+static void unpackTime(int time, int& digit1, int& digit2, int& digit3)
 {
-    if (hiBitSet(d)) {
-        clearHiBit(d);
-        p = validateHilPointerAdd(p);
-
-        D1 = loWord(d);
-        D2 = hiWord(d);
-//move camera
-
-        d = *p++;
-        p = validateHilPointerAdd(p);
-
-        swos.hilLeftTeamGoals = loWord(d);
-        swos.hilRightTeamGoals = hiWord(d);
-
-        d = *p++;
-        p = validateHilPointerAdd(p);
-
-        swos.animPatternsState = hiWord(d);
-
-        //invokeWithSaved68kRegisters(DrawAnimatedPatterns);
-
-        d = *p++;
-    }
-
-    return { p, d };
-}
-
-static std::pair<dword *, dword> handleSprites(dword *p, dword d)
-{
-    while (!hiBitSet(d)) {
-        p = validateHilPointerAdd(p);
-        auto spriteIndex = d >> 20;
-        int x = static_cast<int>(d << 12) >> 22;
-        int y = static_cast<int>(d << 22) >> 22;
-
-        drawMenuSprite(spriteIndex, x, y);
-
-        d = *p++;
-    }
-
-    return { p, d };
-}
-
-static void drawBigRotatingLetterR()
-{
-    drawMenuSprite(((swos.stoppageTimer >> 1) & 0x1f) + kReplayFrame00Sprite, 11, 14);
-}
-
-void SWOS::ReplayFrame()
-{
-    auto p = swos.currentGoalPtr.asPtr();
-    auto d = *p++;
-
-    initInstantReplayFrame(d);
-
-    for (auto func : { handleCameraPositionAndResult, handleSprites }) {
-        std::tie(p, d) = func(p, d);
-
-        if (d == -1) {
-            swos.replayState = kNotReplaying;
-            return;
-        }
-    }
-
-    p = validateHilPointerSub(p - 1);
-    swos.currentGoalPtr = p;
-
-    if (!swos.normalReplayRunning)
-        drawBigRotatingLetterR();
-    else
-        drawResult();
-
-    if (swos.replayState == kSlowMotionPlayback && !swos.paused) {
-        frameDelay();
-        skipFrameUpdate();
-    }
+    digit1 = (time >> 16) & 0xff;
+    digit2 = (time >> 8) & 0xff;
+    digit3 = time & 0xff;
 }

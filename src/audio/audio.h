@@ -18,7 +18,13 @@ void stopAudio();
 void initGameAudio();
 void resetGameAudio();
 void ensureMenuAudioFrequency();
-int playIntroSample(void *buffer, int size, int volume, int loopCount);
+
+bool soundEnabled();
+void setSoundEnabled(bool enabled);
+bool musicEnabled();
+void setMusicEnabled(bool enabled);
+bool commentaryEnabled();
+void setCommentaryEnabled(bool enabled);
 
 void saveAudioOptions(CSimpleIni& ini);
 void loadAudioOptions(const CSimpleIniA& ini);

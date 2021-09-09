@@ -232,7 +232,7 @@ class ExpressionParser:
     def handleSymbol(self):
         self.tokenizer.getNextToken()
         idToken = self.tokenizer.getNextToken()
-        self.tokenizer.expectIdentifier(idToken)
+        idToken.string.startswith('@') or self.tokenizer.expectIdentifier(idToken)
         idToken.string = '"' + idToken.string + '"'
         self.tokenizer.ungetToken()
 
@@ -273,7 +273,7 @@ class ExpressionParser:
             except InvalidOperandNode as invalidNode:
                 if invalidNode.node.var:
                     try:
-                        node = self.parseVariableContentsAsExpression(invalidNode.node)
+                        node = self.parseVariableContentAsExpression(invalidNode.node)
                     except InvalidOperand as opError:
                         Util.error(f"in variable `{invalidNode.node.var.name}': {opError}", token)
                     except EvaluationError as evalError:
@@ -292,7 +292,7 @@ class ExpressionParser:
 
         return nodes
 
-    def parseVariableContentsAsExpression(self, node):
+    def parseVariableContentAsExpression(self, node):
         assert isinstance(node, OperandNode)
         assert node.var
 

@@ -6,3 +6,5 @@ void initChantsBeforeTheGame();
 bool chantsOnChannelFinished(int channel);
 void playCrowdChants();
 void playFansChant4lSample();
+bool areCrowdChantsEnabled();
+void setCrowdChantsEnabled(bool crowdChantsEnabled);

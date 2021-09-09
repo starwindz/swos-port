@@ -21,7 +21,7 @@ public:
     void addProc(CToken *proc);
     void addLabel(CToken *label);
     void addReference(CToken *ref);
-    void addReference(const String& str);
+    void addReference(const String& str, CToken *refProc);
     void markImport(const String& str);
     void markExport(const String& str);
     bool hasReference(const String& str) const;
@@ -37,7 +37,7 @@ public:
     void resolveSegments(const SegmentSet& segments);
 
     std::vector<String> publics() const;
-    std::vector<std::tuple<String, ReferenceType, String>> externs() const;
+    std::vector<std::tuple<String, ReferenceType, String, String>> externs() const;
 
 private:
     static bool isReference(const String& str);
@@ -47,16 +47,24 @@ private:
 
 #pragma pack(push, 1)
     struct RefHolder {
-        RefHolder(ReferenceType type = kNone, CToken *structName = nullptr) : type(type) {
+        RefHolder(ReferenceType type = kNone, CToken *structName = nullptr, CToken *refProc = nullptr) : type(type) {
             if (type == kUser) {
                 assert(structName);
                 Util::assignSize(*structNameLength(), structName->textLength);
                 structName->copyText(structNamePtr());
+            } else {
+                Util::assignSize(*structNameLength(), 0);
+            }
+            if (refProc) {
+                Util::assignSize(*refProcNameLength(), refProc->textLength);
+                refProc->copyText(refProcNamePtr());
+            } else {
+                Util::assignSize(*refProcNameLength(), 0);
             }
         }
         using LengthType = uint8_t;
-        static size_t requiredSize(ReferenceType type = kNone, CToken *structName = nullptr) {
-            return sizeof(RefHolder) + (type == kUser ? structName->textLength + sizeof(LengthType) : 0);
+        static size_t requiredSize(ReferenceType type = kNone, CToken *structName = nullptr, CToken *refProc = nullptr) {
+            return sizeof(RefHolder) + 2 * sizeof(LengthType) + (type == kUser ? structName->textLength : 0) + (refProc ? refProc->textLength : 0);
         }
         String structName() const {
             if (type == kUser) {
@@ -67,8 +75,13 @@ private:
             }
             return String();
         }
+        String refProcName() const {
+            return { refProcNamePtr(), *refProcNameLength() };
+        }
         LengthType *structNameLength() const { return (LengthType *)(this + 1); }
-        char *structNamePtr() const { return reinterpret_cast<char *>(structNameLength() + sizeof(LengthType)); }
+        char *structNamePtr() const { return reinterpret_cast<char *>(structNameLength()) + sizeof(LengthType); }
+        LengthType *refProcNameLength() const { return reinterpret_cast<LengthType *>(structNamePtr() + *structNameLength()); }
+        char *refProcNamePtr() const { return reinterpret_cast<char *>(refProcNameLength()) + sizeof(LengthType); }
 
         uint8_t *structPtr = nullptr;
         ReferenceType type;

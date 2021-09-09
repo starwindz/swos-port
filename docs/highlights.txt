@@ -1,0 +1,81 @@
+New format is introduced:
+- complete 32-bit coordinates are saved (both whole and fractional part versus only whole in original)
+- game time and stats are also saved and shown each frame if needed
+- limit of 10 scenes per highlight file is removed
+- highlight scene buffer is increased so the saved scene length remains approximately the same even with
+  additional data
+
+Highlights are now, as replays, saved to their separate directory, called "highlights".
+
+
+Current version: 2.0
+
+Header:
+
+offset:  size:  desc.
+-------  -----  -----
+   0        4   "HIL2", magic
+   4        4   version, word.word = major.minor, currently: 2.0
+   8        4   offset to the start of scene data buffer
+  12     1704   first (top) team, in-game structure
+1716     1704   second (bottom) team
+3420       40   game name (e.g. "FRIENDLY", "RUSSIAN PREMIER DIVISION", ...)
+3460       40   game round (e.g. "FIRST ROUND")
+3500        2   number of scenes in the file
+3502        2   number of goals for first team
+3504        2   number of goals for second team
+3506        1   pitch type
+3507        1   number of pitch file
+3508        2   number of maximum substitutes
+3510        2   padding
+
+Scene data buffer starts with a scene offset table. It's an array of start and end offsets (dwords) marking
+scene start and end in the buffer that follows. Offsets are relative to the start of the buffer. There are as
+many start-end pairs as there are scenes.
+
+offset:  size:  desc.
+-------  -----  -----
+   0        4   offset to scene data start
+   4        4   offset to scene data end (not including)
+   ...
+
+Data buffer:
+   ?       ??   Buffer holding the scene data consists of frames. Each frame consists of:
+                - [0]  dword: offset of the next frame (relative to the scene buffer start)
+                - [4]  dword: offset of the previous frame ( -||- )
+                - [8]  2 dwords: camera coordinates, x and y
+                - [16] 2 words, number of goals for team 1 and 2
+                - [20] 3 bytes: game time digit 1, 2, 3 (BCD)
+                - [23] byte: reserved
+
+                Array of "replay objects" follow, until the next frame beginning.
+
+                If the high bit of picture index is set, it's stats data in the following form:
+                - word: ball possession
+                - word: goal attempts
+                - word: shots on target
+                - word: number of corners won
+                - word: number of fouls conceded
+                - word: number of bookings
+                - word: number of sendings off
+
+                If the highest bit isn't set, the object is a sprite, comprising of following data:
+                - dword: picture index
+                - dword: x
+                - dword: y
+
+When saving replay file scene offset table is saved with it, so the highlights can be played as well.
+
+
+Keyboard shortcuts during the replay:
+- left/right:                   skip forward/backward
+- ctrl + left/right:            large skip
+- ctrl + alt + left/right:      extra large skip
+- shift + left/right:           skip single frame (best when paused)
+- R:                            slow motion replay (50% speed)
+- F:                            fast mode replay (200% speed)
+- I:                            toggle info display
+- , (comma):                    go to previous scene
+- . (dot):                      go to next scene
+
+These shortcuts, with the exception of 'R' and 'F', are not available during the game.

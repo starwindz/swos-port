@@ -22,7 +22,7 @@ Menu replaysMenu
     kButtonColor = @kGreen
 
     x: -kMenuOffset
-    onInit: initReplaysMenu
+    onInit: replaysMenuOnInit
     onReturn: updateMenuButtonsState
     initialEntry: viewHighlights
 
@@ -53,7 +53,7 @@ Menu replaysMenu
         skipLeft: loadHighlights
         directionLeft: @kDown
 
-        onSelect: ~showHighlights
+        onSelect: playHighlights
     }
 
     Entry loadHighlights {

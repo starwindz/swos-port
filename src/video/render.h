@@ -11,13 +11,13 @@ void finishRendering();
 SDL_Renderer *getRenderer();
 SDL_Rect getViewport();
 void skipFrameUpdate();
-void updateScreen();
-void updateFrame();
-void frameDelay(double factor = 1.0);
-void timerProc();
-void fadeIfNeeded();
+void updateScreen(bool delay = false);
 
-void drawFrame(int x, int y, int width, int height, const Color& color);
+void fadeIn();
+void fadeOut();
+void fadeInAndOut(void (*callback)() = nullptr);
+
+void drawRectangle(int x, int y, int width, int height, const Color& color);
 
 bool getLinearFiltering();
 void setLinearFiltering(bool useLinearFiltering);

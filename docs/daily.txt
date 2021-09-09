@@ -4394,3 +4394,250 @@ earlier:
   problem), will see
 22.07.2021.
 - went for it, and implemented the above idea ;) works like a charm, and is as fast as can be
+23.07.2021.
+- committed to Github
+- fixed menu item background showing up 1 pixel outside outer frame; rounded x & y up and lowered dimensions
+  by that much, it's indistinguishable
+- fixed player names in play match menu being too close to edge, their 2 pixel margin is restored
+- fixed tactics entries in play match menu lacking outer frames
+24.07.2021.
+- fixed career loading, seems there was one exported variable inside the career file buffer (isCareer) that
+  was getting alignment (old story already); turned out the variable was unused, so removed it, but added
+  static assert check for career file buffer size if this ever happens again (lucky coincidence, exporting
+  start of the buffer made the buffer at least word aligned, so isCareer got automatically aligned as well,
+  and any other word needed won't get alignment bytes)
+- removed support for original CD comments
+- turned off comments and crowd chants in training games
+- fixed career loading restarting menu music
+- [mnu2h] added support for multiline text entries
+25.07.2021.
+- fixed a crash in continue/abort prompt, had to convert DoContinueAbortMenu and continueAbortMenu; and that
+  was the last reference to GetTextWidth()
+26.07.2021.
+- studying highlights in order to fix them and replay bug and refactor and convert rest of the code
+27.07.2021.
+- compiled xenia, found license switch ;) and studied XBLA SWOS for a bit
+- started with highlights conversion, but decided to do MainKeysCheck() first (even though I was initially
+  gonna let it be for now)
+28.07.2021.
+- [ida2asm] stopped registering references from non-procs (we're removing them anyway)
+- [ida2asm] fixed overstepping the fragment boundaries when skipping until a given symbol (this was causing
+  an end symbol to be falsely found and then the range wouldn't connect with the next fragment)
+29.07.2021.
+- removed plenty of unneeded code, mostly highlights but some other variables too, trying to get it to
+  compile
+30.07.2021.
+- fully translated and revised highlight files documentation
+31.07.2021.
+- did some work on highlights code conversion, at least finalized the specification of the new
+  highlights/replay file format
+01.08.2021.
+- continuing with highlights/replays
+02.08.2021.
+- as yesterday; did loading routines, got both old and new highlight files supported
+03.08.2021.
+- been analyzing UpdateCameraBreakMode(), this might be a good candidate for converting next
+04.08.2021.
+- [ida2asm] added name of the procedure that references the missing reference to the output (it helps
+  immensely in fixing that missing reference)
+- [ida2asm] fixed only marking first import reference as found and leaving the rest unsatisfied (resulting
+  in spurious error)
+- converted most of MainKeysCheck()
+05.08.2021.
+- finished converting MainKeysCheck()
+- removed bunch of intro variables and some others
+06.08.2021.
+- finalized rough play instant replay routine, everything is still quite broken
+07.08.2021.
+- finally got it to compile, but lot of things are broken, will need to analyze the diffs
+08.08.2021.
+- fixed camera getting stuck, mistakenly commented out the code that decrements showFansCounter in a rush
+- finally the replays are working, except the buffer size needs to be tweaked; I've accounted for increased
+  coordinate sizes, but not the amount of data: all sprites are getting recorded, since there's no way to
+  know the screen size on which it will be replayed; and who knows, maybe some future replayers might even
+  implement a custom moving camera
+- fade out implemented, after figuring out how SDL_RenderReadPixels() works
+- need to connect fade-in, but it's annoying since it has to be called at exactly the proper time, and
+  replays are running until the buffer dries out
+09.08.2021.
+- trying to connect fade ins and outs, but only got menus and initial two before the game correctly, fading
+  out can't be performed in the code that does fade-in, since the rendering buffer gets emptied by then, and
+  that's causing plenty of trouble
+10.08.2021.
+- [mnu2h] fixed negative coordinate literals (how did this get broken again?)
+- converted versusMenu; since PlayGame() was referencing it I had to convert it as well, renamed it to
+  InitializeIngameTeamsAndStartGame() along the way; that helped remove some more code and data and
+  amazingly, nothing seems to have been broken in the process
+- haven't managed to fix the fades, since PlayGame() conversion ate all the time, but at least I'm in much
+  better position to tackle it now
+11.08.2021.
+- same problems as with versusMenu, stadiumMenu is calling DrawMenu() from init function which ruins fades,
+  decided to convert that menu as well
+- [mnu2h] fixed single quoted strings getting incorrectly converted to numbers if they contain digits only
+- [mnu2h] fixed a bug where new menus and entries retained some of the data from the previously parsed ones
+- [mnu2h] fixed handler functions declared in template entries not getting C++ declaration in the header
+12.08.2021.
+- [mnu2h] added support for onDestroy function (will need this for per-menu texture caching)
+- removed color converted sprite copying functionality from the menu system (used in stadium and edit
+  tactics menu, which have to be converted anyway)
+- introduced a concept of menu local sprites, sprites that are valid only during the lifetime of the current
+  menu, and when it goes away they are destroyed automatically (this kind of makes onDestroy superfluous, but
+  I'm keeping it in for now)
+13.08.2021.
+- contemplating how to properly colorize player sprites in stadium menu, refactored background image loading
+  into a function of its own
+- removed sprites [210..214]
+- found some more code to remove
+14.08.2021.
+- removed assert for zero width/height entries, they're used in pre-match menus, and hopefully mnu2h will
+  catch these issues compile time
+- called parseCommandLine() again after loading options so they can override (can't parse them after loading
+  options since they can affect options location ;))
+- removed ADL lib and all the associated code
+- added an option to skip showing pre-match menus (versus and stadium)
+15.08.2021.
+- all the gymnastics about sprite colorizing were futile :) simply moved game sprite loading into versus
+  menu, and then just used normal sprites (works nicely, since the longest pause is while showing versus menu,
+  so used that opportunity to actually load all that's needed for the game -- on a side note, sound file
+  loading is slow because there are so many, they should really be stored in a non-compressed zip file)
+- [mnu2h] fixed needlessly issuing native entry codes for null text and null multi-line text
+- [mnu2h] fixed evaluation of certain built-in variables inside a preprocessor expression if they couldn't
+  be trivially converted to integer
+- [mnu2h] now issuing a warning if an entry-dependent variable is used inside a loop (e.g. @prevY), since
+  the preprocessor expressions will evaluate immediately and each iteration will end up with the same value
+  (very likely not what's intended)
+- added a routine to swap menu background
+- argh, game sprites have shadow! will need to figure out something
+16.08.2021.
+- [mnu2h] made ':' operator work with internal variables (starting with '@') in preprocessor expressions
+- [mnu2h] added 't' format specifier for preprocessor expressions, it will cause the result of the expression
+  to be tokenized and inserted back into the input
+- fixed reserve player name entry positions in stadium menu
+17.08.2021.
+- [mnu2h] fixed tokenized preprocessor expression result missing first token when used in a void context
+- finally set up players in the stadium menu properly (at least the positions), players are looking good but
+  goalkeepers have a little bit of shadow left, leaving it as is for now, if it turns out a big problem one
+  additional sprite could be added to the sheet, for this purpose only
+- fixed fade-in when entering the game
+18.08.2021.
+- fixed pretty much all the menu <-> game fades, but I sometimes notice sort of a small flicker during the
+  fades, doesn't happen every time, will have to check that out more thoroughly
+- implemented in-game highlights (on 'H')
+19.08.2021.
+- expanded hil format with a pointer to the previous frame, that is required to add rewind support
+- added a field to the hil file header that holds offset to the data buffer, it will ensure that the format
+  is extensible in the future
+- trying to get highlights and replays menu operational again
+20.08.2021.
+- trying to separate init match and showing pre-match menus in playing normal game and showing replay
+21.08.2021.
+- implemented reading of legacy highlight files and internal conversion into the new format
+22.08.2021.
+- got the highlights running with old highlight files, but it's still buggy
+- fixed choppy sprites during the new-style replays (replays weren't getting full coordinates, just the whole
+  parts)
+- converted continue menu (need to show errors from replays failing to save/load)
+- [ida2asm] stopped adding out-of-proc instructions into the output items stream, as a removed function was
+  referenced from unreachable code, causing linker errors
+23.08.2021.
+- got the old format replay files to load and play, fixed some of the bugs, but the main problems still
+  remain: the sprite movement is jerky and sprites are off center
+24.08.2021.
+- removed plenty more of SWOS variables, including control-related ones
+- cleaned up game control code and now bench button works again
+- refactored sound/music code a bit
+25.08.2021.
+- fixed off-center sprites in old-style replays; added assert that the sprite is actually loaded into
+  getSprite() (was getting a null sprite with zero data since they're not yet loaded at the time of replay
+  load, that's why the drawing was off)
+- fixed music not stopping during the replay, and restarting after
+- added basic key controls: F - fast replay, R - slow motion, P - pause, it's working nicely, next is to add
+  rewind controls (did a small change compared to the original: allowed R to slow down replays/highlights as
+  well)
+26.08.2021.
+/
+27.08.2021.
+- removed static vars for alt, shift etc., introduced usage of SDL_GetModState() (more proper)
+- implemented keys for rewinding/skipping replay reproduction, and it's working great :) it's left/right
+  arrow in combination with ctrl/alt/shift (kind of like in VLC)
+- also added a small display with the current scene number, total number of scenes and percentage of the
+  current scene replayed
+28.08.2021.
+- stopped crowd sound when returning to menu after a replay
+- added abort by fire to replay, but only during the game
+- fixed small imprecision in frame offset calculation, now toggling forward/backward returns to exactly the
+  same frame
+- fixed pause blocking scene fade-in after fade-out, leaving the screen black, appearing as if stuck
+- fixed escape only going to the next scene instead of terminating the whole highlights session
+- fixed not fading out when a replay is aborted
+- added keys to go to the previous/next scene (if applicable), comma and dot (< and > on top)
+- fixed stadium menu player sprites getting messed up when loading 2nd match or more
+29.08.2021.
+- [ida2asm] an error is issued when an unconnected range end is encountered while there was already an
+  unconnected range end earlier; it's possible in case regions overlap, or some symbol was renamed (d-oh)
+- converted corner flags update routine, but they're still annoyingly wiggling; ah, what a twist, after
+  closely analyzing the original, found out that their corner flags are also mangled -- considering this a
+  graphical problem and leaving it as is
+- removed most of the camera variables, but the main ones are still hanging by the ActivateReferee(); and
+  Flip() is finally gone
+- implemented end game fade-out & in, it's still missing the stats overlay, but otherwise is looking good
+30.08.2021.
+- UpdateStatistics() is really two functions, update and show, separated them & working on converting the
+  stats code and get it to display at the end of the game (and halftime)
+31.08.2021.
+- implemented pause and stats, but stats at half-time and end game don't appear automatically, will need to
+  debug that
+01.09.2021.
+- fixed automatic stats not showing up
+- implemented auto-save highlights and auto-replays
+- fixed auto-replay being able to be interrupted by the non-scorer
+- fixed invalid fade-out in play match menu when two players are playing (after 1st player is done)
+02.09.2021.
+- fixed a check if the scene table loaded properly when loading replays
+- fixed replaying files as if they were instant replays (instant replay flag wasn't being reset)
+- fixed not being able to save both highlights and replays after a match
+- cut out the frames spent at the bench (only wondering if the cut is too harsh?)
+- removed the game clock from highlights, and moved the result a bit down if we are displaying clock
+- fixed saved highlights and replays ending up at game root, and not in their appropriate directories
+03.09.2021.
+- fixed highlight file getting the whole match data saved (had to do the extraction and fixup of
+  highlights-only data and scene table reconstruction)
+- fixed slow motion flag getting stuck for the next instant replay
+- cleared game name and round buffer so random post-string garbage doesn't end up in the file
+- fixed bad replay header alignment and static asserted it
+- decided to save scene table along with replays, so highlights can be watched too from the same file (and
+  updated GUI to allow it if present)
+- removed current scene number from replay info if it's not a highlight
+04.09.2021.
+- changed debug memory flags, now the debug version is quite a bit faster
+- fixed 64-bit version (but the debug version there is still slow as hell)
+- fixed minutes display in replays
+- fixed missing half-time and full-time sprites
+- fixed right column in long-names save highlights menu getting yellow frame (it's that SWOS play match menu
+  kludge, haven't been reseting the flag)
+- trying to set up stats in replays, but it's still a bit buggy
+05.09.2021.
+- fixed wrong stats showing up in replays
+- fixed crowd chants sometimes playing at double speed in replays
+- refactored legacy highlights file parsing into separate class
+- gave up on the system of having stats on and stats off packet, since frames containing them may get skipped
+  over in rewinding and it would get very complicated keeping track of the state; now just saving stats each
+  frame they're shown and that problem is gone; the file is a wee bit bigger, but the stats aren't really
+  shown for a long time, even if left to expire on their own
+- fixed bad fade out at the end of the game (displaying sprites on black background)
+- fixed result/stats disappearing if game is exited with escape
+- fixed final stats blinking (disappear then quickly reappear) when fire is pressed
+- [mnu2h] fixed handling of string tables that have negative starting index
+- fixed gameplay options menu crash when setting pitch type to seasonal/random (starting index is -2 not 0)
+06.09.2021.
+- reimplemented big S spinning sprite
+- refactored timer code out of the renderer
+- reimplementing timing code to fix some mistakes (the case when running on slower machine incapable of
+  delivering 70FPS), but currently it's messed up (game's in slow motion, lol)
+07.09.2021.
+/
+08.09.2021.
+- can't find the timing of SDL_RenderPresent() anywhere, my measurements show 0-5ms, probably ~1.7 on
+  average, so included average render time into timing calculations
+- changed the timing algorithm slightly in order to accommodate slower machines, so far it's looking good but
+  more thorough testing is required

@@ -156,5 +156,17 @@
     <CustomBuild Include="..\..\..\src\menus\mnu\windowMode.mnu">
       <Filter>mnu</Filter>
     </CustomBuild>
+    <CustomBuild Include="..\..\..\src\menus\mnu\continueAbort.mnu">
+      <Filter>mnu</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\..\src\menus\mnu\versus.mnu">
+      <Filter>mnu</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\..\src\menus\mnu\stadium.mnu">
+      <Filter>mnu</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\..\src\menus\mnu\continue.mnu">
+      <Filter>mnu</Filter>
+    </CustomBuild>
   </ItemGroup>
 </Project>

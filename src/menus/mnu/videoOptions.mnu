@@ -52,7 +52,7 @@ Menu videoOptionsMenu
         y: kGamePlayOptionsStartY
         downEntry: >
 
-        stringTable: [ ~m_useLinearFiltering, swos.aOff, swos.aOn ]
+        stringTable: [ ~m_useLinearFiltering, "OFF", "ON" ]
         onSelect: switchLinearFiltering
     }
 
@@ -60,7 +60,7 @@ Menu videoOptionsMenu
         upEntry: <
         downEntry: >
 
-        stringTable: [ ~m_flashCursor, swos.aOff, swos.aOn ]
+        stringTable: [ ~m_flashCursor, "OFF", "ON" ]
         onSelect: changeFlashCursor
     }
 
@@ -68,7 +68,7 @@ Menu videoOptionsMenu
         upEntry: <
         downEntry: >
 
-        stringTable: [ ~m_showTouchTrails, swos.aOff, swos.aOn ]
+        stringTable: [ ~m_showTouchTrails, "OFF", "ON" ]
         onSelect: changeShowTouchTrails
     }
 
@@ -76,7 +76,7 @@ Menu videoOptionsMenu
         upEntry: <
         downEntry: >
 
-        stringTable: [ ~m_transparentButtons, swos.aOff, swos.aOn ]
+        stringTable: [ ~m_transparentButtons, "OFF", "ON" ]
         onSelect: changeVirtualJoypadTransparentButtons
     }
 

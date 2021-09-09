@@ -1,16 +1,21 @@
 #include "gameLoop.h"
 #include "game.h"
+#include "render.h"
+#include "timer.h"
 #include "gameControls.h"
 #include "spinningLogo.h"
 #include "playerNameDisplay.h"
 #include "gameSprites.h"
 #include "gameTime.h"
 #include "bench.h"
+#include "drawBench.h"
 #include "result.h"
-#include "camera.h"
+#include "stats.h"
 #include "pitch.h"
+#include "pitchConstants.h"
 #include "menus.h"
-#include "render.h"
+#include "menuBackground.h"
+#include "camera.h"
 #include "controls.h"
 #include "keyBuffer.h"
 #include "audio.h"
@@ -19,80 +24,106 @@
 #include "sfx.h"
 #include "chants.h"
 #include "options.h"
+#include "replays.h"
+#include "stadiumMenu.h"
 #include "replayExitMenu.h"
 #include "util.h"
 
-constexpr Uint32 kMinimumPreMatchScreenLength = 1'200;
+constexpr int kGameEndCameraX = 176;
+constexpr int kGameEndCameraY = 80;
 
-static Uint32 m_loadingStartTick;
+static bool m_fadeAndSaveReplay;
+static bool m_fadeAndInstantReplay;
+static bool m_fadeAndReplayHighlights;
 
-static void showStadiumScreenAndFadeOutMusic(TeamGame *topTeam, TeamGame *bottomTeam);
+static bool m_doFadeIn;
+
+static bool m_playingMatch;
+
 static void initGameLoop();
-static bool updateTimersHandlePauseAndStats();
+static void drawFrame();
+static void updateTimersHandlePauseAndStats();
 static void coreGameUpdate();
 static void handleHighlightsAndReplays();
+static void gameOver();
 static bool gameEnded(TeamGame *topTeam, TeamGame *bottomTeam);
-static void updateFrameAndFadeIfNeeded();
-static void insertPauseBeforeTheGameIfNeeded();
-static void keepStatisticsOnScreen();
+static void pausedLoop();
+static void showStatsLoop();
 static void loadCrowdChantSampleIfNeeded();
 static void initGoalSprites();
 
 void gameLoop(TeamGame *topTeam, TeamGame *bottomTeam)
 {
-    showStadiumScreenAndFadeOutMusic(topTeam, bottomTeam);
+    swos.playGame = 1;
+
+    showStadiumScreenAndFadeOutMusic(topTeam, bottomTeam, swos.gameMaxSubstitutes);
 
     do {
         initGameLoop();
 
-        // the really main game loop ;)
-        while (updateTimersHandlePauseAndStats()) {
-            // the code doesn't even get to test the flag unless the replay is started
+        // the really real main game loop ;)
+        while (true) {
+            updateTimersHandlePauseAndStats();
             loadCrowdChantSampleIfNeeded();
 
-            if (!swos.goIntoHighlightsLoop) {
-                if (!swos.replayState) {
-                    coreGameUpdate();
-                    handleHighlightsAndReplays();
-                    updateFrameAndFadeIfNeeded();
-                } else {
-                    //FadeOutToBlack();
-                    loadCrowdChantSampleIfNeeded();
-                    SWOS::PlayInstantReplayLoop(); // convert me [only ref.]
-                }
-            } else {
-                //FadeOutToBlack();
-                SWOS::PlayHighlightsLoop();
+            coreGameUpdate();
+            drawFrame();
+
+            if (m_doFadeIn) {
+                fadeIn();
+                m_doFadeIn = false;
             }
+
+            handleHighlightsAndReplays();
+
+            if (!swos.playGame) {
+                fadeOut();
+                break;
+            }
+
+            updateScreen(true);
         }
     } while (!gameEnded(topTeam, bottomTeam));
+
+    m_playingMatch = false;
 }
 
-void showStadiumScreenAndFadeOutMusic(TeamGame *topTeam, TeamGame *bottomTeam)
+void showStadiumScreenAndFadeOutMusic(TeamGame *topTeam, TeamGame *bottomTeam, int maxSubstitutes)
 {
-    swos.playGame = 1;
-
-    SetPitchTypeAndNumber();
-
-    invokeWithSaved68kRegisters([] {
-        showMenu(swos.stadiumMenu);
-    });
-
-    initMatch(topTeam, bottomTeam, true);
+    if (showPreMatchMenus())
+        showStadiumMenu(topTeam, bottomTeam, maxSubstitutes);
 
     waitForMusicToFadeOut();
 }
 
+void requestFadeAndSaveReplay()
+{
+    m_fadeAndSaveReplay = true;
+}
+
+void requestFadeAndInstantReplay()
+{
+    m_fadeAndInstantReplay = true;
+}
+
+void requestFadeAndReplayHighlights()
+{
+    m_fadeAndReplayHighlights = true;
+}
+
+bool isMatchRunning()
+{
+    return m_playingMatch;
+}
+
 static void initGameLoop()
 {
-    swos.g_muteCommentary = swos.g_commentary ? 0 : -1;
+    m_playingMatch = true;
+    m_doFadeIn = true;
 
-    loadCommentary();
-    loadSoundEffects();
-    loadIntroChant();
+    unloadMenuBackground();
 
-    insertPauseBeforeTheGameIfNeeded();
-    //fade out to black
+    playCrowdNoise();
 
     initGameAudio();
     playCrowdNoise();
@@ -106,162 +137,220 @@ static void initGameLoop()
 
     swos.trainingGameCopy = swos.g_trainingGame;
     swos.gameCanceled = 0;
+    swos.saveHighlightScene = 0;
     swos.instantReplayFlag = 0;
-    swos.saveHighlights = 0;
-    swos.fadeAndSaveReplay = 0;
+
+    m_fadeAndSaveReplay = false;
+    m_fadeAndInstantReplay = false;
+    m_fadeAndReplayHighlights = false;
 
     setCameraToInitialPosition();
 
-    swos.skipFade = 0;
     ReadTimerDelta();
 
     waitForKeyboardAndMouseIdle();
 
-    swos.timerBoolean = 0;
-    swos.bumpBigSFrame = -1;
+    swos.stoppageTimer = 0;
+    swos.lastStoppageTimerValue = 0;
+    swos.menuCycleTimer = 0;
 
-    updateFrameAndFadeIfNeeded();
+    initFrameTicks();
 }
 
-bool updateTimersHandlePauseAndStats()
+static void drawFrame()
+{
+    drawPitchAtCurrentCamera();
+    startNewHighlightsFrame();
+    drawSprites();
+    drawBench();
+    drawStatsIfNeeded();
+}
+
+void updateTimersHandlePauseAndStats()
 {
     ReadTimerDelta();
     swos.menuCycleTimer = 0;
 
-    while (swos.paused) {
-        SWOS::GetKey();
-        MainKeysCheck();
-        if (isAnyPlayerFiring())
-            swos.paused ^= 1;
-    }
+    pausedLoop();
 
-    if (swos.showingStats)
-        keepStatisticsOnScreen();
+    if (statsEnqueued())
+        showStatsLoop();
 
     swos.frameCount++;
 
     if (swos.spaceReplayTimer)
         swos.spaceReplayTimer--;
 
-    SWOS::GetKey(); // remove me
-    MainKeysCheck(); // & me
-
-    return swos.playGame != 0;
+    // is this necessary?
+    processControlEvents();
+    checkGameKeys();
 }
 
 static void coreGameUpdate()
 {
     moveCamera();
-    drawPitch();
-    D0 = -1;
-    D4 = getCameraX().raw();
-    D5 = getCameraY().raw();
-    SWOS::SaveCoordinatesForHighlights(); // fixme!!!
     playEnqueuedSamples();
     updateGameTime();
     initGoalSprites();
+    UpdateCameraBreakMode();    // convert
     updateTeamControls();
     UpdateBall();
     MovePlayers();
-    DrawReferee();
-    SetCornerFlagSprite();
+    UpdateReferee();
+    updateCornerFlags();
     spinBigSLogo();
     //ManageAdvertisements();
     DoGoalKeeperSprites();
-    DrawControlledPlayerNumbers();
+    UpdateControlledPlayerNumbers();
     MarkPlayer();
     setCurrentPlayerName();
     BookPlayer();
     showAndPositionResult();
-    SWOS::DrawAnimatedPatterns(); // remove/re-implement me
-    drawSprites();
+    SWOS::DrawAnimatedPatterns(); // remove/re-implement
     updateBench();
-    UpdateStatistics();
-    D0 = -2;
-    SWOS::SaveCoordinatesForHighlights();
+    updateStatistics();
 }
 
 static void handleHighlightsAndReplays()
 {
-    if (swos.saveHighlights) {
-        SaveHighlight();
-        swos.saveHighlights = 0;
+    // remove when UpdateCameraBreakMode() is converted
+    if (swos.saveHighlightScene) {
+        saveHighlightScene();
+        swos.saveHighlightScene = 0;
     }
 
-    if (swos.fadeAndSaveReplay) {
-        FadeAndSaveReplay();
-        swos.fadeAndSaveReplay = 0;
+    if (m_fadeAndSaveReplay) {
+        fadeOut();
+        saveHighlightScene();
+        m_doFadeIn = true;
+        m_fadeAndSaveReplay = false;
     }
 
-    if (swos.instantReplayFlag) {
-        HandleInstantReplayStateSwitch();
-        swos.instantReplayFlag = 0;
-        swos.goalCameraMode = 0;
+    // remove instantReplayFlag when UpdateCameraBreakMode() is converted
+    if (m_fadeAndInstantReplay || swos.instantReplayFlag) {
+        fadeOut();
+
+        bool userRequested = true;
+        if (swos.instantReplayFlag) {
+            userRequested = false;
+            swos.instantReplayFlag = 0;
+            swos.goalCameraMode = 0;
+        }
+
+        playInstantReplay(userRequested);
+
+        m_doFadeIn = true;
+        m_fadeAndInstantReplay = false;
+        swos.goalCameraMode = 0;    // is this necessary?
     }
+
+    if (m_fadeAndReplayHighlights) {
+        fadeOut();
+        playHighlights(true);
+        m_doFadeIn = true;
+        m_fadeAndReplayHighlights = false;
+    }
+}
+
+// Executed when the game is over.
+static void gameOver()
+{
+    drawFrame();
+    fadeOut();
+
+    setCameraX(kGameEndCameraX);
+    setCameraY(kGameEndCameraY);
+    drawPitchAtCurrentCamera();
+
+    D1 = kPitchCenterX;
+    D2 = kPitchCenterY;
+    SetBallPosition();
+
+    swos.resultTimer = 30'000;
+    swos.stoppageEventTimer = 1'650;
+    swos.gameState = GameState::kResultAfterTheGame;
+    swos.breakCameraMode = -1;
+    swos.gameStatePl = GameState::kStopped;
+    swos.cameraDirection = -1;
+    swos.lastTeamPlayedBeforeBreak = &swos.topTeamData;
+    swos.stoppageTimerTotal = 0;
+    swos.stoppageTimerActive = 0;
+
+    StopAllPlayers();
+
+    swos.cameraXVelocity = 0;
+    swos.cameraYVelocity = 0;
+
+    loadAndPlayEndGameComment();
+
+    m_doFadeIn = true;
+}
+
+void SWOS::GameOver()
+{
+    gameOver();
 }
 
 static bool gameEnded(TeamGame *topTeam, TeamGame *bottomTeam)
 {
     stopAudio();
-    //FadeOutToBlack();
-    //reload sw title! (which should have been unloaded)
-    SetHilFileHeader();
     matchEnded();
+    refreshReplayGameData();
+    setStandardMenuBackgroundImage();
 
-    if (!swos.isGameFriendly)
+    if (!swos.isGameFriendly || swos.g_trainingGame)
         return true;
 
-    if (swos.g_trainingGame)
+    bool replaySelected = showReplayExitMenuAfterFriendly();
+    if (!replaySelected)
         return true;
 
-    showReplayExitMenuAfterFriendly();
-
-    if (!swos.replaySelected)
-        return true;
+    unloadMenuBackground();
 
     swos.team1NumAllowedInjuries = 4;
     swos.team2NumAllowedInjuries = 4;
 
     swos.playGame = 1;
-    SetPitchTypeAndNumber();
+//    SetPitchTypeAndNumber();
 
     initMatch(swos.topTeamPtr, swos.bottomTeamPtr, false);
 
     return false;
 }
 
-static void updateFrameAndFadeIfNeeded()
+static void pausedLoop()
 {
-    updateFrame();
-    if (!swos.skipFade) {
-        //FadeIn();
-        swos.skipFade = -1;
-        swos.stoppageTimer = 0;
-        swos.lastStoppageTimerValue = 0;
-        swos.menuCycleTimer = 0;
-    }
-}
+    while (true) {
+        processControlEvents();
+        checkGameKeys();
 
-static void insertPauseBeforeTheGameIfNeeded()
-{
-    if (!doNotPauseLoadingScreen()) {
-        auto diff = SDL_GetTicks() - m_loadingStartTick;
-        if (diff < kMinimumPreMatchScreenLength) {
-            auto pause = kMinimumPreMatchScreenLength - diff;
-            logInfo("Pausing loading screen for %d milliseconds (target: %d)", pause, kMinimumPreMatchScreenLength);
-            SDL_Delay(pause);
+        if (!isGamePaused())
+            break;
+
+        auto events = getPlayerEvents(kPlayer1) | getPlayerEvents(kPlayer2);
+        if (events & (kGameEventKick | kGameEventPause)) {
+            togglePause();
+            break;
         }
+
+        SDL_Delay(100);
     }
 }
 
-static void keepStatisticsOnScreen()
+static void showStatsLoop()
 {
+    drawFrame();
+    updateScreen();
+
     do {
-        SWOS::GetKey();
-        MainKeysCheck();
-        UpdateStatistics();
         SDL_Delay(100);
-    } while (swos.showingStats);
+        processControlEvents();
+        checkGameKeys();
+        if (isAnyPlayerFiring()) {
+            swos.fireBlocked = 1;
+            hideStats();
+        }
+    } while (showingUserRequestedStats());
 }
 
 static void loadCrowdChantSampleIfNeeded()
@@ -276,9 +365,4 @@ static void initGoalSprites()
 {
     swos.goal1TopSprite.pictureIndex = kTopGoalSprite;
     swos.goal2BottomSprite.pictureIndex = kBottomGoalSprite;
-}
-
-void SWOS::ShowStadiumInit_OnEnter()
-{
-    m_loadingStartTick = SDL_GetTicks();
 }

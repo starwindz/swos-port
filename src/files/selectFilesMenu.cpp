@@ -136,26 +136,11 @@ static bool getFilenameAndExtension()
 //     selectedFilename
 //     extension
 //
-__declspec(naked) int SWOS::GetFilenameAndExtension()
+int SWOS::GetFilenameAndExtension()
 {
     auto result = getFilenameAndExtension();
     SwosVM::flags.zero = result;
     return D0 = !result;
-}
-
-static bool selectFileToSaveDialog()
-{
-    auto ext = codeToExtension(D0);
-    auto files = findFiles(ext);
-
-    auto menuTitle = A1.asPtr();
-    auto saveFilename = A0.asPtr();
-
-    auto selectedFilename = showSelectFilesMenu(menuTitle, files, ext, saveFilename);
-
-    A0 = getFilenameBuffer(selectedFilename);
-
-    return A0 && A0.asPtr()[0];
 }
 
 // SelectFileToSaveDialog
@@ -169,20 +154,23 @@ static bool selectFileToSaveDialog()
 //      zero flag - set = canceled or error, clear = OK
 //      (D0 also)
 //
-__declspec(naked) int SWOS::SelectFileToSaveDialog()
+int SWOS::SelectFileToSaveDialog()
 {
-#ifdef SWOS_VM
-    auto result = selectFileToSaveDialog();
+    auto ext = codeToExtension(D0);
+    auto files = findFiles(ext);
+
+    auto menuTitle = A1.asPtr();
+    auto saveFilename = A0.asPtr();
+
+    auto selectedFilename = showSelectFilesMenu(menuTitle, files, ext, saveFilename);
+
+    A0 = getFilenameBuffer(selectedFilename);
+
+    auto result = A0 && A0.asPtr()[0];
+
     SwosVM::flags.zero = result;
     D0 = !result;
     return 0;
-#else
-    __asm {
-        call selectFileToSaveDialog
-        call setZeroFlagAndD0FromAl
-        retn
-    }
-#endif
 }
 
 std::string showSelectFilesMenu(const char *menuTitle, const FoundFileList& filenames,
@@ -588,7 +576,8 @@ static void selectFile()
     else
         m_selectedFilename.clear();
 
-    // opportunity for overflow, all places that call have had their buffers widened enough, until we can remove it entirely
+    // opportunity for overflow, all the places in SWOS that end up here
+    // have had their buffers widened enough, until we can remove them entirely
     if (m_saveExtension && m_saveFilenameBuffer)
         strcpy(m_saveFilenameBuffer, m_selectedFilename.c_str());
 

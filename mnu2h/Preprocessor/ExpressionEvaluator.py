@@ -200,3 +200,15 @@ class ExpressionEvaluator:
             nodes = ExpressionEvaluator.skipExpression(nodes)
 
         return nodes
+
+    # Iterates through nodes and calls the supplied callback for each variable value. If the callback returns
+    # false, the iteration is ended. Assumes the given expression is correct.
+    @staticmethod
+    def iterateVariableNodes(nodes, f):
+        assert isinstance(nodes, list)
+        assert callable(f)
+
+        for node in nodes:
+            if isinstance(node, OperandNode):
+                if not f(node.token):
+                    return

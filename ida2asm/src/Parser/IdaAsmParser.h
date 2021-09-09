@@ -56,7 +56,7 @@ private:
     std::pair<CToken *, CToken *> outputCallInstruction(CToken *token, F fillNameProc);
     CToken *skipUntilNewLine(CToken *token);
     CToken *skipUntilEof(CToken *token);
-    CToken *skipUntilSymbol(CToken *token, const String& sym);
+    std::pair<CToken *, bool> skipUntilSymbol(CToken *token, const String& sym);
     std::pair<CToken *, size_t> getNextSignificantToken(CToken *token);
     std::pair<CToken *, std::vector<CToken *>> collectComments(CToken *token);
     CToken *handleSymbolRemoval(CToken *token, SymbolAction action, const String& sym);

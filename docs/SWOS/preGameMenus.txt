@@ -1,0 +1,2 @@
+Delay for versus menu: 100 vertical retraces (~1.467sec measured)
+Delay for stadium menu: measured ~0.333sec

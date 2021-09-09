@@ -28,12 +28,13 @@ class MenuParser:
         self.expressionParser = expressionParser
         self.varStorage = varStorage
 
+        self.fillAllowedAndDefaultProperties()
+
+    def init(self):
         self.menu = None
         self.functions = set()
         self.stringTableLengths = set()
         self.entryDotReferences = []
-
-        self.fillAllowedAndDefaultProperties()
 
     def fillAllowedAndDefaultProperties(self):
         self.allowedProperties = set(Constants.kMenuProperties)
@@ -50,6 +51,7 @@ class MenuParser:
         self.allowedProperties.add('onRestore')
 
     def parse(self):
+        self.init()
         self.menu = self.parseMenuHeader()
         self.parseMenuBody()
         return self.menu
@@ -81,14 +83,13 @@ class MenuParser:
 
             if token.string == '#':
                 self.preprocessor.parsePreprocessorDirective(self.menu)
-            elif token.string == 'Entry':
-                if len(self.menu.entries) >= Constants.kMaxEntries:
+            elif token.string in ('Entry', 'TemplateEntry'):
+                isTemplateEntry = token.string == 'TemplateEntry'
+                if not isTemplateEntry and len(self.menu.entries) >= Constants.kMaxEntries:
                     Util.error(f'entry limit ({Constants.kMaxEntries}) exceeded', token)
-                self.entryParser.parse(self.menu, False)
+                self.entryParser.parse(self.menu, isTemplateEntry)
                 self.stringTableLengths.add(self.entryParser.stringTableLength)
                 self.functions.update(self.entryParser.functions)
-            elif token.string == 'TemplateEntry':
-                self.entryParser.parse(self.menu, True)
             elif token.string == 'ResetTemplate':
                 self.handleResetTemplateEntry()
             elif token.string == 'entryAlias':

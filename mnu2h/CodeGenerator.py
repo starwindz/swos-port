@@ -43,7 +43,7 @@ class CodeGenerator:
                 out('#pragma once\n')
                 out('#include "menus.h"')
                 out('#include "swossym.h"\n')
-                out('using namespace SWOS_Menu;\n')
+                out('using namespace SwosMenu;\n')
 
                 self.outputFunctionForwardDeclarations(out)
                 self.outputStringTableDeclarations(out)
@@ -108,6 +108,7 @@ class CodeGenerator:
             out()
 
         self.outputStringTableVariables(out)
+        self.outputMultilineTextVariables(out)
 
         if stringTableLengths:
             out(kPackPragmaOff)
@@ -148,7 +149,7 @@ class CodeGenerator:
                     st = entry.stringTable
                     numStrings = len(st.values)
                     if numStrings:
-                        name = Util.getStringTableName(menuName, entry)
+                        name = self.getStringTableVariableName(menuName, entry)
                         output = ''
                         nativeIndexVariable = st.nativeFlags[0]
 
@@ -175,6 +176,22 @@ class CodeGenerator:
 
                         out(output)
 
+    def outputMultilineTextVariables(self, out):
+        assert callable(out)
+
+        for menuName, menu in self.parser.getMenus().items():
+            for entry in menu.entries.values():
+                if entry.multilineText:
+                    numStrings = len(entry.multilineText)
+                    numChars = sum(len(s) + 1 for s in entry.multilineText)
+
+                    var = self.getMultilineTextVariableName(menuName, entry)
+                    out(f'static EntryMultilineTextNative<{numChars}> {var}{{ {entry.textFlags}, {numStrings}, ')
+
+                    chars = list('\0'.join(entry.multilineText) + '\0')
+                    quotedChars = map(lambda c: f"'{c}'", chars)
+                    out('   ', ','.join(quotedChars).replace('\0', '\\0'), '};\n')
+
     # outputMenu
     #
     # in:
@@ -197,13 +214,15 @@ class CodeGenerator:
 
             if not func in menu.properties:
                 menu.properties[func] = 0
-            elif Variable.isSwos(menu.properties[func]):
-                menu.properties[func] = f'SwosVM::Procs::{menu.properties[func][1:]}'
             else:
-                menuHeaderV2 = True
-                nativeFunction[-1] = True
+                isSwosVar = Variable.isSwos(menu.properties[func])
+                if isSwosVar:
+                    menu.properties[func] = f'SwosVM::Procs::{menu.properties[func][1:]}'
+                if not isSwosVar or func == Constants.kOnDestroy:
+                    menuHeaderV2 = True
+                    nativeFunction[-1] = True
 
-        out(f'struct SWOS_Menu_{menuName} : public BaseMenu\n{{')
+        out(f'struct SwosMenu_{menuName} : public BaseMenu\n{{')
 
         if menuHeaderV2:
             out('    MenuHeaderV2 header{ kMenuHeaderV2Mark, ', end='')
@@ -211,7 +230,10 @@ class CodeGenerator:
             out('    MenuHeader header{ ', end='')
 
         out(f'{menu.properties[Constants.kOnInit]}, {menu.properties[Constants.kOnReturn]}, '
-            f'{menu.properties[Constants.kOnDraw]}, {menu.properties[Constants.kInitialEntry]}', end='')
+            f'{menu.properties[Constants.kOnDraw]}, ', end='')
+        if menuHeaderV2:
+            out(f'{menu.properties[Constants.kOnDestroy]}, ', end='')
+        out(f'{menu.properties[Constants.kInitialEntry]}', end='')
 
         if menuHeaderV2:
             out(', { ' + ''.join(map(lambda val: f'{("false", "true")[val]}, ', nativeFunction)) + '}', end='')
@@ -297,7 +319,7 @@ class CodeGenerator:
 
         out('    };')
 
-        if len(entries):
+        if entries:
             out('\n    // entry references')
             for entryName, ordinal in entries:
                 out((f'    static auto& {entryName}Entry = *reinterpret_cast<MenuEntry *>'
@@ -331,7 +353,7 @@ class CodeGenerator:
         if entry.text:
             if Variable.isSwos(entry.text):
                 entry.text = f'SwosVM::Offsets::{entry.text[1:]}'
-            elif entry.text not in ('-1', '(-1)'):
+            elif entry.text not in ('-1', '(-1)', '0'):
                 entry.native.add('text')
 
     # getEntryStructs
@@ -357,6 +379,8 @@ class CodeGenerator:
             text = str(entry.text).strip()
             if text in ('-1', '(-1)'):
                 text = '-1'
+            elif text == '0':
+                text = 'nullptr'
             native = 'Native' if 'text' in entry.native else ''
             result.append(f'EntryText{native} et{ord}{{ {entry.textFlags}, {text} }};')
 
@@ -369,14 +393,27 @@ class CodeGenerator:
                 else:
                     result[-1] += f'SwosVM::Offsets::{entry.stringTable.variable} }};'
             else:
-                name = Util.getStringTableName(menuName, entry)
+                name = CodeGenerator.getStringTableVariableName(menuName, entry)
                 result[-1] += f'&{name} }};'
+
+        if entry.multilineText is not None:
+            if entry.multilineText:
+                var = CodeGenerator.getMultilineTextVariableName(menuName, entry)
+                var = f'reinterpret_cast<MultilineText *>(&{var})'
+                native = 'Native'
+            else:
+                var = 'nullptr'
+                native = ''
+            result.append(f'EntryMultilineText{native} emt{ord}{{ {entry.textFlags}, {var} }};')
 
         if entry.number is not None:
             result.append(f'EntryNumber en{ord}{{ {entry.textFlags}, {entry.number} }};')
 
         if entry.sprite is not None:
             result.append(f'EntryForegroundSprite efs{ord}{{ {entry.sprite} }};')
+
+        if entry.menuSpecificSprite is not None:
+            result.append(f'EntryMenuSpecificSprite emss{ord}{{}};')
 
         if entry.customDrawForeground is not None:
             native = 'Native' if 'customDrawForeground' in entry.native else ''
@@ -425,3 +462,32 @@ class CodeGenerator:
             result.append(f'EntryOnReturnFunction{native} eadf{ord}{{ {entry.onReturn} }};')
 
         return result
+
+    # getTableVariableName
+    #
+    # in:
+    #     menuName    - name of the parent menu
+    #     entry       - entry for which we're deciding table name
+    #     tableClass  - table class name used as a suffix to make it unique
+    #
+    # Forms and returns a unique string table variable name for the entry.
+    #
+    @staticmethod
+    def getTableVariableName(menuName, entry, tableClass):
+        assert isinstance(menuName, str)
+        assert isinstance(entry, Entry)
+
+        name = menuName + '_' + entry.name
+
+        if not entry.name:
+            name += f'{entry.ordinal:02}'
+
+        return name + '_' + tableClass
+
+    @staticmethod
+    def getStringTableVariableName(menuName, entry):
+        return CodeGenerator.getTableVariableName(menuName, entry, 'stringTable')
+
+    @staticmethod
+    def getMultilineTextVariableName(menuName, entry):
+        return CodeGenerator.getTableVariableName(menuName, entry, 'multilineText')

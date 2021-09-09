@@ -1,0 +1,124 @@
+#include "timer.h"
+#include "game.h"
+
+constexpr double kTargetFps = 70;
+static constexpr int kMaxLastFrames = 64;
+
+static Sint64 m_frequency;
+
+static Uint64 m_lastFrameTicks;
+static double m_ticksPerFrame;
+
+static Uint64 m_frameStartTime;
+static Uint64 m_renderEndTime;
+
+static std::deque<Uint64> m_lastFramesDelay;
+
+static std::array<Uint64, kMaxLastFrames> m_renderTimes;
+static int m_renderTimesIndex;
+
+static void sleep(Uint64 sleepTicks);
+static Uint64 getAverageRenderTime();
+
+void initTimer()
+{
+    m_frequency = SDL_GetPerformanceFrequency();
+    m_ticksPerFrame = m_frequency / kTargetFps;
+}
+
+void initFrameTicks()
+{
+    m_lastFrameTicks = SDL_GetPerformanceCounter();
+    m_renderTimes.fill(0);
+}
+
+// Simulates SWOS procedure executed at each interrupt 8 tick.
+// This will have to change and be calculated dynamically based on time elapsed since the last call.
+void timerProc()
+{
+    auto now = SDL_GetPerformanceCounter();
+    auto ticksElapsed = now - m_frameStartTime;
+    int framesElapsed = std::max(1l, std::lround(ticksElapsed / m_ticksPerFrame));
+
+    swos.currentTick += framesElapsed;
+    swos.menuCycleTimer += framesElapsed;
+
+    if (!isGamePaused())
+        swos.stoppageTimer += framesElapsed;
+}
+
+void markFrameStartTime()
+{
+    m_frameStartTime = SDL_GetPerformanceCounter();
+}
+
+void skipFrameUpdate()
+{
+    m_frameStartTime = m_renderEndTime = SDL_GetPerformanceCounter();
+}
+
+void frameDelay(double factor /* = 1.0 */)
+{
+    if (factor > 1.0) {
+        // don't use busy wait in menus
+        auto delay = std::lround(1'000 * factor / kTargetFps);
+        SDL_Delay(delay);
+        return;
+    }
+
+    Uint64 desiredDelay = std::llround(m_frequency * factor / kTargetFps);
+    desiredDelay -= getAverageRenderTime();
+
+    auto diff = SDL_GetPerformanceCounter() - m_frameStartTime;
+
+    if (diff < desiredDelay) {
+        sleep(desiredDelay - diff);
+
+        Uint64 startTicks;
+        do {
+            startTicks = SDL_GetPerformanceCounter();
+        } while (m_frameStartTime + desiredDelay > startTicks);
+    }
+
+    timerProc();
+}
+
+void measureRendering(std::function<void()> render)
+{
+    auto start = SDL_GetPerformanceCounter();
+    render();
+    auto time = SDL_GetPerformanceCounter() - start;
+
+    m_renderTimes[m_renderTimesIndex] = time;
+    m_renderTimesIndex = (m_renderTimesIndex + 1) % (kMaxLastFrames - 1);
+
+    markFrameStartTime();
+}
+
+static void sleep(Uint64 sleepTicks)
+{
+    // measure deviation from the desired sleep value and what the system actually delivers
+    constexpr int kNumFramesForSlackValue = 64;
+    static std::array<Uint64, kNumFramesForSlackValue> s_slackValues;
+    static int s_slackValueIndex;
+
+    auto slackValue = std::accumulate(s_slackValues.begin(), s_slackValues.end(), 0LL);
+    slackValue = (slackValue + (slackValue > 0 ? kNumFramesForSlackValue : -kNumFramesForSlackValue) / 2) / kNumFramesForSlackValue;
+
+    if (static_cast<Sint64>(sleepTicks) > slackValue) {
+        auto intendedDelay = 1'000 * (sleepTicks - slackValue) / m_frequency;
+
+        auto delayStart = SDL_GetPerformanceCounter();
+        SDL_Delay(static_cast<Uint32>(intendedDelay));
+        auto actualDelay = SDL_GetPerformanceCounter() - delayStart;
+
+        s_slackValues[s_slackValueIndex] = actualDelay - intendedDelay * m_frequency / 1'000;
+        s_slackValueIndex = (s_slackValueIndex + 1) % kNumFramesForSlackValue;
+    }
+}
+
+static Uint64 getAverageRenderTime()
+{
+    auto sum = std::accumulate(m_renderTimes.begin(), m_renderTimes.end(), 0LL);
+    return (sum + m_renderTimes.size() / 2) / m_renderTimes.size();
+}

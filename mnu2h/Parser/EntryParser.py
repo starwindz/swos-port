@@ -3,7 +3,6 @@ import Constants
 import Parser.Common
 
 from Menu import Menu
-from Entry import Entry
 from Token import Token
 from Tokenizer import Tokenizer
 from Variable import Variable
@@ -27,10 +26,13 @@ class EntryParser:
         self.varStorage = varStorage
 
         self.defaultPropertyTokenizer = Tokenizer.empty()
+
+        self.init()
+
+    def init(self):
         self.functions = set()
         self.stringTableLength = 0
 
-        self.menu = None
         self.entry = None
 
     # parse
@@ -44,6 +46,8 @@ class EntryParser:
     def parse(self, menu, isTemplate):
         assert isinstance(menu, Menu)
         assert isinstance(isTemplate, bool)
+
+        self.init()
 
         self.menu = menu
 
@@ -166,6 +170,9 @@ class EntryParser:
         elif property == 'stringTable':
             result = self.parseStringTable()
             self.checkForWhitespaceInStrings(property, result.values, valueToken)
+        elif property == 'multilineText':
+            result = self.parseMultilineText()
+            self.checkForWhitespaceInStrings(property, result, valueToken)
         else:
             result = self.expressionParser.parse(self.menu)
             self.checkForWhitespaceInStrings(property, result, valueToken)
@@ -251,6 +258,20 @@ class EntryParser:
                 if property2 != property and getattr(self.entry, property2) is not None and property2 in userSetProperties:
                     Util.error(f"can't use properties `{property}' and `{property2}' at the same time", token)
 
+    # parseMultilineText
+    #
+    # Parses multi line text block and returns a list of strings. Block is defined by a list of strings
+    # separated by comma, all inside square brackets.
+    #
+    def parseMultilineText(self):
+        token = self.tokenizer.getNextToken()
+        if token.string in ('0', '@kNull'):
+            return []
+        token = self.tokenizer.expect('[', token, fetchNextToken=True)
+        values = self.getStringList(token, True)
+        values = list(map(Util.unquotedString, values))
+        return values
+
     # parseStringTable
     #
     # Parses string table block and returns a filled-in string table object and a token that follows it.
@@ -279,7 +300,7 @@ class EntryParser:
 
             token, variable, declareIndexVariable, externIndexVariable = self.getStringTableIndexVariable(token)
             token, initialValue = self.getStringTableInitialStringIndex(token)
-            values = self.getStringTableStrings(token)
+            values = self.getStringList(token, False)
             nativeFlags = self.getNativeFlags(variable, values)
 
             removeSwosVar = lambda val: Variable.extractSwosVar(val) if Variable.isSwos(val) else val
@@ -321,9 +342,16 @@ class EntryParser:
         assert isinstance(token, Token)
 
         initialValue = 0
+        negative = False
+
+        while token.string == '-':
+            negative = not negative
+            token = self.tokenizer.getNextToken()
 
         try:
             initialValue = int(token.string, 0)
+            if negative:
+                initialValue = -initialValue
 
             token = self.tokenizer.getNextToken()
             token = self.tokenizer.expect(',', token, fetchNextToken=True)
@@ -332,7 +360,7 @@ class EntryParser:
 
         return token, initialValue
 
-    def getStringTableStrings(self, token):
+    def getStringList(self, token, onlyLiterals):
         assert isinstance(token, Token)
 
         values = []
@@ -344,14 +372,19 @@ class EntryParser:
             if string[0] == string[-1] == "'":
                 string = '"' + string[1:-1] + '"'
             elif string == 'swos':
+                if onlyLiterals:
+                    Util.error('SWOS variables not supported', token)
                 token = Parser.Common.getSwosVariable(self.tokenizer)
                 string = token.string
                 idString = string[1:]
 
             values.append(string)
 
-            if not idString.isidentifier() and not Util.isString(string):
-                Util.error(f"expecting string or identifier, got `{token.string}'", token)
+            if not Util.isString(string):
+                if onlyLiterals:
+                    Util.error(f"expected string literal, got `{token.string}'", token)
+                if not idString.isidentifier():
+                    Util.error(f"expected string or identifier, got `{token.string}'", token)
 
             token = self.tokenizer.getNextToken("`]' or `,'")
             if token.string == ']':

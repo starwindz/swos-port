@@ -46,3 +46,22 @@ class ExpressionHandler:
         assert isinstance(varStorage, VariableStorage)
 
         return self.evaluator.createSingleOperandExpression(token, menu, variable, varStorage)
+
+    # Returns the first token (or None if there aren't any) of a preprocessor variable that depends on some
+    # entry value (e.g. @prevY) inside the given node list.
+    def containsEntryDependentPreprocessorVariable(self, nodes):
+        assert isinstance(nodes, list)
+
+        entryToken = None
+
+        def isEntryDependentVar(token):
+            if token.string.startswith(('@prev', '@cur', '@next')):
+                nonlocal entryToken
+                entryToken = token
+                return False
+            else:
+                return True
+
+        self.evaluator.iterateVariableNodes(nodes, isEntryDependentVar)
+
+        return entryToken

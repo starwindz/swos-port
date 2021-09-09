@@ -3,6 +3,7 @@
 #include "loadTexture.h"
 #include "camera.h"
 #include "game.h"
+#include "replays.h"
 #include "render.h"
 #include "file.h"
 #include "util.h"
@@ -52,14 +53,11 @@ void loadPitch()
 }
 
 // Renders pitch at cameraX and cameraY.
-void drawPitch()
+void drawPitch(FixedPoint cameraX, FixedPoint cameraY)
 {
-    auto cameraX = getCameraX();
-    auto cameraY = getCameraY();
-
     // make sure to skip the top invisible row
-    int row = swos.g_cameraY / kSwosPatternSize - 1;
-    int column = swos.g_cameraX / kSwosPatternSize;
+    int row = cameraY.whole() / kSwosPatternSize - 1;
+    int column = cameraX.whole() / kSwosPatternSize;
     float xOfs = FixedPoint(cameraX.whole() % kSwosPatternSize, cameraX.fraction());
     float yOfs = FixedPoint(cameraY.whole() % kSwosPatternSize, cameraY.fraction());
 
@@ -72,19 +70,21 @@ void drawPitch()
 
     setCameraX(cameraX);
     setCameraY(cameraY);
-    swos.g_oldCameraX = cameraX.whole();
-    swos.g_oldCameraY = cameraY.whole();
 
+    // unfortunately, this has to stay until UpdateCameraBreakMode() is converted
     swos.cameraCoordinatesValid = 1;
+}
+
+void drawPitchAtCurrentCamera()
+{
+    drawPitch(getCameraX(), getCameraY());
 }
 
 void SWOS::ScrollToCurrent()
 {
-    drawPitch();
+    drawPitchAtCurrentCamera();
 }
 
-// Using floating point SDL calls resulted with visible stitches in patterns. Switched to integer, rounding
-// pattern size to higher number to avoid running out of pixels to draw if the camera is at the rightmost point.
 static void drawPitch(float xOfs, float yOfs, int row, int column, int numPatternsX, int numPatternsY)
 {
     int screenWidth, screenHeight;
@@ -158,7 +158,8 @@ static void drawPitch(float xOfs, float yOfs, int row, int column, int numPatter
 
 void SWOS::DrawAnimatedPatterns()
 {
-    if (!swos.replayState && !swos.g_trainingGame && swos.showFansCounter)
+    // must decrease this so the camera would start moving at the start of the game
+    if (!replayingNow() && !swos.g_trainingGame && swos.showFansCounter)
         swos.showFansCounter--;
     //...
 }

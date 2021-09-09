@@ -70,7 +70,16 @@ void initMenuSprites()
 const PackedSprite& getSprite(int index)
 {
     assert(static_cast<size_t>(index) < m_packedSprites[m_res].size());
+//fixme
+    assert(index==225||
+        m_packedSprites[m_res][index].widthF && m_packedSprites[m_res][index].heightF);
+
     return m_packedSprites[m_res][index];
+}
+
+void setSprite(int index, const PackedSprite& sprite)
+{
+    m_packedSprites[m_res][index] = sprite;
 }
 
 SDL_Texture *getTexture(const PackedSprite& sprite)

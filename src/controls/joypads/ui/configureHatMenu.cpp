@@ -5,6 +5,7 @@
 #include "gameControlEvents.h"
 #include "textInput.h"
 #include "selectGameControlEventsMenu.h"
+#include "continueAbortMenu.h"
 #include "configureHat.mnu.h"
 
 static int m_joypadIndex;
@@ -119,7 +120,7 @@ static void toggleEvent()
 
     assert(static_cast<size_t>(index) <= lastEventLabel - firstEventLabel);
 
-    bool active = getMenuEntry(firstEventStatus + index)->string() == swos.aOn;
+    bool active = !strcmp(getMenuEntry(firstEventStatus + index)->string(), "ON");
 
     int mask;
 
@@ -148,7 +149,7 @@ static void toggleInverted()
 
     assert(entry->ordinal == invertedLabel || entry->ordinal == invertedStatus);
 
-    bool active = getMenuEntry(invertedStatus)->string() == swos.aOn;
+    bool active = !strcmp(getMenuEntry(invertedStatus)->string(), "ON");
 
     (*m_bindings)[m_currentBinding].inverted = !active;
     setMask(!active, invertedLabel, invertedStatus);
@@ -284,7 +285,7 @@ static void setMask(bool activate, int labelIndex, int statusIndex)
     getMenuEntry(labelIndex)->setBackgroundColor(color);
     auto status = getMenuEntry(statusIndex);
     status->setBackgroundColor(color);
-    status->setString(activate ? swos.aOn : swos.aOff);
+    status->copyString(activate ? "ON" : "OFF");
 }
 
 static bool exitIfDisconnected()

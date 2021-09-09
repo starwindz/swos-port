@@ -5,7 +5,8 @@
 
 void updateTeamControls();
 GameControlEvents getPlayerEvents(PlayerNumber player);
-bool getShortFireAndUpdateFireCounter(bool currentFire, PlayerNumber player = kPlayer1);
+bool isPlayerFiring(PlayerNumber player);
+bool getShortFireAndBumpFireCounter(bool currentFire, PlayerNumber player = kPlayer1);
 int16_t eventsToDirection(GameControlEvents events);
 GameControlEvents directionToEvents(int16_t direction);
 bool isAnyPlayerFiring();

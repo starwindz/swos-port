@@ -1,6 +1,7 @@
 #include "windowModeMenu.h"
 #include "windowManager.h"
 #include "menuMouse.h"
+#include "continueMenu.h"
 #include "text.h"
 #include "textInput.h"
 
@@ -267,7 +268,7 @@ static void changeResolutionSelected()
     } else {
         logWarn("Failed to switch to %s", entry->string());
         snprintf(buffer, kBufferSize, "FAILED TO SWITCH TO %s", entry->string());
-        showError(buffer);
+        showErrorMenu(buffer);
     }
 }
 

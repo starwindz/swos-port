@@ -195,7 +195,7 @@ static void processEvent(const SDL_Event& event)
             bool pressed = event.type == SDL_KEYDOWN;
 
             if (m_shortcutsEnabled)
-                checkKeyboardShortcuts(key, pressed);
+                checkGlobalKeyboardShortcuts(key, pressed);
 
             if (pressed)
                 registerKey(key);
@@ -277,9 +277,6 @@ void processControlEvents()
 
     while (SDL_PollEvent(&event))
         processEvent(event);
-
-    if (swos.paused)
-        SDL_Delay(15);
 }
 
 void setGlobalShortcutsEnabled(bool enabled)
@@ -360,11 +357,7 @@ void initGameControls()
 
     // TODO: kill with fire when possible
     swos.pl1Fire = 0;
-    swos.pl1SecondaryFire = 0;
-    swos.pl1Direction = -1;
     swos.pl2Fire = 0;
-    swos.pl2SecondaryFire = 0;
-    swos.pl2Direction = -1;
 }
 
 bool gotMousePlayer()
@@ -372,33 +365,9 @@ bool gotMousePlayer()
     return m_pl1Controls == kMouse || m_pl2Controls == kMouse;
 }
 
-// Returns true if last pressed key belongs to selected keys of any currently active player.
-bool testForPlayerKeys()
+// Returns true if the key belongs to selected keys of any currently active player.
+bool testForPlayerKeys(SDL_Scancode key)
 {
-    auto key = lastKey();
-
-    return swos.playMatchTeam1Ptr->teamControls != kComputerTeam && m_pl1Controls == kKeyboard1 && keyboard1HasScancode(key) ||
-        swos.playMatchTeam2Ptr->teamControls != kComputerTeam && m_pl2Controls == kKeyboard2 && keyboard2HasScancode(key);
-}
-
-// outputs:
-//   ASCII code in convertedKey
-//   scan code in lastKey
-//   0 if nothing pressed
-//
-void SWOS::GetKey()
-{
-    processControlEvents();
-
-    swos.convertedKey = 0;
-    swos.lastKey = 0;
-
-    auto lastKey = getKey();
-    if (lastKey != SDL_SCANCODE_UNKNOWN) {
-        auto pcScanCode = sdlScancodeToPc(lastKey);
-        if (pcScanCode != 255) {
-            swos.lastKey = sdlScancodeToPc(lastKey);
-            swos.convertedKey = swos.convertKeysTable[swos.lastKey];
-        }
-    }
+    return swos.playMatchTeam1Ptr && swos.playMatchTeam1Ptr->teamControls != kComputerTeam && m_pl1Controls == kKeyboard1 && keyboard1HasScancode(key) ||
+        swos.playMatchTeam2Ptr && swos.playMatchTeam2Ptr->teamControls != kComputerTeam && m_pl2Controls == kKeyboard2 && keyboard2HasScancode(key);
 }

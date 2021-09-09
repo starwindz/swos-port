@@ -7,4 +7,5 @@ skillsPerQuadrant
 ofsPitch1Dat - aPitch1_dat
 aPitch1_blk - aPitch6_blk
 
-aChairmanScenes - aQueensland (SWOS string table, offset into it are used)
+000C16F8 aChairmanScenes
+000C6FBB aQueensland (SWOS string table, offset into it are used)

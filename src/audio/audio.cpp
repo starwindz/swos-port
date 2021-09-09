@@ -7,13 +7,18 @@
 #include "log.h"
 #include "swos.h"
 #include "options.h"
+
+static int16_t m_musicEnabled;
+static int16_t m_soundEnabled;
+static int16_t m_commentaryEnabled;
+
 #include "audioOptions.mnu.h"
 
 constexpr int kMaxVolume = MIX_MAX_VOLUME;
 constexpr int kMinVolume = 0;
 
-static int16_t m_volume = 100;                      // master sound volume
-static std::atomic<int16_t> m_musicVolume = 100;    // atomic since ADL thread will need to access it
+static int16_t m_volume = 100;          // master sound volume
+static int16_t m_musicVolume = 100;
 
 static int m_actualFrequency;
 static int m_actualChannels;
@@ -62,7 +67,7 @@ void ensureMenuAudioFrequency()
 
 void initAudio()
 {
-    if (!swos.g_soundOff)
+    if (m_soundEnabled)
         resetMenuAudio();
 }
 
@@ -81,17 +86,12 @@ void stopAudio()
     }
 }
 
-void SWOS::StopAudio()
-{
-    stopAudio();
-}
-
 static void channelFinished(int channel);
 
 // Called when switching from menus to the game.
 void initGameAudio()
 {
-    if (swos.g_soundOff)
+    if (!m_soundEnabled)
         return;
 
     waitForMusicToFadeOut();
@@ -110,23 +110,34 @@ static void channelFinished(int channel)
         logDebug("Channel %d finished playing", channel);
 }
 
-int playIntroSample(void *buffer, int size, int volume, int loopCount)
+bool soundEnabled()
 {
-    assert(m_actualFrequency == kGameFrequency && m_actualChannels <= 2);
-//    assert(size == kIntroBufferSize);
-    assert(loopCount == 0);
+    return m_soundEnabled != 0;
+}
 
-//    static Mix_Chunk *chunk;
-//    Mix_FreeChunk(chunk);
+void setSoundEnabled(bool enabled)
+{
+    m_soundEnabled = enabled;
+}
 
-    //char waveBuffer[8 * kIntroBufferSize];
-    //fillWaveBuffer(waveBuffer, buffer, size);
+bool musicEnabled()
+{
+    return m_musicEnabled != 0;
+}
 
-//    chunk = chunkFromBuffer(waveBuffer, kSizeofWaveHeader + size);
-//    static uint16_t stereoBuffer[kIntroBufferSize];
+void setMusicEnabled(bool enabled)
+{
+    m_musicEnabled = enabled;
+}
 
-//    return Mix_PlayChannel(0, chunk, 0);
-    return -1;
+bool commentaryEnabled()
+{
+    return m_commentaryEnabled != 0;
+}
+
+void setCommentaryEnabled(bool enabled)
+{
+    m_commentaryEnabled = enabled;
 }
 
 //
@@ -134,10 +145,10 @@ int playIntroSample(void *buffer, int size, int volume, int loopCount)
 //
 
 static const std::array<Option<int16_t>, 4> kAudioOptions = {{
-    { "soundOff", &swos.g_soundOff, 0, 1, 0 },
-    { "musicOff", &swos.g_musicOff, 0, 1, 0 },
-    { "commentary", &swos.g_commentary, 0, 1, 1 },
-    { "crowdChants", &swos.g_crowdChantsOn, 0, 1, 1 },
+    { "sound", &m_soundEnabled, 0, 1, 1 },
+    { "music", &m_musicEnabled, 0, 1, 1 },
+    { "commentary", &m_commentaryEnabled, 0, 1, 1 },
+    { "crowdChants", &m_crowdChantsEnabled, 0, 1, 1 },
 }};
 
 const char kAudioSection[] = "audio";
@@ -160,7 +171,7 @@ static void setMasterVolume(int volume, bool apply = true)
 {
     setVolume(m_volume, volume, "master");
 
-    if (apply && !swos.g_soundOff)
+    if (apply && m_soundEnabled)
         Mix_Volume(-1, m_volume);
 }
 
@@ -173,7 +184,7 @@ static void setMusicVolume(int volume, bool apply = true)
 {
     setVolume(m_musicVolume, volume, "music");
 
-    if (apply && !swos.g_soundOff && !swos.g_musicOff)
+    if (apply && m_soundEnabled && m_musicEnabled)
         Mix_VolumeMusic(m_musicVolume);
 }
 
@@ -181,7 +192,7 @@ void loadAudioOptions(const CSimpleIniA& ini)
 {
     loadOptions(ini, kAudioOptions, kAudioSection);
 
-    swos.g_menuMusic = !swos.g_musicOff;
+    setCrowdChantsEnabled(m_crowdChantsEnabled != 0);
 
     auto volume = ini.GetLongValue(kAudioSection, kMasterVolume, 100);
     setMasterVolume(volume, false);
@@ -192,7 +203,7 @@ void loadAudioOptions(const CSimpleIniA& ini)
 
 void saveAudioOptions(CSimpleIni& ini)
 {
-    swos.g_musicOff = !swos.g_menuMusic;
+    m_crowdChantsEnabled = areCrowdChantsEnabled();
 
     saveOptions(ini, kAudioOptions, kAudioSection);
 
@@ -211,27 +222,31 @@ void showAudioOptionsMenu()
 
 static void toggleMasterSound()
 {
-    swos.g_soundOff = !swos.g_soundOff;
+    m_soundEnabled = !m_soundEnabled;
 
-    if (swos.g_soundOff) {
+    if (m_soundEnabled) {
+        initAudio();
+        if (m_musicEnabled)
+            restartMusic();
+    } else {
         finishMusic();
         finishAudio();
-    } else {
-        initAudio();
-        if (swos.g_menuMusic)
-            restartMusic();
     }
 }
 
 static void toggleMenuMusic()
 {
-    swos.g_menuMusic = !swos.g_menuMusic;
-    swos.g_musicOff = !swos.g_menuMusic;
+    m_musicEnabled = !m_musicEnabled;
 
-    if (swos.g_menuMusic)
+    if (m_musicEnabled)
         restartMusic();
     else
         finishMusic();
+}
+
+static void toggleCommentary()
+{
+    m_commentaryEnabled = !m_commentaryEnabled;
 }
 
 static void increaseVolume()
@@ -272,8 +287,6 @@ static void musicVolumeBeforeDraw()
 
 static void toggleCrowdChants()
 {
-    if (!swos.g_crowdChantsOn)
-        SWOS::TurnCrowdChantsOn();
-    else
-        SWOS::TurnCrowdChantsOff();
+    m_crowdChantsEnabled = !m_crowdChantsEnabled;
+    setCrowdChantsEnabled(m_crowdChantsEnabled != 0);
 }

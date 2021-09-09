@@ -113,6 +113,7 @@ Menu gameplayOptionsMenu
     Entry { text: swos.aAutoSaveHighli }
     Entry { text: "AUTO SAVE REPLAYS" }
     Entry { text: swos.aChairmanScenes }
+    Entry { text: "SHOW PRE-MATCH MENUS" }
     Entry { text: "GAME STYLE" }
 
     // start of column 2, where the actual controls are
@@ -124,34 +125,40 @@ Menu gameplayOptionsMenu
 
     Entry gameLength {
         y: kGamePlayOptionsStartY
-        stringTable: swos.gameLengthStrTable
+        stringTable: [
+            swos.g_gameLength,
+            "3 MINS", "5 MINS", "7 MINS", "10 MINS"
+        ]
         onSelect: swos.ChangeGameLength
         downEntry: >
     }
 
     Entry {
-        stringTable: swos.pitchTypeStrTable
+        stringTable: [
+            swos.g_pitchType, -2,
+            "SEASONAL", "RANDOM", "FROZEN", "MUDDY", "WET", "SOFT", "NORMAL", "DRY", "HARD"
+        ]
         onSelect: swos.ChangePitchType
         upEntry: <
         downEntry: >
     }
 
     Entry {
-        stringTable: swos.autoReplaysStrTable
+        stringTable: [ swos.g_autoReplays, "OFF", "ON" ]
         onSelect: swos.ChangeAutoReplays
         upEntry: <
         downEntry: >
     }
 
     Entry {
-        stringTable: swos.allPlTeamsEqualStrTable
+        stringTable: [ swos.g_allPlayerTeamsEqual, "OFF", "ON" ]
         onSelect: swos.ChangeAllPlTeamsEqual
         upEntry: <
         downEntry: >
     }
 
     Entry {
-        stringTable: swos.autoSaveHlStrTable
+        stringTable: [ swos.g_autoSaveHighlights, "OFF", "ON" ]
         onSelect: swos.ChangeAutoSaveHighlights
         upEntry: <
         downEntry: >
@@ -165,8 +172,15 @@ Menu gameplayOptionsMenu
     }
 
     Entry {
-        stringTable: swos.chairmanScenesStrTable
+        stringTable: [ swos.g_chairmanScenes, "OFF", "ON" ]
         onSelect: swos.ChangeChairmanScenes
+        upEntry: <
+        downEntry: >
+    }
+
+    Entry {
+        stringTable: [ ~m_showPreMatchMenus, "OFF", "ON" ]
+        onSelect: toggleShowPreMatchMenus
         upEntry: <
         downEntry: >
     }

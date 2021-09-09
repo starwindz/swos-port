@@ -1,6 +1,7 @@
 #include "chants.h"
 #include "audio.h"
 #include "sfx.h"
+#include "game.h"
 #include "file.h"
 #include "util.h"
 #include "SoundSample.h"
@@ -13,6 +14,8 @@ static SoundSample m_resultSample;
 static int m_fadeInChantTimer;
 static int m_fadeOutChantTimer;
 static int m_nextChantTimer;
+
+static bool m_crowdChantsEnabled;
 
 enum ChantFunctionIndices {
     kPlayIntroChant, kPlayFansChant8l, kPlayFansChant10l, kPlayFansChant4l,
@@ -28,6 +31,7 @@ static Mix_Chunk *m_chantsSample;
 static int m_chantsChannel = -1;
 
 static void playChant(SfxSampleIndex index);
+static void stopChants();
 static void setVolumeOrStopChants(int volume);
 static int getChantSampleIndex();
 static void loadChantSample(int sampleIndex);
@@ -36,7 +40,7 @@ static void fadeOutChantsIfGameTurnedBoring(bool wasInteresting);
 // Called when initializing the game loop.
 void loadIntroChant()
 {
-    if (swos.g_soundOff)
+    if (!soundEnabled())
         return;
 
     auto color = swos.topTeamIngame.prShirtCol;
@@ -47,10 +51,7 @@ void loadIntroChant()
     };
     auto chantIndex = kIntroTeamChantIndices[color];
 
-    std::string prefix;
-    bool hasAudioDir = dirExists(kAudioDir);
-    if (hasAudioDir)
-        prefix = "audio"s + getDirSeparator();
+    auto prefix = "audio"s + getDirSeparator();
 
     if (chantIndex >= 0) {
         assert(chantIndex < 6);
@@ -59,10 +60,9 @@ void loadIntroChant()
 
         logInfo("Picked intro chant %d `%s'", chantIndex, introChantFile);
 
-        if (hasAudioDir)
-            introChantFile += 4;    // skip "sfx\" prefix
+        introChantFile += 4;    // skip "sfx\" prefix
 
-        m_introChantSample.loadFromFile(hasAudioDir ? (prefix + introChantFile).c_str() : introChantFile);
+        m_introChantSample.loadFromFile((prefix + introChantFile).c_str());
         m_chants[kPlayIntroChant] = SWOS::PlayIntroChantSample;
     } else {
         logInfo("Not playing intro chant");
@@ -78,7 +78,7 @@ void loadIntroChant()
 
 void loadCrowdChantSample()
 {
-    if (swos.g_soundOff || !swos.g_commentary)
+    if (!soundEnabled() || !commentaryEnabled() || swos.g_trainingGame)
         return;
 
     bool wasInteresting = m_interestingGame;
@@ -121,7 +121,7 @@ bool chantsOnChannelFinished(int channel)
 
 void playCrowdChants()
 {
-    if (swos.g_soundOff || !swos.g_crowdChantsOn || swos.g_trainingGame)
+    if (!soundEnabled() || !m_crowdChantsEnabled || swos.g_trainingGame)
         return;
 
     if (m_fadeInChantTimer) {
@@ -165,9 +165,34 @@ void playFansChant4lSample()
     playChant(kChant4l);
 }
 
+bool areCrowdChantsEnabled()
+{
+    return m_crowdChantsEnabled;
+}
+
+void setCrowdChantsEnabled(bool crowdChantsEnabled)
+{
+    if (crowdChantsEnabled != m_crowdChantsEnabled) {
+        if (m_crowdChantsEnabled = crowdChantsEnabled) {
+            logInfo("Enabling crowd chants");
+            m_chantsChannel = -1;
+            m_fadeInChantTimer = 0;
+            m_fadeOutChantTimer = 0;
+            m_nextChantTimer = 0;
+
+            if (isMatchRunning())
+                playCrowdNoise();
+        } else {
+            logInfo("Disabling crowd chants");
+            stopChants();
+            stopBackgroudCrowdNoise();
+        }
+    }
+}
+
 static void playChant(Mix_Chunk *chunk)
 {
-    if (swos.g_soundOff || !swos.g_crowdChantsOn)
+    if (!soundEnabled() || !m_crowdChantsEnabled || swos.g_trainingGame)
         return;
 
     if (chunk) {
@@ -179,7 +204,7 @@ static void playChant(Mix_Chunk *chunk)
 
 static void playChant(SfxSampleIndex index)
 {
-    if (swos.g_soundOff || !swos.g_crowdChantsOn)
+    if (!soundEnabled() || !m_crowdChantsEnabled || swos.g_trainingGame)
         return;
 
     assert(index == kChant4l || index == kChant8l || index == kChant10l);
@@ -320,23 +345,4 @@ void SWOS::PlayResultSample()
         playChant(chunk);
     else
         logWarn("Failed to load result sample");
-}
-
-void SWOS::TurnCrowdChantsOn()
-{
-    m_chantsChannel = -1;
-    m_fadeInChantTimer = 0;
-    m_fadeOutChantTimer = 0;
-    m_nextChantTimer = 0;
-    swos.g_crowdChantsOn = 1;
-
-    if (swos.screenWidth == kGameScreenWidth)
-        playCrowdNoise();
-}
-
-void SWOS::TurnCrowdChantsOff()
-{
-    swos.g_crowdChantsOn = 0;
-    stopChants();
-    stopBackgroudCrowdNoise();
 }

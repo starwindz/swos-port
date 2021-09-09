@@ -384,8 +384,8 @@ offset  length  description
                 izgleda se inicijalizuje na 1, ako je ofs 142 tima != 0 (za igrace)
                 za golmane = 3
                 u MovePlayers, ako je lopta van igre ako je 1 stavi na 2
- 102        2   ako je < 0, igrac ima crveni karton, ako je > 0 igrac ima zuti
-                karton, ako je nula, nema kartona
+ 102        2   if < 0 the player has a red card, if > 0 the player has a yellow card
+                if zero no cards
  104        2   seems like something about injuries, seems if -2 => injury
                 can be -1 and -2
                 injury level, starting value for injury timer (how long the

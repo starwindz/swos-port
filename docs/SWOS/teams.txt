@@ -318,8 +318,18 @@ offset:  size:  desc.
                 - fresh played entering the game starts from value 0.
                 - this interpretation makes sense only for players from the
                   starting 11
-  37       1    player face index [0,1,2,3]
-  38      23    full name of the player
+  37       1    player face index, used when drawing player icon in stadium menu before the game; it gets
+                initialized differently from face field at offset 5, player index is gotten via
+                GetPlayerGameBreakPosition() instead of GetPlayerAtIndex()
+  38      23    full name of the player, it's actually wrong during the game, since it's initialized the same
+                way as previous field (luckily it's never used)
+
+Seems there is some mess in the code regarding the last two fields: when drawing player sprites in the stadium
+menu right before the game, players are traversed linearly from topTeamIngame and bottomTeamIngame. Face field
+from offset 37 and full name from offset 38 are used. But in the game face field from offset 5 is used, and
+players are iterated in a different manner: by GetPlayerAtIndex() which returns players in the order of
+tactics team uses. Ingame teams end up initialized with wrong data in fields at offset 37 and 38, but it
+doesn't manifest itself as they aren't used during the game.
 
 61 is the size of player structure. Players seems to be sorted by numbers
 inside the file structure.

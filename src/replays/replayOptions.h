@@ -5,3 +5,5 @@ void saveReplayOptions(CSimpleIni& ini);
 
 bool getAutoSaveReplays();
 void setAutoSaveReplays(bool autoSave);
+bool getShowReplayPercentage();
+void toggleShowReplayPercentage();

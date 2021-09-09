@@ -5,6 +5,7 @@
 #include "gameControlEvents.h"
 #include "textInput.h"
 #include "selectGameControlEventsMenu.h"
+#include "continueAbortMenu.h"
 #include "configureAxis.mnu.h"
 
 static int m_joypadIndex;

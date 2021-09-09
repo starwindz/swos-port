@@ -236,7 +236,7 @@ Menu controlOptionsMenu
         height: kOptionHeight
         color: kOptionsColumn2Color
 
-        stringTable: [ ~m_autoConnectJoypads, swos.aOff, swos.aOn ]
+        stringTable: [ ~m_autoConnectJoypads, "OFF", "ON" ]
 
         onSelect: toggleAutoConnectJoypads
 
@@ -250,7 +250,7 @@ Menu controlOptionsMenu
         height: kOptionHeight
         color: kOptionsColumn2Color
 
-        stringTable: [ ~m_enableMenuControllers, swos.aOff, swos.aOn ]
+        stringTable: [ ~m_enableMenuControllers, "OFF", "ON" ]
 
         onSelect: toggleMenuControllers
 
@@ -264,7 +264,7 @@ Menu controlOptionsMenu
         height: kOptionHeight
         color: kOptionsColumn2Color
 
-        stringTable: [ ~m_showSelectMatchControlsMenu, swos.aOff, swos.aOn ]
+        stringTable: [ ~m_showSelectMatchControlsMenu, "OFF", "ON" ]
 
         onSelect: toggleShowMatchControlsMenu
 

@@ -42,6 +42,12 @@ static inline char *stpcpy(char *dest, const char *src)
     return dest - 1;
 }
 
+template<typename T>
+size_t vectorByteSize(const std::vector<T>& vec)
+{
+    return vec.size() * sizeof(vec[0]);
+}
+
 struct TextInputScope {
     TextInputScope() { SDL_StartTextInput(); }
     ~TextInputScope() { SDL_StopTextInput(); }

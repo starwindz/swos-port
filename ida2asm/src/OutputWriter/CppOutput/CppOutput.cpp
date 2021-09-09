@@ -144,7 +144,7 @@ bool CppOutput::outputExterns()
 
     bool result = true;
 
-    for (const auto& [name, refType, customType] : m_references.externs()) {
+    for (const auto& [name, refType, customType, refProc] : m_references.externs()) {
         assert(name.length() && name.data());
 
         switch (refType) {
@@ -165,6 +165,8 @@ bool CppOutput::outputExterns()
             if (!m_error.empty())
                 m_error += '\n';
             m_error += "undefined reference found: " + name.string();
+            if (refProc)
+                m_error += " (referenced from: " + refProc.string() + ')';
             result = false;
             break;
         }

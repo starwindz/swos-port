@@ -27,7 +27,7 @@ class ExpressionParser:
     #     expandVariables - if false do not expand variables, copy everything verbatim
     #     tokenizer       - custom tokenizer to use (if not given will use standard one from the instance)
     #
-    # Parses an expression and returns the result (as string). This isn't a real expression evaluator,
+    # Parses an expression and returns the result (as a string). This isn't a real expression evaluator,
     # it will just make sure that the result is in the form a C++ compiler can evaluate.
     #
     def parse(self, menu=None, expandVariables=True, tokenizer=None):

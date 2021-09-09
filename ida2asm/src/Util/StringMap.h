@@ -142,7 +142,6 @@ public:
     T *add(const char *str, size_t len, Util::hash_t hash, Args... args) {
         assert(!m_nodes);
 
-        //auto size = T::requiredSize(args...);
         auto size = requiredSize<T, Args...>(args...);
         auto nodeSize = Node::requiredSize(len);
 

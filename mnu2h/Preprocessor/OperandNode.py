@@ -4,6 +4,7 @@ from Menu import Menu
 from Token import Token
 from Tokenizer import Tokenizer
 from VariableStorage import VariableStorage
+from Variable import Variable
 
 class InvalidOperandNode(Exception):
     def __init__(self, node):
@@ -25,8 +26,12 @@ class OperandNode:
         if not var:
             if token.string[0] == '@':
                 self.value = varStorage.expandBuiltinVariable(token.string, token, menu)
-                self.value = Util.removeEnclosingParentheses(self.value)
-                self.value = int(self.value, 0)
+                try:
+                    value = Util.removeEnclosingParentheses(self.value)
+                    value = int(self.value, 0)
+                    self.value = value
+                except ValueError:
+                    self.var = Variable(token.string, self.value, token)
             elif token.string.isidentifier():
                 if menu:
                     var = varStorage.getMenuVariable(menu, token.string)

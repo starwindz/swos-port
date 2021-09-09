@@ -8,29 +8,35 @@
 #include "replays.h"
 #include "replayExit.mnu.h"
 
-void showReplayExitMenuAfterFriendly()
+static bool m_replaySelected;
+
+bool showReplayExitMenuAfterFriendly()
 {
     showMenu(replayExitMenu);
+    return m_replaySelected;
 }
 
 static void replayExitMenuOnInit()
 {
-    swos.replaySelected = 0;
+    m_replaySelected = false;
 
-    drawMenu();     // redraw menu so it's ready for the fade-in
-    fadeIfNeeded();
+    drawMenu(false);    // redraw the menu so it's ready for the fade-in
+    fadeIn();
 
     SDL_ShowCursor(SDL_ENABLE);
 }
 
-static void replayExitMenuDone(bool replay = false)
+static void replayExitMenuDone(bool replay)
 {
-    swos.replaySelected = replay;
-//    FadeOutToBlack();
-    SetExitMenuFlag();
+    m_replaySelected = replay;
 
     if (replay)
         initNewReplay();
+
+    drawMenu(false);
+    fadeOut();
+
+    SetExitMenuFlag();
 
     updateCursor(replay);
 }
@@ -43,5 +49,5 @@ static void replayOnSelect()
 
 static void exitOnSelect()
 {
-    replayExitMenuDone();
+    replayExitMenuDone(false);
 }

@@ -181,6 +181,11 @@ const char *getAssetDir()
     return nullptr;
 }
 
+std::string getPathInAssetDir(const char *path)
+{
+    return std::string(getAssetDir()) + getDirSeparator() + path;
+}
+
 static void clampWindowSize(int& width, int& height)
 {
     assert(m_window);

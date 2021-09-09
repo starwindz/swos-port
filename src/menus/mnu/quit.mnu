@@ -4,13 +4,13 @@
 
 #include "common.mh"
 
-Menu quitMenu {
+Menu quitMenu
+{
     defaultX: kPromptItemsX
     defaultWidth: kPromptButtonWidth
     defaultHeight: kPromptButtonHeight
     defaultTextFlags: @kBigFont
 
-    onInit: quitMenuOnInit
     initialEntry: returnToGame
 
     Entry quit {

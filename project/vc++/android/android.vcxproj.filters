@@ -40,16 +40,7 @@
     <ClInclude Include="..\..\..\src\menus\mainMenu.h">
       <Filter>Source Files\menus</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\menus\menus.h">
-      <Filter>Source Files\menus</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\src\menus\menuCodes.h">
-      <Filter>Source Files\menus</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\src\menus\menuMouse.h">
-      <Filter>Source Files\menus</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\src\replays\ReplayData.h">
+    <ClInclude Include="..\..\..\src\replays\ReplayDataStorage.h">
       <Filter>Source Files\replays</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\src\replays\replayOptions.h">
@@ -90,9 +81,6 @@
     </ClInclude>
     <ClInclude Include="..\..\..\src\text\text.h">
       <Filter>Source Files\text</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\src\menus\drawMenu.h">
-      <Filter>Source Files\menus</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\src\controls\joypads\joypads.h">
       <Filter>Source Files\controls\joypads</Filter>
@@ -193,21 +181,6 @@
     <ClInclude Include="..\..\..\src\video\windowModeMenu.h">
       <Filter>Source Files\video</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\menus\menuItemRenderer.h">
-      <Filter>Source Files\menus</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\src\menus\menuProc.h">
-      <Filter>Source Files\menus</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\src\menus\MenuEntry.h">
-      <Filter>Source Files\menus</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\src\menus\menuBackground.h">
-      <Filter>Source Files\menus</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\src\menus\menuAlloc.h">
-      <Filter>Source Files\menus</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\src\sprites\sprites.h">
       <Filter>Source Files\sprites</Filter>
     </ClInclude>
@@ -265,6 +238,60 @@
     <ClInclude Include="..\..\..\src\game\color.h">
       <Filter>Source Files\game</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\src\menus\continueAbortMenu.h">
+      <Filter>Source Files\menus</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\replays\hilFile.h">
+      <Filter>Source Files\replays</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\game\stats.h">
+      <Filter>Source Files\game</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\menus\engine\drawMenu.h">
+      <Filter>Source Files\menus\engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\menus\engine\menuAlloc.h">
+      <Filter>Source Files\menus\engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\menus\engine\menuBackground.h">
+      <Filter>Source Files\menus\engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\menus\engine\menuCodes.h">
+      <Filter>Source Files\menus\engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\menus\engine\MenuEntry.h">
+      <Filter>Source Files\menus\engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\menus\engine\menuItemRenderer.h">
+      <Filter>Source Files\menus\engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\menus\engine\menuMouse.h">
+      <Filter>Source Files\menus\engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\menus\engine\menuProc.h">
+      <Filter>Source Files\menus\engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\menus\engine\menus.h">
+      <Filter>Source Files\menus\engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\menus\versusMenu.h">
+      <Filter>Source Files\menus</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\menus\stadiumMenu.h">
+      <Filter>Source Files\menus</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\menus\continueMenu.h">
+      <Filter>Source Files\menus</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\game\pitchConstants.h">
+      <Filter>Source Files\game</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\replays\LegacyReplayConverter.h">
+      <Filter>Source Files\replays</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\video\timer.h">
+      <Filter>Source Files\video</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source Files">
@@ -309,9 +336,6 @@
     <Filter Include="Source Files\text">
       <UniqueIdentifier>{4743f581-fde5-4078-9567-e0c1834b74fe}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\menus\mnu">
-      <UniqueIdentifier>{7c577fa3-9507-4369-9de0-3e2ac99f6ea5}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\controls\joypads">
       <UniqueIdentifier>{00c93686-86d7-490b-836f-8dae831c9d6a}</UniqueIdentifier>
     </Filter>
@@ -329,6 +353,9 @@
     </Filter>
     <Filter Include="Source Files\game">
       <UniqueIdentifier>{610c4129-7816-4a21-8965-2e0a657b0ef5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\menus\engine">
+      <UniqueIdentifier>{f0dab818-5f7c-4da5-8efe-889b111e7bf3}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -368,16 +395,7 @@
     <ClCompile Include="..\..\..\src\menus\mainMenu.cpp">
       <Filter>Source Files\menus</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\menus\menus.cpp">
-      <Filter>Source Files\menus</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\menus\menuMouse.cpp">
-      <Filter>Source Files\menus</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\menus\unpackMenu.cpp">
-      <Filter>Source Files\menus</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\replays\ReplayData.cpp">
+    <ClCompile Include="..\..\..\src\replays\ReplayDataStorage.cpp">
       <Filter>Source Files\replays</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\src\replays\replayOptions.cpp">
@@ -415,9 +433,6 @@
     </ClCompile>
     <ClCompile Include="..\..\..\src\text\text.cpp">
       <Filter>Source Files\text</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\menus\drawMenu.cpp">
-      <Filter>Source Files\menus</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\src\controls\joypads\joypads.cpp">
       <Filter>Source Files\controls\joypads</Filter>
@@ -471,9 +486,6 @@
     <ClCompile Include="..\..\..\src\controls\keyboard\testKeyboardMenu.cpp">
       <Filter>Source Files\controls\keyboard</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\menus\menuProc.cpp">
-      <Filter>Source Files\menus</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\src\controls\menuControls.cpp">
       <Filter>Source Files\controls</Filter>
     </ClCompile>
@@ -518,18 +530,6 @@
     </ClCompile>
     <ClCompile Include="..\..\..\src\video\windowModeMenu.cpp">
       <Filter>Source Files\video</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\menus\menuItemRenderer.cpp">
-      <Filter>Source Files\menus</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\menus\MenuEntry.cpp">
-      <Filter>Source Files\menus</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\menus\menuBackground.cpp">
-      <Filter>Source Files\menus</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\menus\menuAlloc.cpp">
-      <Filter>Source Files\menus</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\src\sprites\sprites.cpp">
       <Filter>Source Files\sprites</Filter>
@@ -623,6 +623,51 @@
     </ClCompile>
     <ClCompile Include="..\..\..\src\game\color.cpp">
       <Filter>Source Files\game</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\menus\continueAbortMenu.cpp">
+      <Filter>Source Files\menus</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\menus\engine\drawMenu.cpp">
+      <Filter>Source Files\menus\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\menus\engine\menuAlloc.cpp">
+      <Filter>Source Files\menus\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\menus\engine\menuBackground.cpp">
+      <Filter>Source Files\menus\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\menus\engine\MenuEntry.cpp">
+      <Filter>Source Files\menus\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\menus\engine\menuItemRenderer.cpp">
+      <Filter>Source Files\menus\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\menus\engine\menuMouse.cpp">
+      <Filter>Source Files\menus\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\menus\engine\menuProc.cpp">
+      <Filter>Source Files\menus\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\menus\engine\menus.cpp">
+      <Filter>Source Files\menus\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\menus\engine\unpackMenu.cpp">
+      <Filter>Source Files\menus\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\menus\versusMenu.cpp">
+      <Filter>Source Files\menus</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\menus\stadiumMenu.cpp">
+      <Filter>Source Files\menus</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\menus\continueMenu.cpp">
+      <Filter>Source Files\menus</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\replays\LegacyReplayConverter.cpp">
+      <Filter>Source Files\replays</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\video\timer.cpp">
+      <Filter>Source Files\video</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -1,5 +1,7 @@
 #include "selectMatchControls.h"
 #include "menuMouse.h"
+#include "drawMenu.h"
+#include "render.h"
 #include "controls.h"
 #include "joypads.h"
 #include "keyboard.h"
@@ -13,6 +15,7 @@ static bool m_twoPlayers;
 static bool m_keyboardPresent;
 
 static bool m_blockControlAssignment;
+static bool m_fadedOut;
 
 using namespace SelectMatchControlsMenu;
 
@@ -33,15 +36,25 @@ static bool isFinalTeamSetup()
 
 void SWOS::PlayMatchSelected()
 {
+    m_fadedOut = false;
+
     if (reinterpret_cast<TeamFile *>(swos.careerTeam)->teamControls == kComputerTeam)
         swos.careerTeamSetupDone = 1;
+
+    swos.g_allowShorterMenuItemsWithFrames = 0;
 
     if (!isFinalTeamSetup()) {
         swos.playerNumThatStarted = 1;
     } else {
         swos.playerNumThatStarted = std::max(1, numPlayers());
+
         if (swos.squadChangesAllowed && getShowSelectMatchControlsMenu() && !showSelectMatchControlsMenu())
             return;
+
+        if (!m_fadedOut) {
+            drawMenu(false);
+            fadeOut();
+        }
     }
 
     SetExitMenuFlag();
@@ -181,6 +194,10 @@ static void confirmSelection()
 {
     m_success = true;
     SetExitMenuFlag();
+
+    drawMenu(false);
+    fadeOut();
+    m_fadedOut = true;
 }
 
 static void configureControls(PlayerNumber player)

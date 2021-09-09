@@ -111,7 +111,7 @@ void SWOS::MenuCheckControls()
 
     auto events = getEventsFromAllControllers();
     events = filterResetEvents(events);
-    auto shortFire = getShortFireAndUpdateFireCounter((events & kGameEventNonMovementMask) != 0) || m_fire;
+    auto shortFire = getShortFireAndBumpFireCounter((events & kGameEventNonMovementMask) != 0) || m_fire;
     m_fire = false;
 
     if (swos.fireCounter > 0)   // used in EditTactics menu in two functions

@@ -37,15 +37,6 @@ SoundSample& SoundSample::operator=(SoundSample&& other)
     return *this;
 }
 
-SoundSample SoundSample::createNullSample()
-{
-    auto sample = SoundSample();
-    sample.m_buffer = new char[kSizeofWaveHeader];
-    sample.m_size = kSizeofWaveHeader;
-    sample.convertRawToWav();
-    return sample;
-}
-
 void SoundSample::free()
 {
     Mix_FreeChunk(m_chunk);

@@ -5,7 +5,6 @@
 #include "sprites.h"
 #include "renderSprites.h"
 #include "text.h"
-#include "windowManager.h"
 #include "render.h"
 #include "color.h"
 
@@ -27,8 +26,6 @@ constexpr int kFormationEntryHeight = 9;
 
 constexpr int kFormationIndex = -1;
 
-static int m_screenWidth;
-static int m_screenHeight;
 static FixedPoint m_cameraX;
 static FixedPoint m_cameraY;
 
@@ -70,7 +67,7 @@ static void updateMenuTeamColorsPointer();
 static const Color& getSelectedPlayerHighlightColor(int pos);
 static void drawBenchSprite(int spriteIndex, int x, int y);
 static void drawRectWithShadow(int x, int y, int width, int height, const Color& color);
-static void updateScreenInfo();
+static void updateCameraCoordinates();
 
 void initBenchMenusBeforeMatch()
 {
@@ -82,7 +79,7 @@ void drawBench()
     if (!isBenchVisible())
         return;
 
-    updateScreenInfo();
+    updateCameraCoordinates();
 
     if (!swos.g_trainingGame || !trainingTopTeam())
         drawOpponentsBench();
@@ -343,7 +340,7 @@ static void drawSubstitutesMenuEntry(int y, int playerIndex)
     drawEntryHighlight(y, teamPos);
 
     const auto& frameColor = kGamePalette[m_colors->entryFrame];
-    drawFrame(kMenuX, y, kSubsMenuEntryWidth, kSubsMenuEntryHeight, frameColor);
+    drawRectangle(kMenuX, y, kSubsMenuEntryWidth, kSubsMenuEntryHeight, frameColor);
 
     y += kShadowOffset;
 
@@ -385,7 +382,7 @@ static void drawFormationEntry(int i, int y)
         SDL_RenderFillRectF(renderer, &highlightRect);
     }
 
-    drawFrame(kMenuX, y, kFormationEntryWidth, kFormationEntryHeight, kGamePalette[m_colors->entryFrame]);
+    drawRectangle(kMenuX, y, kFormationEntryWidth, kFormationEntryHeight, kGamePalette[m_colors->entryFrame]);
 
     static const std::array<const char *, 12> kTacticNames = {{
         "4-4-2", "5-4-1", "4-5-1",
@@ -433,7 +430,7 @@ static void drawLegend(MenuType menuType)
     int y = menuType == kSubstitutesMenu ? kSubstitutesLegendY : kFormationLegendY;
 
     drawRectWithShadow(x, y, kLegendWidth, kLegendHeight, kGamePalette[m_colors->highlight]);
-    drawFrame(x, y, kLegendWidth, kLegendHeight, kGamePalette[m_colors->background]);
+    drawRectangle(x, y, kLegendWidth, kLegendHeight, kGamePalette[m_colors->background]);
 
     int spriteX = x + (kLegendWidth - legendSprite.width) / 2;
     int spriteY = y + (kLegendHeight - legendSprite.height) / 2;
@@ -574,7 +571,7 @@ static const Color& getSelectedPlayerHighlightColor(int pos)
 
 static void drawBenchSprite(int spriteIndex, int x, int y)
 {
-    drawSprite(spriteIndex, x - m_cameraX, y - m_cameraY, m_screenWidth, m_screenHeight);
+    drawSprite(spriteIndex, x - m_cameraX, y - m_cameraY);
 }
 
 static void drawRectWithShadow(int x, int y, int width, int height, const Color& baseColor)
@@ -592,10 +589,8 @@ static void drawRectWithShadow(int x, int y, int width, int height, const Color&
     SDL_RenderFillRectF(renderer, &rect);
 }
 
-void updateScreenInfo()
+void updateCameraCoordinates()
 {
-    std::tie(m_screenWidth, m_screenHeight) = getWindowSize();
-
     m_cameraX = getCameraX();
     m_cameraY = getCameraY();
 }

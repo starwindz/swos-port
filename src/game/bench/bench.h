@@ -5,6 +5,7 @@ constexpr int kNumFormationEntries = 18;
 void initBenchBeforeMatch();
 void updateBench();
 bool inBench();
+bool inBenchMenus();
 bool isCameraLeavingBench();
 void clearCameraLeavingBench();
 void setCameraLeavingBench();
