@@ -171,7 +171,7 @@ bool gotReplay()
 
 bool gotHighlights()
 {
-    return m_gotHighlight && !m_replayData.empty();
+    return m_gotHighlight && m_replayData.numScenes();
 }
 
 void saveHighlightScene()

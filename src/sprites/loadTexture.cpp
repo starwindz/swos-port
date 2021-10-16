@@ -1,5 +1,6 @@
 #include "loadTexture.h"
 #include "windowManager.h"
+#include "render.h"
 #include "util.h"
 #include "file.h"
 

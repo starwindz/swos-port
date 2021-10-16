@@ -4,6 +4,7 @@
 #include "scanCodes.h"
 #include "sdlProcs.h"
 #include "windowManager.h"
+#include "render.h"
 
 #undef assertEqual
 

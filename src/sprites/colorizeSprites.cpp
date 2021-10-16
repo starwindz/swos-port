@@ -1,5 +1,6 @@
 #include "colorizeSprites.h"
 #include "variableSprites.h"
+#include "render.h"
 #include "sprites.h"
 #include "file.h"
 #include "util.h"
@@ -29,6 +30,7 @@ static int m_res;
 static const TeamGame *m_topTeam;
 static const TeamGame *m_bottomTeam;
 
+static void clearTextures();
 static void colorizePlayers();
 static void colorizeGoalkeepers();
 static void colorizeBenchPlayers();
@@ -52,8 +54,11 @@ void initSpriteColorizer(int res)
     m_res = res;
 }
 
-void colorizeGameSprites(int res, const TeamGame *topTeam, const TeamGame *bottomTeam)
+void colorizeGameSprites(int res, const TeamGame *topTeam, const TeamGame *bottomTeam, bool invalidateTextures)
 {
+    if (invalidateTextures)
+        clearTextures();
+
     m_res = res;
     m_topTeam = topTeam;
     m_bottomTeam = bottomTeam;
@@ -146,6 +151,26 @@ void copyShirtPixels(int baseColor, int stripesColor, const PackedSprite& back, 
         dst += backSurface->pitch / 4;
         src += shirtSurface->pitch / 4;
     }
+}
+
+// Do not deallocate, just clear the pointers.
+static void clearTextures()
+{
+    struct {
+        SDL_Texture **textures;
+        size_t numTextures;
+    } static const kTextures[] = {
+        { m_topTeamPlayerTextures.data(), m_topTeamPlayerTextures.size() },
+        { m_bottomTeamPlayerTextures.data(), m_bottomTeamPlayerTextures.size() },
+        { m_topTeamGoalkeeperTextures.data(), m_topTeamGoalkeeperTextures.size() },
+        { m_bottomTeamGoalkeeperTextures.data(), m_bottomTeamGoalkeeperTextures.size() },
+        { &m_topTeamBenchPlayersTexture, 1 },
+        { &m_bottomTeamBenchPlayersTexture, 1 },
+    };
+
+    for (const auto& texturePack : kTextures)
+        for (size_t i = 0; i < texturePack.numTextures; i++)
+            texturePack.textures[i] = nullptr;
 }
 
 static void colorizePlayers()
@@ -378,7 +403,7 @@ static void pastePlayerShirtLayer(const TeamGame *team, SDL_Surface *backSurface
     int shirtOffset = 0;
 
     switch (team->prShirtType) {
-    case kShirtVerticalStripes:
+    case kShirtHorizontalStripes:
         shirtOffset = kPlayerShirt[m_res].size() / 3;
         std::swap(baseColor, stripesColor);
         break;

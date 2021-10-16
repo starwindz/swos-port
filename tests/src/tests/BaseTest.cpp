@@ -291,17 +291,17 @@ void BaseTest::outputStats(std::chrono::time_point<std::chrono::steady_clock> st
 
 static RgbQuad *getMenuPalette()
 {
-    auto pal = swos.linAdr384k + 129'536;
+//    auto pal = swos.linAdr384k + 129'536;
 
     static RgbQuad s_menuPalette[256];
 
-    if (!s_menuPalette[0].red) {
-        for (int i = 0; i < 256; i++) {
-            s_menuPalette[i].red = pal[3 * i] * 4;
-            s_menuPalette[i].green = pal[3 * i + 1] * 4;
-            s_menuPalette[i].blue = pal[3 * i + 2] * 4;
-        }
-    }
+//    if (!s_menuPalette[0].red) {
+//        for (int i = 0; i < 256; i++) {
+//            s_menuPalette[i].red = pal[3 * i] * 4;
+//            s_menuPalette[i].green = pal[3 * i + 1] * 4;
+//            s_menuPalette[i].blue = pal[3 * i + 2] * 4;
+//        }
+//    }
 
     return s_menuPalette;
 }
@@ -317,11 +317,11 @@ void BaseTest::takeSnapshot(const char *snapshotDir, const char *caseId, int cas
     static std::vector<std::future<void>> forgottenFutures; // it's not stupid if it works ;)
 
     // skip tests that don't show menus, currently no better way to check since main menu always gets shown at start
-    if (std::count(swos.linAdr384k.asCharPtr(), swos.linAdr384k + kVgaScreenSize, 0) == kVgaScreenSize)
-        return;
+//    if (std::count(swos.linAdr384k.asCharPtr(), swos.linAdr384k + kVgaScreenSize, 0) == kVgaScreenSize)
+//        return;
 
     auto screen = new char[kVgaScreenSize];
-    memcpy(screen, swos.linAdr384k, kVgaScreenSize);
+//    memcpy(screen, swos.linAdr384k, kVgaScreenSize);
 
     char buf[16];
     snprintf(buf, sizeof(buf), "%03d", caseInstanceIndex);

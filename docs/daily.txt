@@ -4750,3 +4750,84 @@ earlier:
 - added missing playCrowdNoise() call to the start of replays
 - fixed video options of Android showing up on PC when returning from window mode menu
 - published a new version and pushed to Github
+30.09.2021.
+/
+01.10.2021.
+/
+02.10.2021.
+/
+03.10.2021.
+- fixed sprite reloading when asset resolution changes (still needs some testing in the wild)
+- added clear screen option (by default is on, and the screen is cleared to black before each frame is drawn;
+  it's a small optimization since we redraw the whole screen anyway, but when off some glitches were showing
+  up on Samsung phone, so it's better to allow the user to control it)
+- removed old SWOS char tables
+- fixed blocked bench bug (stats flag wasn't reset when the stats timer expire, and the game was thinking the
+  stats are displayed, that was blocking the bench)
+04.10.2021.
+/
+05.10.2021.
+/
+06.10.2021.
+/
+07.10.2021.
+/
+08.10.2021.
+/
+09.10.2021.
+- implemented bench drawing all the time (since it can be visible with minimum zoom), works fine in regular
+  game but is bugged a bit in training
+10.10.2021.
+- fixed training game bench problem
+- extended sprite compile script with training pitch marking and printed a table listing memory requirements
+  for each pitch/resolution
+- implemented pitch type and number selection
+- prevented resetting coach to lower bench in training game (at first was gonna leave it, but turned it off
+  after all)
+- fixed coach changing color from black to white in training game on half-time
+- added default zoom button (keypad star)
+- added zoom level display, it's only shown when the zoom is changed, and disappears after a bit
+11.10.2021.
+- fixed rendering for weird resolutions, there will be letter-boxing if aspect ratio is such that the screen
+  width or height surpasses pitch width/height
+- fixed pitch changing when resolution changes :)
+- zoom is recalculated each frame (in case screen size changes and the minimum value is now too small)
+- menu background image doesn't stretch anymore (though now we get black bars on the side)
+- added yes/no confirmation dialog when trying to overwrite highlight/replay files
+- fixed test controls menu
+- fixed some invalid item movement order in control options menu
+- fixed arrows and other sprites being off position in menus (those with center x/y values)
+12.10.2021.
+- fixed menu mouse selection being off when using letter-boxed resolution
+- changed the way menu background is rendered, it will now stretch, but without distortion, and will try to
+  fill largest space possible; I think it works much better now
+- fixed a timing bug, much closer to target FPS now
+- fixed resizing the window while the game is paused resulting in black/garbled areas
+- fixed joypad quick config using red card sprite instead of white cursor block :)
+13.10.2021.
+- fixed wrong shorts colors, and accidentally along with it all-players-black problem :) it turns out that
+  SDL's color mod algorithm can only subtract color from the original texture, effectively darkening it;
+  proper sprite image therefore has to be prepared as a white version with shades of gray in the darker
+  parts, and on top of it the actual color comes in; so I've compensated in the convert script by adding
+  brightness operation with factor 2.2 (determined experimentally), seems to work fine ;)
+- set default music and game audio volume to 50 (100 is probably too loud)
+- fixed vertical and horizontal stripes on player shirts in the game being swapped
+- fixed out of proportion stadium sprites
+14.10.2021.
+- app now remembers if it was maximized and restores on startup; added option switch to video options too;
+  while I was there added dynamic vertical centering for resolution list if there are fewer than 8, and
+  fixed wrong gray color for full screen label when the full screen mode is unavailable
+- added zoom in/out on mouse wheel scrolling
+- added new control events to control menus, so they can be mapped
+- fixed yes/no dialog when trying to delete key control, and made abort default option
+- fixed quick control config prompt rendering
+- added initial check for minimum window size, so it can't start up say 3x3
+- removed some menu code remnants, and lin384k, vsPtr & screenWidth (just one DOS buffer remaining)
+15.10.2021.
+- fixed missing menu entries caused by yesterday's removal of DrawMultipleItems(); forwarded items to
+  drawMenuItem() and all is good again
+- fixed wrong item navigation order in select game events menu (all variants)
+- fixed not detecting already assigned key when adding new key control
+- fixed controls quick config menu
+- fixed second team result digits swapped when scoring 10+ goals
+- published a new version and pushed to Github

@@ -91,7 +91,7 @@ void measureRendering(std::function<void()> render)
     m_renderTimes[m_renderTimesIndex] = time;
     m_renderTimesIndex = (m_renderTimesIndex + 1) % kMaxLastFrames;
 
-    m_frameStartTime = time - m_overShoot;
+    m_frameStartTime = SDL_GetPerformanceCounter() - m_overShoot;
 }
 
 static void sleep(Uint64 sleepTicks)

@@ -183,7 +183,7 @@ Menu controlOptionsMenu
         text: kRedefineControls
 
         upEntry: pl2LastControl
-        downEntry: >
+        downEntry: autoConnectJoypads
         leftEntry: pl1RedefineControls
 
         directionRight: @kDown
@@ -283,6 +283,6 @@ Menu controlOptionsMenu
 
         onSelect: exitControlsMenu
 
-        upEntry: autoConnectJoypads
+        upEntry: <
     }
 }

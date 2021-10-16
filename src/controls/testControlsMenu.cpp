@@ -100,7 +100,7 @@ void showTestControlsMenu(const char *title, const char *controlsTitle, bool all
     waitForKeyboardAndMouseIdle();
 
     while (!aborted(allowEscapeExit)) {
-        drawMenuBackground(kControlsAndEventsY, kAbortInfoY);
+        drawMenuBackground();
         drawControls(getControls);
         drawEvents(getEvents);
         updateScreen();

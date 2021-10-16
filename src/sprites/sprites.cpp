@@ -2,6 +2,7 @@
 #include "spriteDatabase.h"
 #include "gameSprites.h"
 #include "colorizeSprites.h"
+#include "render.h"
 #include "loadTexture.h"
 #include "darkRectangle.h"
 #include "camera.h"
@@ -32,9 +33,9 @@ void initSprites()
     initSpriteColorizer(m_res);
 }
 
-static void initMatchSprites()
+static void initMatchSprites(bool invalidateTextures)
 {
-    colorizeGameSprites(m_res, m_topTeam, m_bottomTeam);
+    colorizeGameSprites(m_res, m_topTeam, m_bottomTeam, invalidateTextures);
     //CopyAdvertisementsData
     initGameSprites(m_topTeam, m_bottomTeam);
     updateLegacySprites();
@@ -45,7 +46,7 @@ void initMatchSprites(const TeamGame *topTeam, const TeamGame *bottomTeam)
     m_topTeam = topTeam;
     m_bottomTeam = bottomTeam;
 
-    initMatchSprites();
+    initMatchSprites(false);
 }
 
 static void traverseMenuTextures(std::function<void(int, int)> f)
@@ -176,6 +177,8 @@ static void loadTextureFile(int textureIndex, int fileIndex)
 
 static void loadSprites(AssetResolution oldResolution, AssetResolution newResolution)
 {
+    logInfo("Reloading sprites for asset resolution %d", newResolution);
+
     if (oldResolution != AssetResolution::kInvalid) {
         for (auto& texture : m_textures[static_cast<int>(oldResolution)]) {
             if (texture) {
@@ -190,6 +193,6 @@ static void loadSprites(AssetResolution oldResolution, AssetResolution newResolu
     if (newResolution != AssetResolution::kInvalid) {
         initMenuSprites();
         if (isMatchRunning())
-            initMatchSprites();
+            initMatchSprites(true);
     }
 }

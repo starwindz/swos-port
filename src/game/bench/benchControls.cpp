@@ -44,6 +44,7 @@ static GameControlEvents m_controls;
 
 TeamGeneralInfo *m_team;
 TeamGame *m_teamData;
+static int m_teamNumber;
 
 static BenchState m_state;
 static int m_goToBenchTimer;
@@ -70,7 +71,7 @@ static std::array<std::array<byte, kNumPlayersInTeam>, 2> m_shirtNumberTable;
 static int m_selectedFormationEntry;
 
 static void handleMenuControls();
-static void initBenchVars();
+static void initBenchVars(TeamGeneralInfo *team);
 static void handleBenchArrowSelection();
 static void selectPlayerToSubstituteMenuHandler();
 static void handleFormationMenuControls();
@@ -87,12 +88,12 @@ static void leaveBench();
 static void leaveBenchFromMenu();
 static bool benchBlocked();
 static bool benchUnavailable();
-static void updateBenchTeam();
-static bool updateNonBenchControls();
+static TeamGeneralInfo *getNonBenchControlsTeam();
+static bool updateNonBenchControls(const TeamGeneralInfo *team);
 static void updateBenchControls();
 static bool bumpGoToBenchTimer();
 static bool filterControls();
-static bool benchInvoked();
+static bool benchInvoked(const TeamGeneralInfo *team);
 static void findInitialPlayerToBeSubstituted();
 static void markPlayer();
 static void swapPlayerShirtNumbers(int ord1, int ord2);
@@ -129,6 +130,14 @@ void initBenchControls()
         m_shirtNumberTable[0][i] = i;
         m_shirtNumberTable[1][i] = i;
     }
+
+    if (swos.teamPlayingUp == 1) {
+        m_team = &swos.topTeamData;
+        m_teamData = &swos.topTeamIngame;
+    } else {
+        m_team = &swos.bottomTeamData;
+        m_teamData = &swos.bottomTeamIngame;
+    }
 }
 
 // Returns true if bench needs to be invoked, but false if it's already showing.
@@ -147,11 +156,11 @@ bool benchCheckControls()
         setBenchOff();
 
         if (!benchBlocked() && !benchUnavailable()) {
-            updateBenchTeam();
+            auto team = getNonBenchControlsTeam();
 
             auto benchCalled = m_bench1Called || m_bench2Called;
-            if (benchCalled || updateNonBenchControls() && benchInvoked()) {
-                initBenchVars();
+            if (benchCalled || updateNonBenchControls(team) && benchInvoked(team)) {
+                initBenchVars(team);
                 return true;
             }
         }
@@ -249,6 +258,11 @@ void setSubstituteInProgress()
 
 const TeamGeneralInfo *getBenchTeam()
 {
+    if (!swos.g_trainingGame && m_teamNumber != m_team->teamNumber) {
+        m_team = m_teamNumber == 1 ? &swos.bottomTeamData : &swos.topTeamData;
+        m_teamNumber = m_team->teamNumber;
+    }
+
     return m_team;
 }
 
@@ -278,12 +292,14 @@ static void handleMenuControls()
     }
 }
 
-static void initBenchVars()
+static void initBenchVars(TeamGeneralInfo *team)
 {
     m_bench1Called = false;
     m_bench2Called = false;
 
-    m_teamData = m_team->teamNumber == 2 ? swos.bottomTeamPtr : swos.topTeamPtr;
+    m_team = team;
+    m_teamData = team->teamNumber == 2 ? swos.bottomTeamPtr : swos.topTeamPtr;
+    m_teamNumber = team->teamNumber;
 
     m_playerToBeSubstitutedPos = -1;
     m_arrowPlayerIndex = 0;
@@ -616,30 +632,28 @@ static bool benchUnavailable()
     return false;
 }
 
-static void updateBenchTeam()
+static TeamGeneralInfo *getNonBenchControlsTeam()
 {
     static int s_alternateTeamsTimer;
 
     if (m_bench1Called)
-        m_team = &swos.topTeamData;
+        return &swos.topTeamData;
     else if (m_bench2Called)
-        m_team = &swos.bottomTeamData;
+        return &swos.bottomTeamData;
     else
-        m_team = ++s_alternateTeamsTimer & 1 ? &swos.topTeamData : &swos.bottomTeamData;
-
-    m_teamData = m_team == &swos.topTeamData ? swos.topTeamPtr : swos.bottomTeamPtr;
+        return ++s_alternateTeamsTimer & 1 ? &swos.topTeamData : &swos.bottomTeamData;
 }
 
-static bool updateNonBenchControls()
+static bool updateNonBenchControls(const TeamGeneralInfo *team)
 {
-    if (m_team->playerNumber) {
-        m_controls = directionToEvents(m_team->direction);
-        if (m_team->firePressed)
+    if (team->playerNumber) {
+        m_controls = directionToEvents(team->direction);
+        if (team->firePressed)
             m_controls |= kGameEventKick;
-        if (m_team->secondaryFire)
+        if (team->secondaryFire)
             m_controls |= kGameEventBench;
     } else {
-        switch (m_team->plCoachNum) {
+        switch (team->plCoachNum) {
         case 1:
             m_controls = getPlayerEvents(kPlayer1);
             break;
@@ -712,14 +726,14 @@ static bool filterControls()
 
 // Game is stopped and bench call is possible, check if it's actually invoked.
 // Secondary fire needs to be pressed, or any one direction tapped three times quickly.
-static bool benchInvoked()
+static bool benchInvoked(const TeamGeneralInfo *team)
 {
-    assert(m_team);
+    assert(team);
 
     if (m_controls & kGameEventBench)
         return true;
 
-    auto& state = m_team == &swos.topTeamData ? m_pl1TapState : m_pl2TapState;
+    auto& state = team == &swos.topTeamData ? m_pl1TapState : m_pl2TapState;
 
     if ((m_controls & kGameEventMovementMask) == kNoGameEvents) {
         state.blockWhileHoldingDirection = false;

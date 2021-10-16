@@ -112,8 +112,9 @@ static void setupPlayerSprites()
     FacesArray team2SpriteIndices{ -1, -1, -1 };
 
     int res = static_cast<int>(getAssetResolution());
-    auto width = m_stadiumSprites[res][kPlayerBackground].width;
-    auto height = m_stadiumSprites[res][kPlayerBackground].height;
+
+    int width = m_stadiumSprites[res][kPlayerBackground].width;
+    int height = m_stadiumSprites[res][kPlayerBackground].height;
 
     int currentSpriteIndex = 0;
 
@@ -221,8 +222,9 @@ static SDL_Surface *createPlayerBackground(int res, SDL_Surface *spriteAtlas)
 {
     SDL_SetSurfaceColorMod(spriteAtlas, 255, 255, 255);
     auto& back = m_stadiumSprites[res][kPlayerBackground];
-    auto backSurface = SDL_CreateRGBSurfaceWithFormat(0, back.width, back.height,
-        spriteAtlas->format->BitsPerPixel, spriteAtlas->format->format);
+    auto width = back.width * kResMultipliers[res];
+    auto height = back.height * kResMultipliers[res];
+    auto backSurface = SDL_CreateRGBSurfaceWithFormat(0, width, height, spriteAtlas->format->BitsPerPixel, spriteAtlas->format->format);
     SDL_Rect backRect = { back.xOffset, back.yOffset, back.frame.w, back.frame.h };
     SDL_LowerBlit(spriteAtlas, const_cast<SDL_Rect *>(&back.frame), backSurface, &backRect);
 
@@ -259,13 +261,15 @@ static void pasteShirtLayer(int res, const TeamGame *team, SDL_Surface *spriteAt
         kPlayerShirtHorizontalStripes,
     };
     auto& back = m_stadiumSprites[res][kPlayerBackground];
-    PackedSprite backLayerSprite{ { 0, 0, back.width, back.height }, back.xOffset, back.yOffset, 0, 0, back.width, back.height };
-    const auto& shirtRect = m_stadiumSprites[res][kShirtLayers[team->prShirtType]];
+    int16_t width = back.width * kResMultipliers[res];
+    int16_t height = back.height * kResMultipliers[res];
+    PackedSprite backLayerSprite{ { 0, 0, width, height }, back.xOffset, back.yOffset, 0, 0, back.width, back.height };
+    const auto& shirtSprite = m_stadiumSprites[res][kShirtLayers[team->prShirtType]];
 
     auto shirtColor = team->prShirtCol;
     auto stripesColor = team->prStripesCol;
     if (team->prShirtType == kShirtVerticalStripes)
         std::swap(shirtColor, stripesColor);
 
-    copyShirtPixels(shirtColor, stripesColor, backLayerSprite, shirtRect, backSurface, spriteAtlas);
+    copyShirtPixels(shirtColor, stripesColor, backLayerSprite, shirtSprite, backSurface, spriteAtlas);
 }

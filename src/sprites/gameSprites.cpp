@@ -6,7 +6,13 @@
 #include "replays.h"
 #include "camera.h"
 
-static Sprite m_cornerFlagSpriteTopLeft, m_cornerFlagSpriteTopRight, m_cornerFlagSpriteBottomLeft, m_cornerFlagSpriteBottomRight;
+static Sprite m_cornerFlagSpriteTopLeft, m_cornerFlagSpriteTopRight,
+    m_cornerFlagSpriteBottomLeft, m_cornerFlagSpriteBottomRight;
+
+static const std::array<Sprite *, 4> kCornerFlagSprites = {
+    &m_cornerFlagSpriteTopLeft, &m_cornerFlagSpriteTopRight,
+    &m_cornerFlagSpriteBottomLeft, &m_cornerFlagSpriteBottomRight
+};
 
 static Sprite * const kAllSprites[] = {
     &swos.ballShadowSprite,
@@ -60,6 +66,15 @@ void initGameSprites(const TeamGame *topTeam, const TeamGame *bottomTeam)
 {
     m_topTeam = topTeam;
     m_bottomTeam = bottomTeam;
+
+    for (auto& sprite : kCornerFlagSprites) {
+        sprite->teamNumber = 3;
+        sprite->frameIndex = -1;
+        sprite->frameDelay = 5;
+        sprite->cycleFramesTimer = 1;
+        sprite->unk003[4] = 1;
+        sprite->show();
+    }
 
     initializePlayerSpriteFrameIndices();
 }
@@ -214,11 +229,6 @@ void updateCornerFlags()
     constexpr int kRightCornerFlagX = 590;
     constexpr int kTopCornerFlagY = 129;
     constexpr int kBottomCornerFlagY = 769;
-
-    static const std::array<Sprite *, 4> kCornerFlagSprites = {
-        &m_cornerFlagSpriteTopLeft, &m_cornerFlagSpriteTopRight,
-        &m_cornerFlagSpriteBottomLeft, &m_cornerFlagSpriteBottomRight
-    };
 
     static const std::array<std::pair<int, int>, 4> kCornerFlagCoordinates = {{
         { kLeftCornerFlagX, kTopCornerFlagY }, { kRightCornerFlagX, kTopCornerFlagY },

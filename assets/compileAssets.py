@@ -1,11 +1,15 @@
+import re
 import os
 import sys
+import math
 import pathlib
 import operator
 import traceback
 import multiprocessing
 
 from typing import Final
+from tabulate import tabulate
+
 from PIL import Image
 from PyTexturePacker import Packer, Utils
 
@@ -20,6 +24,7 @@ kPadding: Final = 2
 kPitchesDir: Final = 'pitches'
 kPitchWidth: Final = 42
 kPitchHeight: Final = 53
+kDefaultTrainingPitch: Final = 6
 
 kResMultipliers: Final = (12, 6, 3)
 kNumResolutions: Final = 3
@@ -331,6 +336,7 @@ def outputPitchIndices(pitches, out):
 
 def getPatterns(atlasData, pitches):
     patterns = [[] for i in range(kNumResolutions)]
+    memoryPerPitch = [[0] * kNumResolutions for i in range(len(pitches))]
     pitchStartPatterns = [0] * len(pitches)
 
     texture = 0
@@ -342,16 +348,17 @@ def getPatterns(atlasData, pitches):
 
         pitchName = resAtlasData[0]['meta']['image']
         if pitchName.startswith('pitch'):
+            index = int(pitchName[5:pitchName.index('-')]) - 1
             if res == 0:
-                index = int(pitchName[5:pitchName.index('-')]) - 1
                 pitchStartPatterns[index] = len(patterns[res])
 
             # careful, files within an atlas are arbitrarily ordered
             atlasPatterns = []
             for j, atlas in enumerate(resAtlasData):
+                memoryPerPitch[index][res] += atlas['meta']['size']['w'] * atlas['meta']['size']['h'] * 4
                 for filename, pattern in atlas['frames'].items():
-                    index = int(filename[filename.index('-') + 1 : filename.index('.')])
-                    atlasPatterns.append((index, (pattern['frame']['x'], pattern['frame']['y'], texture + j)))
+                    fileIndex = int(filename[filename.index('-') + 1 : filename.index('.')])
+                    atlasPatterns.append((fileIndex, (pattern['frame']['x'], pattern['frame']['y'], texture + j)))
 
             for pattern in (patterns[1] for patterns in sorted(atlasPatterns, key=operator.itemgetter(0))):
                 patterns[res].append(pattern)
@@ -360,7 +367,7 @@ def getPatterns(atlasData, pitches):
                 maxAtlases = max(map(len, atlasData[i - 3:i]))
                 texture += maxAtlases
 
-    return patterns, pitchStartPatterns
+    return patterns, pitchStartPatterns, memoryPerPitch
 
 def outputPitchPatterns(resPatterns, out):
     out(f'static const std::array<std::array<PackedPitchPattern, {len(resPatterns[0])}>, {kNumResolutions}> kPatterns = {{{{')
@@ -376,13 +383,31 @@ def outputPitchPatternStartIndices(pitchStartPatterns, out):
     out('   ', ', '.join(map(str, pitchStartPatterns)))
     out('}};')
 
-def outputPitchPatternData(atlasData, pitches, out):
-    resPatterns, pitchStartPatterns = getPatterns(atlasData, pitches)
+def printPitchMemoryUsage(memoryPerPitch):
+    assert kNumResolutions == 3
+
+    def humanize(val):
+        p = int(math.floor(math.log(val, 2) / 10))
+        val = val / math.pow(1024, p)
+        units = ['b','KiB','MiB','GiB','TiB','PiB','EiB','ZiB','YiB'][p]
+        return f'{val:.2f} {units}'
+
+    for i, row in enumerate(memoryPerPitch):
+        row = list(map(humanize, row))
+        memoryPerPitch[i] = [i + 1] + row
+
+    print('Approximate video memory requirements per pitch:')
+    print(tabulate(memoryPerPitch, headers=['#', '4k', 'HD', 'low-res'], tablefmt='fancy_grid'))
+
+def outputPitchPatternData(atlasData, pitches, trainingPitch, out):
+    resPatterns, pitchStartPatterns, memoryPerPitch = getPatterns(atlasData, pitches)
+    printPitchMemoryUsage(memoryPerPitch)
+    print(f'\nTraining pitch: {trainingPitch}')
     outputPitchPatterns(resPatterns, out)
     out('')
     outputPitchPatternStartIndices(pitchStartPatterns, out)
 
-def generatePitchDatabase(atlasData, pitches):
+def generatePitchDatabase(atlasData, pitches, trainingPitch):
     with (open(os.path.join(kOutDir, 'pitchDatabase.h'), 'w')) as f:
         out = getOutputFunc(f)
 
@@ -390,6 +415,8 @@ def generatePitchDatabase(atlasData, pitches):
         out(f'static constexpr int kNumPitches = {len(pitches)};')
         out(f'static constexpr int kPitchPatternWidth = {kPitchWidth};')
         out(f'static constexpr int kPitchPatternHeight = {kPitchHeight};\n')
+
+        out(f'static constexpr int kTrainingPitchIndex = {trainingPitch - 1};\n')
 
         maxFiles, files, fileMap = generateFileMap(atlasData, 'pitch')
         outputTextureFilenames(maxFiles, files, fileMap, out, generateTextureToFile=False)
@@ -409,7 +436,7 @@ struct PackedPitchPattern {
 
         outputPitchIndices(pitches, out)
         out('')
-        outputPitchPatternData(atlasData, pitches, out)
+        outputPitchPatternData(atlasData, pitches, trainingPitch, out)
 
 def generateStadiumSprites(atlasData):
     with open(os.path.join(kOutDir, 'stadiumSprites.h'), 'w') as f:
@@ -427,11 +454,6 @@ def generateStadiumSprites(atlasData):
 
         assert numSprites == 9
 
-        for res, resSprites in enumerate(sprites):
-            for sprite in resSprites:
-                sprite[8] *= kResMultipliers[res]
-                sprite[9] *= kResMultipliers[res]
-
         out('''
 enum StadiumSprites {
     kPlayerSkin = 0,
@@ -444,6 +466,11 @@ enum StadiumSprites {
     kPlayerShirtHorizontalStripes = 7,
     kGoalkeeperBackground = 8,
 };\n''')
+
+        out(f'static const std::array<byte, {len(kResMultipliers)}> kResMultipliers = {{\n   ')
+        for multiplier in kResMultipliers:
+            out(f' {multiplier},', end='')
+        out('\n};\n')
 
         out(f'static const std::array<std::array<PackedSprite, {numSprites}>, {kNumResolutions}> m_stadiumSprites = {{{{')
         outputSprites(sprites, out)
@@ -461,8 +488,16 @@ def getPitches():
             if pitchIndex >= 0:
                 if pitchIndex in seenPitches:
                     sys.exit(f'Duplicate pitch {pitchIndex} encountered')
+                seenPitches.add(pitchIndex)
                 pitchDir = os.path.join(kPitchesDir, entry.name)
                 pitches.append(pitchDir)
+
+    seenPitches = sorted(seenPitches)
+    if (seenPitches[0] != 1):
+        sys.exit('Pitches must start with 1')
+
+    if len(seenPitches) != seenPitches[-1]:
+        sys.exit('Pitch numbers must be consecutive')
 
     return pitches
 
@@ -546,9 +581,7 @@ def packPitch(input, atlasNamePattern, outputPath, **kwargs):
 
     for i in range(numAtlases):
         atlasName = atlasNamePattern.replace('%d', str(i)) + '.png'
-        atlasData = {'frames': {}, 'meta': {'image': atlasName, 'format': 'RGB888',
-            'size': {'w': kTextureDimension, 'h': kTextureDimension}, 'scale': 1 }}
-
+        atlasData = {'frames': {}, 'meta': {'image': atlasName, 'format': 'RGB888', 'scale': 1 }}
         patternsLeft = lambda: len(images) - currentPattern
         patternsX, patternsY = getPitchAtlasSize(patternsLeft(), maxPatternsPerSide)
 
@@ -582,6 +615,8 @@ def packPitch(input, atlasNamePattern, outputPath, **kwargs):
 
         atlasPath = os.path.join(outputPath, atlasName)
         atlas.save(atlasPath)
+
+        atlasData['meta']['size'] = {'w': atlas.width, 'h': atlas.height}
 
         result.append(atlasData)
 
@@ -618,20 +653,34 @@ def getOptions(pitches):
     return result
 
 def parseCommandLine(options):
+    kTrainingPitchRegex: Final = re.compile(r'\s*--training-?pitch\s*=\s*(?P<trainingPitch>.*)', re.IGNORECASE)
+
+    blocky = False
+    trainingPitch = kDefaultTrainingPitch
+
     for arg in sys.argv[1:]:
         if arg.lower().replace('-', '') == 'blocky':
-            for option in options:
-                option[input] = os.path.join('blocky', option[input])
-            break
+            if not blocky:
+                for option in options:
+                    option['input'] = os.path.join('blocky', option['input'])
+                blocky = True
+        elif match := re.match(kTrainingPitchRegex, arg):
+            try:
+                trainingPitch = int(match.group('trainingPitch'))
+            except ValueError:
+                sys.exit('Training pitch must be specified with an integer')
 
-    return options
+    return options, trainingPitch
 
 def main():
     createDirs()
 
     pitches = getPitches()
     options = getOptions(pitches)
-    options = parseCommandLine(options)
+    options, trainingPitch = parseCommandLine(options)
+
+    if trainingPitch > len(pitches):
+        sys.exit(f'Invalid training pitch {trainingPitch}')
 
     pool = multiprocessing.Pool()
     atlasData = pool.map(pack, options)
@@ -641,8 +690,10 @@ def main():
 
     generateSpriteDatabase(atlasData)
     generateVariableSprites(atlasData)
-    generatePitchDatabase(atlasData, pitches)
+    generatePitchDatabase(atlasData, pitches, trainingPitch)
     generateStadiumSprites(atlasData)
+
+    print('\nSuccess.', end='');
 
 if __name__ == '__main__':
     main()

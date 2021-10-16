@@ -2,6 +2,7 @@
 #include "init.h"
 #include "options.h"
 #include "render.h"
+#include "windowManager.h"
 #include "pitch.h"
 #include "audio.h"
 #include "file.h"

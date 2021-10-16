@@ -174,7 +174,7 @@ static bool confirmDeletion(SDL_Scancode key)
 {
     char buf[128];
     snprintf(buf, sizeof(buf), "TO DELETE '%s' KEY?", scancodeToString(key));
-    return showContinueAbortPrompt("DELETE KEY", swos.aOk, swos.aCancel, { "ARE YOU SURE YOU WANT", buf });
+    return showContinueAbortPrompt("DELETE KEY", "YES", "NO", { "ARE YOU SURE YOU WANT", buf });
 }
 
 static void deleteKey()
@@ -229,16 +229,13 @@ static void drawInputKeyPrompt()
 #else
     drawTextCentered(kMenuScreenWidth / 2, kPressKeyYLine2, "(MOUSE CLICK CANCELS)");
 #endif
-
-    updateScreen();
 }
 
 static void addKeyMapping()
 {
     constexpr int kWarningY = 60;
 
-    drawInputKeyPrompt();
-    auto key = getControlKey(m_keyboard, kWarningY);
+    auto key = getControlKey(m_keyboard, kWarningY, drawInputKeyPrompt);
 
     if (key != SDL_SCANCODE_UNKNOWN) {
         auto keyName = scancodeToString(key);

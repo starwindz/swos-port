@@ -22,3 +22,6 @@
   (just like sprites)
 - each pitch directory has to have a pitch<num>.txt file, which determines which tile goes where on the pitch
   (it's a pitch matrix, 55x42 tiles)
+- there is no more stretching, instead the original proportions are kept, extra space on the sides is filled
+  with additional pitch patterns; if there's still space (screen is wider than the pitch), it's filled with
+  black bars (same goes with vertical space, except it's not filled with pitch patterns)

@@ -1,10 +1,5 @@
 #pragma once
 
-#include "render.h"
-
-constexpr int kWindowWidth = 4 * kVgaWidth;
-constexpr int kWindowHeight = 4 * kVgaHeight;
-
 enum WindowMode
 {
     kModeFullScreen, kModeWindow, kModeBorderlessMaximized, kNumWindowModes,
@@ -20,6 +15,7 @@ using AssetResolutionChangeHandler = std::function<void(AssetResolution, AssetRe
 
 SDL_Window *createWindow();
 void destroyWindow();
+void initWindow();
 std::pair<int, int> getWindowSize();
 AssetResolution getAssetResolution();
 void registerAssetResolutionChangeHandler(AssetResolutionChangeHandler handler);
@@ -27,6 +23,7 @@ const char *getAssetDir();
 std::string getPathInAssetDir(const char *path);
 void setWindowSize(int width, int height);
 bool getWindowResizable();
+bool getWindowMaximized();
 WindowMode getWindowMode();
 int getWindowDisplayIndex();
 bool setFullScreenResolution(int width, int height);
@@ -39,13 +36,16 @@ void switchToBorderlessMaximized();
 void toggleBorderlessMaximizedMode();
 void toggleFullScreenMode();
 void toggleWindowResizable();
+void toggleWindowMaximized();
 void centerWindow();
 
 bool hasMouseFocus();
 bool mapCoordinatesToGameArea(int& x, int& y);
-float getScale();
-float getScreenXOffset();
-float getScreenYOffset();
+float getGameScale();
+float getGameScreenOffsetX();
+float getGameScreenOffsetY();
+float getFieldWidth();
+float getFieldHeight();
 SDL_FRect mapRect(int x, int y, int width, int height);
 
 #ifdef VIRTUAL_JOYPAD

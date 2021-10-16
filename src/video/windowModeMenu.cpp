@@ -1,22 +1,37 @@
 #include "windowModeMenu.h"
 #include "windowManager.h"
+#include "render.h"
 #include "menuMouse.h"
 #include "continueMenu.h"
 #include "text.h"
 #include "textInput.h"
 
-#ifndef  __ANDROID__
-constexpr auto kSelectedColor = kSoftBlueText;
-#endif
+SDL_UNUSED constexpr auto kSelectedColor = kSoftBlueText;
 
 constexpr int kPleaseWaitLimitMs = 333;
 
 static bool m_menuShown;
 static int16_t m_windowResizable = 1;
+static int16_t m_windowMaximized;
 
 #include "windowMode.mnu.h"
 
+using DisplayModeList = std::vector<std::pair<int, int>>;
+
 static const char *kPleaseWaitText;
+static DisplayModeList m_resolutions;
+static int m_resListOffset;
+
+#ifndef __ANDROID__
+static void updateDisplayedWindowSize();
+static void updateFullScreenAvailability();
+static void highlightCurrentMode();
+#endif
+static void centerItemsVertically();
+static DisplayModeList getDisplayModes(int displayIndex);
+static void fillResolutionListUi();
+static void fixSelectedEntry();
+static void updateScrollArrows();
 
 using namespace WindowModeMenu;
 
@@ -39,6 +54,66 @@ static void windowModeMenuOnInit()
 #endif
 }
 
+static void windowModeMenuOnDraw()
+{
+    if (SDL_IsTextInputActive())
+        return;
+
+    static int lastDisplayIndex = -1;
+
+    int displayIndex = getWindowDisplayIndex();
+    if (displayIndex >= 0) {
+        if (displayIndex != lastDisplayIndex) {
+            m_resolutions = getDisplayModes(displayIndex);
+            lastDisplayIndex = displayIndex;
+            m_resListOffset = 0;
+        }
+
+#ifdef __ANDROID__
+        fillResolutionListUi();
+        updateScrollArrows();
+        fixSelectedEntry();
+#else
+        updateDisplayedWindowSize();
+        highlightCurrentMode();
+        fillResolutionListUi();
+        updateFullScreenAvailability();
+        updateScrollArrows();
+        fixSelectedEntry();
+#endif
+    } else if (!m_menuShown) {
+        logWarn("Failed to get window display index, SDL reported: %s", SDL_GetError());
+    }
+
+    centerItemsVertically();
+
+    m_menuShown = true;
+}
+
+static void centerItemsVertically()
+{
+    int topY = exitEntry.y + 1;
+    int bottomY = 0;
+
+    for (auto entry = &headerEntry + 1; entry < &exitEntry; entry++) {
+        if (entry->visible()) {
+            topY = std::min<int>(entry->y, topY);
+            bottomY = std::max(entry->endY(), bottomY);
+        }
+    }
+
+    int verticalSpace = exitEntry.y - headerEntry.endY();
+    int usedHeight = bottomY - topY;
+    int targetY = headerEntry.endY() + (verticalSpace - usedHeight) / 3;
+    int diff = targetY - topY;
+
+    if (diff) {
+        std::for_each(&headerEntry + 1, &exitEntry, [diff](auto& entry) {
+            entry.y += diff;
+        });
+    }
+}
+
 constexpr static int numResolutionFields()
 {
 #ifdef __ANDROID__
@@ -54,17 +129,13 @@ static void updateDisplayedWindowSize()
     int width, height;
     std::tie(width, height) = getWindowSize();
 
-    auto widthEntry = getMenuEntry(customWidth);
-    widthEntry->fg.number = width;
-
-    auto heightEntry = getMenuEntry(customHeight);
-    heightEntry->fg.number = height;
+    customWidthEntry.setNumber(width);
+    customHeightEntry.setNumber(height);
 
     m_windowResizable = getWindowResizable();
+    m_windowMaximized = getWindowMaximized();
 }
 #endif
-
-using DisplayModeList = std::vector<std::pair<int, int>>;
 
 static DisplayModeList getDisplayModes(int displayIndex)
 {
@@ -120,9 +191,6 @@ static DisplayModeList getDisplayModes(int displayIndex)
     return result;
 }
 
-static DisplayModeList m_resolutions;
-static int m_resListOffset;
-
 static void fillResolutionListUi()
 {
     for (int i = resolutionField0; i < resolutionField0 + numResolutionFields(); i++)
@@ -159,37 +227,17 @@ static void fixSelectedEntry()
     }
 }
 
-#ifdef __ANDROID__
-static void centerResolutionFieldsVertically()
-{
-    int numFields = std::count_if(&fullScreenEntry, &lastResolutionFieldEntry + 1, [](auto& entry) {
-        return entry.visible();
-    });
-    int totalHeight = numFields * firstResolutionFieldEntry.height;
-    int verticalSpace = exitEntry.y - headerEntry.endY();
-    int startY = (verticalSpace - totalHeight) / 2 + headerEntry.endY();
-    int diff = startY - fullScreenEntry.y;
-
-    std::for_each(&fullScreenEntry, &lastResolutionFieldEntry + 1, [diff](auto& entry) {
-        entry.y += diff;
-    });
-}
-#endif
-
 #ifndef __ANDROID__
 static void updateFullScreenAvailability()
 {
-    auto fullScreenEntry = getMenuEntry(fullScreen);
     bool fullScreenAvailable = !m_resolutions.empty();
 
-    strcpy(fullScreenEntry->string(), "FULL SCREEN:");
+    strcpy(fullScreenEntry.string(), "FULL SCREEN:");
     if (!fullScreenAvailable)
-        strcpy(fullScreenEntry->string() + 11, " UNAVAILABLE");
+        strcpy(fullScreenEntry.string() + 11, " UNAVAILABLE");
 
-    fullScreenEntry->disabled = !fullScreenAvailable;
-
-    auto fullScreenArrowEntry = getMenuEntry(fullScreenArrow);
-    fullScreenArrowEntry->setVisible(getWindowMode() == kModeFullScreen && fullScreenAvailable);
+    fullScreenEntry.disabled = !fullScreenAvailable;
+    fullScreenArrowEntry.setVisible(getWindowMode() == kModeFullScreen && fullScreenAvailable);
 }
 #endif
 
@@ -295,6 +343,8 @@ static void inputWindowWidthOrHeight(Dimension dimension)
                 centerWindow();
             }
         }
+    } else {
+        switchToWindow();
     }
 }
 
@@ -311,21 +361,21 @@ static void inputWindowHeight()
 #ifndef __ANDROID__
 static void setWindowedFieldsColor(bool selected)
 {
-    getMenuEntry(windowed)->stringFlags = selected ? kSelectedColor : kWhiteText;
+    windowedEntry.stringFlags = selected ? kSelectedColor : kWhiteText;
 }
 
 static void setBorderlessFieldsColor(bool selected)
 {
-    getMenuEntry(borderlessMaximized)->stringFlags = selected ? kSelectedColor : kWhiteText;
+    borderlessMaximizedEntry.stringFlags = selected ? kSelectedColor : kWhiteText;
 }
 
 static void setFullScreenFieldsColor(bool selected)
 {
-    int stringFlags = selected ? kSelectedColor : kWhiteText;
+    int color = selected ? kSelectedColor : kGrayText;
     if (m_resolutions.empty())
-        stringFlags = kGrayText;
+        color = kDarkGrayText;
 
-    getMenuEntry(fullScreen)->stringFlags = stringFlags;
+    fullScreenEntry.stringFlags = color;
 }
 
 static void highlightCurrentMode()
@@ -367,38 +417,3 @@ static void highlightCurrentMode()
     setFullScreenFieldsColor(fullScreenSelected);
 }
 #endif
-
-static void windowModeMenuOnDraw()
-{
-    if (SDL_IsTextInputActive())
-        return;
-
-    static int lastDisplayIndex = -1;
-
-    int displayIndex = getWindowDisplayIndex();
-    if (displayIndex >= 0) {
-        if (displayIndex != lastDisplayIndex) {
-            m_resolutions = getDisplayModes(displayIndex);
-            lastDisplayIndex = displayIndex;
-            m_resListOffset = 0;
-        }
-
-#ifdef __ANDROID__
-        fillResolutionListUi();
-        centerResolutionFieldsVertically();
-        updateScrollArrows();
-        fixSelectedEntry();
-#else
-        updateDisplayedWindowSize();
-        highlightCurrentMode();
-        fillResolutionListUi();
-        updateFullScreenAvailability();
-        updateScrollArrows();
-        fixSelectedEntry();
-#endif
-    } else if (!m_menuShown) {
-        logWarn("Failed to get window display index, SDL reported: %s", SDL_GetError());
-    }
-
-    m_menuShown = true;
-}

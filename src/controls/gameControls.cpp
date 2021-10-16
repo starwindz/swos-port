@@ -17,7 +17,7 @@ static int m_pl2FireCounter;
 
 static GameControlEvents filterOverlappedEvents(PlayerNumber player, GameControlEvents events);
 static void updateGameControls(PlayerNumber player, GameControlEvents events);
-static bool handleStatsFireExit();
+static bool updateFireBlocked();
 static void updateTeamControls(TeamGeneralInfo *team, PlayerNumber player, GameControlEvents events);
 static void updatePlayerFire(PlayerNumber player, GameControlEvents events);
 
@@ -26,7 +26,7 @@ static void updatePlayerFire(PlayerNumber player, GameControlEvents events);
 //
 void updateTeamControls()
 {
-    if (handleStatsFireExit())
+    if (updateFireBlocked())
         return;
 
     static int s_teamSwitchCounter;
@@ -73,11 +73,9 @@ GameControlEvents getPlayerEvents(PlayerNumber player)
 
     switch (controls) {
     case kKeyboard1:
-        assert(player == kPlayer1);
         events = keyboard1Events();
         break;
     case kKeyboard2:
-        assert(player == kPlayer2);
         events = keyboard2Events();
         break;
     case kMouse:
@@ -232,7 +230,7 @@ static GameControlEvents filterOverlappedEvents(PlayerNumber player, GameControl
 
 static void updateGameControls(PlayerNumber player, GameControlEvents events)
 {
-    static_assert(kMaxGameEvent == 256, "You missed a spot!");
+    static_assert(kMaxGameEvent == 1'025, "You missed a spot!");
 
     updatePlayerFire(player, events);
 
@@ -261,7 +259,7 @@ void SWOS::Player2StatusProc()
     updatePlayerFire(kPlayer2, events);
 }
 
-static bool handleStatsFireExit()
+static bool updateFireBlocked()
 {
     if (swos.fireBlocked) {
         if (!((getPlayerEvents(kPlayer1) | getPlayerEvents(kPlayer2)) & kGameEventKick))

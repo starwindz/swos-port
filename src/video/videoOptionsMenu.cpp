@@ -3,6 +3,7 @@
 #include "VirtualJoypad.h"
 #include "windowManager.h"
 #include "windowModeMenu.h"
+#include "render.h"
 #include "pitch.h"
 
 constexpr float kZoomIncrement = 0.1f;
@@ -12,6 +13,7 @@ static int16_t m_flashCursor = 1;
 static int16_t m_showTouchTrails;
 static int16_t m_transparentButtons = 1;
 static int16_t m_showFps;
+static int16_t m_clearScreen;
 
 #include "videoOptions.mnu.h"
 
@@ -31,6 +33,7 @@ static void videoOptionsMenuOnInit()
     m_useLinearFiltering = getLinearFiltering();
     m_flashCursor = cursorFlashingEnabled();
     m_showFps = getShowFps();
+    m_clearScreen = getClearScreen();
 #ifdef VIRTUAL_JOYPAD
     m_showTouchTrails = getShowTouchTrails();
     m_transparentButtons = getTransparentVirtualJoypadButtons();
@@ -100,6 +103,12 @@ static void changeShowFps()
 {
     m_showFps = !m_showFps;
     setShowFps(m_showFps != 0);
+}
+
+static void toggleClearScreen()
+{
+    m_clearScreen = !getClearScreen();
+    setClearScreen(m_clearScreen != 0);
 }
 
 static void changeShowTouchTrails()

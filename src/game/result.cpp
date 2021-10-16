@@ -1,6 +1,7 @@
 #include "result.h"
 #include "gameTime.h"
 #include "windowManager.h"
+#include "render.h"
 #include "text.h"
 #include "renderSprites.h"
 #include "darkRectangle.h"
@@ -226,11 +227,11 @@ static void resetResultTimer()
 
 static void drawGrid(int scorerListOffsetY)
 {
-    float width = kVgaWidth + 2 * getScreenXOffset();
+    float width = kVgaWidth + 2 * getGameScreenOffsetX();
     float y = static_cast<float>(kGridTopY + scorerListOffsetY);
     float height = kVgaHeight - y;
 
-    drawDarkRectangle({ 0, y, width, height });
+    drawDarkRectangle({ 0, y, width, height }, false);
 }
 
 static void drawTeamNames(int scorerListOffsetY)
@@ -245,20 +246,20 @@ static void drawTeamNames(int scorerListOffsetY)
 
 static void drawCurrentResult(int scorerListOffsetY)
 {
-    int x = kBigLeftResultDigitX;
     int y = kBigResultDigitY + scorerListOffsetY;
 
-    drawMenuSprite(kBigZeroSprite + swos.team1GoalsDigit2, x, y);
+    drawMenuSprite(kBigZeroSprite + swos.team1GoalsDigit2, kBigLeftResultDigitX, y);
     if (swos.team1GoalsDigit1)
-        drawMenuSprite(kBigZeroSprite + swos.team1GoalsDigit1, x - kResultBigDigitWidth, y);
+        drawMenuSprite(kBigZeroSprite + swos.team1GoalsDigit1, kBigLeftResultDigitX - kResultBigDigitWidth, y);
 
     drawMenuSprite(kBigDashSprite, kDashX, kDashY + scorerListOffsetY);
 
-    x = kBigRightResultSecondDigitX;
-
+    int x = kBigRightResultSecondDigitX;
+    if (swos.team2GoalsDigit1) {
+        drawMenuSprite(kBigZeroSprite + swos.team2GoalsDigit1, x, y);
+        x += kResultBigDigitWidth;
+    }
     drawMenuSprite(kBigZeroSprite + swos.team2GoalsDigit2, x, y);
-    if (swos.team2GoalsDigit1)
-        drawMenuSprite(kBigZeroSprite + swos.team2GoalsDigit1, x + kResultBigDigitWidth, y);
 }
 
 static void draw1stLegResult(int scorerListOffsetY)
@@ -313,7 +314,7 @@ static void drawScorerList(int scorerListOffsetY)
 
             for (size_t i = 0; i < kMaxScorersForDisplay; i++) {
                 if (lines[i][0]) {
-                    drawTextRoutine(x, y, lines[i].data(), -1, kWhiteText, false);
+                    drawTextRoutine(x, y, lines[i].data(), -1, kWhiteText, false, 255);
                     y += kScorerLineHeight;
                 }
             }

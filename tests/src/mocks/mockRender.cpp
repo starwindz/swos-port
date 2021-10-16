@@ -26,6 +26,10 @@ void fadeIfNeeded() {}
 void fadeIn(std::function<void()>, double) {}
 void fadeOut(std::function<void()>, double) {}
 void makeScreenshot() {}
+void drawHorizontalLine(int, int, int, const Color&) {}
+void drawVerticalLine(int, int, int, const Color&) {}
 void drawRectangle(int x, int y, int width, int height, const Color& color) {}
 bool getLinearFiltering() { return false; }
 void setLinearFiltering(bool) {}
+bool getClearScreen() { return false; }
+void setClearScreen(bool) {}

@@ -123,6 +123,12 @@ void MenuEntry::copyString(const char *str)
         *p = '\0';
 }
 
+bool MenuEntry::bigFont() const
+{
+    assert(type == kEntryString || type == kEntryStringTable || type == kEntryMultilineText || type == kEntryNumber);
+    return ((stringFlags >> 4) & 1) != 0;
+}
+
 void MenuEntry::setNumber(int number)
 {
     assert(type == kEntryNumber);

@@ -39,6 +39,7 @@ Menu videoOptionsMenu
     Entry linearFilteringLabel { text: "LINEAR FILTERING" }
     Entry flashMenuCursorLabel { text: "FLASH MENU CURSOR" }
     Entry showFpsLabel { text: "SHOW FPS INDICATOR" }
+    Entry clearScreenLabel { text: "CLEAR SCREEN" }
     Entry showTouchTrailsLabel { text: "SHOW TOUCH TRAILS" }
     Entry transparentVirtualJoypadButtonsLabel { text: "BLEND VIRTUAL JOYPAD" }
 
@@ -115,6 +116,15 @@ Menu videoOptionsMenu
         downEntry: >
 
         onSelect: changeShowFps
+    }
+
+    Entry clearScreen {
+        stringTable: [ ~m_clearScreen, "OFF", "ON" ]
+
+        upEntry: <
+        downEntry: >
+
+        onSelect: toggleClearScreen
     }
 
     Entry showTouchTrails {

@@ -11,11 +11,11 @@ Menu windowModeMenu
     kCustomSizeWidth = #textWidth("999999") + 4
 
     export kNumResolutionFieldsShort = 8
-    export kNumResolutionFieldsFull = 12
+    export kNumResolutionFieldsFull = 12    // with additional entries when window options aren't present
 
     kResolutionFieldX = kBaseX + 4
     kResolutionFieldWidth = kBigButtonWidth - 10
-    kResolutionListY = 76
+    kResolutionListY = 80
 
     kArrowWidth = 10
     kArrowSpriteIndex = 175
@@ -27,11 +27,12 @@ Menu windowModeMenu
     kColumn1X = 82
     kColumn2X = 96
 
-    kCustomSizeY = 26
-    kBorderlessMaximizedY = kCustomSizeY + 2 * kRowHeight + 2
-    kFullScreenY = kBorderlessMaximizedY + kRowHeight + 2
+    kCustomSizeY = 20
+    kBorderlessMaximizedY = kCustomSizeY + 3 * kRowHeight - 2
+    kFullScreenY = kResolutionListY - kRowHeight + 1
 
     onInit: windowModeMenuOnInit
+    onRestore: windowModeMenuOnInit
     onDraw: windowModeMenuOnDraw
     initialEntry: windowed
 
@@ -111,6 +112,7 @@ Menu windowModeMenu
         x: kColumn2X + 10
         y: kCustomSizeY + kRowHeight
         width: @kTextWidth + 4
+        height: kRowHeight - 2
 
         textFlags: @kCenterAligned
         text: "RESIZABLE"
@@ -118,25 +120,57 @@ Menu windowModeMenu
         onSelect: ~toggleWindowResizable
 
         upEntry: windowed
-        downEntry: borderlessMaximized
+        downEntry: maximized
         rightEntry: resizableOnOff
     }
 
     Entry resizableOnOff {
-        y: @prevY + 1
+        y: @prevY
         width: @kTextWidth + 3 + 4
         height: kRowHeight - 2
 
         textFlags: 0
-        // using direct constants instead of variables here in order to be able to measure width above
         stringTable: [ ~m_windowResizable, "OFF", "ON" ]
         color: @kLightBlue
 
         onSelect: ~toggleWindowResizable
 
         upEntry: customWidth
-        downEntry: borderlessMaximized
+        downEntry: maximized
         leftEntry: resizable
+    }
+
+    Entry maximized {
+        x: resizable.x
+        y: resizable.endY + 1
+        width: @kTextWidth + 4
+        height: resizable.height
+
+        textFlags: @kCenterAligned
+        text: "MAXIMIZED"
+
+        onSelect: ~toggleWindowMaximized
+
+        upEntry: resizable
+        downEntry: borderlessMaximized
+        rightEntry: maximizedOnOff
+    }
+
+    Entry maximizedOnOff {
+        x: resizableOnOff.x
+        y: @prevY
+        width: @kTextWidth + 3 + 4
+        height: kRowHeight - 2
+
+        textFlags: 0
+        stringTable: [ ~m_windowMaximized, "OFF", "ON" ]
+        color: @kLightBlue
+
+        onSelect: ~toggleWindowMaximized
+
+        upEntry: resizableOnOff
+        downEntry: borderlessMaximized
+        leftEntry: maximized
     }
 
     defaultY: kBorderlessMaximizedY
@@ -150,6 +184,7 @@ Menu windowModeMenu
     Entry borderlessMaximized {
         x: kColumn2X
         width: @kTextWidth + 5
+        height: resizable.height
 
         textFlags: @kCenterAligned
         text: "BORDERLESS MAXIMIZED"
@@ -172,7 +207,7 @@ Menu windowModeMenu
         x: kColumn2X
         width: kResolutionFieldWidth
 
-        textFlags: 0
+        textFlags: @kGrayText
         text: @kAlloc
 
         upEntry: borderlessMaximized
@@ -213,14 +248,14 @@ Menu windowModeMenu
 
     Entry scrollUpArrow {
         x: kScrollArrowX
-        y: kResolutionListY
+        y: firstResolutionField.y
         width: kScrollArrowWidth
         height: kScrollArrowHeight
 
         sprite: kUpArrowSpriteIndex
         onSelect: scrollResolutionsUpSelected
 
-        leftEntry: resolutionField0
+        leftEntry: firstResolutionField
         upEntry: borderlessMaximized
         downEntry: scrollDownArrow
     }

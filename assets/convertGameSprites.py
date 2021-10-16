@@ -89,6 +89,8 @@ def putPixel(image, x, y, pal, pixel):
 def saveImage(image, index, grayscale=False, dir1='', dir2='', metadata=None):
     if grayscale:
         image = ImageEnhance.Color(image).enhance(0)
+        # brighten it since SDL's color mod only subtracts color and the image ends up too dark
+        image = ImageEnhance.Brightness(image).enhance(2.2)
 
     global g_blocky
     filter =  Image.NEAREST if g_blocky else Image.LANCZOS

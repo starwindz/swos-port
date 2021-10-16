@@ -19,26 +19,31 @@ void initMenuBackground()
     setStandardMenuBackgroundImage();
 }
 
-void drawMenuBackground(int offsetLine /* = 0 */, int numLines /* = kVgaHeight */)
+void drawMenuBackground()
 {
-    assert(offsetLine <= 0 && offsetLine + numLines <= kVgaHeight);
-
-    int width, height;
-    std::tie(width, height) = getWindowSize();
-
-    SDL_Rect src{ 0, 0 };
-    if (m_background)
-        SDL_QueryTexture(m_background, nullptr, nullptr, &src.w, &src.h);
-
     auto renderer = getRenderer();
-    if (src.w < width || src.h < height) {
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-        SDL_RenderClear(renderer);
-    }
 
     if (m_background) {
-        SDL_Rect dst{ 0, offsetLine * height / kVgaHeight, width, numLines * height / kVgaHeight };
-        SDL_RenderCopy(renderer, m_background, &src, &dst);
+        SDL_Rect src{ 0, 0 };
+        SDL_QueryTexture(m_background, nullptr, nullptr, &src.w, &src.h);
+
+        auto w = static_cast<float>(src.w);
+        auto h = static_cast<float>(src.h);
+
+        auto viewPort = getViewport();
+        auto scale = std::max(viewPort.w / w, viewPort.h / h);
+
+        w *= scale;
+        h *= scale;
+
+        SDL_FRect dst{ (viewPort.w - w) / 2, (viewPort.h - h) / 2, w, h };
+        SDL_RenderCopyF(renderer, m_background, &src, &dst);
+    } else {
+        // just fill it with black if no image
+        auto scale = getGameScale();
+        SDL_FRect dst{ getGameScreenOffsetX(), getGameScreenOffsetY(), scale * kVgaWidth, scale * kVgaHeight };
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        SDL_RenderFillRectF(renderer, &dst);
     }
 }
 

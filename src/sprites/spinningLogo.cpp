@@ -1,4 +1,5 @@
 #include "spinningLogo.h"
+#include "render.h"
 #include "renderSprites.h"
 #include "windowManager.h"
 #include "bench.h"
@@ -26,7 +27,7 @@ void updateSpinningLogo()
 void drawSpinningLogo()
 {
     if (m_enabled)
-        drawSprite(m_pictureIndex, kVgaWidth + getScreenXOffset() - kLogoXEdgeDist, kLogoY, false, 0, 0);
+        drawSprite(m_pictureIndex, kVgaWidth + getGameScreenOffsetX() - kLogoXEdgeDist, kLogoY, false, 0, 0);
 }
 
 void toggleSpinningLogo()

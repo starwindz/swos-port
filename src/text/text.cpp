@@ -1,6 +1,7 @@
 #include "text.h"
 #include "sprites.h"
 #include "renderSprites.h"
+#include "MenuEntry.h"
 #include "color.h"
 
 constexpr int kSmallFontSpace = 3;
@@ -128,7 +129,7 @@ static void setTextColor(int color)
     setMenuSpritesColor(colorRgb);
 }
 
-static void drawText(int x, int y, const char *str, const char *limit, int color, bool bigFont, bool addEllipsis)
+static void drawText(int x, int y, const char *str, const char *limit, int color, bool bigFont, bool addEllipsis, int alpha = 255)
 {
     setTextColor(color);
 
@@ -139,7 +140,7 @@ static void drawText(int x, int y, const char *str, const char *limit, int color
         } else if (c == '\t') {
             x += kTabSpace;
         } else if (int spriteIndex = charToSprite(c, bigFont)) {
-            drawCharSprite(spriteIndex, x, y);
+            drawCharSprite(spriteIndex, x, y, alpha);
             x += getSprite(spriteIndex).width;
         }
     }
@@ -147,34 +148,37 @@ static void drawText(int x, int y, const char *str, const char *limit, int color
     if (addEllipsis) {
         int dotSprite = bigFont ? kBigDotSprite : kSmallDotSprite;
         auto dotSpriteWidth = getSprite(dotSprite).width;
-        drawCharSprite(dotSprite, x, y);
+        drawCharSprite(dotSprite, x, y, alpha);
         x += dotSpriteWidth;
-        drawCharSprite(dotSprite, x, y);
+        drawCharSprite(dotSprite, x, y, alpha);
         x += dotSpriteWidth;
-        drawCharSprite(dotSprite, x, y);
+        drawCharSprite(dotSprite, x, y, alpha);
     }
 }
 
-void drawText(int x, int y, const char *str, int maxWidth /* = INT_MAX */, int color /* = kWhiteText2 */, bool bigFont /* = false */)
+void drawText(int x, int y, const char *str, int maxWidth /* = INT_MAX */, int color /* = kWhiteText2 */,
+    bool bigFont /* = false */, int alpha /* = 255 */)
 {
     maxWidth = maxWidth <= 0 ? INT_MAX : maxWidth;
 
     auto elisionInfo = getElisionInfo(x, maxWidth, str, bigFont);
     auto end = elisionInfo.start + elisionInfo.stringLength;
-    drawText(x, y, elisionInfo.start, end, color, bigFont, elisionInfo.needsEllipsis);
+    drawText(x, y, elisionInfo.start, end, color, bigFont, elisionInfo.needsEllipsis, alpha);
 }
 
-void drawTextRightAligned(int x, int y, const char *str, int maxWidth /* = INT_MAX */, int color /* = kWhiteText2 */, bool bigFont /* = false */)
+void drawTextRightAligned(int x, int y, const char *str, int maxWidth /* = INT_MAX */, int color /* = kWhiteText2 */,
+    bool bigFont /* = false */, int alpha /* = 255 */)
 {
     maxWidth = maxWidth <= 0 ? INT_MAX : maxWidth;
     int textLength = getStringPixelLength(str, bigFont);
     int tempX = x - std::min(textLength, maxWidth);
     auto elisionInfo = getElisionInfo(tempX, maxWidth, str, bigFont);
     auto end = elisionInfo.start + elisionInfo.stringLength;
-    drawText(x - elisionInfo.pixelWidth, y, elisionInfo.start, end, color, bigFont, elisionInfo.needsEllipsis);
+    drawText(x - elisionInfo.pixelWidth, y, elisionInfo.start, end, color, bigFont, elisionInfo.needsEllipsis, alpha);
 }
 
-void drawTextCentered(int x, int y, const char *str, int maxWidth /* = INT_MAX */, int color /* = kWhiteText2 */, bool bigFont /* = false */)
+void drawTextCentered(int x, int y, const char *str, int maxWidth /* = INT_MAX */, int color /* = kWhiteText2 */,
+    bool bigFont /* = false */, int alpha /* = 255 */)
 {
     maxWidth = maxWidth <= 0 ? INT_MAX : maxWidth;
     int textLength = getStringPixelLength(str, bigFont);
@@ -182,7 +186,12 @@ void drawTextCentered(int x, int y, const char *str, int maxWidth /* = INT_MAX *
     auto elisionInfo = getElisionInfo(tempX, maxWidth, str, bigFont);
     x -= (elisionInfo.pixelWidth + 1) / 2;
     auto end = elisionInfo.start + elisionInfo.stringLength;
-    drawText(x, y, elisionInfo.start, end, color, bigFont, elisionInfo.needsEllipsis);
+    drawText(x, y, elisionInfo.start, end, color, bigFont, elisionInfo.needsEllipsis, alpha);
+}
+
+int entryTextHeight(const MenuEntry& entry)
+{
+    return entry.bigFont() ? kBigFontHeight : kSmallFontHeight;
 }
 
 int getStringPixelLength(const char *str, bool bigFont /* = false */)
@@ -261,21 +270,4 @@ void toUpper(char *str)
 {
     while (*str++)
         str[-1] = toupper(str[-1]);
-}
-
-// GetTextSize
-//
-// in:
-//      A0 -> text
-//      A1 -> chars table (big or small)
-// out:
-//      D7 - number of pixels needed to display string
-//
-void SWOS::GetTextSize()
-{
-    auto text = A0.asConstPtr();
-    auto charTable = A1.as<const CharTable *>();
-    auto bigFont = charTable == &swos.bigCharsTable;
-
-    D7 = getStringPixelLength(text, bigFont);
 }

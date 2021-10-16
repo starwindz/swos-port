@@ -403,14 +403,7 @@ void activateMenu(const void *menu)
 
 static void initMenuEntry(MenuEntry& entry)
 {
-    entry.background = kEntryNoBackground;
-    entry.bg.entryFunc.clearAligned();
-
-    entry.type = kEntryNoForeground;
-    entry.fg.contentFunction.clearAligned();
-
-    entry.invisible = 0;
-    entry.disabled = 0;
+    memset(&entry, 0, sizeof(entry));
 
     entry.leftEntry = -1;
     entry.rightEntry = -1;
@@ -426,11 +419,6 @@ static void initMenuEntry(MenuEntry& entry)
     entry.rightEntryDis = -1;
     entry.upEntryDis = -1;
     entry.downEntryDis = -1;
-
-    entry.onSelect.clearAligned();
-    entry.controlMask = 0;
-    entry.beforeDraw = nullptr;
-    entry.afterDraw = nullptr;
 }
 
 static void finalizeMenu(Menu *dstMenu, char *menuEnd, int numEntries)

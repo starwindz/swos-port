@@ -116,6 +116,7 @@ struct MenuEntry
     void setString(char *str);
     void setString(const char *str);
     void copyString(const char *str);
+    bool bigFont() const;
     void setNumber(int number);
     void setSprite(int index);
     void setBackgroundColor(int color);

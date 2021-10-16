@@ -7,26 +7,45 @@
 #include "render.h"
 #include "file.h"
 #include "util.h"
+#include "random.h"
 
 constexpr int kSwosPatternSize = 16;
 
-constexpr int kPitchWidth = kPitchPatternWidth * kSwosPatternSize;
-constexpr int kPitchHeight = kPitchPatternHeight * kSwosPatternSize;
+static_assert(kPitchWidth == kPitchPatternWidth * kSwosPatternSize &&
+    kPitchHeight == kPitchPatternHeight * kSwosPatternSize, "Pitch dimensions mismatch");
 
 constexpr float kZoomIncrement = 1.f / 70 / 4;
 constexpr float kMaxZoom = 2.5;
 constexpr float kMaxZoomVelocityFactor = .1f;
 
+enum PitchTypes {
+    kRandom = -1,
+    kFrozen = 0,
+    kMuddy = 1,
+    kWet = 2,
+    kSoft = 3,
+    kNormal = 4,
+    kDry = 5,
+    kHard = 6,
+    kMaxPitchType = 6,
+};
+
+static int m_pitchType;
+static int m_pitchNumber;
+
 static int m_res;
-
 static float m_zoom;
+static Uint32 m_lastZoomChangeTicks;
 
+static void setPitchType();
+static void setPitchNumber();
 static void drawPitch(float xOfs, float yOfs, int row, int column, int numPatternsX, int numPatternsY);
 static void reloadPitch(AssetResolution oldResolution, AssetResolution newResolution);
 static std::pair<float, float> clipPitch(float widthNormalized, float heightNormalized, float& x, float& y);
-static float getMinimumZoom(float scale = getScale());
+static float getMinimumZoom(float scale = getGameScale());
 static float getDefaultZoom(float scale);
 static float getZoomIncrement();
+static void clipZoom();
 
 void initPitches()
 {
@@ -34,21 +53,18 @@ void initPitches()
     registerAssetResolutionChangeHandler(reloadPitch);
 }
 
-static int getPitchNo()
+void setPitchTypeAndNumber()
 {
-    int pitchNo = swos.pitchNumberAndType >> 8;
-    assert(static_cast<size_t>(pitchNo) < kNumPitches);
-
-    return pitchNo;
+    setPitchType();
+    setPitchNumber();
 }
 
 void loadPitch()
 {
-    int pitchNo = getPitchNo();
-    logInfo("Loading pitch %d", pitchNo);
+    logInfo("Loading pitch %d (type: %d), asset resolution %d", m_pitchNumber, m_pitchType, m_res);
 
-    auto pitchIndex = kPitchIndices[pitchNo];
-    auto start = kPitchPatternStartIndices[pitchNo];
+    auto pitchIndex = kPitchIndices[m_pitchNumber];
+    auto start = kPitchPatternStartIndices[m_pitchNumber];
 
     for (int i = 0; i < kPitchPatternHeight; i++) {
         for (int j = 0; j < kPitchPatternWidth; j++) {
@@ -68,23 +84,26 @@ void loadPitch()
 // Renders pitch at cameraX and cameraY.
 std::pair<float, float> drawPitch(float cameraX, float cameraY)
 {
+    // clip zoom first since the screen dimensions might have changed
+    clipZoom();
+
     assert(m_zoom > 0);
 
-    int width, height;
-    std::tie(width, height) = getWindowSize();
+    auto width = getFieldWidth();
+    auto height = getFieldHeight();
 
-    auto scale = getScale();
+    auto scale = getGameScale();
 
-    auto widthNormalized = width / scale / m_zoom;
-    auto heightNormalized = height / scale / m_zoom;
+    auto widthNormalized = width / m_zoom;
+    auto heightNormalized = height / m_zoom;
 
     auto x = cameraX + (kVgaWidth - widthNormalized) / 2;
     auto y = cameraY + (kVgaHeight - heightNormalized) / 2;
 
     auto offsets = clipPitch(widthNormalized, heightNormalized, x, y);
 
-    auto numPatternsX = width / scale / m_zoom / kSwosPatternSize + 1;
-    auto numPatternsY = height / scale / m_zoom / kSwosPatternSize + 1;
+    auto numPatternsX = widthNormalized / kSwosPatternSize + 1;
+    auto numPatternsY = heightNormalized / kSwosPatternSize + 1;
     numPatternsX = std::min(static_cast<float>(kPitchPatternWidth), numPatternsX);
     numPatternsY = std::min(static_cast<float>(kPitchPatternHeight), numPatternsY);
     numPatternsX = std::ceil(numPatternsX);
@@ -134,6 +153,11 @@ bool zoomOut(float step /* = 0 */)
     return setZoomFactor(m_zoom - getZoomIncrement(), step);
 }
 
+bool resetZoom()
+{
+    return setZoomFactor(getDefaultZoom(getGameScale()));
+}
+
 float getZoomFactor()
 {
     return m_zoom;
@@ -143,7 +167,7 @@ bool setZoomFactor(float zoom, float step /* = 0 */)
 {
     auto initialZoom = m_zoom;
 
-    auto scale = getScale();
+    auto scale = getGameScale();
     if (scale) {
         if (!zoom) {
             m_zoom = getDefaultZoom(scale);
@@ -160,17 +184,88 @@ bool setZoomFactor(float zoom, float step /* = 0 */)
         m_zoom = zoom;
     }
 
-    return initialZoom != m_zoom;
+    bool zoomChanged = initialZoom != m_zoom;
+    if (zoomChanged)
+        m_lastZoomChangeTicks = SDL_GetTicks();
+
+    return zoomChanged;
+}
+
+Uint32 getLastZoomChangeTime()
+{
+    return m_lastZoomChangeTicks;
+}
+
+static void setPitchType()
+{
+    // 12 (months) x 7 (pitch types)
+    // probabilities in percents (sum = 100)
+    static const std::array<std::array<byte, 7>, 12> kPitchTypeSeasonalProbabilities = {{
+        30, 20, 30, 20, 0, 0, 0,
+        20, 30, 20, 20, 10, 0, 0,
+        10, 30, 10, 30, 20, 0, 0,
+        0, 10, 10, 30, 40, 10, 0,
+        0, 0, 0, 10, 40, 40, 10,
+        0, 0, 0, 0, 40, 40, 20,
+        0, 0, 0, 0, 30, 30, 40,
+        0, 0, 0, 0, 50, 30, 20,
+        0, 0, 0, 20, 40, 30, 10,
+        0, 20, 0, 40, 30, 10, 0,
+        10, 30, 10, 40, 10, 0, 0,
+        20, 30, 20, 30, 0, 0, 0,
+    }};
+    static const std::array<byte, 7> kPitchTypeProbabilities = { 5, 5, 10, 20, 30, 20, 10 };
+
+    m_pitchType = 0;
+
+    if (swos.gamePitchTypeOrSeason || swos.gamePitchType == -1) {
+        auto probabilities = swos.gamePitchTypeOrSeason ? kPitchTypeProbabilities.data() : kPitchTypeSeasonalProbabilities[swos.gameSeason].data();
+        auto probability = SWOS::rand() * 100 / 256;    // range 0..99
+        while (probability >= *probabilities) {
+            probability -= *probabilities++;
+            m_pitchType++;
+        }
+    } else {
+        m_pitchType = swos.gamePitchType;
+    }
+
+    assert(m_pitchType >= kRandom && m_pitchType <= kMaxPitchType);
+}
+
+static void setPitchNumber()
+{
+    static const std::array<byte, 16> kPitchNumberProbabilities = {
+        0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 4, 4, 2, 2, 3, 3
+    };
+
+    if (swos.g_trainingGame) {
+        m_pitchNumber = kTrainingPitchIndex;
+    } else {
+        int index;
+        if (swos.plg_D0_param) {
+            // pick random pitch (used in friendlies)
+            index = SWOS::rand() & 0xf;
+        } else {
+            // pseudo-random, but always the same in regards to the teams that are playing; used in career
+            index = swos.topTeamIngame.teamName[0] | (swos.topTeamIngame.teamName[1] << 8);
+            index ^= swos.topTeamIngame.prShirtCol;
+            index ^= swos.topTeamIngame.prShortsCol;
+            index &= 0xf;
+        }
+
+        m_pitchNumber = kPitchNumberProbabilities[index];
+    }
+
+    assert(m_pitchNumber >= 0 && m_pitchNumber < kNumPitches);
 }
 
 static void drawPitch(float xOfs, float yOfs, int row, int column, int numPatternsX, int numPatternsY)
 {
     int patternSize = kPatternSizes[m_res];
-    int pitchNo = getPitchNo();
-    auto start = kPitchPatternStartIndices[pitchNo];
-    auto indices = kPitchIndices[pitchNo];
+    auto start = kPitchPatternStartIndices[m_pitchNumber];
+    auto indices = kPitchIndices[m_pitchNumber];
 
-    auto scale = getScale();
+    auto scale = getGameScale();
 
     auto destPatternSize = kSwosPatternSize * scale * m_zoom;
 
@@ -278,20 +373,16 @@ static std::pair<float, float> clipPitch(float widthNormalized, float heightNorm
     return { xOffset, yOffset };
 }
 
-static float getMinimumZoom(float scale /* = getScale() */)
+static float getMinimumZoom(float scale /* = getGameScale() */)
 {
     assert(scale);
 
-    int width, height;
-    std::tie(width, height) = getWindowSize();
+    auto fieldWidth = getFieldWidth();
+    auto fieldHeight = getFieldHeight();
 
-    auto normalizedWidth = width / scale;
-    auto normalizedHeight = height / scale;
+    assert(fieldWidth <= kPitchWidth && fieldHeight <= kPitchHeight);
 
-    assert(normalizedWidth <= kPitchWidth && normalizedHeight <= kPitchHeight);
-
-    auto minZoom = std::max(normalizedWidth / kPitchWidth, normalizedHeight / kPitchHeight);
-    return minZoom;
+    return std::max(fieldWidth / kPitchWidth, fieldHeight / kPitchHeight);
 }
 
 static float getDefaultZoom(float scale)
@@ -307,4 +398,10 @@ static float getZoomIncrement()
 {
     auto zoomRange = kMaxZoom - getMinimumZoom();
     return (m_zoom - getMinimumZoom()) / zoomRange * kMaxZoomVelocityFactor + kZoomIncrement;
+}
+
+static void clipZoom()
+{
+    m_zoom = std::max(m_zoom, getMinimumZoom());
+    m_zoom = std::min(m_zoom, kMaxZoom);
 }

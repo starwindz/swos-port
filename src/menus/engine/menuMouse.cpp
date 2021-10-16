@@ -6,6 +6,7 @@
 #include "mainMenu.h"
 #include "controls.h"
 #include "windowManager.h"
+#include "render.h"
 #include "game.h"
 #include "replayExitMenu.h"
 

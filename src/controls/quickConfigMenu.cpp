@@ -6,6 +6,7 @@
 #include "scancodes.h"
 #include "keyBuffer.h"
 #include "joypads.h"
+#include "color.h"
 
 constexpr int kRedefineKeysHeaderY = 30;
 constexpr int kRedefineKeysStartY = 70;
@@ -34,6 +35,7 @@ enum class FinalPromptResult {
 };
 
 static void drawQuickConfigMenu(const QuickConfigContext& context);
+static void redrawMenu(const QuickConfigContext& context, bool flip = true);
 static FinalPromptResult waitForConfirmation();
 
 bool promptForDefaultGameEvents(QuickConfigContext& context)
@@ -45,17 +47,18 @@ bool promptForDefaultGameEvents(QuickConfigContext& context)
     context.reset();
     if (context.warningY < 0)
         context.warningY = kWarningY;
+    context.redrawMenuFn = std::bind(drawQuickConfigMenu, std::cref(context));
 
     logInfo("Configuring %s for player %d", context.controls == QuickConfigControls::kJoypad ? "joypad" : "keyboard",
         context.player == kPlayer1 ? 1 : 2);
     if (context.controls == QuickConfigControls::kJoypad)
         logInfo("Joypad: #%d", context.joypadIndex);
 
+    redrawMenu(context);
+
     waitForKeyboardAndMouseIdle();
 
     while (true) {
-        drawQuickConfigMenu(context);
-
         auto result = getNextControl(context);
 
         switch (result) {
@@ -69,7 +72,7 @@ bool promptForDefaultGameEvents(QuickConfigContext& context)
             assert(false);
         }
 
-        drawQuickConfigMenu(context);
+        redrawMenu(context);
 
         switch (waitForConfirmation()) {
         case FinalPromptResult::kSuccess:
@@ -86,7 +89,7 @@ bool promptForDefaultGameEvents(QuickConfigContext& context)
     }
 }
 
-static void clearWarningIfNeeded(Uint32& showWarningTicks, int warningY);
+static void clearWarningIfNeeded(Uint32& showWarningTicks, const QuickConfigContext& context);
 static Uint32 printWarning(QuickConfigStatus status, const char *control, const QuickConfigContext& context, char *warningBuffer, size_t warningBufferSize);
 
 QuickConfigStatus getNextControl(QuickConfigContext& context)
@@ -96,10 +99,12 @@ QuickConfigStatus getNextControl(QuickConfigContext& context)
 
     Uint32 showWarningTicks = 0;
 
+    redrawMenu(context);
+
     while (true) {
         processControlEvents();
 
-        clearWarningIfNeeded(showWarningTicks, context.warningY);
+        clearWarningIfNeeded(showWarningTicks, context);
 
         auto result = context.getNextControl();
 
@@ -135,7 +140,7 @@ static void drawControls(const QuickConfigContext& context)
     }
 
     if (context.currentSlot < kNumDefaultGameControlEvents)
-        drawMenuSprite(kBlockSpriteX, y, kBlockSprite);
+        drawMenuSprite(kBlockSprite, kBlockSpriteX, y);
 }
 
 static void drawQuickConfigMenu(const QuickConfigContext& context)
@@ -168,45 +173,42 @@ static void drawQuickConfigMenu(const QuickConfigContext& context)
     drawTextCentered(160, kAbortY, context.abortText);
 
     drawControls(context);
-
-    updateScreen();
 }
 
-enum LineDirection { kVertical, kHorizontal };
-static void drawLine(int x, int y, int length, LineDirection direction)
+static void redrawMenu(const QuickConfigContext& context, bool flip /* = true */)
 {
-    auto dest = swos.linAdr384k + y * kVgaWidth + x;
-
-    if (direction == kHorizontal) {
-        memset(dest, kWhiteText2, length);
-    } else {
-        while (length--) {
-            *dest = kWhiteText2;
-            dest += kVgaWidth;
-        }
+    if (context.redrawMenuFn) {
+        context.redrawMenuFn();
+        if (flip)
+            updateScreen();
     }
 }
 
 static void drawConfirmationMenu()
 {
+    drawMenuBackground();
+
     static const std::array<std::pair<int, const char *>, 3> kSegmentData = {{
         { kSegment1X, "ENTER/S - SAVE" }, { kSegment2X, "ESC/D - DISCARD" }, { kSegment3X, "R - RESTART" },
     }};
 
+    const auto& color = kMenuPalette[kWhiteText2];
+
     for (const auto& segmentData : kSegmentData) {
         int x = segmentData.first;
         auto text = segmentData.second;
-        drawLine(x, kTopLineY, kHorizontalSegmentLength, kHorizontal);
-        drawLine(x, kTopLineY + 1, kVerticalSegmentLength - 1, kVertical);
-        drawLine(x, kBottomLineY, kHorizontalSegmentLength, kHorizontal);
-        drawLine(x, kBottomLineY - kVerticalSegmentLength + 1, kVerticalSegmentLength - 1, kVertical);
+
+        drawHorizontalLine(x, kTopLineY, kHorizontalSegmentLength, color);
+        drawVerticalLine(x, kTopLineY + 1, kVerticalSegmentLength - 1, color);
+        drawHorizontalLine(x, kBottomLineY, kHorizontalSegmentLength, color);
+        drawVerticalLine(x, kBottomLineY - kVerticalSegmentLength + 1, kVerticalSegmentLength - 1, color);
 
         drawTextCentered(x + kSegmentLength / 2 + 1, kFinalPromptY, text);
 
-        drawLine(x + kSegmentLength - kHorizontalSegmentLength + 1, kTopLineY, kHorizontalSegmentLength, kHorizontal);
-        drawLine(x + kSegmentLength, kTopLineY + 1, kVerticalSegmentLength - 1, kVertical);
-        drawLine(x + kSegmentLength - kHorizontalSegmentLength + 1, kBottomLineY, kHorizontalSegmentLength, kHorizontal);
-        drawLine(x + kSegmentLength, kBottomLineY - kVerticalSegmentLength + 1, kVerticalSegmentLength - 1, kVertical);
+        drawHorizontalLine(x + kSegmentLength - kHorizontalSegmentLength, kTopLineY, kHorizontalSegmentLength, color);
+        drawVerticalLine(x + kSegmentLength, kTopLineY + 1, kVerticalSegmentLength - 1, color);
+        drawHorizontalLine(x + kSegmentLength - kHorizontalSegmentLength, kBottomLineY, kHorizontalSegmentLength, color);
+        drawVerticalLine(x + kSegmentLength, kBottomLineY - kVerticalSegmentLength + 1, kVerticalSegmentLength - 1, color);
     }
 
     updateScreen();
@@ -259,12 +261,11 @@ static FinalPromptResult waitForConfirmation()
     } while (true);
 }
 
-static void clearWarningIfNeeded(Uint32& showWarningTicks, int warningY)
+static void clearWarningIfNeeded(Uint32& showWarningTicks, const QuickConfigContext& context)
 {
     if (showWarningTicks && showWarningTicks < SDL_GetTicks()) {
-        drawMenuBackground(warningY, warningY + 13);
         showWarningTicks = 0;
-        updateScreen();
+        redrawMenu(context);
     }
 }
 
@@ -279,7 +280,7 @@ static Uint32 printWarning(QuickConfigStatus status, const char *control, const 
 
     auto showWarningTicks = SDL_GetTicks() + kWarningInterval;
 
-    drawMenuBackground(context.warningY, context.warningY + 13);
+    redrawMenu(context, false);
     drawTextCentered(kVgaWidth / 2, context.warningY, warningBuffer, -1, kYellowText);
     updateScreen();
 

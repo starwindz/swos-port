@@ -2,6 +2,7 @@
 #include "bench.h"
 #include "benchControls.h"
 #include "camera.h"
+#include "replays.h"
 #include "sprites.h"
 #include "renderSprites.h"
 #include "text.h"
@@ -52,6 +53,7 @@ static void drawBenchPlayerArrow();
 static void drawOpponentsBench();
 static void drawBenchPlayersAndCoach(BenchState state, int y, const TeamGeneralInfo& team, const TeamGame& teamData, bool drawTrainingTopHalf);
 static void drawBenchPlayers(const PlayerGame *players, int reservePlayersFrameTeamOffset, int y, BenchState state, bool drawTrainingTopHalf);
+static void drawCoach(BenchState state, const TeamGeneralInfo& team, int coachY);
 static bool isPlayerStanding(BenchState state, int currentPlayerIndex);
 static void drawFormationMenu();
 static void drawSubstitutesMenu();
@@ -61,7 +63,7 @@ static void drawSubstitutesMenuEntry(int y, int playerIndex);
 static void drawFormationEntry(int i, int y);
 static void drawEntryHighlight(int y, int pos);
 static void drawLegend(MenuType menuType);
-static bool isBenchVisible();
+static void updateCameraLeavingBench();
 static bool getPlayerArrowCoordinates(int& x, int& y);
 static int getCoachY(int y, bool drawTrainingTopHalf);
 static int getCoachSpriteIndex(BenchState state, const TeamGeneralInfo& team);
@@ -79,8 +81,7 @@ void initBenchMenusBeforeMatch()
 
 void drawBench(float xOffset, float yOffset)
 {
-    if (!isBenchVisible())
-        return;
+    updateCameraLeavingBench();
 
     m_xOffset = xOffset;
     m_yOffset = yOffset;
@@ -90,7 +91,9 @@ void drawBench(float xOffset, float yOffset)
     if (!swos.g_trainingGame || !trainingTopTeam())
         drawOpponentsBench();
 
-    drawBenchPlayerArrow();
+    if (inBench())
+        drawBenchPlayerArrow();
+
     drawBenchPlayersAndCoach(getBenchState(), getBenchY(), *getBenchTeam(), *getBenchTeamData(), trainingTopTeam());
 
     if (swos.g_trainingGame && trainingTopTeam())
@@ -142,10 +145,8 @@ static void drawBenchPlayersAndCoach(BenchState state, int y, const TeamGeneralI
         y += kBenchPlayerHeight;
 
     int coachY = getCoachY(y, drawTrainingTopHalf);
-    if (coachY > 0) {
-        int coachFrame = getCoachSpriteIndex(state, team);
-        drawBenchSprite(coachFrame, kBenchReservePlayersX, coachY);
-    }
+    if (coachY > 0)
+        drawCoach(state, team, coachY);
 
     y += kBenchPlayerHeight;
 
@@ -188,6 +189,12 @@ static void drawBenchPlayers(const PlayerGame *players, int reservePlayersFrameT
         if (swos.g_trainingGame && drawTrainingTopHalf)
             players -= 2;
     }
+}
+
+static void drawCoach(BenchState state, const TeamGeneralInfo& team, int coachY)
+{
+    int coachFrame = getCoachSpriteIndex(state, team);
+    drawBenchSprite(coachFrame, kBenchReservePlayersX, coachY);
 }
 
 static bool isPlayerStanding(BenchState state, int currentPlayerIndex)
@@ -443,14 +450,10 @@ static void drawLegend(MenuType menuType)
     drawMenuSprite(spriteIndex, spriteX, spriteY);
 }
 
-static bool isBenchVisible()
+static void updateCameraLeavingBench()
 {
-    if (!inBench() && (!isCameraLeavingBench() || !benchVisibleByX())) {
+    if (!inBench() && (!isCameraLeavingBench() || !benchVisibleByX()))
         clearCameraLeavingBench();
-        return false;
-    }
-
-    return benchVisibleByX();
 }
 
 static bool getPlayerArrowCoordinates(int& x, int& y)
@@ -483,10 +486,8 @@ static int getCoachY(int y, bool drawTrainingTopHalf)
     if (swos.g_trainingGame) {
         if (drawTrainingTopHalf)
             return -1;
-        else {
-            if (trainingTopTeam())
-                return y - 2 * kBenchPlayerHeight;
-        }
+        else if (trainingTopTeam())
+            return y - 2 * kBenchPlayerHeight;
     }
 
     return y;
@@ -495,7 +496,7 @@ static int getCoachY(int y, bool drawTrainingTopHalf)
 static int getCoachSpriteIndex(BenchState state, const TeamGeneralInfo& team)
 {
     int coachFrameTeamOffset = 0;
-    if (team.teamNumber != 1)
+    if (!swos.g_trainingGame && team.teamNumber != 1)
         coachFrameTeamOffset = kCoach2SittingStartSprite - kCoach1SittingStartSprite;
 
     int coachBaseFrame = kCoach1SittingStartSprite;
@@ -577,7 +578,10 @@ static const Color& getSelectedPlayerHighlightColor(int pos)
 
 static void drawBenchSprite(int spriteIndex, int x, int y)
 {
-    drawSprite(spriteIndex, x - m_cameraX, y - m_cameraY, true, m_xOffset, m_yOffset);
+    auto xDest = x - m_cameraX;
+    auto yDest = y - m_cameraY;
+    saveCoordinatesForHighlights(spriteIndex, xDest, yDest);
+    drawSprite(spriteIndex, xDest, yDest, true, m_xOffset, m_yOffset);
 }
 
 static void drawRectWithShadow(int x, int y, int width, int height, const Color& baseColor)

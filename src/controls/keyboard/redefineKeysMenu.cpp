@@ -7,11 +7,15 @@
 
 static DefaultScancodesPack m_keys;
 
-static QuickConfigStatus getScanCodeStatus(Keyboard keyboard, SDL_Scancode key, int numKeys = 0)
+static QuickConfigStatus getScanCodeStatus(Keyboard keyboard, SDL_Scancode key, int numKeys, bool redefineKeys)
 {
     assert(keyboard == Keyboard::kSet1 || keyboard == Keyboard::kSet2);
 
     if (std::find(m_keys.begin(), m_keys.begin() + numKeys, key) != m_keys.begin() + numKeys)
+        return QuickConfigStatus::kAlreadyUsed;
+
+    if (!redefineKeys && (keyboard == Keyboard::kSet1 && keyboard1HasScancode(key) ||
+        keyboard == Keyboard::kSet2 && keyboard2HasScancode(key)))
         return QuickConfigStatus::kAlreadyUsed;
 
     if (keyboard == Keyboard::kSet1 && getPl2Controls() == kKeyboard2) {
@@ -54,7 +58,7 @@ static std::pair<QuickConfigStatus, const char *> getControlKey(QuickConfigConte
         waitForKeyboardAndMouseIdle();
 
         auto keyboard = context.controls == QuickConfigControls::kKeyboard1 ? Keyboard::kSet1 : Keyboard::kSet2;
-        auto status = getScanCodeStatus(keyboard, key, context.currentSlot);
+        auto status = getScanCodeStatus(keyboard, key, context.currentSlot, context.redefiningControls);
 
         if (status == QuickConfigStatus::kContinue) {
             addKey(context, key);
@@ -69,11 +73,12 @@ static std::pair<QuickConfigStatus, const char *> getControlKey(QuickConfigConte
     return { QuickConfigStatus::kNoInput, nullptr };
 }
 
-SDL_Scancode getControlKey(Keyboard keyboard, int warningY)
+SDL_Scancode getControlKey(Keyboard keyboard, int warningY, std::function<void()> redrawMenuFn)
 {
-    auto context = QuickConfigContext::getKeyboardContext(keyboard, getControlKey, nullptr);
+    auto context = QuickConfigContext::getKeyboardContext(keyboard, getControlKey, nullptr, redrawMenuFn);
     context.currentSlot = 0;
     context.warningY = warningY;
+    context.redefiningControls = false;
 
     auto status = getNextControl(context);
 

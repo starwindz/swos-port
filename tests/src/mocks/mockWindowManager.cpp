@@ -1,11 +1,12 @@
 #include "mockWindowManager.h"
 #include "windowManager.h"
+#include "render.h"
 
 constexpr int kDefaultFullScreenWidth = 640;
 constexpr int kDefaultFullScreenHeight = 480;
 
-static int m_windowWidth = kWindowWidth;
-static int m_windowHeight = kWindowHeight;
+static int m_windowWidth = 0;//kWindowWidth;
+static int m_windowHeight = 0;//kWindowHeight;
 static int m_displayWidth = kDefaultFullScreenWidth;
 static int m_displayHeight = kDefaultFullScreenHeight;
 static bool m_windowResizable = false;
@@ -52,6 +53,11 @@ void setWindowSize(int width, int height)
 bool getWindowResizable()
 {
     return m_windowResizable;
+}
+
+bool getWindowMaximized()
+{
+    return false;
 }
 
 void setWindowResizable(bool resizable)
@@ -128,6 +134,7 @@ bool setFullScreenResolution(int width, int height)
 void toggleBorderlessMaximizedMode() {}
 void toggleFullScreenMode() {}
 void toggleWindowResizable() {}
+void toggleWindowMaximized() {}
 void centerWindow() {}
 
 bool hasMouseFocus()
@@ -140,13 +147,15 @@ bool mapCoordinatesToGameArea(int &x, int &y)
     return false;
 }
 
-float getScale()
+float getGameScale()
 {
     return 1.0;
 }
 
-float getScreenXOffset() { return 0; }
-float getScreenYOffset() { return 0; }
+float getGameScreenOffsetX() { return 0; }
+float getGameScreenOffsetY() { return 0; }
+float getFieldWidth() { return 1; }
+float getFieldHeight() { return 1; }
 
 std::pair<int, int> mapPoint(int x, int y)
 {

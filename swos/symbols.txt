@@ -33,14 +33,13 @@ team1NameLength - dseg_114C96
 
 # sprites
 aSprite_dat
-UnchainSpriteInMenus - DrawEmptyMenuItem
+UnchainSpriteInMenus - DrawSpriteCentered
 ClearSprite - ShowMenu
 InitDisplaySprites - InitTeamsData
 DrawSprite_entry2
 MakeSpritesFromPlayerNames - AI_SetControlsDirection
-# + game time + pitch type color tables
-dseg_17D8EB - pitchTypeSeasonalProbabilities
-dseg_166760 - menuItemColorTable
+# + game time + pitch type tables
+dseg_17D8EB - team1StatsData
 numberBuffer - prevLastPlayer
 allSpritesArray - lastSelectedTeam
 numSpritesToRender
@@ -71,7 +70,7 @@ aGrafsLoader00_ - g_pitchDatBuffer
 # remove intro image reel data too
 aSfxFlcWincup_r - big_S_pictureIndexArray
 fansSidesSwapped
-drawSpritesWriteOnly - vsPtr
+drawSpritesWriteOnly - averagePlayerPrice
 animPatternsIndex - animPatternsState
 
 # color palette
@@ -80,7 +79,6 @@ dseg_17192A - optionsMenu
 # InputText
 InputTextKeyLoop - InitUserTactics
 g_inputtingText
-g_allowExtraCharsFlag
 inMenuKeyboardBuffer
 
 # menus
@@ -89,17 +87,18 @@ InitMainMenuStuff
 MenuProc
 UnpackMenu
 RestorePreviousMenu
-DrawSelectedMenuItemFrame - DrawMenuItemBackground
+DrawBackAllItems - CopyWholeSprite
 DrawMenuItemOuterFrame
 EuropeanChampionshipInit - DrawAnimatedPatterns
 continueMenu - DesignDIYTournamentInit
 continueAbortMenu - designDiyTournamentMenu
 errorPromptsEnabled - dseg_114BE0
 cseg_1E1A6
+cseg_216A2
 g_currentMenuPtr
+kColorTableShine - viewTeamsColumn1
 menuStatus - controlMask
-menuTextBlinkCounter
-deadInputTextVar - shirtColorTable
+menuTextBlinkCounter - shirtColorTable
 DrawMenuText - ZeroOutStars
 controlsHeldTimer
 lastControls
@@ -114,8 +113,8 @@ FindFirstFile - SelectFileToSaveDialog
 # controls/joypads
 # + FadeOut & SetPalette
 FadeOutToBlack - InitMenuMusic
-# + camera vars
-cameraXMod320 - pl1Fire
+# + char tables + camera vars
+smallCharsTable - pl1Fire
 pl1SecondaryFire - pl2Fire
 pl2SecondaryFire - fadingMenuDeadVar01
 # pitch patterns + setup.dat vars
@@ -193,16 +192,14 @@ AllowStatistics - DrawStatistics
 randXorIndex - playerPositionsScoringChances
 
 # misc. variables
-linAdr120k - linAdr982k
-handle982k - g_workingPalette
+linAdr384k - playGame
 dosMemOfs4fc00h - poolplyrDatBuffer
 g_midiPlaying - instantReplayFlag
 # also removes chain font buffer and keyboard variables
-g_fadePalette - playGame
 aBenc2_dat
 aDemo_dat
 optionsMenu - friendlyGameMenu
-menuX - g_spriteGraphicsPtr
+dseg_110344 - g_spriteGraphicsPtr
 menuSize - g_exitMenu
 # + pitch patterns
 europeanChampionshipMenu - patternsGoalCounter
@@ -239,6 +236,7 @@ dosMemLinAdr - aSensibleWorldOfSoccerV2_0
 @null
 ProgramPIT
 cseg_67646
+CallDrawMultipleItems
 
 # sound
 InitMenuMusic
@@ -340,7 +338,6 @@ g_currentMenu, array char[6500] (align: 4)
 previousMenuItem, MenuEntry *
 g_exitMenu, word
 menuCycleTimer, word
-kColorTableShine, array word[8]
 menuCursorFrame, word
 g_allowShorterMenuItemsWithFrames, word
 
@@ -465,6 +462,9 @@ bookedPlayerCardOrNumberSprite, Sprite
 pitchNumberAndType, word
 g_pitchDatBuffer, array char[10032]
 pitchBallSpeedFactor, word
+gamePitchTypeOrSeason, word
+gamePitchType, int16_t
+gameSeason, word
 
 # highlights
 playHighlightFlag, word
@@ -538,7 +538,6 @@ nobodysBallTimer, word
 
 # memory buffers
 dosMemOfs60c00h, char *
-linAdr384k, char *
 
 # game loop
 UpdateBall, function
@@ -563,10 +562,10 @@ UpdatePlayerBeingPassedTo, function
 UpdatePlayersAndBall, function
 UpdatePlayerInjuries, function
 AssignFakeGoalsToScorers, function
+SetIngameTeamsPrimaryColors, function
 cseg_2F0E2, function
 cseg_2F194, function
 cseg_2F3AB, function
-cseg_2FB5E, function
 cseg_30BD1, function
 cseg_8F66C, function
 SetTeamSecondaryColors, function
@@ -677,8 +676,6 @@ ZeroOutStars, function
 StartingMatch, function
 
 aSensibleWorldOfSoccerV2_0, array const char
-vsPtr, char *
-screenWidth, dword
 skillsPerQuadrant, array char[245]
 currentTick, word
 stoppageTimer, word
@@ -686,8 +683,6 @@ lastStoppageTimerValue, word
 aChairmanScenes, array const char
 animPatternsState, word
 playGame, word
-smallCharsTable, CharTable
-bigCharsTable, CharTable
 twoPlayers, word
 flipOnOff, word
 inFriendlyMenu, word
@@ -808,6 +803,7 @@ MenuCheckControls
 ShowMenu
 DrawMenu
 DrawMenuItem
+DrawMultipleItems
 ActivateMenu
 SetCurrentEntry
 DoContinueAbortMenu
@@ -830,13 +826,11 @@ UpdateAndApplyTeamControls
 GameOver
 
 # sprites/game graphics
-CopySprite
 DrawStatistics
 ScrollToCurrent
 
 # text
 InputText
-GetTextSize
 
 # music
 TryMidiPlay

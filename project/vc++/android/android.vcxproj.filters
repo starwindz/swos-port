@@ -295,6 +295,9 @@
     <ClInclude Include="..\..\..\src\game\referee.h">
       <Filter>Source Files\game</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\src\video\overlay.h">
+      <Filter>Source Files\video</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source Files">
@@ -677,6 +680,9 @@
     </ClCompile>
     <ClCompile Include="..\..\..\src\game\referee.cpp">
       <Filter>Source Files\game</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\video\overlay.cpp">
+      <Filter>Source Files\video</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -24,6 +24,7 @@ static void drawStats();
 static void drawDarkRectangles();
 static std::pair<const TeamStatsData *, const TeamStatsData *> getTeamStatsPointers();
 static void drawText(int team1Goals, int team2Goals, const TeamStatsData *leftTeamStats, const TeamStatsData *rightTeamStats);
+static void checkStatsTimer();
 
 void initStats()
 {
@@ -56,6 +57,12 @@ bool statsEnqueued()
 
 bool showingUserRequestedStats()
 {
+    if (m_showStats) {
+        m_showStats = false;
+        m_showingUserRequestedStats = true;
+        swos.statsTimer = 1;
+    }
+
     return m_showingUserRequestedStats;
 }
 
@@ -100,6 +107,8 @@ void updateStatistics()
             m_isGoalAttempt = 0;
         }
     }
+
+    checkStatsTimer();
 }
 
 const GameStats getStats()
@@ -124,12 +133,6 @@ void drawStats(int team1Goals, int team2Goals, const GameStats& stats)
 // Called once per frame from main loop.
 void drawStatsIfNeeded()
 {
-    if (m_showStats) {
-        m_showStats = false;
-        m_showingUserRequestedStats = true;
-        swos.statsTimer = 1;
-    }
-
     if (m_showingUserRequestedStats || swos.statsTimer > 0)
         drawStats();
 }
@@ -244,4 +247,10 @@ static void drawText(int team1Goals, int team2Goals, const TeamStatsData *leftTe
         drawStatsNumber(kRightColumn, y, statsInfo.rightValue);
         y += kLineSpacing;
     }
+}
+
+static void checkStatsTimer()
+{
+    if (swos.statsTimer < 0)
+        hideStats();
 }

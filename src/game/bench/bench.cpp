@@ -19,6 +19,7 @@ static bool m_leavingBench;
 static int m_benchY;
 static int m_opponentBenchY;
 
+static void initBench();
 static void invokeBench();
 static void checkForThrowInAndKeepersBall();
 static void checkIfGoalkeeperClaimedTheBall();
@@ -31,6 +32,7 @@ void initBenchBeforeMatch()
     clearCameraLeavingBench();
     initBenchControls();
     initBenchMenusBeforeMatch();
+    initBench();
 }
 
 // Main entry point from game loop.
@@ -115,11 +117,9 @@ int getBenchPlayerPosition(int index)
     return positions[index] - 1;
 }
 
-// Make the bench happen.
-static void invokeBench()
+static void initBench()
 {
     swos.stateGoal = 0;
-    swos.g_inSubstitutesMenu = 1;
     swos.resultTimer = -swos.resultTimer;
     swos.statsTimer = -swos.statsTimer;
 
@@ -129,8 +129,6 @@ static void invokeBench()
 
     if (swos.g_trainingGame) {
         m_benchY = m_opponentBenchY = kTrainingPitchBenchY;
-        // always start from the bottom bench half
-        setTrainingTopTeam(topTeam ? 0 : 1);
     } else {
         // bit 2 of the 2nd character of top team name... nice criteria :P
         if (swos.topTeamIngame.teamName[1] & 2)
@@ -141,7 +139,14 @@ static void invokeBench()
 
     swos.plComingX = kPlayerGoingInX;
     swos.plComingY = kPlayerGoingInY;
+}
 
+// Make the bench happen.
+static void invokeBench()
+{
+    initBench();
+
+    swos.g_inSubstitutesMenu = 1;
     checkForThrowInAndKeepersBall();
 }
 

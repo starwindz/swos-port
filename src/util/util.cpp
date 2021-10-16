@@ -88,7 +88,7 @@ std::string formatNumberWithCommas(int64_t num)
     return result;
 }
 
-void formatDoubleNoTrailingZeros(double value, char *buf, int bufLen, int digits)
+int formatDoubleNoTrailingZeros(double value, char *buf, int bufLen, int digits)
 {
     int len = snprintf(buf, bufLen, "%.*f", digits, value);
 
@@ -98,9 +98,11 @@ void formatDoubleNoTrailingZeros(double value, char *buf, int bufLen, int digits
         *p-- = '\0';
 
     if (*p == '.')
-        *p = '\0';
+        *p-- = '\0';
 
-    assert(p > buf);
+    assert(p >= buf);
+
+    return p - buf + 1;
 }
 
 int numDigits(int num)

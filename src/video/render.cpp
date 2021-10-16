@@ -1,6 +1,6 @@
 #include "render.h"
 #include "timer.h"
-#include "game.h"
+#include "overlay.h"
 #include "windowManager.h"
 #include "joypads.h"
 #include "VirtualJoypad.h"
@@ -8,16 +8,16 @@
 #include "file.h"
 #include "util.h"
 #include "color.h"
-#include "text.h"
 
 static SDL_Renderer *m_renderer;
 static Uint32 m_windowPixelFormat;
 
 static bool m_useLinearFiltering;
+static bool m_clearScreen;
 
 static bool m_pendingScreenshot;
 
-static void showFps();
+static void drawStraightLine(int x, int y, int width, int height, const Color& color);
 static void fade(bool fadeOut, std::function<void()> render, double factor);
 static void doMakeScreenshot();
 static SDL_Surface *getScreenSurface();
@@ -49,6 +49,8 @@ void initRendering()
         logInfo("    %s", SDL_GetPixelFormatName(info.texture_formats[i]));
 
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
+
+    initWindow();   // must have renderer alive and well first to update the logical size
 
 #ifdef VIRTUAL_JOYPAD
     getVirtualJoypad().setRenderer(m_renderer);
@@ -97,6 +99,7 @@ void updateScreen(bool delay /* = false */)
     SDL_RenderFlush(m_renderer);
 
     showFps();
+    showZoomFactor();
 
     if (delay)
         frameDelay();
@@ -106,8 +109,11 @@ void updateScreen(bool delay /* = false */)
     });
 
     // must clear the renderer or there will be display artifacts on Samsung phone
-    SDL_SetRenderDrawColor(m_renderer, 0, 0, 0, 255);
-    SDL_RenderClear(m_renderer);
+    // still, let the user decide which way is better on their machine
+    if (m_clearScreen) {
+        SDL_SetRenderDrawColor(m_renderer, 0, 0, 0, 255);
+        SDL_RenderClear(m_renderer);
+    }
 }
 
 void fadeIn(std::function<void()> render, double factor /* = 1.0 */)
@@ -120,13 +126,23 @@ void fadeOut(std::function<void()> render, double factor /* = 1.0 */)
     fade(true, render, factor);
 }
 
+void drawHorizontalLine(int x, int y, int width, const Color& color)
+{
+    drawStraightLine(x, y, width + 1, 1, color);
+}
+
+void drawVerticalLine(int x, int y, int height, const Color& color)
+{
+    drawStraightLine(x, y, 1, height + 1, color);
+}
+
 void drawRectangle(int x, int y, int width, int height, const Color& color)
 {
     SDL_SetRenderDrawColor(m_renderer, color.r, color.g, color.b, 255);
-    auto scale = getScale();
+    auto scale = getGameScale();
 
-    auto x1 = x * scale + getScreenXOffset() - scale / 2;
-    auto y1 = y * scale + getScreenYOffset();
+    auto x1 = x * scale + getGameScreenOffsetX() - scale / 2;
+    auto y1 = y * scale + getGameScreenOffsetY();
     auto w = (width + 1) * scale;
     auto h = height * scale;
     auto x2 = x1 + w - scale;
@@ -156,6 +172,16 @@ void setLinearFiltering(bool useLinearFiltering)
     }
 }
 
+bool getClearScreen()
+{
+    return m_clearScreen;
+}
+
+void setClearScreen(bool clearScreen)
+{
+    m_clearScreen = clearScreen;
+}
+
 std::string ensureScreenshotsDirectory()
 {
     auto path = pathInRootDir("screenshots");
@@ -168,44 +194,18 @@ void makeScreenshot()
     m_pendingScreenshot = true;
 }
 
-static void showFps()
+static void drawStraightLine(int x, int y, int width, int height, const Color& color)
 {
-    if (getShowFps()) {
-        constexpr int kNumFramesForFps = 64;
+    SDL_SetRenderDrawColor(m_renderer, color.r, color.g, color.b, 255);
+    auto scale = getGameScale();
 
-        auto now = SDL_GetPerformanceCounter();
+    auto xF = x * scale + getGameScreenOffsetX() - scale / 2;
+    auto yF = y * scale + getGameScreenOffsetY() - scale / 2;
+    auto w = width * scale;
+    auto h = height * scale;
 
-        static Uint64 s_lastFrameTick;
-        if (s_lastFrameTick) {
-            static std::array<Uint64, kNumFramesForFps> s_renderTimes;
-            static int s_renderTimesIndex;
-
-            auto frameTime = now - s_lastFrameTick;
-
-            s_renderTimes[s_renderTimesIndex] = frameTime;
-            s_renderTimesIndex = (s_renderTimesIndex + 1) % s_renderTimes.size();
-            int numFrames = 0;
-
-            auto totalRenderTime = std::accumulate(s_renderTimes.begin(), s_renderTimes.end(), 0ULL, [&](auto sum, auto current) {
-                if (current) {
-                    sum += current;
-                    numFrames++;
-                }
-                return sum;
-            });
-
-            auto fps = .0;
-            if (numFrames)
-                fps = 1. / (static_cast<double>(totalRenderTime) / numFrames / SDL_GetPerformanceFrequency());
-
-            char buf[32];
-            formatDoubleNoTrailingZeros(fps, buf, sizeof(buf), 2);
-
-            drawText(290, 4, buf);
-        }
-
-        s_lastFrameTick = now;
-    }
+    SDL_FRect rect{ xF, yF, w, h };
+    SDL_RenderFillRectF(m_renderer, &rect);
 }
 
 static void fade(bool fadeOut, std::function<void()> render, double factor)

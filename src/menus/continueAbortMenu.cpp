@@ -21,7 +21,7 @@ static bool m_result;
 static MultilineText *formMultilineText(const std::vector<const char *>& messageLines);
 
 bool showContinueAbortPrompt(const char *header, const char *continueText, const char *abortText,
-    const std::vector<const char *>& messageLines, bool abortDefault /* = false */)
+    const std::vector<const char *>& messageLines, bool abortDefault /* = true */)
 {
     assert(messageLines.size() < 7);
 
@@ -88,13 +88,13 @@ static void continueAbortMenuInit()
     warningTextEntry.fg.multilineText = m_warningText;
     contEntry.setString(m_continueText);
 
-    if (m_abortText) {
+    if (m_abortText)
         abortEntry.setString(m_abortText);
-        if (m_abortDefault)
-            setCurrentEntry(ContinueAbortMenu::abort);
-    } else {
+    else
         abortEntry.hide();
-    }
+
+    if (!m_abortDefault)
+        setCurrentEntry(cont);
 }
 
 static void continueSelected()

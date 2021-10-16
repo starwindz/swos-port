@@ -1,6 +1,7 @@
 #include "gameLoop.h"
 #include "game.h"
 #include "render.h"
+#include "windowManager.h"
 #include "timer.h"
 #include "gameControls.h"
 #include "spinningLogo.h"
@@ -342,7 +343,6 @@ static bool gameEnded(TeamGame *topTeam, TeamGame *bottomTeam)
     swos.team2NumAllowedInjuries = 4;
 
     swos.playGame = 1;
-//    SetPitchTypeAndNumber();
 
     initMatch(swos.topTeamPtr, swos.bottomTeamPtr, false);
 
@@ -351,14 +351,17 @@ static bool gameEnded(TeamGame *topTeam, TeamGame *bottomTeam)
 
 static void pausedLoop()
 {
-    while (true) {
-        // make sure to first check if the game is actually paused since we're invoked unconditionally
-        if (!isGamePaused())
-            break;
+    int oldWidth = -1, oldHeight = -1;
 
+    while (isGamePaused()) {
         processControlEvents();
 
-        if (checkGameKeys()) {
+        int width, height;
+        std::tie(width, height) = getWindowSize();
+
+        if (checkGameKeys() || width != oldWidth || height != oldHeight) {
+            oldWidth = width;
+            oldHeight = height;
             markFrameStartTime();
             drawFrame(false);
             updateScreen(true);
@@ -372,10 +375,10 @@ static void pausedLoop()
         }
 
         SDL_Delay(100);
-    }
 
-    // make sure to reset the timer or delta time will be heavily skewed after the pause
-    markFrameStartTime();
+        // make sure to reset the timer or delta time will be heavily skewed after the pause
+        markFrameStartTime();
+    }
 }
 
 static void showStatsLoop()

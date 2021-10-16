@@ -1,5 +1,6 @@
 #include "menuItemRenderer.h"
 #include "windowManager.h"
+#include "render.h"
 #include "menus.h"
 #include "color.h"
 

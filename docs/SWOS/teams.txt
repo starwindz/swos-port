@@ -102,6 +102,32 @@ offset:  size:  description:
 
   Size 76 bytes.
 
+Basic team colors conflict table:
+       gray white black orange red blue brown l.blue green yellow
+gray     x                           x           x     x
+white         x
+black               x                x    x            x
+orange                    x     x                             x
+red                       x     x         x
+blue     x          x                x           x
+brown               x           x         x
+l.blue   x                           x           x
+green    x          x                                  x
+yellow                    x                                   x
+
+Stripes vs shorts conflict table:
+       gray white black orange red blue brown l.blue green yellow
+gray     x    x                      x           x     x
+white    x    x                                  x            x
+black               x                x    x            x
+orange                    x     x                             x
+red                       x     x         x
+blue     x          x                x    x      x
+brown               x           x    x    x
+l.blue   x    x                      x           x
+green    x          x                                  x
+yellow        x            x                                  x
+
 Player structure:
 ----
 offset:  size:  description:

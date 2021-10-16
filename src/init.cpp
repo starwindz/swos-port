@@ -31,10 +31,9 @@ constexpr int kSentinelSize = sizeof(kSentinelMagic);
 // sizes of all SWOS buffers in DOS and extended memory
 constexpr int kDosMemBufferSize = 21'890 + kSentinelSize;
 // allocate buffer to hold every SWOS sprite (but only structs, no data)
-constexpr int kSpritesBuffer = kNumSprites * sizeof(SpriteGraphics) + kSentinelSize;
+constexpr int kSpritesBufferSize = kNumSprites * sizeof(SpriteGraphics) + kSentinelSize;
 
-constexpr int kExtendedMemoryBufferSize = 393'216 + kSentinelSize;
-SDL_UNUSED constexpr int kTotalExtraMemorySize = kDosMemBufferSize + kSpritesBuffer + kExtendedMemoryBufferSize;
+SDL_UNUSED constexpr int kTotalExtraMemorySize = kDosMemBufferSize + kSpritesBufferSize;
 
 static void init();
 static void initRandomSeed();
@@ -51,8 +50,6 @@ void startMainMenuLoop()
 
     D0 = 0;
     Randomize2();
-
-    swos.screenWidth = kVgaWidth;
 
     // flush controls
     SDL_FlushEvents(SDL_KEYDOWN, SDL_KEYUP);
@@ -89,10 +86,7 @@ void checkMemory()
     verifyBlock(extraMemStart, kDosMemBufferSize);
 
     assert(*swos.g_spriteGraphicsPtr == reinterpret_cast<SpriteGraphics *>(extraMemStart + kDosMemBufferSize));
-    verifyBlock(extraMemStart + kDosMemBufferSize, kSpritesBuffer);
-
-    assert(swos.linAdr384k == extraMemStart + kDosMemBufferSize + kSpritesBuffer);
-    verifyBlock(extraMemStart + kDosMemBufferSize + kSpritesBuffer, kExtendedMemoryBufferSize);
+    verifyBlock(extraMemStart + kDosMemBufferSize, kSpritesBufferSize);
 
 #ifdef _MSCVER
     _ASSERTE(_CrtCheckMemory());
@@ -119,16 +113,12 @@ static void setupExtraMemory()
     assert(reinterpret_cast<uintptr_t>(extraMemStart) % sizeof(void *) == 0);
 
     swos.dosMemOfs60c00h = extraMemStart;   // names don't match offsets anymore, but are left for historical preservation ;)
-
     *swos.g_spriteGraphicsPtr = reinterpret_cast<SpriteGraphics *>(extraMemStart + kDosMemBufferSize);
-
-    swos.linAdr384k = extraMemStart + kDosMemBufferSize + kSpritesBuffer;
 
 #ifdef DEBUG
     SwosVM::initSafeMemoryAreas();
     memcpy(swos.dosMemOfs60c00h + kDosMemBufferSize - kSentinelSize, kSentinelMagic, kSentinelSize);
-    memcpy((*swos.g_spriteGraphicsPtr).asCharPtr() + kSpritesBuffer - kSentinelSize, kSentinelMagic, kSentinelSize);
-    memcpy(swos.linAdr384k + kExtendedMemoryBufferSize - kSentinelSize, kSentinelMagic, kSentinelSize);
+    memcpy((*swos.g_spriteGraphicsPtr).asCharPtr() + kSpritesBufferSize - kSentinelSize, kSentinelMagic, kSentinelSize);
 #endif
 }
 

@@ -2,35 +2,54 @@
 #include "render.h"
 #include "windowManager.h"
 
+class ScopedGameScaler
+{
+public:
+    ScopedGameScaler() {
+        m_renderer = getRenderer();
+        SDL_RenderGetScale(m_renderer, &m_originalScaleX, &m_originalScaleY);
+        auto gameScale = getGameScale();
+        SDL_RenderSetScale(m_renderer, gameScale, gameScale);
+    }
+    ~ScopedGameScaler() {
+        SDL_RenderSetScale(m_renderer, m_originalScaleX, m_originalScaleY);
+    }
+private:
+    SDL_Renderer *m_renderer;
+    float m_originalScaleX;
+    float m_originalScaleY;
+};
+
 static SDL_Renderer *prepareRendererForDarkenedRectangles();
 
-void drawDarkRectangle(const SDL_FRect& rect)
+void drawDarkRectangle(const SDL_FRect& rect, bool offsetX /* = true */)
 {
-    auto renderer = prepareRendererForDarkenedRectangles();
-    SDL_RenderFillRectF(renderer, &rect);
-    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
-    SDL_RenderSetScale(renderer, 1, 1);
+    darkenRectangles(&rect, 1, offsetX);
 }
 
-void darkenRectangles(const SDL_FRect *rects, int numRects)
+void darkenRectangles(const SDL_FRect *rects, int numRects, bool offsetX /* = true */)
 {
-    auto xOffset = getScreenXOffset() / getScale();
-    std::vector<SDL_FRect> centeredRects(rects, rects + numRects);
-    for (auto& rect : centeredRects)
-        rect.x += xOffset;
+    auto gameScale = getGameScale();
+    auto xOffset = getGameScreenOffsetX() / gameScale;
+    auto yOffset = getGameScreenOffsetY() / gameScale;
 
+    std::vector<SDL_FRect> centeredRects(rects, rects + numRects);
+    for (auto& rect : centeredRects) {
+        if (offsetX)
+            rect.x += xOffset;
+        rect.y += yOffset;
+    }
+
+    ScopedGameScaler gs;
     auto renderer = prepareRendererForDarkenedRectangles();
     SDL_RenderFillRectsF(renderer, centeredRects.data(), numRects);
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
-    SDL_RenderSetScale(renderer, 1, 1);
 }
 
 static SDL_Renderer *prepareRendererForDarkenedRectangles()
 {
     auto renderer = getRenderer();
-    auto scale = getScale();
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 127);
-    SDL_RenderSetScale(renderer, scale, scale);
     return renderer;
 }

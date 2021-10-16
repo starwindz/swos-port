@@ -1,6 +1,7 @@
 #include "game.h"
 #include "gameLoop.h"
 #include "windowManager.h"
+#include "render.h"
 #include "audio.h"
 #include "music.h"
 #include "chants.h"
@@ -29,12 +30,15 @@
 #include "versusMenu.h"
 #include "stadiumMenu.h"
 
+constexpr int kWheelZoomFrames = 6;
+
 static TeamGame m_topTeamSaved;
 static TeamGame m_bottomTeamSaved;
 
 static bool m_gamePaused;
 
 static bool m_blockZoom;
+static int m_zoomFrames;
 
 static void saveTeams();
 static void restoreTeams();
@@ -52,7 +56,7 @@ void initMatch(TeamGame *topTeam, TeamGame *bottomTeam, bool saveOrRestoreTeams)
     saveOrRestoreTeams ? saveTeams() : restoreTeams();
 
     initMatchSprites(topTeam, bottomTeam);
-//    SetPitchTypeAndNumber();
+    setPitchTypeAndNumber();
     loadPitch();
     //InitAdvertisements
 
@@ -92,6 +96,7 @@ void initMatch(TeamGame *topTeam, TeamGame *bottomTeam, bool saveOrRestoreTeams)
     loadIntroChant();
 
     m_blockZoom = false;
+    m_zoomFrames = 0;
 }
 
 void initializeIngameTeams(int minSubs, int maxSubs, TeamFile *team1, TeamFile *team2)
@@ -138,7 +143,7 @@ void initializeIngameTeams(int minSubs, int maxSubs, TeamFile *team1, TeamFile *
 
     A2 = team1;
     A3 = team2;
-    cseg_2FB5E();
+    SetIngameTeamsPrimaryColors();
 
     if (swos.g_gameType != kGameTypeCareer && swos.g_allPlayerTeamsEqual) {
         GetAveragePlayerPriceInSelectedTeams();
@@ -321,12 +326,23 @@ bool checkZoomKeys()
 {
     constexpr auto kZoomStep = .25f;
 
+    int wheelDirection = mouseWheelAmount();
+    if (wheelDirection)
+        m_zoomFrames = wheelDirection > 0 ? kWheelZoomFrames : -kWheelZoomFrames;
+
     auto keys = SDL_GetKeyboardState(nullptr);
     bool controlHeld = keys[SDL_SCANCODE_LCTRL] || keys[SDL_SCANCODE_RCTRL];
     bool shiftHeld = keys[SDL_SCANCODE_LSHIFT] || keys[SDL_SCANCODE_RSHIFT];
-    bool zoomKeysHeld = keys[SDL_SCANCODE_KP_PLUS] || keys[SDL_SCANCODE_KP_MINUS];
 
-    if ((controlHeld || shiftHeld) && zoomKeysHeld) {
+    bool zoomInRequested = keys[SDL_SCANCODE_KP_PLUS] || m_zoomFrames > 0;
+    bool zoomOutRequested = keys[SDL_SCANCODE_KP_MINUS] || m_zoomFrames < 0;
+
+    bool zoomKeysHeld = zoomInRequested || zoomOutRequested;
+    bool resetToDefault = keys[SDL_SCANCODE_KP_MULTIPLY] != 0;
+
+    if (resetToDefault) {
+        return resetZoom();
+    } else if ((controlHeld || shiftHeld) && zoomKeysHeld) {
         if (m_blockZoom)
             return false;
         m_blockZoom = true;
@@ -334,11 +350,14 @@ bool checkZoomKeys()
         m_blockZoom = false;
     }
 
+    if (m_zoomFrames)
+        m_zoomFrames > 0 ? m_zoomFrames-- : m_zoomFrames++;
+
     auto step = controlHeld ? kZoomStep : 0;
 
-    if (keys[SDL_SCANCODE_KP_PLUS])
+    if (zoomInRequested)
         return zoomIn(step);
-    else if (keys[SDL_SCANCODE_KP_MINUS])
+    else if (zoomOutRequested)
         return zoomOut(step);
     else
         return false;

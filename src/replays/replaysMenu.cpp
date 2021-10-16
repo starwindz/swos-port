@@ -4,17 +4,18 @@
 #include "continueMenu.h"
 #include "menuMouse.h"
 #include "selectFilesMenu.h"
+#include "continueAbortMenu.h"
 #include "replays.mnu.h"
 
 using namespace ReplaysMenu;
 
 using EntryList = std::array<int, 2>;
-static bool m_initialized;
 
 static void updateMenuButtonsState();
 static void updateReplaysAndHighlightsState();
 static void updateButtonState(bool enabled, const EntryList& entries);
 static void showError(FileStatus error);
+static bool promptOverwrite(const char *filename);
 
 void showReplaysMenu()
 {
@@ -25,7 +26,6 @@ void showReplaysMenu()
 static void replaysMenuOnInit()
 {
     updateMenuButtonsState();
-    m_initialized = true;
 }
 
 static void playHighlights()
@@ -61,7 +61,7 @@ static void selectHighlightToSave()
 
     if (hilFilename[0]) {
         auto path = joinPaths(kHighlightsDir, hilFilename);
-        if (!saveHighlightsFile(path.c_str()))
+        if (promptOverwrite(hilFilename) && !saveHighlightsFile(path.c_str()))
             showErrorMenu("ERROR SAVING HIGHLIGHTS FILE");
     }
 }
@@ -98,7 +98,7 @@ static void selectReplayToSave()
     showSelectFilesMenu(menuTitle, files, ".rpl", rplFilename);
     if (rplFilename[0]) {
         auto path = joinPaths(kReplaysDir, rplFilename);
-        if (!saveReplayFile(path.c_str()))
+        if (promptOverwrite(rplFilename) && !saveReplayFile(path.c_str()))
             showErrorMenu("ERROR SAVING REPLAY FILE");
     }
 }
@@ -108,8 +108,8 @@ static void updateMenuButtonsState()
     updateReplaysAndHighlightsState();
     determineReachableEntries();
 
-    if (!m_initialized && getMenuEntry(viewHighlights)->disabled)
-        highlightEntry(getMenuEntry(viewReplays)->disabled ? loadHighlights : viewReplays);
+    if (getMenuEntry(viewHighlights)->disabled)
+        highlightEntry(viewReplaysEntry.disabled ? loadHighlights : viewReplays);
 }
 
 static void updateReplaysAndHighlightsState()
@@ -145,4 +145,10 @@ static void showError(FileStatus error)
         showErrorMenu("FILE I/O ERROR");
         break;
     }
+}
+
+static bool promptOverwrite(const char *filename)
+{
+    return showContinueAbortPrompt("CONFIRM OVERWRITE", "YES", "NO",
+        { "ARE YOU SURE YOU WANT TO OVERWRITE", filename }, true);
 }

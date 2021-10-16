@@ -16,7 +16,7 @@ enum GameControlEvents : int32_t
     kGameEventSaveHighlight = 256,
     kGameEventZoomIn = 512,
     kGameEventZoomOut = 1'024,
-    kMaxGameEvent = kGameEventSaveHighlight,
+    kMaxGameEvent,
 };
 
 ENABLE_FLAGS(GameControlEvents)

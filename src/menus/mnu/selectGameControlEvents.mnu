@@ -5,24 +5,28 @@
 #include "common.mh"
 
 Menu selectGameControlEvents {
-    kToggleWidth = 140
+    kToggleWidth = 120
     kStatusWidth = 26
-    kButtonHeight = 12
-    kColumnGap = 2
+    kButtonHeight = 16
+    kStatusGap = 4
     export kLowerButtonsGap = 10
 
-    kColumn1X = (@kScreenWidth - kToggleWidth - kStatusWidth - kColumnGap) / 2 - kMenuOffset
-    kColumn2X = kColumn1X + kToggleWidth + kColumnGap
+    kRowLength = kToggleWidth + kStatusWidth + kStatusGap
+    kColumnGap = 6
+    kRowGap = 2
+
+    // events and their status (ON/OFF) are split into two columns
+    kColumn1X = (@kScreenWidth - 2 * kRowLength - kStatusGap * 3) / 2 - kMenuOffset
+    kColumn1StatusX = kColumn1X + kToggleWidth + kStatusGap
+    kColumn2X = kColumn1X + kRowLength + kColumnGap
+    kColumn2StatusX = kColumn2X + kToggleWidth + kStatusGap
+
     kEventHeaderLabelY = 21
-    kToggleStartY = 36
+    kToggleStartY = 44
     kWarningY = 186
 
     export kOnColor = @kGreen
     export kOffColor = @kGray
-
-    defaultX: kColumn1X
-    defaultWidth: kToggleWidth
-    defaultHeight: kButtonHeight
 
     onInit: selectGameControlEventsOnInit
     onRestore: selectGameControlEventsOnRestore
@@ -56,7 +60,10 @@ Menu selectGameControlEvents {
         onSelect: toggleEvent
     }
 
-    defaultY: @prevEndY + kColumnGap
+    defaultX: kColumn1X
+    defaultY: @prevEndY + kRowGap
+    defaultWidth: kToggleWidth
+    defaultHeight: kButtonHeight
 
     Entry upToggle {
         y: kToggleStartY
@@ -101,20 +108,24 @@ Menu selectGameControlEvents {
     Entry benchToggle {
         rightEntry: benchStatus
         upEntry: <
-        downEntry: >
+        downEntry: ok
 
         text: "BENCH"
     }
 
+    defaultX: kColumn2X
+
     Entry pauseToggle {
+        y: kToggleStartY
+        leftEntry: upStatus
         rightEntry: pauseStatus
-        upEntry: <
         downEntry: >
 
         text: "PAUSE"
     }
 
     Entry replayToggle {
+        leftEntry: downStatus
         rightEntry: replayStatus
         upEntry: <
         downEntry: >
@@ -123,20 +134,39 @@ Menu selectGameControlEvents {
     }
 
     Entry saveHighlightToggle {
+        leftEntry: leftStatus
         rightEntry: saveHighlightStatus
         upEntry: <
-        downEntry: ok
+        downEntry: >
 
         text: "SAVE HIGHLIGHT"
+    }
+
+    Entry zoomInToggle {
+        leftEntry: rightStatus
+        rightEntry: zoomInStatus
+        upEntry: <
+        downEntry: >
+
+        text: "ZOOM IN"
+    }
+
+    Entry zoomOutToggle {
+        leftEntry: kickStatus
+        rightEntry: zoomOutStatus
+        upEntry: <
+        downEntry: cancel
+
+        text: "ZOOM OUT"
     }
 
     Entry invertedToggle {
         invisible: true
 
-        leftEntry: prev
+        leftEntry: benchStatus
         rightEntry: invertedStatus
         upEntry: <
-        downEntry: exit
+        downEntry: next
 
         text: "INVERTED"
 
@@ -151,48 +181,56 @@ Menu selectGameControlEvents {
         onSelect: toggleEventFromStatus
     }
 
-    defaultX: kColumn2X
+    defaultX: kColumn1StatusX
     defaultWidth: kStatusWidth
 
     Entry upStatus {
         y: kToggleStartY
         leftEntry: upToggle
+        rightEntry: pauseToggle
         downEntry: >
     }
 
     Entry downStatus {
         leftEntry: downToggle
+        rightEntry: replayToggle
         upEntry: <
         downEntry: >
     }
 
     Entry leftStatus {
         leftEntry: leftToggle
+        rightEntry: saveHighlightToggle
         upEntry: <
         downEntry: >
     }
 
     Entry rightStatus {
         leftEntry: rightToggle
+        rightEntry: zoomInToggle
         upEntry: <
         downEntry: >
     }
 
     Entry kickStatus {
         leftEntry: kickToggle
+        rightEntry: zoomOutToggle
         upEntry: <
         downEntry: >
     }
 
     Entry benchStatus {
-        leftEntry: benchStatus
+        leftEntry: benchToggle
+        rightEntry: zoomOutToggle
         upEntry: <
-        downEntry: >
+        downEntry: ok
     }
 
+    defaultX: kColumn2StatusX
+
     Entry pauseStatus {
+        y: kToggleStartY
         leftEntry: pauseToggle
-        upEntry: <
         downEntry: >
     }
 
@@ -204,6 +242,18 @@ Menu selectGameControlEvents {
 
     Entry saveHighlightStatus {
         leftEntry: saveHighlightToggle
+        upEntry: <
+        downEntry: >
+    }
+
+    Entry zoomInStatus {
+        leftEntry: zoomInToggle
+        upEntry: <
+        downEntry: >
+    }
+
+    Entry zoomOutStatus {
+        leftEntry: zoomOutToggle
         upEntry: <
         downEntry: cancel
     }
@@ -227,23 +277,22 @@ Menu selectGameControlEvents {
     entryAlias firstEventStatus = upStatus
     entryAlias lastEventStatus = invertedStatus
 
-    entryAlias lastVisibleToggle = saveHighlightToggle
-
     kOkCancelWidth = (kToggleWidth + kStatusWidth) / 2
-    kCancelX = kColumn1X + kOkCancelWidth + kColumnGap
+    kOkX = (@kScreenWidth - 2 * kOkCancelWidth - kStatusGap) / 2 - kMenuOffset
+    kCancelX = kOkX + kOkCancelWidth + kStatusGap
 
     defaultColor: kExitColor
     defaultWidth: kOkCancelWidth
     defaultHeight: kBigButtonHeight
 
     Entry ok {
-        x: kColumn1X
-        y: lastVisibleToggle.endY + kLowerButtonsGap
+        x: kOkX
+        y: @kScreenHeight - kBigButtonHeight - 4
 
         skipDown: cancel
         leftEntry: @kNoEntry
         rightEntry: cancel
-        upEntry: lastEventToggle
+        upEntry: benchToggle
 
         text: swos.aOk
 
@@ -265,15 +314,15 @@ Menu selectGameControlEvents {
     }
 
     // overlaid entries (prev/exit/next)
-    kTotalWidth = kToggleWidth + kStatusWidth - kColumnGap
+    kTotalWidth = kToggleWidth + kStatusWidth - kStatusGap
     kPrevExitNextWidth = kTotalWidth / 3
 
     Entry prev {
-        x: kColumn1X
+        x: kOkX
         width: kPrevExitNextWidth
 
         rightEntry: exit
-        upEntry: lastEventToggle
+        upEntry: benchToggle
 
         sprite: kLeftArrowSpriteIndex
 
@@ -281,26 +330,26 @@ Menu selectGameControlEvents {
     }
 
     Entry exit {
-        x: @prevEndX + kColumnGap
+        x: @prevEndX + kStatusGap
         width: kPrevExitNextWidth + (kTotalWidth % 3 > 0)
 
         text: swos.aExit
 
         leftEntry: prev
         rightEntry: next
-        upEntry: lastEventToggle
+        upEntry: benchStatus
 
         onSelect: ~SetExitMenuFlag
     }
 
     Entry next {
-        x: @prevEndX + kColumnGap
+        x: @prevEndX + kStatusGap
         width: kPrevExitNextWidth + (kTotalWidth % 3 > 1)
 
         sprite: kRightArrowSpriteIndex
 
         leftEntry: exit
-        upEntry: lastEventStatus
+        upEntry: zoomOutToggle
 
         onSelect: selectNextEvent
     }

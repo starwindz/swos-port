@@ -162,13 +162,13 @@ struct PackedMenu : BaseMenu
 enum TextColors
 {
     kWhiteText = 0,
-    kDarkGrayText = 1,
+    kGrayText = 1,
     kWhiteText2 = 2,
     kBlackText = 3,
     kBrownText = 4,
     kLightBrownText = 5,
     kOrangeText = 6,
-    kGrayText = 7,
+    kDarkGrayText = 7,
     kNearBlackText = 8,
     kVeryDarkGreenText = 9,
     kRedText = 10,
@@ -281,6 +281,7 @@ enum class PlayerState : byte
     kInjured = 13,
     kSad = 14,
     kHappy = 15,
+    kUnknown = 255,
 };
 
 struct ImageIndicesTable

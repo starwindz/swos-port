@@ -36,7 +36,6 @@ static void drawNumberMenuItem(MenuEntry *entry);
 static void drawSpriteMenuItem(MenuEntry *entry, int spriteIndex);
 static void drawMenuLocalSprite(MenuEntry *entry, int spriteIndex);
 static void executeEntryContentFunction(MenuEntry *entry);
-static const CharTable *getCharTable(const MenuEntry *entry);
 static void getTextBox(int& x, int& y, int& width, const MenuEntry *entry, int charHeight);
 
 void drawMenu(bool updateScreen /* = true */)
@@ -66,6 +65,16 @@ void SWOS::DrawMenu()
 void SWOS::DrawMenuItem()
 {
     drawMenuItem(A5.asMenuEntry());
+}
+
+// in:
+//      D0  - max. number of items to draw
+//      A5 -> first entry to draw
+void SWOS::DrawMultipleItems()
+{
+    auto entry = A5.asMenuEntry();
+    for (int i = 0; i < D0.asInt16(); i++)
+        drawMenuItem(entry++);
 }
 
 void drawMenuItem(MenuEntry *entry)
@@ -172,12 +181,14 @@ static void drawMenuItems()
 
 static void drawSelectedFrame()
 {
+    static const std::array<byte, 8> kColorTableShine = { 2, 2, 1, 1, 7, 7, 1, 1 };
+
     auto entry = getCurrentMenu()->selectedEntry;
     if (entry && entry->width && entry->height) {
         constexpr int kFlashInterval = 32;
         static Uint32 s_lastFlashTime;
 
-        auto color = swos.kColorTableShine[swos.menuCursorFrame & 7];
+        auto color = kColorTableShine[swos.menuCursorFrame & 7];
 
         if (cursorFlashingEnabled()) {
             auto now = SDL_GetTicks();
@@ -276,8 +287,8 @@ static void drawStringMenuItem(MenuEntry *entry, const char *string)
     assert(entry && (entry->type == kEntryString || entry->type == kEntryStringTable || entry->type == kEntryNumber));
 
     if (string) {
-        auto charTable = getCharTable(entry);
-        bool bigFont = charTable == &swos.bigCharsTable;
+        bool bigFont = entry->bigFont();
+        int textHeight = entryTextHeight(*entry);
 
         int x = entry->x;
         int y = entry->y;
@@ -285,17 +296,17 @@ static void drawStringMenuItem(MenuEntry *entry, const char *string)
         int color = entry->solidTextColor();
 
         if (entry->stringFlags & kTextLeftAligned) {
-            getTextBox(x, y, width, entry, charTable->charHeight);
+            getTextBox(x, y, width, entry, textHeight);
             if (entry->background != kEntryNoBackground)
                 x += 2;
             drawText(x, y, string, width, color, bigFont);
         } else if (entry->stringFlags & kTextRightAligned) {
-            getTextBox(x, y, width, entry, charTable->charHeight);
+            getTextBox(x, y, width, entry, textHeight);
             x += width;
             drawTextRightAligned(x, y, string, width, color, bigFont);
         } else {
             // for some reason, centered text doesn't reset delta color
-            getTextBox(x, y, width, entry, charTable->charHeight);
+            getTextBox(x, y, width, entry, textHeight);
             x += (width + 1) / 2;
             drawTextCentered(x, y, string, width, color, bigFont);
         }
@@ -319,22 +330,22 @@ static void drawMultilineTextMenuItem(MenuEntry *entry)
     if (entry->fg.multilineText) {
         int color = entry->solidTextColor();
 
-        auto charTable = getCharTable(entry);
-        bool bigFont = charTable == &swos.bigCharsTable;
+        bool bigFont = entry->bigFont();
+        int textHeight = entryTextHeight(*entry);
 
         auto text = entry->fg.multilineText.asConstCharPtr() + 1;
         auto numLines = text[-1];
 
-        assert(numLines > 0 && entry->height >= numLines * charTable->charHeight);
+        assert(numLines > 0 && entry->height >= numLines * textHeight);
 
         int x = entry->x;
         int y = entry->y;
         int width = entry->width;
 
-        getTextBox(x, y, width, entry, charTable->charHeight);
+        getTextBox(x, y, width, entry, textHeight);
         int frameThickness = x - entry->x;
 
-        int slackSpace = entry->height - numLines * charTable->charHeight - 2 * frameThickness;
+        int slackSpace = entry->height - numLines * textHeight - 2 * frameThickness;
         auto spaceBetweenLines = std::div(slackSpace, numLines + 1);    // +1 since we start (and end) with a free space
 
         x += width / 2;
@@ -342,7 +353,7 @@ static void drawMultilineTextMenuItem(MenuEntry *entry)
 
         while (numLines--) {
             drawTextCentered(x, y, text, width, color, bigFont);
-            y += spaceBetweenLines.quot + charTable->charHeight + (spaceBetweenLines.rem-- > 0);
+            y += spaceBetweenLines.quot + textHeight + (spaceBetweenLines.rem-- > 0);
             while (*text++)
                 ;
         }
@@ -365,8 +376,8 @@ static void drawSpriteMenuItem(MenuEntry *entry, int spriteIndex)
     if (spriteIndex) {
         const auto& sprite = getSprite(spriteIndex);
 
-        int x = entry->x + entry->width / 2 - sprite.width / 2;
-        int y = entry->y + entry->height / 2 - sprite.height / 2;
+        int x = entry->x + (entry->width - sprite.width) / 2;
+        int y = entry->y + (entry->height - sprite.height) / 2;
         drawMenuSprite(spriteIndex, x, y);
     }
 }
@@ -378,14 +389,14 @@ static void drawMenuLocalSprite(MenuEntry *entry, int spriteIndex)
 
     const auto& sprite = m_menuLocalSprites[spriteIndex];
 
-    auto scale = getScale();
+    auto scale = getGameScale();
     auto widthF = static_cast<float>(sprite.width);
     auto heightF = static_cast<float>(sprite.height);
 
-    auto x = getScreenXOffset() + (entry->x + static_cast<float>(entry->width) / 2) * scale - widthF / 2;
-    auto y = getScreenYOffset() + (entry->y + static_cast<float>(entry->height) / 2) * scale - heightF / 2;
+    auto x = getGameScreenOffsetX() + (entry->x + (entry->width - widthF) / 2) * scale;
+    auto y = getGameScreenOffsetY() + (entry->y + (entry->height - heightF) / 2) * scale;
 
-    SDL_FRect dst{ x, y, widthF, heightF };
+    SDL_FRect dst{ x, y, widthF * scale, heightF * scale };
     SDL_RenderCopyF(getRenderer(), sprite.texture, nullptr, &dst);
 }
 
@@ -396,14 +407,6 @@ static void executeEntryContentFunction(MenuEntry *entry)
     D1 = entry->x;
     D2 = entry->y;
     entry->fg.contentFunction();
-}
-
-static const CharTable *getCharTable(const MenuEntry *entry)
-{
-    assert(entry);
-
-    auto useBigCharTable = (entry->stringFlags >> 4) & 1;
-    return useBigCharTable ? &swos.bigCharsTable : &swos.smallCharsTable;
 }
 
 static void getTextBox(int& x, int& y, int& width, const MenuEntry *entry, int charHeight)

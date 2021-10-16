@@ -194,10 +194,10 @@ void loadAudioOptions(const CSimpleIniA& ini)
 
     setCrowdChantsEnabled(m_crowdChantsEnabled != 0);
 
-    auto volume = ini.GetLongValue(kAudioSection, kMasterVolume, 100);
+    auto volume = ini.GetLongValue(kAudioSection, kMasterVolume, 50);
     setMasterVolume(volume, false);
 
-    auto musicVolume = ini.GetLongValue(kAudioSection, kMusicVolume, 100);
+    auto musicVolume = ini.GetLongValue(kAudioSection, kMusicVolume, 50);
     setMusicVolume(musicVolume, false);
 }
 

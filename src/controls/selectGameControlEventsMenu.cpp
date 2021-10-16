@@ -23,7 +23,7 @@ static Uint32 m_showWarningTicks;
 
 static const std::vector<int> kPrevExitNextButtons = { prev, SelectGameControlEvents::exit, next };
 
-static_assert(kMaxGameEvent == 256, "New game event added, menu needs redressing!");
+static_assert(kMaxGameEvent == 1'025, "New game event added, menu needs redressing!");
 
 std::pair<bool, GameControlEvents> getNewGameControlEvents(const char *title)
 {
@@ -102,25 +102,23 @@ static void initEventEntries()
 static void updateCurrentData()
 {
     if (!m_addNew) {
-        auto titleBuffer = getMenuEntry(eventHeaderLabel)->string();
+        auto titleBuffer = eventHeaderLabelEntry.string();
         std::tie(m_events, m_inverted) = m_getFunction(m_index, titleBuffer, kStdMenuTextSize);
     }
 }
 
 static void initEventEntriesColorAndStatus()
 {
-    if (!m_addNew) {
-        for (int i = firstEventToggle; i <= lastEventToggle; i++) {
-            auto event = 1 << (i - firstEventToggle);
-            bool on = (event & m_events) != 0;
+    for (int i = firstEventToggle; i <= lastEventToggle; i++) {
+        auto event = 1 << (i - firstEventToggle);
+        bool on = (event & m_events) != 0;
 
-            auto toggleEntry = getMenuEntry(i);
-            toggleEntry->setBackgroundColor(on ? kOnColor : kOffColor);
+        auto toggleEntry = getMenuEntry(i);
+        toggleEntry->setBackgroundColor(on ? kOnColor : kOffColor);
 
-            auto statusEntry = getMenuEntry(i - firstEventToggle + firstEventStatus);
-            statusEntry->setBackgroundColor(on ? kOnColor : kOffColor);
-            statusEntry->copyString(on ? "ON" : "OFF");
-        }
+        auto statusEntry = getMenuEntry(i - firstEventToggle + firstEventStatus);
+        statusEntry->setBackgroundColor(on ? kOnColor : kOffColor);
+        statusEntry->copyString(on ? "ON" : "OFF");
     }
 }
 
@@ -179,11 +177,9 @@ static void setInvertedEntry()
 
 static void shiftExitButtonsDown()
 {
-    auto invertedEntry = getMenuEntry(invertedStatus);
-
     for (auto entryIndex : kPrevExitNextButtons) {
         auto entry = getMenuEntry(entryIndex);
-        entry->y = invertedEntry->endY() + kLowerButtonsGap;
+        entry->y = invertedStatusEntry.endY() + kLowerButtonsGap;
     }
 }
 
@@ -192,18 +188,17 @@ static void initInvertedButton()
     static const std::vector<int> kInvertedEntries = { invertedStatus, invertedToggle };
 
     if (m_showInverted) {
-        auto pauseStatusEntry = getMenuEntry(pauseStatus);
-        auto pauseToggleEntry = getMenuEntry(pauseToggle);
-
         setEntriesVisibility(kInvertedEntries, true);
-        pauseStatusEntry->downEntry = invertedStatus;
-        pauseToggleEntry->downEntry = invertedToggle;
+
+        zoomOutStatusEntry.downEntry = invertedStatus;
+        zoomOutToggleEntry.downEntry = invertedToggle;
+        benchStatusEntry.rightEntry = invertedToggle;
+        benchStatusEntry.downEntry = SelectGameControlEvents::exit;
 
         setInvertedEntry();
         shiftExitButtonsDown();
     } else if (!m_addNew) {
-        getMenuEntry(pauseToggle)->downEntry = SelectGameControlEvents::exit;
-        getMenuEntry(pauseStatus)->downEntry = next;
+        benchStatusEntry.downEntry = SelectGameControlEvents::exit;
     }
 }
 
@@ -264,10 +259,9 @@ static void showWarning(const char *str)
 {
     assert(str);
 
-    auto warningEntry = getMenuEntry(warning);
-    warningEntry->copyString(str);
+    warningEntry.copyString(str);
     m_showWarningTicks = SDL_GetTicks();
-    warningEntry->show();
+    warningEntry.show();
 }
 
 static void onOk()
