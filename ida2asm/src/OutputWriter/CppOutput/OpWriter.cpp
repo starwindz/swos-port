@@ -111,7 +111,7 @@ void OpWriter::writeSrcToDestMemory()
 {
     assert(m_dst.fetchMemory);
 
-    writeToMemory(m_dst, kSourceValue);
+    writeToMemory(m_dst, m_src.fetchMemory ? kFetchSource : kSourceValue);
 }
 
 void OpWriter::outputDest(ValueCategory category /* = kAuto */)
@@ -378,7 +378,7 @@ void OpWriter::writeToConstantAddress(const OpInfo& op, DestMemoryData source)
     assert(op.constantAddress > 0);
 
     auto outputData = [source, this] {
-        source == kSourceValue ? outputSrcValue(kRvalue) : outputDestVar();
+        this->outputData(source);
     };
     auto isConstZero = [source, this] {
         return source == kSourceValue ? m_src.isConstZero() : false;
@@ -500,16 +500,12 @@ void OpWriter::writeToDynamicAddress(const OpInfo& op, DestMemoryData source)
 {
     assert(op.fetchMemory && op.constantAddress < 0);
 
-    auto outputData = [source, this] {
-        source == kSourceValue ? outputSrcValue(kRvalue) : outputDestVar();
-    };
-
     out("writeMemory(");
     outputDestValue(kRvalue);
     out(", ");
     out(op.size);
     out(", ");
-    outputData();
+    outputData(source);
     out(")");
 }
 
@@ -676,6 +672,23 @@ bool OpWriter::outputOpValue(const OperandInfo::Component& comp, const OpInfo& o
     }
 
     return needsParen;
+}
+
+void OpWriter::outputData(DestMemoryData source)
+{
+    switch (source) {
+    case kSourceValue:
+        outputSrcValue(kRvalue);
+        break;
+    case kDestVar:
+        outputDestVar();
+        break;
+    case kFetchSource:
+        outputOp(m_src, kLvalue);
+        break;
+    default:
+        false;
+    };
 }
 
 bool OpWriter::handleLocalVariable(const OperandInfo& op)

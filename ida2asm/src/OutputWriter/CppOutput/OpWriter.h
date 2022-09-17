@@ -84,7 +84,7 @@ private:
         int constantAddress = false;
     };
 
-    enum DestMemoryData { kSourceValue, kDestVar, };
+    enum DestMemoryData { kSourceValue, kDestVar, kFetchSource };
     void outputOp(const OpInfo& op, ValueCategory category);
     void fetchFromMemoryIfNeeded(const OpInfo& op, ValueCategory category);
     void writeToMemory(const OpInfo& op, DestMemoryData source);
@@ -96,6 +96,7 @@ private:
     void outputSrcValue(ValueCategory category);
     void outputOpValue(const OpInfo& op, ValueCategory category);
     bool outputOpValue(const OperandInfo::Component& val, const OpInfo& op, ValueCategory category) const;
+    void outputData(DestMemoryData source);
     bool handleLocalVariable(const OperandInfo& op);
     void setFlag(const char *flag, std::function<void()> f);
     void setFlag(const char *flag, const char *val);

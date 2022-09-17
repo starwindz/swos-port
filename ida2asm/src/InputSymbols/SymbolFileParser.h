@@ -26,6 +26,8 @@ public:
 
     const StringList& exports() const;
     const StringSet& imports() const;
+    class IntroducedVariable;
+    const StringMap<IntroducedVariable>& introducedVariables() const;
     int getTypeSize(const String& type) const;
 
     bool isImport(const String& var) const;
@@ -36,6 +38,49 @@ public:
 
     bool cppOutput() const;
     std::tuple<String, String, int, int> exportedDeclaration(const String& var) const;
+
+    class IntroducedVariable
+    {
+        static constexpr char kType[] = "int32_t ";
+        static constexpr size_t kTypeExtraSpace = sizeof(kType) - 1;
+    public:
+        IntroducedVariable(int value, const String& name) : m_value(value) {
+            memcpy(declPtr(), kType, kTypeExtraSpace);
+            name.copy(declPtr() + kTypeExtraSpace);
+            Util::assignSize(m_declLength, kTypeExtraSpace + name.length());
+
+            _itoa(value, stringPtr(), 10);
+            Util::assignSize(m_strLength, strlen(stringPtr()));
+        }
+        static size_t requiredSize(int value, const String& name) {
+            int numDigits = 0;
+            do {
+                numDigits++;
+                value /= 10;
+            } while (value);
+            return sizeof(IntroducedVariable) + numDigits + kTypeExtraSpace + name.length();
+        }
+        int value() const {
+            return m_value;
+        }
+        String stringValue() const {
+            return { stringPtr(), m_strLength };
+        }
+        String decl() const {
+            return { declPtr(), m_declLength };
+        }
+    private:
+        char *declPtr() const {
+            return (char *)(this + 1);
+        }
+        char *stringPtr() const {
+            return declPtr() + m_declLength;
+        }
+
+        int m_value;
+        uint8_t m_strLength;
+        uint8_t m_declLength;
+    };
 
 private:
     struct ExportEntry {
@@ -62,8 +107,10 @@ private:
     static SymbolAction getSectionName(const char *begin, const char *end);
     const char *handlePotentialArray(const char *start, const char *p, ExportEntry& e);
     const char *handlePotentialAlignment(const char *start, const char *p, ExportEntry& e);
-    void parseHookProcLine(const char *symStart, const char *symEnd, const char *start, const char *end);
+    int parseHookProcLine(const char *symStart, const char *symEnd, const char *start, const char *end);
+    int parseConstantToVariableLine(const char *symStart, const char *symEnd, const char *start, const char *end);
     void parseRemoveAndNullLine(SymbolAction action, const char *symStart, const char *symEnd, const char *start, const char *end);
+    std::tuple<int32_t, String, String, const char *> parseProcNameLineNumberId(const char *start, const char *end, bool fetchVariable);
     static bool isRemoveHook(const char *start, const char *end);
     void addHookProcs();
     void parseTypeSize(const char *symStart, const char *symEnd, const char *start, const char *end);
@@ -84,12 +131,12 @@ private:
     enum Namespace { kGlobal, kEndRange, kSaveRegs, kReplaceNs, kOnEnterNs, };
 
     struct Hasher {
-        size_t operator()(const std::pair<std::string, Namespace>& key) const {
-            return std::hash<std::string>{}(key.first);
+        size_t operator()(const std::tuple<std::string, Namespace, int>& key) const {
+            return std::hash<std::string>{}(std::get<0>(key)) ^ (std::get<2>(key) * 101);
         }
     };
 
-    void ensureUniqueSymbol(const char *start, const char *end, Namespace symNamespace, SymbolAction action);
+    void ensureUniqueSymbol(const char *start, const char *end, Namespace symNamespace, SymbolAction action, int lineNumber = 0);
 
 #pragma pack(push, 1)
     enum ImportReturnType : uint8_t { kVoid, kInt, };
@@ -123,7 +170,7 @@ private:
 
     std::pair<KeywordType, const char *> lookupKeyword(const char *p, const char *limit);
 
-    std::unordered_map<std::pair<std::string, Namespace>, std::pair<size_t, SymbolAction>, Hasher> m_symbolLine;
+    std::unordered_map<std::tuple<std::string, Namespace, int>, std::pair<size_t, SymbolAction>, Hasher> m_symbolLine;
 
     const char *m_path;
     const char *m_headerPath;
@@ -142,6 +189,8 @@ private:
     SymbolTable m_symbolTable;
     ProcHookList m_procHookList;
     StringMap<int> m_typeSizes;
+    StringMap<IntroducedVariable> m_introducedVariables;
+    std::unordered_map<String, int> m_introducedVariableValues;
 
     struct ExportTypeData {
         ExportTypeData(const char *str, size_t len, const String& baseType, int arraySize, int8_t alignment)

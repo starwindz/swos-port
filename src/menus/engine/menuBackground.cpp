@@ -18,6 +18,7 @@ void initMenuBackground()
 {
     registerAssetResolutionChangeHandler(reloadMenuBackground);
     setStandardMenuBackgroundImage();
+    initMenuItemRenderer();
 }
 
 void drawMenuBackground()

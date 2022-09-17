@@ -56,7 +56,7 @@ spriteFixupFlag - g_skipNonCompetitionFiles
 playerCardChances3min - ballOutOfGameTimer
 team1MostFrequentFace - statsTimer
 #whiteGuyConvertTable - pitchNumberAndType #ref: FillSkinColorConversionTable
-ballSpeedBounceFactorTable - gravityConstant
+ballSpeedBounceFactorTable - kGravityConstant
 
 # pitches
 ReadPitchFile - ActivateReferee
@@ -115,6 +115,7 @@ FindFirstFile - SelectFileToSaveDialog
 
 # controls/joypads
 # + FadeOut & SetPalette
+UpdateAndApplyTeamControls
 FadeOutToBlack - InitMenuMusic
 # + char tables + camera vars
 smallCharsTable - pl1Fire
@@ -208,6 +209,7 @@ menuSize - g_exitMenu
 europeanChampionshipMenu - patternsGoalCounter
 nextCameraDirections
 lastKey
+kAngleCoeficients - importMenuSelectedTactics
 
 # highlights
 HighlightsMenu
@@ -226,7 +228,7 @@ goalBasePtr - userRequestedReplay
 currentGoalPtr - cameraCoordinatesValid
 hilLeftTeamGoals - winningTeamPtr
 
-# CD ROM variables
+# CD-ROM variables
 dosMemSegment
 dosMemSelector
 dosMemLinAdr - aSensibleWorldOfSoccerV2_0
@@ -304,9 +306,9 @@ StartFirstExtraTime
 
 
 #
-# list of symbols to export to header so they can be accessible from C++
+# list of symbols to export to header file so they can be accessible from C++
 # inside ASM files they will be prefixed with underscore, and made public
-# syntax for generating SWOS C++ header files is:
+# syntax is:
 # <symbol> [, function |, (array | pointer | ptr | functionPointer) <type>['['<size>']'] |, <type>] [(align: <n>)]
 #
 
@@ -588,8 +590,13 @@ strikeDestX, word
 playersLeavingPitchBottom, array word[22]
 playersLeavingPitchTop, array word[22]
 
+# game constants
+kKeeperSaveDistance, word
+kBallGroundConstant, word
+kBallAirConstant, word
+kGravityConstant, dword
+
 # referee
-CalculateDeltaXAndY, function
 refComingAnimTable, word
 refWaitingAnimTable, word
 refYellowCardAnimTable, word
@@ -778,6 +785,10 @@ PlayerDoingHeader, 161, PlayHeaderComment
 PlayerTackled, 59, PlayInjuryComment
 UpdateCameraBreakMode, 321, EnqueueCrowdChantsReload
 
+# small part of Amiga mode support in AI_SetControlsDirection
+AI_SetControlsDirection, 1248, CheckForAmigaModeDirectionFlipBan
+AI_SetControlsDirection, 820, WriteAmigaModeDirectionFlip
+
 
 #
 # list of symbols (functions) that will be replaced by the C++ code
@@ -823,8 +834,8 @@ RemoveReferee
 InitializeIngameTeamsAndStartGame
 ToMainGameLoop
 GoalScored
-UpdateAndApplyTeamControls
 GameOver
+CalculateDeltaXAndY
 
 # sprites/game graphics
 DrawStatistics
@@ -873,6 +884,26 @@ PlayResultSample
 
 EndProgram
 Int2Ascii
+
+#
+# Convert constant access to variable access, Generate and initialize given variable. Format:
+# <proc name>, <line number>, <variable name>, <constant value>
+#
+
+@constant-to-variable
+UpdateCameraBreakMode, 8, penaltiesInterval, 110
+UpdateCameraBreakMode, 39, initalKickInterval, 825
+UpdateCameraBreakMode, 281, goalCameraInterval, 55
+UpdateCameraBreakMode, 537, letPlayerControlCameraInterval, 550
+PlayerBeginTackling, 15, playerDownTacklingInterval, 55
+PlayerHeading, 9, playerDownHeadingInterval, 55
+UpdatePlayersAndBall, 346, penaltyLockInterval, 55
+UpdatePlayersAndBall, 1189, goalkeeperCatchLimitZ, 27
+UpdatePlayersAndBall, 2131, hideResultInterval, 55
+UpdatePlayersAndBall, 2955, hideResultInterval, 55
+AI_SetControlsDirection, 128, clearResultInterval, 660
+AI_SetControlsDirection, 134, clearResultInterval, 660
+AI_SetControlsDirection, 140, clearResultHalftimeInterval, 385
 
 #
 # Let ida2asm know about the sizes of types used in the export section so it can generate offsets properly.

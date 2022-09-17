@@ -168,7 +168,7 @@ static void fade(bool fadeOut, std::function<void()> render, double factor)
     constexpr int kFadeDelayMs = 900;
     constexpr int kMaxAlpha = 255;
 
-    auto numSteps = std::ceil(kFadeDelayMs * kTargetFps / factor / 1'000);
+    auto numSteps = std::ceil(kFadeDelayMs * targetFps() / factor / 1'000);
     auto alphaPerFrame = kMaxAlpha / numSteps;
 
     for (auto i = .0; i <= numSteps; i++) {

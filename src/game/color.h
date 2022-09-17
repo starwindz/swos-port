@@ -10,12 +10,6 @@ struct Color {
     }
 };
 
-struct ColorF {
-    float r;
-    float g;
-    float b;
-};
-
 extern const std::array<Color, 16> kMenuPalette;
 extern const std::array<Color, 16> kTeamPalette;
 extern const std::array<Color, 16> kGamePalette;

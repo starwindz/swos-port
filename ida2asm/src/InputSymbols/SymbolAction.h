@@ -12,7 +12,8 @@ enum SymbolAction : uint16_t {
     kInsertCall = 128,
     kRemoveEndRange = 256,
     kRemoveSolo = 512,
-    kTypeSizes = 1024,
+    kConstantToVariable = 1024,
+    kTypeSizes = 2048,
 };
 
 ENABLE_FLAGS(SymbolAction)

@@ -4,15 +4,44 @@
 #include "render.h"
 #include "drawPrimitives.h"
 #include "menus.h"
+#include "unpackMenu.h"
 #include "color.h"
+#include <future>
 
-constexpr int kMaxTextureWidth = 2048;
-constexpr int kMaxTextureHeight = 2048;
+constexpr int kMinTextureWidth = 2048;
+constexpr int kMinTextureHeight = 2048;
 constexpr int kSafeBorder = 2;
 
 static bool m_useGradientFill;
+static bool m_initialized;
 
-static const std::array<std::array<Color, 33>, 7> kGradients = {{
+// Menu item backgrounds, radial color gradients in essence:
+// - each pixel at (x,y) gets a color depending on the distance from the coordinate beginning
+// - gradient stop colors are arranged following the screen diagonal at every 1/32
+// - colors in between are linearly interpolated.
+//
+// d = sqr(width^2 + height^2)
+// l = sqr(x^2 + y^2)
+// s = l / d * 32 ; note that l/d is in [0, 1) range, and s in [0, 32)
+// fraction = s - floor(s)
+// color at (x,y) = gradient[floor(s)] * (1 - fraction) + gradient[ceil(s)] * fraction
+//
+//       +----------/ #32
+//       .         .
+//       .        .
+//       |       /
+//       |      / #2
+//       |     /
+//       |    /
+//       |   / #1
+//       |  /
+//       | /
+//       |/ #0
+//       +----------
+//
+constexpr int kNumGradients = 7;
+
+static const std::array<std::array<Color, 33>, kNumGradients> kGradients = {{
     {{
         // dark blue to black
         { 0, 0, 0 }, { 0, 0, 8 }, { 0, 0, 16 }, { 0, 0, 24 }, { 0, 0, 32 }, { 0, 0, 40 }, { 0, 0, 48 },
@@ -20,7 +49,7 @@ static const std::array<std::array<Color, 33>, 7> kGradients = {{
         { 0, 0, 112 }, { 0, 0, 120 }, { 0, 0, 132 }, { 0, 0, 140 }, { 0, 0, 148 }, { 0, 0, 156 },
         { 0, 0, 164 }, { 0, 0, 172 }, { 0, 0, 180 }, { 0, 0, 188 }, { 0, 0, 196 }, { 0, 0, 204 },
         { 0, 0, 212 }, { 0, 0, 220 }, { 0, 0, 228 }, { 0, 0, 236 }, { 0, 0, 244 }, { 0, 0, 252 },
-        { 0, 0, 252 },
+        { 0, 0, 255 },
     }},
     {{
         // orange to brown
@@ -58,7 +87,7 @@ static const std::array<std::array<Color, 33>, 7> kGradients = {{
         { 152, 48, 180 }, { 152, 56, 184 }, { 152, 60, 192 }, { 148, 64, 196 }, { 144, 72, 200 },
         { 144, 76, 204 }, { 144, 84, 208 }, { 140, 88, 212 }, { 140, 96, 216 }, { 140, 100, 224 },
         { 140, 108, 228 }, { 140, 112, 232 }, { 140, 120, 236 }, { 140, 128, 240 }, { 140, 136, 244 },
-        { 144, 144, 252 }, { 144, 144, 252 },
+        { 144, 144, 252 }, { 144, 144, 255 },
     }},
     {{
         // light blue to blue
@@ -85,18 +114,102 @@ static const std::array<int, 16> kBackgroundToGradient = {{
     2, 2, 2, 0, 1, 1, 1, 2, 0, 2, 3, 4, 1, 5, 6, 6
 }};
 
-// We're counting that there will be no entries with the same top left points
+// Fixed point color, 9 bits integer part (highest bit = sign bit), 23 bits fraction
+struct ColorF
+{
+    static constexpr int kColorShift = 23;
+    static constexpr int kColorRoundLimit = 0x400000;
+
+    int32_t r;
+    int32_t g;
+    int32_t b;
+
+    ColorF(float rF, float gF, float bF)
+    {
+        assert(rF >= 0 && rF <= 255 && gF >= 0 && gF <= 255 && bF >= 0 && bF <= 255);
+        r = floatToFixed(rF);
+        g = floatToFixed(gF);
+        b = floatToFixed(bF);
+    }
+    static int floatToFixed(float value)
+    {
+        float whole, fraction = std::modf(value, &whole);
+        return static_cast<int>(whole) << kColorShift | static_cast<int>(fraction * ((1 << kColorShift) - 1));
+    }
+};
+
+#define FIXED_TO_INT(value) ((value >> ColorF::kColorShift) + ((value & ((1 << ColorF::kColorShift) - 1)) > ColorF::kColorRoundLimit))
+
+struct Texture {
+    Texture(SDL_Texture *texture, int refCount) : texture(texture), refCount(refCount) {}
+    SDL_Texture *texture = nullptr;
+    int refCount = 0;
+};
+
+using TextureList = std::list<Texture>;
+
+// x, y coordinates, gradient and resolution should make an entry unique.
+// Possible optimization is to remove entries that are completely contained inside other entries, but
+// it's not worth it (complicated to implement and not that much too gain).
+struct EntryRenderInfo {
+    EntryRenderInfo(const MenuEntry& entry) {
+        dst = getTransformedRect(&entry);
+
+        auto xRoundedUp = std::ceil(dst.x);
+        auto yRoundedUp = std::ceil(dst.y);
+        dst.w -= (xRoundedUp - dst.x);
+        dst.h -= (yRoundedUp - dst.y);
+        dst.x = xRoundedUp;
+        dst.y = yRoundedUp;
+
+        // we'll use rounded-down values for source rectangle, since there's currently no option for it to be float
+        src.x = 0;
+        src.y = 0;
+        src.w = static_cast<int>(std::floor(dst.w));
+        src.h = static_cast<int>(std::floor(dst.h));
+
+        assert(entry.backgroundColor() < kBackgroundToGradient.size());
+        gradient = kBackgroundToGradient[entry.backgroundColor()];
+
+#ifdef DEBUG
+        this->entry = &entry;
+#endif
+    }
+    EntryRenderInfo(const MenuEntry *entry) : EntryRenderInfo(*entry) {}
+
+    static SDL_FRect getTransformedRect(const MenuEntry *entry) {
+        return mapRect(entry->x, entry->y, entry->width, entry->height);
+    }
+
+    SDL_Rect src;
+    SDL_FRect dst;
+    int gradient;
+    TextureList::iterator texture;
+    const void *menu = nullptr;
+#ifdef DEBUG
+    const MenuEntry *entry;
+#endif
+};
+
+static std::pair<int, int> m_screenDimensions;
+
 struct EntryKey {
-    unsigned x;
-    unsigned y;
-    unsigned color;
+    int x;
+    int y;
+    int width;
+    int height;
+    int gradient;
+    std::pair<int, int> screenDimensions;
 
     EntryKey(const MenuEntry& entry)
-        : x(entry.x), y(entry.y), color(entry.backgroundColor()) {}
+        : x(entry.x), y(entry.y), width(entry.width), height(entry.height),
+        gradient(kBackgroundToGradient[entry.backgroundColor()]), screenDimensions(m_screenDimensions)
+    {}
     EntryKey(const MenuEntry *entry) : EntryKey(*entry) {}
 
     bool operator==(const EntryKey& other) const {
-        return x == other.x && y == other.y && color == other.color;
+        return x == other.x && y == other.y && width == other.width && height == other.height &&
+            gradient == other.gradient && screenDimensions == other.screenDimensions;
     }
 };
 
@@ -104,103 +217,99 @@ namespace std {
     template<>
     struct hash<EntryKey> {
         size_t operator()(const EntryKey& key) const {
-            return key.color | (key.x << 10) | (key.y << 20);
+            return (key.x | (key.y << 8) | (key.width << 16) | (key.height << 24)) ^
+                (key.screenDimensions.first | (key.screenDimensions.second << 16));
         }
     };
 }
 
-struct EntryRenderInfo {
-    EntryRenderInfo() = default;
-
-    SDL_Rect src;
-    SDL_FRect dst;
-    int color;
-    int texture;
-#ifdef DEBUG
-    const MenuEntry *entry;
-#endif
+// Structure needed for grouping entries into a single surface/texture.
+struct TexturePartitionContext {
+    bool hasContent() const {
+        return maxX > kSafeBorder || maxY > kSafeBorder;
+    }
+    int x = kSafeBorder;
+    int y = kSafeBorder;
+    int maxX = kSafeBorder;
+    int maxY = kSafeBorder;
+    std::vector<EntryRenderInfo> entries;
+    std::vector<const MenuEntry *> menuEntries;
+    SDL_Surface *surface = nullptr;
 };
+using QueuedTextures = std::vector<TexturePartitionContext>;
 
-static std::unordered_map<EntryKey, EntryRenderInfo> m_cache;
-static std::vector<SDL_Texture *> m_textures;
-static std::pair<int, int> m_cacheScreenDimensions;
+static constexpr size_t kMaxCachedMenus = 6;
 
-static std::vector<EntryRenderInfo> m_currentSurfaceEntries;
-static int m_nextTextureIndex;
+using EntryCache = std::unordered_map<EntryKey, EntryRenderInfo>;
+static std::array<EntryCache, kNumGradients> m_cache;
 
-static int m_x = kSafeBorder;
-static int m_y = kSafeBorder;
-static int m_maxX;
-static int m_maxY;
+using CachedMenu = std::pair<const void *, std::pair<int, int>>;
+static std::list<CachedMenu> m_cachedMenus;
 
-static void clearCache();
+static TextureList m_textures = {{ nullptr, 1 }};   // keep null texture first always
+static TextureList::iterator m_lastTexture;
+
+static int m_maxTextureAtlasWidth;
+static int m_maxTextureAtlasHeight;
+
+static bool updateScreenDimensions();
+static bool currentMenuInCache();
+static void trimCache();
+static SDL_Texture *lookupTexture(const EntryRenderInfo& entry);
+static EntryRenderInfo *lookupEntry(const MenuEntry *entry);
+static void createTexture(SDL_Surface *surface, std::vector<EntryRenderInfo>& entries);
+static void createTexture(SDL_Surface *surface, EntryRenderInfo& entry);
+static TextureList::iterator createTexture(SDL_Surface *surface, int refCount);
+static void insertEntry(const MenuEntry *entry, const EntryRenderInfo& renderInfo);
+static EntryCache::iterator deleteCachedEntry(EntryCache& cache, EntryCache::iterator it);
+static void clearMenuCache(bool all);
+static void clearMenuCache(const CachedMenu& menu);
 static void ensureCacheValidity();
-static void enqueueEntryBackgroundForCaching(const MenuEntry& entry);
+static void enqueueEntryBackgroundForCaching(const MenuEntry& entry, QueuedTextures& context);
 static SDL_Surface *createSurface(int width, int height);
-static SDL_Texture *createTexture(SDL_Surface *surface);
-static void createAndFillTextureAtlas();
+static void createAndFillTextureAtlases(QueuedTextures& context);
 static void renderEntryBackgroundSingleColor(const EntryRenderInfo& surfaceEntry);
 static void fillEntryBackground(SDL_Surface *surface, const EntryRenderInfo& surfaceEntry);
 
+void initMenuItemRenderer()
+{
+    updateScreenDimensions();
+    m_initialized = true;
+}
+
 void cacheMenuItemBackgrounds()
 {
-    if (!m_useGradientFill)
+    if (!m_useGradientFill || currentMenuInCache())
         return;
 
-    clearCache();
+    trimCache();
+
+    auto startTime = SDL_GetPerformanceCounter();
+    updateScreenDimensions();
 
     auto menu = getCurrentMenu();
     auto entries = menu->entries();
+    QueuedTextures queuedTextures(1);
 
     for (unsigned i = 0; i < menu->numEntries; i++) {
         const auto& entry = entries[i];
         if (entry.visible() && entry.background == kEntryFrameAndBackColor && entry.backgroundColor() != kNoBackground) {
-            assert(m_cache.find(entry) == m_cache.end());
-            enqueueEntryBackgroundForCaching(entry);
+            if (!lookupEntry(&entry))
+                enqueueEntryBackgroundForCaching(entry, queuedTextures);
         }
     }
 
-    createAndFillTextureAtlas();
-    m_cacheScreenDimensions = getWindowSize();
-}
-
-static SDL_FRect getTransformedRect(const MenuEntry *entry)
-{
-    return mapRect(entry->x, entry->y, entry->width, entry->height);
-}
-
-static EntryRenderInfo getEntryRenderInfo(const MenuEntry& entry, int texture = 0)
-{
-    EntryRenderInfo info;
-
-    info.dst = getTransformedRect(&entry);
-
-    auto xRoundedUp = std::ceil(info.dst.x);
-    auto yRoundedUp = std::ceil(info.dst.y);
-    info.dst.w -= (xRoundedUp - info.dst.x);
-    info.dst.h -= (yRoundedUp - info.dst.y);
-    info.dst.x = xRoundedUp;
-    info.dst.y = yRoundedUp;
-
-    // we'll use rounded-down values for source rectangle, since there's no option for it to be float
-    info.src.x = 0;
-    info.src.y = 0;
-    info.src.w = static_cast<int>(std::floor(info.dst.w));
-    info.src.h = static_cast<int>(std::floor(info.dst.h));
-
-    info.color = entry.backgroundColor();
-    info.texture = texture;
-
-#ifdef DEBUG
-    info.entry = &entry;
-#endif
-
-    return info;
+    if (queuedTextures.size() > 1 || queuedTextures.back().hasContent()) {
+        createAndFillTextureAtlases(queuedTextures);
+        m_cachedMenus.emplace_back(getCurrentPackedMenu(), m_screenDimensions);
+        auto interval = SDL_GetPerformanceCounter() - startTime;
+        logInfo("Background cache built in %.2fms", static_cast<double>(interval * 1000) / SDL_GetPerformanceFrequency());
+    }
 }
 
 static void renderBackground(const EntryRenderInfo& entry)
 {
-    if (auto texture = m_textures[entry.texture])
+    if (auto texture = lookupTexture(entry))
         SDL_RenderCopyF(getRenderer(), texture, &entry.src, &entry.dst);
     else
         renderEntryBackgroundSingleColor(entry);
@@ -211,24 +320,22 @@ void drawMenuItemSolidBackground(const MenuEntry *entry)
     assert(entry);
 
     if (!m_useGradientFill) {
-        auto renderInfo = getEntryRenderInfo(*entry);
-        renderEntryBackgroundSingleColor(renderInfo);
+        renderEntryBackgroundSingleColor(entry);
         return;
     }
 
     ensureCacheValidity();
 
-    auto it = m_cache.find(entry);
-    if (it != m_cache.end()) {
-        renderBackground(it->second);
+    auto entryRenderInfo = lookupEntry(entry);
+    if (entryRenderInfo) {
+        renderBackground(*entryRenderInfo);
     } else {
-        auto renderInfo = getEntryRenderInfo(*entry);
+        EntryRenderInfo renderInfo(*entry);
         auto surface = createSurface(renderInfo.src.w, renderInfo.src.h);
         if (surface) {
             fillEntryBackground(surface, renderInfo);
-            m_textures.push_back(createTexture(surface));
-            renderInfo.texture = m_textures.size() - 1;
-            m_cache.insert({ entry, renderInfo });
+            createTexture(surface, renderInfo);
+            insertEntry(entry, renderInfo);
             renderBackground(renderInfo);
         } else {
             renderEntryBackgroundSingleColor(renderInfo);
@@ -267,113 +374,211 @@ bool menuGradientFillEnabled()
 void enableMenuGradientFill(bool enable)
 {
     if (enable != m_useGradientFill) {
-        if (enable)
-            cacheMenuItemBackgrounds();
-        else
-            clearCache();
         m_useGradientFill = enable;
+        if (m_initialized) {
+            if (enable)
+                cacheMenuItemBackgrounds();
+            else
+                clearMenuCache(true);
+        }
     }
 }
 
-static void clearCache()
+static bool updateScreenDimensions()
 {
-    assert(m_currentSurfaceEntries.empty());
+    const auto& screenDimensions = getWindowSize();
+    if (screenDimensions != m_screenDimensions) {
+        SDL_RendererInfo info;
+        SDL_GetRendererInfo(getRenderer(), &info);
+        m_maxTextureAtlasWidth = std::min(info.max_texture_width, m_screenDimensions.first);
+        m_maxTextureAtlasWidth = std::max(m_maxTextureAtlasWidth, kMinTextureWidth);
+        m_maxTextureAtlasHeight = std::min(info.max_texture_height, m_screenDimensions.second);
+        m_maxTextureAtlasHeight = std::max(m_maxTextureAtlasHeight, kMinTextureHeight);
+        logInfo("Screen dimensions changed, cached: %d, %d -> actual: %d, %d", m_screenDimensions.first,
+            m_screenDimensions.second, screenDimensions.first, screenDimensions.second);
+        m_screenDimensions = screenDimensions;
+        return true;
+    } else {
+        return false;
+    }
+}
 
-    m_cache.clear();
+static bool currentMenuInCache()
+{
+    auto menu = getCurrentPackedMenu();
+    auto it = std::find_if(m_cachedMenus.begin(), m_cachedMenus.end(), [menu](const auto& cachedMenu) {
+        return cachedMenu.first == menu && cachedMenu.second == m_screenDimensions;
+    });
+    return it != m_cachedMenus.end();
+}
 
-    for (const auto& texture : m_textures)
-        if (texture)
-            SDL_DestroyTexture(texture);
+static void trimCache()
+{
+    if (m_cachedMenus.size() >= kMaxCachedMenus) {
+        clearMenuCache(m_cachedMenus.front());
+        m_cachedMenus.pop_front();
+    }
+}
 
-    m_textures.clear();
+static SDL_Texture *lookupTexture(const EntryRenderInfo& entry)
+{
+    return entry.texture != m_textures.end() ? entry.texture->texture : nullptr;
+}
 
-    m_nextTextureIndex = 0;
-    m_x = kSafeBorder;
-    m_y = kSafeBorder;
-    m_maxX = kSafeBorder;
-    m_maxY = kSafeBorder;
+static EntryRenderInfo *lookupEntry(const MenuEntry *entry)
+{
+    int gradient = kBackgroundToGradient[entry->backgroundColor()];
+    auto it = m_cache[gradient].find(entry);
+    if (it != m_cache[gradient].end()) {
+        // force the last used menu to "own" this entry (so it doesn't get reclaimed prematurely)
+        it->second.menu = getCurrentPackedMenu();
+        return &it->second;
+    } else {
+        return nullptr;
+    }
+}
+
+static void createTexture(SDL_Surface *surface, std::vector<EntryRenderInfo>& entries)
+{
+    auto it = createTexture(surface, entries.size());
+    for (auto& entry : entries)
+        entry.texture = it;
+}
+
+static void createTexture(SDL_Surface *surface, EntryRenderInfo& entry)
+{
+    auto it = createTexture(surface, 1);
+    entry.texture = it;
+}
+
+static TextureList::iterator createTexture(SDL_Surface *surface, int refCount)
+{
+    assert(surface);
+
+    auto texture = SDL_CreateTextureFromSurface(getRenderer(), surface);
+    if (!texture)
+        logWarn("Failed to create menu item texture, size %d x %d", surface->w, surface->h);
+
+    SDL_FreeSurface(surface);
+
+    if (texture) {
+        m_textures.emplace_back(texture, refCount);
+        return std::prev(m_textures.end());
+    } else {
+        assert(!m_textures.empty() && m_textures.front().texture == nullptr && m_textures.front().refCount == 1);
+        return m_textures.begin();
+    }
+}
+
+static void insertEntry(const MenuEntry *entry, const EntryRenderInfo& renderInfo)
+{
+    m_cache[renderInfo.gradient].insert({ entry, renderInfo });
+}
+
+static EntryCache::iterator deleteCachedEntry(EntryCache& cache, EntryCache::iterator it)
+{
+    if (it->second.texture != m_textures.end() && it->second.texture->texture) {
+        if (!--it->second.texture->refCount) {
+            SDL_DestroyTexture(it->second.texture->texture);
+            m_textures.erase(it->second.texture);
+        }
+    }
+    return cache.erase(it);
+}
+
+static void clearMenuCache(bool all)
+{
+    if (all) {
+        for (auto& cache : m_cache)
+            cache.clear();
+
+        for (auto& texture : m_textures)
+            if (texture.texture)
+                SDL_DestroyTexture(texture.texture);
+
+        m_textures.clear();
+    } else {
+        auto currentMenu = getCurrentMenu();
+        for (auto& cache : m_cache) {
+            for (auto it = cache.begin(); it != cache.end(); ) {
+                if (it->second.menu == currentMenu)
+                    it = deleteCachedEntry(cache, it);
+                else
+                    ++it;
+            }
+        }
+    }
+}
+
+static void clearMenuCache(const CachedMenu& menu)
+{
+    for (auto& cache : m_cache) {
+        for (auto it = cache.begin(); it != cache.end(); ) {
+            if (it->second.menu == menu.first && it->first.screenDimensions == menu.second)
+                it = cache.erase(it);
+            else
+                ++it;
+        }
+    }
 }
 
 static void ensureCacheValidity()
 {
-    const auto& screenDimensions = getWindowSize();
-    if (m_cacheScreenDimensions != screenDimensions) {
-        logInfo("Screen dimensions changed, cached: %d, %d -> actual: %d, %d", m_cacheScreenDimensions.first,
-            m_cacheScreenDimensions.second, screenDimensions.first, screenDimensions.second);
-        clearCache();
-        m_cacheScreenDimensions = screenDimensions;
-    }
+    if (updateScreenDimensions())
+        clearMenuCache(false);
 }
 
-static void createSingleBigTexture(const MenuEntry& entry, EntryRenderInfo& info)
-{
-    SDL_Texture *texture = nullptr;
-    if (auto surface = createSurface(info.src.w, info.src.h)) {
-        fillEntryBackground(surface, info);
-        texture = createTexture(surface);
-    }
-
-    m_textures.push_back(texture);
-
-    info.src.x = 0;
-    info.src.y = 0;
-}
-
-static void enqueueEntryBackgroundForCaching(const MenuEntry& entry)
+static void enqueueEntryBackgroundForCaching(const MenuEntry& entry, QueuedTextures& queuedTextures)
 {
     assert(entry.background == kEntryFrameAndBackColor && entry.backgroundColor() != kNoBackground);
+    assert(!queuedTextures.empty());
 
-    auto info = getEntryRenderInfo(entry, m_nextTextureIndex);
+    EntryRenderInfo info(entry);
+    auto& context = queuedTextures.back();
 
-    if (info.src.w > kMaxTextureWidth || info.src.h > kMaxTextureHeight) {
-        createSingleBigTexture(entry, info);
+    if (info.src.w > m_screenDimensions.first || info.src.h > m_screenDimensions.second) {
+        assert(false);
+        context.entries.push_back(info);
+        context.menuEntries.push_back(&entry);
+        context.maxX = info.src.w;
+        context.maxY = info.src.y;
+        queuedTextures.emplace_back();
+    } else if (context.y + info.src.h + kSafeBorder <= m_maxTextureAtlasHeight) {
+        if (context.x + info.src.w + kSafeBorder <= m_maxTextureAtlasWidth) {
+            info.src.x = context.x;
+            info.src.y = context.y;
+            context.entries.push_back(info);
+            context.menuEntries.push_back(&entry);
 
-        for (auto& surfaceEntry : m_currentSurfaceEntries)
-            surfaceEntry.texture++;
-        for (auto& cachEntry : m_cache)
-            if (cachEntry.second.texture == m_nextTextureIndex)
-                cachEntry.second.texture++;
-
-        m_nextTextureIndex++;
-        m_cache.insert({ entry, info });
-        return;
-    }
-
-    if (m_y + info.src.h + kSafeBorder <= kMaxTextureHeight) {
-        if (m_x + info.src.w + kSafeBorder <= kMaxTextureWidth) {
-            info.src.x = m_x;
-            info.src.y = m_y;
-            m_currentSurfaceEntries.push_back(info);
-
-            m_x += info.src.w + kSafeBorder;
-            m_maxX = std::max(m_maxX, m_x);
-            m_maxY = std::max(m_maxY, m_y + info.src.h + kSafeBorder);
+            context.x += info.src.w + kSafeBorder;
+            context.maxX = std::max(context.maxX, context.x);
+            context.maxY = std::max(context.maxY, context.y + info.src.h + kSafeBorder);
         } else {
             info.src.x = kSafeBorder;
-            info.src.y = m_maxY;
-            m_currentSurfaceEntries.push_back(info);
+            info.src.y = context.maxY;
+            context.entries.push_back(info);
+            context.menuEntries.push_back(&entry);
 
-            m_x = info.src.w + 2 * kSafeBorder;
-            m_maxX = std::max(m_maxX, m_x);
-            m_y = m_maxY;
-            m_maxY += info.src.h + kSafeBorder;
+            context.x = info.src.w + 2 * kSafeBorder;
+            context.maxX = std::max(context.maxX, context.x);
+            context.y = context.maxY;
+            context.maxY += info.src.h + kSafeBorder;
         }
     } else {
-        createAndFillTextureAtlas();
-        m_x = info.src.w + 2 * kSafeBorder;
-        m_y = kSafeBorder;
-        m_maxX = m_x;
-        m_maxY = info.src.h + kSafeBorder;
+        queuedTextures.emplace_back();
+
+        auto& context = queuedTextures.back();
+        context.x = info.src.w + 2 * kSafeBorder;
+        context.y = kSafeBorder;
+        context.maxX = context.x;
+        context.maxY = info.src.h + kSafeBorder;
+
         info.src.x = kSafeBorder;
         info.src.y = kSafeBorder;
-        info.texture++;
-        m_nextTextureIndex++;
-        m_currentSurfaceEntries.push_back(info);
+        context.entries.push_back(info);
+        context.menuEntries.push_back(&entry);
     }
-
-    assert(!m_currentSurfaceEntries.empty());
-
-    m_cache.insert({ entry, m_currentSurfaceEntries.back() });
+    assert(!context.entries.empty());
 }
 
 static SDL_Surface *createSurface(int width, int height)
@@ -385,61 +590,60 @@ static SDL_Surface *createSurface(int width, int height)
     return surface;
 }
 
-static SDL_Texture *createTexture(SDL_Surface *surface)
+void createAndFillTextureAtlases(QueuedTextures& queuedTextures)
 {
-    assert(surface);
-
-    auto texture = SDL_CreateTextureFromSurface(getRenderer(), surface);
-    if (!texture)
-        logWarn("Failed to create menu item texture, size %d x %d", surface->w, surface->h);
-
-    SDL_FreeSurface(surface);
-
-    return texture;
-}
-
-void createAndFillTextureAtlas()
-{
-    if (m_maxX <= kSafeBorder && m_maxY <= kSafeBorder)
-        return;
-
-    if (auto surface = createSurface(m_maxX, m_maxY)) {
-        for (const auto& surfaceEntry : m_currentSurfaceEntries) {
-            assert(surfaceEntry.src.x < m_maxX && surfaceEntry.src.y < m_maxY);
-            fillEntryBackground(surface, surfaceEntry);
+    std::vector<std::future<void>> futures;
+    for (auto& context : queuedTextures) {
+        if (context.hasContent()) {
+            context.surface = createSurface(context.maxX, context.maxY);
+            if (context.surface) {
+                for (const auto& surfaceEntry : context.entries) {
+                    assert(surfaceEntry.src.x < context.maxX && surfaceEntry.src.y < context.maxY);
+                    futures.emplace_back(std::async(std::launch::async, fillEntryBackground, context.surface, surfaceEntry));
+                }
+            } else {
+                logWarn("Failed to allocate %d x %d surface for menu item background texture atlas", context.maxX, context.maxY);
+            }
         }
-        m_textures.push_back(createTexture(surface));
-    } else {
-        logWarn("Failed to allocate %d x %d surface for menu item background texture atlas", m_maxX, m_maxY);
-        m_textures.push_back(nullptr);
     }
 
-    m_currentSurfaceEntries.clear();
-    m_maxX = kSafeBorder;
-    m_maxY = kSafeBorder;
+    // Normally we should just let the futures get destroyed and they'll block until the job's done, but
+    // I'm getting occasional abort() in debug mode, so let's explicitly wait() on them to be safe
+    for (const auto& future : futures)
+        future.wait();
+
+    for (auto& context : queuedTextures) {
+        if (context.hasContent() && context.surface)
+            createTexture(context.surface, context.entries);
+
+        assert(context.entries.size() == context.menuEntries.size());
+        for (size_t i = 0; i < context.entries.size(); i++)
+            insertEntry(context.menuEntries[i], context.entries[i]);
+    }
 }
 
 // Renders plain single-color background in case surface/texture allocation fails.
 static void renderEntryBackgroundSingleColor(const EntryRenderInfo& surfaceEntry)
 {
-    assert(surfaceEntry.color >= 0 && surfaceEntry.color < 16);
+    assert(surfaceEntry.gradient >= 0 && surfaceEntry.gradient < kNumGradients);
 
-    const auto& gradient = kGradients[kBackgroundToGradient[surfaceEntry.color]];
+    const auto& gradient = kGradients[surfaceEntry.gradient];
     SDL_SetRenderDrawColor(getRenderer(), gradient[16].r, gradient[16].g, gradient[16].b, 255);
     SDL_RenderFillRectF(getRenderer(), &surfaceEntry.dst);
 }
 
-static ColorF colorAtPoint(float x, float y, float diagonalSegment, int color)
+static ColorF colorAtPoint(float x, float y, float diagonalSegment, int gradient)
 {
-    auto gradient = std::sqrt(x*x + y*y) / diagonalSegment;
-    assert(gradient >= 0 && gradient < 32);
+    // length from (0,0) to (x,y) divided by screen diagonal: [0..1) times 32 (# of gradient segments - 1)
+    auto gradientSegment = std::sqrt(x*x + y*y) / diagonalSegment;
+    assert(gradientSegment >= 0 && gradientSegment < 32);
 
-    auto lo = static_cast<int>(std::floor(gradient));
-    auto hi = static_cast<int>(std::ceil(gradient));
-    auto frac = gradient - static_cast<float>(lo);
+    auto lo = static_cast<int>(std::floor(gradientSegment));
+    auto hi = static_cast<int>(std::ceil(gradientSegment));
+    auto frac = gradientSegment - static_cast<float>(lo);
 
-    const auto& c1 = kGradients[kBackgroundToGradient[color]][lo];
-    const auto& c2 = kGradients[kBackgroundToGradient[color]][hi];
+    const auto& c1 = kGradients[gradient][lo];
+    const auto& c2 = kGradients[gradient][hi];
 
     auto r = c1.r * (1 - frac) + c2.r * frac;
     auto g = c1.g * (1 - frac) + c2.g * frac;
@@ -452,7 +656,7 @@ static void fillEntryBackground(SDL_Surface *surface, const EntryRenderInfo& sur
 {
     assert(surfaceEntry.src.x >= 0 && surfaceEntry.src.y >= 0 &&
         surfaceEntry.src.x + surfaceEntry.src.w <= surface->w && surfaceEntry.src.y + surfaceEntry.src.h <= surface->h);
-    assert(surfaceEntry.color >= 0 && surfaceEntry.color < 16);
+    assert(surfaceEntry.gradient >= 0 && surfaceEntry.gradient < kNumGradients);
 
     int screenWidth, screenHeight;
     std::tie(screenWidth, screenHeight) = getWindowSize();
@@ -466,18 +670,19 @@ static void fillEntryBackground(SDL_Surface *surface, const EntryRenderInfo& sur
     auto diagSeg = std::sqrt(static_cast<float>(screenWidth) * screenWidth + screenHeight * screenHeight) / 32.0f;
 
     // only calculate exact values at the vertex points of the rectangle
-    // 1 -- 2
-    // 3 -- 4
+    // c1 -- c2
+    //  |    |
+    // c3 -- c4
     auto y1 = static_cast<float>(screenHeight - 1 - surfaceEntry.dst.y);
     auto y2 = static_cast<float>(screenHeight - surfaceEntry.dst.y - surfaceEntry.src.h);
     auto x1 = static_cast<float>(surfaceEntry.dst.x);
     auto x2 = static_cast<float>(surfaceEntry.dst.x + surfaceEntry.src.w - 1);
 
-    // calculate R, G, B values for vertex points
-    const auto& c1 = colorAtPoint(x1, y1, diagSeg, surfaceEntry.color);
-    const auto& c2 = colorAtPoint(x2, y1, diagSeg, surfaceEntry.color);
-    const auto& c3 = colorAtPoint(x1, y2, diagSeg, surfaceEntry.color);
-    const auto& c4 = colorAtPoint(x2, y2, diagSeg, surfaceEntry.color);
+    // fetch R,G,B values for vertex points
+    const auto& c1 = colorAtPoint(x1, y1, diagSeg, surfaceEntry.gradient);
+    const auto& c2 = colorAtPoint(x2, y1, diagSeg, surfaceEntry.gradient);
+    const auto& c3 = colorAtPoint(x1, y2, diagSeg, surfaceEntry.gradient);
+    const auto& c4 = colorAtPoint(x2, y2, diagSeg, surfaceEntry.gradient);
 
     if (SDL_MUSTLOCK(surface) && SDL_LockSurface(surface) != 0)
         return;
@@ -485,22 +690,46 @@ static void fillEntryBackground(SDL_Surface *surface, const EntryRenderInfo& sur
     auto p = reinterpret_cast<Uint32 *>(surface->pixels) + surface->pitch / 4 * surfaceEntry.src.y + surfaceEntry.src.x;
 
     // linearly interpolate between the vertex points
+    auto rLeft = c1.r;
+    auto gLeft = c1.g;
+    auto bLeft = c1.b;
+    auto rRight = c2.r;
+    auto gRight = c2.g;
+    auto bRight = c2.b;
+    auto rLeftInc = (c3.r - c1.r) / (surfaceEntry.src.h - 1);
+    auto gLeftInc = (c3.g - c1.g) / (surfaceEntry.src.h - 1);
+    auto bLeftInc = (c3.b - c1.b) / (surfaceEntry.src.h - 1);
+    auto rRightInc = (c4.r - c2.r) / (surfaceEntry.src.h - 1);
+    auto gRightInc = (c4.g - c2.g) / (surfaceEntry.src.h - 1);
+    auto bRightInc = (c4.b - c2.b) / (surfaceEntry.src.h - 1);
+
     for (int y = 0; y < surfaceEntry.src.h; y++) {
-        auto rLeft = c1.r + (c3.r - c1.r) / (surfaceEntry.src.h - 1) * y;
-        auto gLeft = c1.g + (c3.g - c1.g) / (surfaceEntry.src.h - 1) * y;
-        auto bLeft = c1.b + (c3.b - c1.b) / (surfaceEntry.src.h - 1) * y;
-        auto rRight = c2.r + (c4.r - c2.r) / (surfaceEntry.src.h - 1) * y;
-        auto gRight = c2.g + (c4.g - c2.g) / (surfaceEntry.src.h - 1) * y;
-        auto bRight = c2.b + (c4.b - c2.b) / (surfaceEntry.src.h - 1) * y;
+        int r = rLeft;
+        int g = gLeft;
+        int b = bLeft;
+        auto rInc = (rRight - rLeft) / (surfaceEntry.src.w - 1);
+        auto gInc = (gRight - gLeft) / (surfaceEntry.src.w - 1);
+        auto bInc = (bRight - bLeft) / (surfaceEntry.src.w - 1);
 
         for (int x = 0; x < surfaceEntry.src.w; x++) {
-            unsigned r = std::lround(rLeft + (rRight - rLeft) / (surfaceEntry.src.w - 1) * x);
-            unsigned g = std::lround(gLeft + (gRight - gLeft) / (surfaceEntry.src.w - 1) * x);
-            unsigned b = std::lround(bLeft + (bRight - bLeft) / (surfaceEntry.src.w - 1) * x);
+            unsigned rDest = FIXED_TO_INT(r);
+            unsigned gDest = FIXED_TO_INT(g);
+            unsigned bDest = FIXED_TO_INT(b);
 
-            p[y * surface->pitch / 4 + x] = (r << surface->format->Rshift) | (g << surface->format->Gshift) |
-                (b << surface->format->Bshift) | (255 << surface->format->Ashift);
+            p[y * surface->pitch / 4 + x] = (rDest << surface->format->Rshift) | (gDest << surface->format->Gshift) |
+                (bDest << surface->format->Bshift) | (255 << surface->format->Ashift);
+
+            r += rInc;
+            g += gInc;
+            b += bInc;
         }
+
+        rLeft += rLeftInc;
+        gLeft += gLeftInc;
+        bLeft += bLeftInc;
+        rRight += rRightInc;
+        gRight += gRightInc;
+        bRight += bRightInc;
     }
 
     if (SDL_MUSTLOCK(surface))

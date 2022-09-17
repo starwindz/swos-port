@@ -643,6 +643,7 @@ void OrphanedAssignmentChainRemover::appendSourceNodesToDestination(const Instru
         };
         auto type = node.instruction->type();
         return src.type != OperandInfo::kReg && src.type != OperandInfo::kFixedMem ||
+            src.type == OperandInfo::kFixedMem && dst.type == OperandInfo::kFixedMem ||
             isMismatchOperandSizeInstruction(type) && dst.size() > src.size() ||
             dst.size() == src.size();
     }());

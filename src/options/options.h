@@ -1,5 +1,10 @@
 #pragma once
 
+enum GameStyle {
+    kPcGameStyle,
+    kAmigaGameStyle,
+};
+
 void loadOptions();
 void saveOptions();
 std::vector<LogItem> parseCommandLine(int argc, char **argv);

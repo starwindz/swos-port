@@ -57,10 +57,13 @@ void DataBank::addVariables(VarData&& vars)
 // Constructs a single structure to hold all variables, and calculates their offsets.
 void DataBank::consolidateVariables(const StructStream& structs)
 {
+    constexpr int kAverageBytesPerVariable = 40;
+
     auto numVariables = std::accumulate(m_vars.begin(), m_vars.end(), size_t(0), [](size_t sum, const auto& varList) {
         return sum + varList.size();
     });
-    auto varMapSizeEstimate = numVariables * 40;
+    numVariables += m_symFileParser.introducedVariables().size() * kAverageBytesPerVariable;
+    auto varMapSizeEstimate = numVariables * kAverageBytesPerVariable;
 
     m_varToAddress.reset(varMapSizeEstimate);
 
@@ -83,6 +86,25 @@ void DataBank::consolidateVariables(const StructStream& structs)
             }
         }
     }
+
+    // merge with introduced variables from @constant-to-variable
+    VarList introducedVars;
+    for (const auto& extraVar : m_symFileParser.introducedVariables()) {
+        m_varToAddress.add(extraVar.text, m_memoryByteSize);
+        Var var;
+        var.name = extraVar.text;
+        var.type = kInt;
+        var.size = 4;
+        var.offset = m_memoryByteSize;
+        var.exportedDecl = extraVar.cargo->decl();
+        var.intValue = extraVar.cargo->value();
+        var.originalValue = extraVar.cargo->stringValue();
+        var.comment = "[introduced by ida2asm]";
+
+        introducedVars.push_back(var);
+        m_memoryByteSize += 4;
+    }
+    m_vars.push_back(std::move(introducedVars));
 
     m_varToAddress.seal();
 

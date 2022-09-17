@@ -22,12 +22,12 @@ static void updateTeamControls(TeamGeneralInfo *team, PlayerNumber player, GameC
 static void updatePlayerFire(PlayerNumber player, GameControlEvents events);
 
 // Sets control related fields in team structure. Called once per frame.
-// Handles one team per frame (next team in next frame).
-//
-void updateTeamControls()
+// Handles one team per frame (next team next frame).
+// Returns a function to run after the main game update.
+std::function<void()> updateTeamControls()
 {
     if (updateFireBlocked())
-        return;
+        return [] {};
 
     static int s_teamSwitchCounter;
     auto team = ++s_teamSwitchCounter & 1 ? &swos.topTeamData : &swos.bottomTeamData;
@@ -52,15 +52,15 @@ void updateTeamControls()
             team->fireThisFrame = 0;
             team->fireCounter = 0;
         }
+    }
 
-        UpdatePlayersAndBall();
-
+    return [team]() {
         if (team->headerOrTackle) {
             team->headerOrTackle = 0;
             auto& fireCounter = team->playerNumber == 2 ? m_pl2FireCounter : m_pl1FireCounter;
             fireCounter = 0;
         }
-    }
+    };
 }
 
 GameControlEvents getPlayerEvents(PlayerNumber player)

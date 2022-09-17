@@ -9,6 +9,7 @@
 #include "sfx.h"
 #include "options.h"
 #include "controls.h"
+#include "amigaMode.h"
 #include "gameControls.h"
 #include "keyBuffer.h"
 #include "dump.h"
@@ -538,13 +539,15 @@ static void determineStartingTeamAndTeamPlayingUp()
 static void initPitchBallFactors()
 {
     static const int kPitchBallSpeedInfluence[] = { -3, 4, 1, 0, 0, -1, -1 };
+    static const int kPitchBallSpeedInfluenceAmiga[] = { -2, 2, 3, 0, 0, -1, -1 };
     static const int kBallSpeedBounceFactorTable[] = { 24, 80, 80, 72, 64, 40, 32 };
     static const int kBallBounceFactorTable[] = { 88, 112, 104, 104, 96, 88, 80 };
 
     int pitchType = swos.pitchNumberAndType & 0xff;
     assert(static_cast<size_t>(pitchType) <= 6);
 
-    swos.pitchBallSpeedFactor = kPitchBallSpeedInfluence[pitchType];
+    const auto& pitchBallSpeedInfluence = amigaModeActive() ? kPitchBallSpeedInfluenceAmiga : kPitchBallSpeedInfluence;
+    swos.pitchBallSpeedFactor = pitchBallSpeedInfluence[pitchType];
     swos.ballSpeedBounceFactor = kBallSpeedBounceFactorTable[pitchType];
     swos.ballBounceFactor = kBallBounceFactorTable[pitchType];
 }

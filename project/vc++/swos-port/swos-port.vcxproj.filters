@@ -298,7 +298,7 @@
     <ClCompile Include="..\..\..\src\game\playerNameDisplay.cpp">
       <Filter>Source Files\game</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\game\updateBall.cpp">
+    <ClCompile Include="..\..\..\src\game\updateGoals.cpp">
       <Filter>Source Files\game</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\src\sprites\renderSprites.cpp">
@@ -399,6 +399,12 @@
     </ClCompile>
     <ClCompile Include="..\..\..\src\video\gameFieldMapping.cpp">
       <Filter>Source Files\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\game\amigaMode.cpp">
+      <Filter>Source Files\game</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\game\updateSprite.cpp">
+      <Filter>Source Files\game</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -740,6 +746,12 @@
     </ClInclude>
     <ClInclude Include="..\..\..\src\video\gameFieldMapping.h">
       <Filter>Source Files\video</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\game\amigaMode.h">
+      <Filter>Source Files\game</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\game\updateSprite.h">
+      <Filter>Source Files\game</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

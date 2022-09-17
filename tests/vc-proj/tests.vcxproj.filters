@@ -319,7 +319,7 @@
     <ClCompile Include="..\..\src\game\gameTime.cpp">
       <Filter>Source Files\project-files\game</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\game\updateBall.cpp">
+    <ClCompile Include="..\..\src\game\updateGoals.cpp">
       <Filter>Source Files\project-files\game</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\game\replayExitMenu.cpp">
@@ -444,6 +444,12 @@
     </ClCompile>
     <ClCompile Include="..\src\tests\RecordedDataTest.cpp">
       <Filter>Source Files\tests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\game\updateSprite.cpp">
+      <Filter>Source Files\project-files\game</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\game\amigaMode.cpp">
+      <Filter>Source Files\project-files\game</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -753,6 +759,12 @@
     </ClInclude>
     <ClInclude Include="..\src\tests\RecordedDataTest.h">
       <Filter>Source Files\tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\game\amigaMode.h">
+      <Filter>Source Files\project-files\game</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\game\updateSprite.h">
+      <Filter>Source Files\project-files\game</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

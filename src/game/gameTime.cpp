@@ -3,6 +3,7 @@
 #include "sprites.h"
 #include "renderSprites.h"
 #include "pitchConstants.h"
+#include "amigaMode.h"
 #include "sfx.h"
 
 constexpr int kTimeX = 20 - 6;
@@ -70,7 +71,7 @@ void updateGameTime()
     } else if (swos.gameStatePl == GameState::kInProgress && !swos.playingPenalties) {
         m_secondsSwitchAccumulator -= m_timeDelta;
         if (m_secondsSwitchAccumulator < 0) {
-            m_secondsSwitchAccumulator += 54;
+            m_secondsSwitchAccumulator += amigaModeActive() ? 49 : 54;
             m_gameSeconds += swos.timerDifference;
 
             if (m_gameSeconds >= 60) {
@@ -276,5 +277,5 @@ static void bumpGameTime()
 static void setupLastMinuteSwitchNextFrame()
 {
     m_gameSeconds = -1;
-    m_endGameCounter = 55;
+    m_endGameCounter = amigaModeActive() ? 50 : 55;
 }

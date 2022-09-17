@@ -3,7 +3,7 @@
 #include "gameControlEvents.h"
 #include "controls.h"
 
-void updateTeamControls();
+std::function<void()> updateTeamControls();
 GameControlEvents getPlayerEvents(PlayerNumber player);
 bool isPlayerFiring(PlayerNumber player);
 bool getShortFireAndBumpFireCounter(bool currentFire, PlayerNumber player = kPlayer1);

@@ -308,7 +308,7 @@ static void runReplay(bool inGame, bool isReplay)
                 assert(i > 0);
                 i -= 2;
             } else {
-                assert(status == Status::kNormal);
+                assert(status == Status::kNormal || status == Status::kPaused);
             }
         }
     }

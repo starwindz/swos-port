@@ -5,23 +5,30 @@ class ProcHookList
 public:
     static constexpr size_t kProcNameLength = 256;
 
-    void add(const String& procName, const String& hookName, int line, int definedAtLine);
+    void add(const String& procName, const String& hookName, int line, int initialValue, bool isVariable, int definedAtLine);
 
     struct ProcHookItem {
-        ProcHookItem(const String& procName, const String& hookName, int line, int nextIndex, int definedAtLine)
-            : procName(procName), hookName(hookName), line(line), nextIndex(nextIndex), definedAtLine(definedAtLine) {}
+        ProcHookItem(const String& procName, const String& hookName, int initialValue, int line,
+            int nextIndex, int definedAtLine, bool isVariable)
+        : procName(procName), hookName(hookName), initialValue(initialValue),
+            line(line), nextIndex(nextIndex), definedAtLine(definedAtLine), isVariable(isVariable)
+        {}
         String procName;
         String hookName;
+        int initialValue;
         int line;
         int definedAtLine;
         int nextIndex;
+        bool isVariable;
     };
 
     std::vector<ProcHookItem> getItems();
     String encodeProcHook(const ProcHookItem *begin, const ProcHookItem *end);
 
     static int getCurrentHookLine(const String& procHook);
+    static bool isCurrentHookVariable(const String& procHook);
     static String getCurrentHookProc(const String& procHook);
+    static int getCurrentHookInitialValue(const String& procHook);
     static bool moveToNextHook(const String& procHook);
 
 private:
@@ -32,6 +39,8 @@ private:
         static size_t requiredSize(const ProcHookItem *begin, const ProcHookItem *end);
         bool moveToNextHook();
         int getCurrentLine() const;
+        int initialValue() const;
+        bool isVariable() const;
         String getCurrentHookProc() const;
 
     private:
@@ -48,6 +57,8 @@ private:
 
             uint32_t line;
             uint32_t hookNameLen;
+            int initialValue;
+            bool isVariable;
         };
 
         char *m_sentinel;
@@ -62,11 +73,13 @@ private:
     struct ProcHookItemInternal {
         char procName[kProcNameLength];
         char hookName[kProcNameLength];
-        size_t procNameLen;
-        size_t hookNameLen;
+        unsigned procNameLen;
+        unsigned hookNameLen;
+        int initialValue;
         int line;
         int definedAtLine;
         int lastIndex = -1;
+        bool isVariable = false;
         bool first = false;
     };
 

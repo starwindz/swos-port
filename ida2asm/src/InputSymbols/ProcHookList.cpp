@@ -1,6 +1,6 @@
 #include "ProcHookList.h"
 
-void ProcHookList::add(const String& procName, const String& hookName, int line, int definedAtLine)
+void ProcHookList::add(const String& procName, const String& hookName, int line, int initialValue, bool isVariable, int definedAtLine)
 {
     ProcHookItemInternal item;
     auto procLen = std::min(procName.length(), kProcNameLength - 1);
@@ -13,8 +13,10 @@ void ProcHookList::add(const String& procName, const String& hookName, int line,
     item.hookName[hookLen] = '\0';
     item.hookNameLen = hookLen;
 
+    item.initialValue = initialValue;
     item.line = line;
     item.definedAtLine = definedAtLine;
+    item.isVariable = isVariable;
 
     m_items.push_back(item);
 }
@@ -30,7 +32,7 @@ auto ProcHookList::getItems() -> std::vector<ProcHookItem>
         int nextIndex = item->lastIndex > 0 ? item->lastIndex : i + 1;
 
         result.emplace_back(String(item->procName, item->procNameLen), String(item->hookName, item->hookNameLen),
-            item->line, nextIndex, item->definedAtLine);
+            item->initialValue, item->line, nextIndex, item->definedAtLine, item->isVariable);
     }
 
     return result;
@@ -52,10 +54,22 @@ int ProcHookList::getCurrentHookLine(const String& procHook)
     return hookList->getCurrentLine();
 }
 
+bool ProcHookList::isCurrentHookVariable(const String& procHook)
+{
+    auto hookList = (PackedProcHookList *)procHook.data();
+    return hookList->isVariable();
+}
+
 String ProcHookList::getCurrentHookProc(const String& procHook)
 {
     auto hookList = (PackedProcHookList *)procHook.data();
     return hookList->getCurrentHookProc();
+}
+
+int ProcHookList::getCurrentHookInitialValue(const String& procHook)
+{
+    auto hookList = (PackedProcHookList *)procHook.data();
+    return hookList->initialValue();
 }
 
 bool ProcHookList::moveToNextHook(const String& procHook)
@@ -92,7 +106,8 @@ auto ProcHookList::getSortedItems() -> std::vector<ProcHookItemInternal *>
             } else if (cmp == 0) {
                 // there is at least one other hook
                 if (current->line > sortedItems[j]->line) {
-                    assert(j > 0);
+                    assert(j > 0 || sortedItems[j]->first);
+
                     if (current->lastIndex < 0)
                         current->lastIndex = lastIndex;
 
@@ -144,6 +159,8 @@ ProcHookList::PackedProcHookList::PackedProcHookList(const ProcHookItem *begin, 
         assert(it == begin || (it->line >= it[-1].line && (it->line != it[-1].line || it->definedAtLine < it[-1].definedAtLine)));
 
         header->line = it->line;
+        header->initialValue = it->initialValue;
+        header->isVariable = it->isVariable;
         header->hookNameLen = it->hookName.length();
         it->hookName.copy((char *)(header + 1));
 
@@ -181,6 +198,18 @@ int ProcHookList::PackedProcHookList::getCurrentLine() const
 {
     assert(m_currentHookCharPtr < m_sentinel);
     return m_currentHook->line;
+}
+
+int ProcHookList::PackedProcHookList::initialValue() const
+{
+    assert(m_currentHookCharPtr < m_sentinel);
+    return m_currentHook->initialValue;
+}
+
+bool ProcHookList::PackedProcHookList::isVariable() const
+{
+    assert(m_currentHookCharPtr < m_sentinel);
+    return m_currentHook->isVariable;
 }
 
 String ProcHookList::PackedProcHookList::getCurrentHookProc() const

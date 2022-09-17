@@ -66,9 +66,14 @@ auto InstructionOperandsInfoExtractor::getOperandInfo() const -> std::array<Oper
                 cookedOp.type = OperandInfo::kFixedMem;
 
                 auto size = op.size();
-                if (!size)
-                    size = m_instruction->type() == Token::T_MOV ? otherOp.size() : otherOp.size() / 2;
-
+                if (!size) {
+                    if (op.dereference() && otherOp.dereference()) {
+                        assert(op.base().type == Token::T_ID);
+                        size = otherOp.size();
+                    } else {
+                        size = m_instruction->type() == Token::T_MOV ? otherOp.size() : otherOp.size() / 2;
+                    }
+                }
                 cookedOp.memSize = static_cast<uint8_t>(size);
             } else {
                 cookedOp.type = OperandInfo::kDynamicMem;

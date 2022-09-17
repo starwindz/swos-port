@@ -3,6 +3,8 @@
 
 static constexpr int kMaxLastFrames = 32;
 
+static double m_targetFps = kTargetFpsPC;
+
 static Sint64 m_frequency;
 
 static Uint64 m_lastFrameTicks;
@@ -22,13 +24,23 @@ static Uint64 getAverageRenderTime();
 void initTimer()
 {
     m_frequency = SDL_GetPerformanceFrequency();
-    m_ticksPerFrame = m_frequency / kTargetFps;
+    m_ticksPerFrame = m_frequency / targetFps();
 }
 
 void initFrameTicks()
 {
     m_lastFrameTicks = SDL_GetPerformanceCounter();
     m_renderTimes.fill(0);
+}
+
+double targetFps()
+{
+    return m_targetFps;
+}
+
+void setTargetFps(double fps)
+{
+    m_targetFps = fps;
 }
 
 // Simulates SWOS procedure executed at each interrupt 8 tick.
@@ -58,12 +70,12 @@ void frameDelay(double factor /* = 1.0 */)
 {
     if (factor > 1.0) {
         // don't use busy wait in menus
-        auto delay = std::lround(1'000 * factor / kTargetFps);
+        auto delay = std::lround(1'000 * factor / targetFps());
         SDL_Delay(delay);
         return;
     }
 
-    Uint64 desiredDelay = std::llround(m_frequency * factor / kTargetFps);
+    Uint64 desiredDelay = std::llround(m_frequency * factor / targetFps());
     desiredDelay -= getAverageRenderTime();
 
     auto diff = SDL_GetPerformanceCounter() - m_frameStartTime;

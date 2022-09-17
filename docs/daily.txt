@@ -5248,3 +5248,62 @@ earlier:
 - added curly braces
 - added YU and German chars to allowed char list when entering names and filenames
 - published a new version and pushed to Github
+02.09.2022.
+/
+03.09.2022.
+/
+04.09.2022.
+/
+05.09.2022.
+/
+06.09.2022.
+/
+07.09.2022.
+- doing some research on how to use shaders in conjunction with SDL, reading SDL sources of DirectX renderers a bit
+08.09.2022.
+- updated SWPE manual, and finally looked into those LaTeX warnings and fixed them ;)
+09.09.2022.
+- explored shaders some more, got a rough idea how that could be organized within the code, but also realized it's
+  possibly better not to use them in this case, exploring other ideas such as texture generation/loading
+10.09.2022.
+- fixed menu gradient background option not getting saved
+- seems like it is the actual software drawing that's the bottleneck, not texture creation and upload; added some
+  timing code, and yes, it's abysmal
+11.09.2022.
+- optimized background drawing, changed from floating to fixed point and used multiple threads; it works much
+  faster now, it's slightly less precise but it's practically impossible to notice the difference; still need to
+  fix some bugs, but I think this is good for now, will need to test on some slow machine to see if it's really OK
+  (possible things to do are moving to GPU shader rendering or caching patterns in files)
+12.09.2022.
+- fixed menu background texture invalidation when resolution changes
+- made cache more granular, allowed it to cache menu entries independently of menus (since they can be reused by
+  different menus, if position, dimensions and resolution are the same), also optimized it even further (increased
+  parallelism)
+- changed texture atlas dimensions to be more flexible (between 2k and screen size, but not over max texture width
+  renderer reports)
+13.09.2022.
+- been getting some crashes in debug mode, although I think the code is fine and the bug is in VC++ (letting
+  futures go out of scope should make the main thread wait on async to finish and clean up properly), I've added
+  wait() calls just to be on the safe side and it hasn't happened since
+- tried some optimizations in hope they would decrease false sharing in the surface memory:
+  1. processing rows in a local array and then copying it to surface
+  2. making every other thread process surface lines in reverse order
+  3. increasing padding between images inside the surface
+  but didn't get any meaningful improvement, so I ditched them to keep the code simpler (#3 surprisingly made
+  things noticeably slower, the bigger the padding the slower it got)
+- started converting CalculateDeltaXAndY()
+14.09.2022.
+- finished CalculateDeltaXAndY(), got it returning exactly the same results, interesting thing is when I do straight
+  multiplication (x * 41 / 64) instead of the expression with sequence of shifts/subtracts, the result is off by
+  1-4 (less when I do integer rounding, but never was able to match it with mul/div) -- typical example is
+  -142,000; decided to go with mul/div, it's much shorter and the error is only about 0.00006
+- started implementing Amiga mode, will need some additions in ida2asm
+15.09.2022.
+- expanded ida2asm documentation, added new section I'm planning to implement, for converting constants to variables
+- implemented it partially as well
+16.09.2022.
+- [ida2asm] @constant-to-variable section fully implemented
+- [ida2asm] fixed not being able to create more than one hook in a single procedure
+- implemented Amiga mode (can be changed in options)
+17.09.2022.
+- published a new version and pushed to Github

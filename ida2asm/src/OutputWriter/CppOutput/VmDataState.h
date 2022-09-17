@@ -219,12 +219,14 @@ private:
     void assignValueToMemory(size_t address, size_t size, const ByteValue& val);
     static bool compareRegisterAndConstant(const RegSlice& reg, size_t val);
     bool compareMemoryAndConstant(size_t addr, size_t size, uint32_t val) const;
+    bool compareMemoryToMemory(size_t addr1, size_t addr2, size_t size) const;
     static std::optional<uint32_t> getRegisterConstant(const RegSlice& reg);
     std::optional<uint32_t> getRegisterConstant(RegisterEnum reg) const;
     std::optional<uint32_t> getMemoryConstant(size_t address, size_t size) const;
     void assignConstantToRegister(const RegSlice& reg, uint32_t val);
     void assignConstantToRegister(RegisterEnum reg, uint32_t val);
     void assignConstantToMemory(size_t address, size_t size, uint32_t val);
+    void assignMemoryToMemory(size_t dstAddress, size_t srcAddress, size_t size);
     void assignExpressionToRegister(const RegSlice& reg, size_t expressionId);
     void assignExpressionToMemory(size_t addr, size_t size, size_t expressionId);
     const RegSlice getRegister(const OperandInfo& op) const;

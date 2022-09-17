@@ -254,7 +254,9 @@ static void coreGameUpdate()
     updateGameTime();
     initGoalSprites();
     UpdateCameraBreakMode();    // convert
-    updateTeamControls();
+    auto postUpdateTeamControls = updateTeamControls();
+    UpdatePlayersAndBall();    // main game engine update
+    postUpdateTeamControls();
     UpdateBall();
     MovePlayers();
     updateReferee();

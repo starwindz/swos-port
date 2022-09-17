@@ -4,10 +4,10 @@
 something that can actually be assembled/compiled without errors.
 
 Even though it started as an assembler conversion tool it can now generate C++ output in addition to the
-basic MASM x86 format. Having multiple output formats was an idea from the start so it was designed to be
-easily augmented.
+basic MASM x86 format which has even become obsolete. Having multiple output formats was an idea from the start
+so it was designed to be easily augmented.
 
-Aside from conversion, second task is symbol manipulation (importing, exporting, removing, etc.). This is
+Aside from the conversion, second task is symbol manipulation (importing, exporting, removing, etc.). This is
 specified via a custom format input text file.
 
 ## Command-line parameters
@@ -18,21 +18,21 @@ specified via a custom format input text file.
 - path to input control file
 - path to output C++ header with exported symbols
 - output format (currently only `masm` and `c++` are supported)
-- number of files to split output ASM files (as well as how many threads to use), maximum is 20
+- number of files to split output files (as well as how many threads to use), maximum is 20
 
 Optional parameters are also accepted, they start with two dashes, and are currently only valid for
 C++ output:
 
 `--extra-memory-size=<size>` - statically allocate memory of given size
 
-`--disable-optimizations`
+`--disable-optimizations` - disable conversion-time optimizations
 
-Short help can be listed by passing `-h` or `--help` parameter.
+Short help can be listed by passing `-h` or `--help` parameter. See more about optimizations in [Optimizations section](#optimizations).
 
 ## Input file
 
-Input file controls how the conversion to actual assembly files will be performed. It consists of sections
-which begin with `@` sign. Following sections are supported:
+Input file controls how the conversion to the actual output files will be performed. It consists of sections
+which begin with '`@`' sign. Following sections are supported:
 - `@import`
 - `@export`
 - `@remove`
@@ -41,13 +41,14 @@ which begin with `@` sign. Following sections are supported:
 - `@save-regs`
 - `@on-enter`
 - `@insert-hook`
+- `@constant-to-variable`
 - `@type-sizes`
 
 Any line beginning with `#` sign is considered a comment and will not be processed.
 
 ### `@import` section
 
-Purpose of `@import` section is to replace assembly procedures with functions from C++. Any non-empty line
+The purpose of `@import` section is to replace assembly procedures with functions from C++. Any non-empty line
 is treated as a procedure name that will be imported from C++. C++ functions do not take any parameters and
 by default return `void`, unless symbol name is followed by a comma followed by `int` -- in that case return
 type is `int`. Assembly procedure body is removed from generated assembly code, and its name is treated as an
@@ -80,7 +81,7 @@ public. Syntax for exporting symbols is:
 <symbol> [, function |, (array | pointer | ptr | functionPointer) <type>['['<size>']'] |, <type>] [(align: <n>)]
 ```
 
-SWOS assembly file contains large amount of symbols, and limiting exports to only the used ones helps
+SWOS assembly file contains a large amount of symbols, and limiting exports to only the used ones helps
 improving compiling and linking performance, as well as minimizing name clashes.
 
 Examples:
@@ -144,9 +145,9 @@ hilFilename, 256 dup(0)
 ### `@save-regs` section
 
 Since SWOS was written in assembly language it uses CPU registers freely, which can create problems when SWOS
-procedures are called from C\++. Many functions destroy contents of registers C\++ compilers assume will not
+procedures are called from C++. Many functions destroy contents of registers C++ compilers assume will not
 change throughout a function call. In order to call SWOS code safely for each listed procedure instructions
-will be injected that save and restore registers C\++ compiler considers nonvolatile.
+will be injected that save and restore registers C++ compiler considers nonvolatile.
 
 Care has to be exercised as `push` and `pop` instructions are injected at the beginning of the proc, and
 before the final `retn`, without code flow analysis. This can cause crashes if used with functions that
@@ -180,15 +181,53 @@ GameLoop, 224
 PlayerDoingHeader, 157, PlayHeaderComment
 ```
 
-will cause a `call GameLoop_224` to be inserted at line 224 of `GameLoop` and
-`call PlayHeaderComment` at line 157 of `PlayerDoingHeader` procedure. On the C++ side,
-`SWOS::GameLoop_224()` and `SWOS::PlayHeaderComment()` will be declared in the output header file.
+will cause a `call GameLoop_224` to be inserted at line 224 of `GameLoop` and `call PlayHeaderComment` at line 157
+of `PlayerDoingHeader` procedure. Previous content that comes after inserted lines is shifted one line above, e.g.
+old lines 224 and 157 become new lines 225 and 158, respectively. On the C++ side, `SWOS::GameLoop_224()` and
+`SWOS::PlayHeaderComment()` will be  declared in the output header file.
 
 It is also possible to remove lines. To do so specify special hook name `@remove` at a line that needs to
 be removed.
 
 There are no limitations in number of hooks per procedure, as long as each line corresponds to exactly
 one hook.
+
+### `@constant-to-variable` section
+
+Sometimes it is required to use a variable instead of a constant. That can be achieved by adding a line in this
+section with the following format:
+
+```
+<proc name>, <line number>, <variable name>, <constant value>
+```
+
+Procedure name and line number uniquely identify a line with constant access. Line number is counted from the
+beginning of the procedure, starting with 1. If the specified line does not hold an instruction using a constant
+value, or a constant value does not match a specified value, an error will be reported. Supplied constant value
+isn't strictly necessary, but it helps validating it's the right line.
+
+`ida2asm` will replace the constant with a variable when generating output. Given variable will be added to the end
+of SWOS data memory and initialized with original constant value. The variable will appear as any other SWOS
+variable, and can be accessed with `swos.<variable name>` syntax. Variable name is expected to be valid and unique
+in this context.
+
+For example:
+```
+UpdateCameraBreakMode, 8, penaltiesInterval, 110
+```
+will generate instruction:
+```
+cmp penaltiesTimer, penaltiesInterval
+```
+in place of:
+```
+cmp penaltiesTimer, 110
+```
+and a variable `penaltiesInterval` will be added to SWOS variables and initialized to 110.
+
+Note that this is technically invalid code in x86 assembly, since there is no addressing mode capable of moving
+data between two memory locations. However the code generator will handle it properly and generate correct
+assignment.
 
 ### `@type-sizes` section
 
@@ -200,7 +239,7 @@ This section is currently only used when outputting C++ files.
 
 ## `no-break` markers
 
-`ida2asm` can be instructed to create multiple assembly files, breaking original file in several places in
+`ida2asm` can be instructed to create multiple output files, breaking original file in several places in
 the process. While care is taken that no procedures are broken apart, it can still happen with some data
 tables or procedures that are expected to be consecutive. In such situations special markers in the source
 code are introduced: "`; ${no-break`" begins protected block, "`; $no-break}`" ends it. Example usage:
@@ -232,20 +271,131 @@ are declared as instances of special templated class which offers a plethora of 
 (as a byte, word, dword, pointer etc.). The variables will be automatically available in the generated
 header file.
 
-## C++ output
+## Output
+
+### Verbatim
+
+Verbatim output simply outputs gathered input as is, without any additional processing. Its primary use is for
+testing, and as a starting point when implementing new output formats.
+
+### MASM output
+
+_**MASM output has been deprecated. It is still present, but lacks any new features.**_
+
+By using MASM output format the pseudo-assembly input is converted to proper MASM 32-bit syntax that can be
+assembled with MASM version 8.00.50727.104. Older versions would probably work too, but this one has been
+extensively tested. Limitations are that only the systems running on 32-bit Intel processors are supported, and
+there are no optimizations on the output files -- it is practically a one-to-one conversion of the input
+instructions.
+
+### C++ output
+
+C++ output is the main output format of the application. The gathered input (x86 instructions) is translated to a
+compilable C++ code, backed by the SWOS Virtual Machine™ runtime. The code is highly portable and can run on
+virtually any system supported by a C++ compiler. Generated output files are:
+
+- `swossym.h`
+- `vm.cpp`
+- `vm.h`
+- `swos*.cpp` (e.g. `swos-01.cpp`, `swos-02.cpp`...)
+
+`swossym.h` is a support header containing SWOS namespace, `Register` struct definition used for 68k register set,
+function prototypes (for both SWOS code -> external code and external code -> SWOS code), `ida2asm`-introduced
+variables and some compile-time checks.
+
+`vm.cpp` and `vm.h` contain implementation of the SWOS Virtual Machine™, which will be further explained.
+`swos*.cpp` files contain the actual SWOS binary code, converted to C++ that runs in the SWOS Virtual Machine™. The
+number of files is decided by the command line parameter.
+
+#### SWOS Virtual Machine™
+
+SWOS Virtual Machine™ is a static (compile-time) emulator of Intel x86 instructions, and is the target for
+`ida2asm` C++ output. It supplies the Intel 80386 register set and flags as global variables and a SWOS memory
+address space where all the game's data resides. There is also a small runtime component that manages memory
+access, ensures proper alignment and supports inter-operation with the external code, residing in `vm.cpp`.
+
+Each instruction is translated when the input file is processed and converted to one or more C++ statements.
+CPU register access is converted to global variable access, and memory access to VM data area access. Generated
+statements update the virtual CPU state in the same way as the original instructions.
+
+Since it's a compile-time emulator custom tailored to SWOS, and implements only a minimal subset of x86 instruction
+set required to run the game, it is able to achieve much higher performance than a general purpose dynamic emulator
+would. Also, it's able to exploit very good optimization capabilities of modern C++ compilers that will compile the
+generated code, although it does implement a few optimizations of its own. Thus the generated code has excellent
+performance, very close to native.
 
 TODO:
-- virtual machine
+- vars struct
+    - memory address space, accessing
+    - wanted to remove the offsets(in comments), but left them (very useful for debugging)
+- procs/handling of proc pointers
+- native pointers/accessing host memory
+- pointer problem: fixed to 32-bits, can't access 64-bit address spaces
+- namespaces: SWOS and SwosVM
 - memory allocation
 - alignment
 - `SwosDataPointer<>`
 - `SwosProcPointer`
 
-### Optimizations
+#### Memory layout
+
+Memory space is divided into 4 parts. First part contains variables from the game -- the game's data area. Second
+part holds the extended memory the game allocates from the DOS extender. Third part is so called "pointer pool
+area", it is an array of native pointers and is the way native memory can be accessed from within the game. Fourth
+part holds memory which can be allocated to clients outside the virtual machine.
+
+Each part is separated by a "safe area", filled with a fixed byte pattern. Checking if this pattern is intact can
+discover memory overwrites. It's a curiosity that the first safe area (at offset 0) had to be modified to have the
+first four bytes zeroed out, to emulate DOS/Amiga behavior since there are some null pointer accesses in the
+original game (or perhaps the conversion, but it's not clear) that rely on getting zero value to work properly.
+
+#### Access by external code
+
+SWOS variables are grouped inside one big C++ `struct SwosVariables`. It maps one-to-one to location of each
+variable when overlayed on top of SWOS memory data array. For convenience `swos.<variable>` macro is provided, so
+for example it's enough to write:
+```
+swos.chosenTactics = -1;
+```
+
+to read/write variables. Types are preserved, so arrays or structs can be used freely:
+```
+swos.importTacticsFilename[0] = 0;
+const auto& positions = swos.positionsTable[tactics];
+if (swos.ballSprite.y >= kPitchCenterY) ...
+if (swos.topTeamData.playerNumber != m_playerNumber) ...
+```
+
+Only concern is alignment.
+
+-accessing pointers probljem
 TODO:
+
+- pointer pool
+- allocating/releasing VM memory (all the functions in header)
+`vm.h` contains declarations of ...
+- read/writeMemory (normally only used by VM itself)
+- registerProc (for example, as a menu handler callback)
+- g_memWord;
+- g_memDword;
+
+#### Optimizations
+
+Currently, the C++ generator performs three types of optimizations:
+
 - redundant flag setting removal
 - redundant assignment removal
 - orphaned assignment removal
+
+;
+
+TODO:
+- planned/possible further optimizations (that compiler can't do), slightly stepping in decompiler area
+- elimination of code helps with compiling speed
+- redundancies in generated x86 SWOS code
+
+In case the optimizations are undesired, they can be disabled by supplying command line parameter
+`--disable-optimizations`.
 
 ## Performance
 
@@ -254,7 +404,7 @@ possible. This impacted performances negatively, resulting in processing times o
 extremely harmful for productivity as assembly files generation needed to be run fairly often, especially at
 the beginning of the project.
 
-That's how second parser version came to be, written in C\++ with ultimate performance in mind. This approach
+That's how second parser version came to be, written in C++ with ultimate performance in mind. This approach
 is reflected in a specially constructed tokenizer (see next section), minimization of heap allocations,
 cache-friendly structures and multi-threaded parser.
 
@@ -314,7 +464,7 @@ the performance results might look like on their machines.
 ### Parallel processing
 
 Parsing of the input file and further processing and output is split and given to separate threads to process
-it in parallel. Their number can be specified from the command line.
+in parallel. Their number can be specified from the command line.
 
 The input file can not be trivially split at random points. Each thread has to determine start and end of its
 block, given only rough offset.

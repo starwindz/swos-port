@@ -8,6 +8,8 @@
 #include "chants.h"
 #include "windowManager.h"
 #include "drawMenu.h"
+#include "menuItemRenderer.h"
+#include "amigaMode.h"
 #include "pitch.h"
 #include "spinningLogo.h"
 #include "replays.h"
@@ -52,6 +54,7 @@ static const char kUseLinearFilteringKey[] = "useLinearFiltering";
 static const char kClearScreenKey[] = "clearScreen";
 static const char kSpinningLogoKey[] = "showSpinningLogo";
 static const char kZoomKey[] = "zoom";
+static const char kMenuItemGradientBackground[] = "menuItemGradientBackground";
 // audio
 static const char kSoundEnabledKey[] = "soundEnabled";
 static const char kMusicEnabledKey[] = "musicEnabled";
@@ -85,6 +88,7 @@ static const std::array<OptionAccessor<bool>, 13> kBoolOptions = {
     spinningLogoEnabled, enableSpinningLogo, kVideoSection, kSpinningLogoKey,
     getAutoSaveReplays, setAutoSaveReplays, kReplaySection, kAutoSaveReplaysKey,
     getShowReplayPercentage, setShowReplayPercentage, kReplaySection, kShowReplayPercentageKey,
+    menuGradientFillEnabled, enableMenuGradientFill, kVideoSection, kMenuItemGradientBackground,
 };
 
 static const std::array<OptionAccessor<int>, 2> kIntOptions = {
@@ -386,4 +390,5 @@ int getGameStyle()
 void setGameStyle(int gameStyle)
 {
     m_gameStyle = gameStyle;
+    setAmigaModeEnabled(m_gameStyle == kAmigaGameStyle);
 }

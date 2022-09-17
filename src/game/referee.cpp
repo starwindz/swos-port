@@ -2,6 +2,7 @@
 #include "camera.h"
 #include "random.h"
 #include "gameSprites.h"
+#include "updateSprite.h"
 #include "comments.h"
 #include "pitchConstants.h"
 
@@ -42,7 +43,6 @@ static void updateRefereeState();
 static void initRefereeAnimationTable(SwosDataPointer<void> animTable);
 static void moveSprite(Sprite& sprite);
 static void updateSpriteAnimation(Sprite& sprite);
-static void updateSpriteDeltaAndDirection(Sprite& sprite);
 
 void activateReferee()
 {
@@ -178,12 +178,10 @@ static void updateRefereeState()
     case kRefIncoming:
         m_refereeSprite.speed = kRefereeSpeed;
         auto oldDirection = m_refereeSprite.direction;
-        updateSpriteDeltaAndDirection(m_refereeSprite);
+        updateSpriteDirectionAndDeltas(m_refereeSprite);
 
         if (oldDirection != m_refereeSprite.direction)
-{
             initRefereeAnimationTable(&swos.refComingAnimTable);
-}
 
         moveSprite(m_refereeSprite);
 
@@ -258,19 +256,4 @@ static void updateSpriteAnimation(Sprite& sprite)
             }
         } while (frame < 0);
     }
-}
-
-static void updateSpriteDeltaAndDirection(Sprite& sprite)
-{
-    D0 = sprite.speed;
-    D1 = sprite.destX;
-    D2 = sprite.destY;
-    D3 = sprite.x.whole();
-    D4 = sprite.y.whole();
-
-    CalculateDeltaXAndY();
-
-    sprite.deltaX.setRaw(D1);
-    sprite.deltaY.setRaw(D2);
-    sprite.direction = ((D0.asWord() + 16) & 0xff) >> 5;
 }

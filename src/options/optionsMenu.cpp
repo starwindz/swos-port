@@ -67,5 +67,6 @@ static void toggleAutoSaveReplays()
 
 static void toggleGameStyle()
 {
-    setGameStyle(!getGameStyle());
+    m_gameStyle = !m_gameStyle;
+    setGameStyle(m_gameStyle);
 }

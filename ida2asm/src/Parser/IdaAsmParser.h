@@ -46,14 +46,16 @@ private:
     CToken *ignoreLine(CToken *token);
     CToken *handleSymbolActions(SymbolAction action, const String& rangeEnd, CToken *token);
     void checkProcHookStart(CToken *token, SymbolAction action, const String& packedProcData);
-    CToken *checkProcHookInsertion(CToken *token);
+    std::tuple<CToken *, String, int> checkProcHook(CToken *token);
     bool isLocalVariable(const char *str, size_t len);
-    void addReference(CToken *token, bool sizeOperator = false);
+    void addReference(CToken *token);
     void outputNullProc();
     CToken *outputSaveCppRegistersInstructions(CToken *token);
     void outputRestoreCppRegistersInstructions();
     template <typename F>
     std::pair<CToken *, CToken *> outputCallInstruction(CToken *token, F fillNameProc);
+    void replaceConstantWithVariable(CToken *token, const String& varName, int value, Instruction::OperandTypes& opTypes,
+        Instruction::OperandTokens& opTokens, size_t operandNo);
     CToken *skipUntilNewLine(CToken *token);
     CToken *skipUntilEof(CToken *token);
     std::pair<CToken *, bool> skipUntilSymbol(CToken *token, const String& sym);
@@ -74,6 +76,7 @@ private:
     void expectedCustom(const char *what, CToken *token);
     void unexpected(CToken *token);
     void verifyHookLine(CToken *token);
+    void moveToNextHook();
     std::string tokenToString(CToken *token);
 
     const SymbolFileParser& m_symbolFileParser;

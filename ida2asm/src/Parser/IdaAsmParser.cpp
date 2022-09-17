@@ -293,9 +293,14 @@ CToken *IdaAsmParser::parseInstruction(CToken *token, TokenList& comments)
 {
     assert(token->category == Token::kInstruction);
 
-    auto skipToken = checkProcHookInsertion(token);
+    auto [skipToken, replaceVariableName, expectedValue] = checkProcHook(token);
     if (skipToken)
         return skipToken;
+
+    bool immediateOperandReplaced = false;
+    if (replaceVariableName && token->instructionType == Token::kBranchInstruction)
+        error("can't change constants in branch instructions, for variable `" + replaceVariableName.string() +
+            "', value " + std::to_string(expectedValue), token);
 
     CToken *prefix{};
 
@@ -335,9 +340,8 @@ CToken *IdaAsmParser::parseInstruction(CToken *token, TokenList& comments)
         case Token::T_ID:
             opTypes[operandNo] |= instructionToken->instructionType == Token::kBranchInstruction ? Instruction::kLabel : Instruction::kVariable;
             addOperandToken();
-            // skip non-proc references since this code will most likely be removed
-            if (m_currentProc)
-                addReference(token, sizeOperator);
+            if (!sizeOperator)
+                addReference(token);
             break;
 
         case Token::T_SHORT:
@@ -439,8 +443,13 @@ CToken *IdaAsmParser::parseInstruction(CToken *token, TokenList& comments)
                     setSize(token->registerSize);
                 addOperandToken();
             } else if (token->category == Token::kNumber) {
-                opTypes[operandNo] |= Instruction::kLiteral;
-                addOperandToken();
+                if (replaceVariableName) {
+                    replaceConstantWithVariable(token, replaceVariableName, expectedValue, opTypes, opTokens, operandNo);
+                    immediateOperandReplaced = true;
+                } else {
+                    opTypes[operandNo] |= Instruction::kLiteral;
+                    addOperandToken();
+                }
             } else {
                 assert(false);
             }
@@ -450,7 +459,11 @@ CToken *IdaAsmParser::parseInstruction(CToken *token, TokenList& comments)
 
     expect(Token::T_NL, token);
 
-    assert(opTokens[1] >= opTokens[0] && opTokens[3] >= opTokens[2] && (opTokens[2] == opTokens[3] || opTokens[3] >= opTokens[0]));
+    assert(opTokens[1] >= opTokens[0] && opTokens[3] >= opTokens[2] && opTokens[5] >= opTokens[4]);
+
+    if (replaceVariableName && !immediateOperandReplaced)
+        error("instruction not using immediate operand, can't convert to variable `" +
+            replaceVariableName.string() + "', value " + std::to_string(expectedValue), instructionToken);
 
     if (m_restoreRegsProc && instructionToken->type == Token::T_RETN)
         outputRestoreCppRegistersInstructions();
@@ -566,7 +579,7 @@ CToken *IdaAsmParser::parseLabel(CToken *token, TokenList& comments)
     assert(token && token->isId());
 
     if (token->isLocalLabel()) {
-        auto skipToken = checkProcHookInsertion(token);
+        auto [skipToken, replaceVariableName, initialValue] = checkProcHook(token);
         if (skipToken)
             return skipToken;
     } else {
@@ -892,7 +905,7 @@ CToken *IdaAsmParser::handleSymbolActions(SymbolAction action, const String& ran
 
             if (nameToken->textLength < requiredLength)
                 error("on enter proc name for \"" + m_currentProc->string() + "\" too long, limit is " +
-                    std::to_string(nameToken->textLength) + ')', token);
+                    std::to_string(nameToken->textLength), token);
 
             m_currentProc->copyText(buffer);
             memcpy(buffer + m_currentProc->textLength, SymbolFileParser::kOnEnterSuffix, sizeof(SymbolFileParser::kOnEnterSuffix) - 1);
@@ -908,28 +921,30 @@ CToken *IdaAsmParser::handleSymbolActions(SymbolAction action, const String& ran
 
 void IdaAsmParser::checkProcHookStart(CToken *token, SymbolAction action, const String& packedProcData)
 {
-    if (action & kInsertCall) {
+    if (action & (kInsertCall | kConstantToVariable)) {
         verifyHookLine(token);
         m_currentHookLine = m_lineNo + ProcHookList::getCurrentHookLine(packedProcData);
         m_currentProcHook = packedProcData;
     }
 }
 
-CToken *IdaAsmParser::checkProcHookInsertion(CToken *token)
+std::tuple<CToken *, String, int> IdaAsmParser::checkProcHook(CToken *token)
 {
     if (m_currentHookLine < static_cast<int>(m_lineNo))
         verifyHookLine(token);
 
     if (m_currentProc && m_currentHookLine == m_lineNo) {
         const auto& hookName = ProcHookList::getCurrentHookProc(m_currentProcHook);
-
-        if (!hookName.empty()) {
+        if (ProcHookList::isCurrentHookVariable(m_currentProcHook)) {
+            int initialValue = ProcHookList::getCurrentHookInitialValue(m_currentProcHook);
+            return { nullptr, hookName, initialValue };
+        } else if (!hookName.empty()) {
             auto hookProc = outputCallInstruction(token, [this, token, &hookName](auto nameToken) {
                 auto buffer = const_cast<char *>(nameToken->text());
 
                 if (nameToken->textLength < hookName.length())
                     error("hook proc name \"" + hookName.string() + "\" too long, limit is " +
-                        std::to_string(nameToken->textLength) + ')', token);
+                        std::to_string(nameToken->textLength), token);
 
                 hookName.copy(buffer);
                 nameToken->textLength = hookName.length();
@@ -938,21 +953,13 @@ CToken *IdaAsmParser::checkProcHookInsertion(CToken *token)
             m_references.addReference(hookProc.first);
         }
 
-        auto prevHookLine = ProcHookList::getCurrentHookLine(m_currentProcHook);
-
-        if (ProcHookList::moveToNextHook(m_currentProcHook)) {
-            auto nextHookLine = ProcHookList::getCurrentHookLine(m_currentProcHook);
-            assert(nextHookLine > prevHookLine);
-            m_currentHookLine = m_lineNo + nextHookLine - prevHookLine;
-        } else {
-            m_currentHookLine = -1;
-        }
+        moveToNextHook();
 
         if (hookName.empty())
-            return skipUntilNewLine(token);
+            return { skipUntilNewLine(token), {}, 0 };
     }
 
-    return nullptr;
+    return {};
 }
 
 bool IdaAsmParser::isLocalVariable(const char *str, size_t len)
@@ -964,15 +971,13 @@ bool IdaAsmParser::isLocalVariable(const char *str, size_t len)
     return false;
 }
 
-void IdaAsmParser::addReference(CToken *token, bool sizeOperator)
+void IdaAsmParser::addReference(CToken *token)
 {
-    if (!m_currentProc)
-        return;
+    // skip non-proc references since this code will most likely be removed
+    if (m_currentProc && !token->isLocalLabel()) {
+        auto ptr = token->text();
+        auto len = token->textLength;
 
-    auto ptr = token->text();
-    auto len = token->textLength;
-
-    if (!sizeOperator && !token->isLocalLabel()) {
         int dotIndex = token->indexOf('.');
         if (dotIndex >= 0)
             len = dotIndex;
@@ -1085,6 +1090,30 @@ std::pair<CToken *, CToken *> IdaAsmParser::outputCallInstruction(CToken *token,
     m_outputItems.addInstruction(comments.second, {}, {}, callToken, {}, { Instruction::kLabel }, { procNameToken, procNameToken->next() });
 
     return { procNameToken, token };
+}
+
+void IdaAsmParser::replaceConstantWithVariable(CToken *token, const String& varName, int value,
+    Instruction::OperandTypes& opTypes, Instruction::OperandTokens& opTokens, size_t operandNo)
+{
+    // replace immediate operand with a given variable
+    int actualValue = token->parseInt();
+    if (actualValue != value)
+        error("immediate operand value mismatch (" + std::to_string(actualValue) + " but " +
+            std::to_string(value) + " expected)", token);
+
+    union {
+        Token token = { Token::T_ID, Token::kId, };
+        char buf[sizeof(Token) + ProcHookList::kProcNameLength + 2 * sizeof(Token) + 2];
+    };
+    assert(varName.length() <= ProcHookList::kProcNameLength);
+    token.textLength = varName.length();
+    varName.copy(buf + sizeof(Token));
+
+    opTypes[operandNo] |= Instruction::kVariable | Instruction::kIndirect;
+    opTokens[2 * operandNo] = &token;
+    opTokens[2 * operandNo + 1] = token.next();
+
+    moveToNextHook();
 }
 
 CToken *IdaAsmParser::skipUntilNewLine(CToken *token)
@@ -1300,6 +1329,19 @@ void IdaAsmParser::verifyHookLine(CToken *token)
             errorDesc += " while looking for " + hookName.string();
 
         error(errorDesc, token);
+    }
+}
+
+void IdaAsmParser::moveToNextHook()
+{
+    auto prevHookLine = ProcHookList::getCurrentHookLine(m_currentProcHook);
+
+    if (ProcHookList::moveToNextHook(m_currentProcHook)) {
+        auto nextHookLine = ProcHookList::getCurrentHookLine(m_currentProcHook);
+        assert(nextHookLine > prevHookLine);
+        m_currentHookLine = m_lineNo + nextHookLine - prevHookLine;
+    } else {
+        m_currentHookLine = -1;
     }
 }
 

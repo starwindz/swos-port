@@ -348,7 +348,16 @@ offset  length  description
                    5   |   3
                        4
                 for the ball -1 if out of the game
-  44        2   player speed
+  44        2   player speed, CalculateDeltaXAndY() divides it by 256, there are strong indications of fixed point
+                8.8 format used here, some speeds for comparison:
+                    players: 928, 974, 1020, 1066, 1112, 1158, 1204, 1250
+                             (depending on the speed skill)
+                    referee = 1024
+                    ball kick = 2560
+                    ball high kick = 2208
+                    goalkeeper diving = 1024..2048
+                    player after doing static header = 256
+                    player after doing strong header = 1726
   46        4   delta x, fixed point word.word (per frame movement by x)
   50        4   delta y, fixed point word.word (per frame movement by y)
   54        4   delta z, fixed point word.word (per frame movement by z)
@@ -360,7 +369,7 @@ offset  length  description
   72        2   save sprite background pixels flag: 1 = don't save, !1 = save
   74        4   sqr(player x - ball x) + sqr(player y - ball y)
   78        4
-  82        2   direction (0..255)
+  82        2   direction (0..255), arranged as direction at offset 42
   84        2   was sprite drawn in previous cycle? 0 = no, 1 = yes
                 is ball out of play, or with goalkeeper
   86        2   ??? maybe true for a player, false for a goalkeeper

@@ -782,6 +782,9 @@ bool VmDataState::valuesEqual(const OperandInfo& op1, const OperandInfo& op2)
             assert(op1.size() && op1.size() == op2.size());
             ensureMemoryValues(op1.address(), op1.memSize);
             return compareRegisterAndMemory(getRegister(op2), op1.address(), op1.memSize);
+        } else if (op2.isFixedMem()) {
+            // normally not possible, only with VM-introduced constants turned to variables
+            return compareMemoryToMemory(op1.address(), op2.address(), std::min(op1.size(), op2.size()));
         } else {
             assert(false);
         }
@@ -878,7 +881,8 @@ void VmDataState::assignValue(const OperandInfo& dst, const OperandInfo& src, bo
             assert(dst.memSize == src.base.size);
             assignRegisterToMemory(dst.address(), getRegister(src));
         } else {
-            assert(false);
+            // for VM-introduced constants to variables only
+            assignMemoryToMemory(dst.address(), src.address(), std::min(dst.size(), src.size()));
         }
         break;
 
@@ -1112,6 +1116,27 @@ bool VmDataState::compareMemoryAndConstant(size_t addr, size_t size, uint32_t va
             return false;
 
         val >>= 8;
+        addr++;
+    }
+    return false;
+}
+
+bool VmDataState::compareMemoryToMemory(size_t addr1, size_t addr2, size_t size) const
+{
+    while (size--) {
+        auto it1 = m_mem.find(addr1);
+        if (it1 == m_mem.end())
+            return false;
+
+        if (!it1->second.isConst())
+            return false;
+
+        auto it2 = m_mem.find(addr2);
+        if (it2 == m_mem.end())
+            return false;
+
+        if (it1->second.unsignedValue() != it2->second.unsignedValue())
+            return false;
     }
     return false;
 }
@@ -1172,6 +1197,13 @@ void VmDataState::assignConstantToMemory(size_t address, size_t size, uint32_t v
         m_mem[address++].value = val & 0xff;
         val >>= 8;
     }
+}
+
+void VmDataState::assignMemoryToMemory(size_t dstAddress, size_t srcAddress, size_t size)
+{
+    ensureMemoryValues(srcAddress, size);
+    while (size--)
+        m_mem[dstAddress++].value = m_mem[srcAddress++].value;
 }
 
 void VmDataState::assignExpressionToRegister(const RegSlice& reg, size_t expressionId)

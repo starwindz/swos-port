@@ -7,6 +7,7 @@ constexpr int kExportsCapacity  = 10'000;
 constexpr int kExportTypesCapacity = 33'000;
 constexpr int kMaxExportEntries = 600;
 constexpr int kMaxReplacement = 50;
+constexpr int kIntroducedVariablesCapacity = 1'200;
 constexpr int kTypeSizesCapacity = 1'000;
 
 static const char kHeader[] =
@@ -91,7 +92,7 @@ static const char kHeader[] =
 SymbolFileParser::SymbolFileParser(const char *symbolFilePath, const char *headerFilePath, const char *outputPath)
     : m_path(symbolFilePath), m_headerPath(headerFilePath), m_imports(kImportsCapacity),
     m_exports(kExportsCapacity), m_importEntries(kImportsCapacity * 3 / 2), m_typeSizes(kTypeSizesCapacity),
-    m_exportTypes(kExportTypesCapacity)
+    m_introducedVariables(kIntroducedVariablesCapacity), m_exportTypes(kExportTypesCapacity)
 {
     auto result = Util::loadFile(symbolFilePath, true);
     m_data.reset(result.first);
@@ -107,6 +108,8 @@ SymbolFileParser::SymbolFileParser(const char *symbolFilePath, const char *heade
     m_symbolTable.seal();
     m_imports.seal();
     m_typeSizes.seal();
+    m_introducedVariables.seal();
+    m_introducedVariables.removeDuplicates();
 
     // we won't need this any longer
     m_symbolLine.clear();
@@ -115,8 +118,8 @@ SymbolFileParser::SymbolFileParser(const char *symbolFilePath, const char *heade
 SymbolFileParser::SymbolFileParser(const SymbolFileParser& other)
     : m_path(other.m_path), m_headerPath(other.m_headerPath), m_exports(other.m_exports),
     m_imports(other.m_imports), m_exportEntries(other.m_exportEntries), m_importEntries(other.m_importEntries),
-    m_symbolTable(other.m_symbolTable), m_typeSizes(m_typeSizes), m_exportTypes(other.m_exportTypes),
-    m_cppOutput(other.m_cppOutput)
+    m_symbolTable(other.m_symbolTable), m_typeSizes(other.m_typeSizes), m_introducedVariables(other.m_introducedVariables),
+    m_exportTypes(other.m_exportTypes), m_cppOutput(other.m_cppOutput)
 {
 }
 
@@ -162,6 +165,11 @@ const StringList& SymbolFileParser::exports() const
 const StringSet& SymbolFileParser::imports() const
 {
     return m_imports;
+}
+
+auto SymbolFileParser::introducedVariables() const -> const StringMap<IntroducedVariable>&
+{
+    return m_introducedVariables;
 }
 
 int SymbolFileParser::getTypeSize(const String& type) const
@@ -416,7 +424,7 @@ void SymbolFileParser::parseSymbolFile()
             auto symStart = start;
             auto symEnd = p;
 
-            if (action == kReplace || action == kInsertCall || action == kTypeSizes) {
+            if (action == kReplace || action == kInsertCall || action == kConstantToVariable || action == kTypeSizes) {
                 while (Util::isSpace(*p) && *p != '\n')
                     p++;
 
@@ -455,15 +463,23 @@ void SymbolFileParser::parseSymbolFile()
                 }
             }
 
-            if (action == kRemove || action == kNull || action == kInsertCall || action == kTypeSizes) {
+            if (action == kRemove || action == kNull || action == kInsertCall || action == kConstantToVariable || action == kTypeSizes) {
                 if (action == kTypeSizes) {
                     parseTypeSize(symStart, symEnd, start, p);
                 } else {
-                    if (action == kInsertCall)
-                        parseHookProcLine(symStart, symEnd, start, p);
-                    else
+                    int line = 0;
+                    if (action == kInsertCall || action == kConstantToVariable) {
+                        auto procLen = symEnd - symStart;
+                        if (procLen >= ProcHookList::kProcNameLength)
+                            error("proc name too long");
+                        if (action == kInsertCall)
+                            line = parseHookProcLine(symStart, symEnd, start, p);
+                        else
+                            line = parseConstantToVariableLine(symStart, symEnd, start, p);
+                    } else {
                         parseRemoveAndNullLine(action, symStart, symEnd, start, p);
-                    ensureUniqueSymbol(symStart, symEnd, kGlobal, action);
+                    }
+                    ensureUniqueSymbol(symStart, symEnd, kGlobal, action, line);
                 }
             } else {
                 if (action != kReplace && start != p)
@@ -577,6 +593,9 @@ auto SymbolFileParser::getSectionName(const char *begin, const char *end) -> Sym
     } else if (len == 11) {
         if (!memcmp(begin, "insert-hook", 11))
             action = kInsertCall;
+    } else if (len == 20) {
+        if (!memcmp(begin, "constant-to-variable", 20))
+            action = kConstantToVariable;
     }
 
     return action;
@@ -663,69 +682,82 @@ const char *SymbolFileParser::handlePotentialAlignment(const char *start, const 
     return pOrig;
 }
 
-void SymbolFileParser::parseHookProcLine(const char *symStart, const char *symEnd, const char *start, const char *end)
+int SymbolFileParser::parseHookProcLine(const char *symStart, const char *symEnd, const char *start, const char *end)
 {
-    start = skipWhiteSpace(start);
+    auto [lineNum, lineNumString, hookName, newStart] = parseProcNameLineNumberId(start, end, false);
+    start = newStart;
 
-    if (start == end)
-        error("missing line number");
+    String procName(symStart, symEnd);
 
-    int32_t line = 0;
-    auto numStart = start;
+    if (!hookName) {
+        constexpr int kProcNameLength = ProcHookList::kProcNameLength;
 
-    std::tie(line, start) = parseInt32(start, end);
-
-    if (start == numStart)
-        error("decimal numeric value expected");
-
-    auto numEnd = start;
-
-    if (line <= 0)
-        error("line number must be positive non-zero integer");
-
-    constexpr int kProcNameLength = ProcHookList::kProcNameLength;
-
-    auto procLen = symEnd - symStart;
-    if (procLen >= kProcNameLength)
-        error("proc name too long");
-
-    String hookName;
-    char buf[kProcNameLength];
-
-    start = skipWhiteSpace(start);
-    if (*start == ',') {
-        start = skipWhiteSpace(start + 1);
-
-        if (start >= end)
-            error("expected hook name");
-
-        if (!isRemoveHook(start, end))
-            hookName.assign(start, end);
-    } else if (*start == '\n') {
-        auto numLen = numEnd - numStart;
-        if (procLen + numLen + 1 >= kProcNameLength)
+        auto hookLen = procName.length() + lineNumString.length() + 1;
+        if (hookLen >= kProcNameLength)
             error("generated hook name too long");
 
-        memcpy(buf, symStart, procLen);
-        buf[procLen] = '_';
+        char buf[kProcNameLength];
 
-        memcpy(buf + procLen + 1, numStart, numLen);
+        procName.copy(buf);
+        buf[procName.length()] = '_';
 
-        auto hookLen = procLen + numLen + 1;
+        lineNumString.copy(buf + procName.length() + 1);
+
         buf[hookLen] = '\0';
 
         hookName.assign(buf, hookLen);
-    } else {
-        commaExpectedError();
+    } else if (isRemoveHook(start, end)) {
+        hookName.clear();
     }
 
-    String procName(symStart, symEnd);
-    m_procHookList.add(procName, hookName, line, m_lineNo);
+    m_procHookList.add(procName, hookName, lineNum, 0, false, m_lineNo);
 
     if (!hookName.empty()) {
         m_imports.add(hookName);
         m_importEntries.emplace(hookName);
     }
+
+    return lineNum;
+}
+
+int SymbolFileParser::parseConstantToVariableLine(const char *symStart, const char *symEnd, const char *start, const char *end)
+{
+    auto [lineNum, lineNumString, variableName, newStart] = parseProcNameLineNumberId(start, end, true);
+    start = newStart;
+
+    if (variableName.empty())
+        error("variable name expected");
+
+    String procName(symStart, symEnd);
+    int32_t initialValue;
+
+    start = skipWhiteSpace(start);
+    if (*start == ',') {
+        start = skipWhiteSpace(start + 1);
+
+        auto numStart = start;
+        std::tie(initialValue, start) = parseInt32(start, end);
+
+        if (start == numStart)
+            error("decimal numeric value expected");
+
+        start = skipWhiteSpace(start);
+        if (*start != '\n')
+            error("unexpected input after initial value");
+    } else if (*start == '\n') {
+        error("initial value expected");
+    } else {
+        commaExpectedError();
+    }
+
+    m_procHookList.add(procName, variableName, lineNum, initialValue, true, m_lineNo);
+    auto it = m_introducedVariableValues.try_emplace(variableName, initialValue);
+    if (!it.second && it.first->second != initialValue)
+        error("trying to initialize variable `" + variableName.string() + "' to " + std::to_string(initialValue) +
+            " when it was already initialized to " + std::to_string(it.first->second));
+    m_introducedVariables.add(variableName, initialValue, variableName);
+
+    return lineNum;
 }
 
 void SymbolFileParser::parseRemoveAndNullLine(SymbolAction action, const char *symStart, const char *symEnd,
@@ -744,6 +776,52 @@ void SymbolFileParser::parseRemoveAndNullLine(SymbolAction action, const char *s
         error("range expression not supported in this context");
     }
     m_symbolTable.addSymbolAction(symStart, symEnd, flags, start, end);
+}
+
+std::tuple<int32_t, String, String, const char *>
+SymbolFileParser::parseProcNameLineNumberId(const char *start, const char *end, bool fetchVariable)
+{
+    start = skipWhiteSpace(start);
+
+    if (start == end)
+        error("missing line number");
+
+    int32_t lineNum = 0;
+    auto numStart = start;
+
+    std::tie(lineNum, start) = parseInt32(start, end);
+
+    if (start == numStart)
+        error("decimal numeric value expected");
+
+    if (lineNum <= 0)
+        error("line number must be positive non-zero integer");
+
+    String lineNumString(numStart, start);
+    String hookOrVariable;
+
+    start = skipWhiteSpace(start);
+    if (*start == ',') {
+        start = skipWhiteSpace(start + 1);
+
+        if (start >= end)
+            error("expected "s + (fetchVariable ? "variable" : "hook") + " name");
+
+        if (fetchVariable) {
+            const char *varStart;
+            std::tie(varStart, start) = getNextToken(start);
+            hookOrVariable.assign(varStart, start);
+        } else {
+            hookOrVariable.assign(start, end);
+        }
+    } else if (*start == '\n') {
+        if (fetchVariable)
+            error("variable expected");
+    } else {
+        commaExpectedError();
+    }
+
+    return { lineNum, lineNumString, hookOrVariable, start };
 }
 
 bool SymbolFileParser::isRemoveHook(const char *start, const char *end)
@@ -768,7 +846,7 @@ void SymbolFileParser::addHookProcs()
                 error("can't set more than one hook per line", procHookItems[j].definedAtLine);
 
         auto procHookData = m_procHookList.encodeProcHook(item, procHookItems.data() + item->nextIndex);
-        m_symbolTable.addSymbolAction(item->procName, kInsertCall, procHookData);
+        m_symbolTable.addSymbolAction(item->procName, item->isVariable ? kConstantToVariable : kInsertCall, procHookData);
 
         i = procHookItems[i].nextIndex;
     }
@@ -929,22 +1007,20 @@ auto SymbolFileParser::lookupKeyword(const char *p, const char *limit) -> std::p
     return notKeywordResult;
 };
 
-void SymbolFileParser::ensureUniqueSymbol(const char *start, const char *end, Namespace symNamespace, SymbolAction action)
+void SymbolFileParser::ensureUniqueSymbol(const char *start, const char *end, Namespace symNamespace,
+    SymbolAction action, int lineNumber /* = 0 */)
 {
     const std::string& sym{ start, end };
 
     if (!sym.empty()) {
-        auto res = m_symbolLine.insert(std::make_pair(std::make_pair(sym, symNamespace), std::make_pair(m_lineNo, action)));
-
-        bool successfullyInserted = res.second;
-        auto element = res.first;
-        auto key = element->first;
-        auto value = element->second;
+        auto [it, successfullyInserted] = m_symbolLine.insert(std::make_pair(std::make_tuple(sym, symNamespace, lineNumber), std::make_pair(m_lineNo, action)));
+        const auto& [key, value] = *it;
         auto oldAction = value.second;
 
         if (!successfullyInserted) {
             static const auto kAllowedCombos = {
-                std::make_pair(kExport, kInsertCall)
+                std::make_pair(kExport, kInsertCall),
+                std::make_pair(kExport, kConstantToVariable)
             };
 
             bool allowedCombo = false;
@@ -957,15 +1033,16 @@ void SymbolFileParser::ensureUniqueSymbol(const char *start, const char *end, Na
             }
 
             if (!allowedCombo) {
-                auto symStr = key.first;
-                auto ns = key.second;
-                auto line = value.first;
+                const auto& [symStr, ns, line] = key;
+                auto lineDefined = value.first;
 
-                auto symName = "symbol";
+                auto symName = "symbol"s;
                 if (ns == kEndRange)
                     symName = "end of range";
+                if (line > 0)
+                    symName += ':' + std::to_string(line);
 
-                error("duplicate "s + symName + " found: `" + symStr + "', first defined at line " + std::to_string(line));
+                error("duplicate "s + symName + " found: `" + symStr + "', first defined at line " + std::to_string(lineDefined));
             }
         }
     }

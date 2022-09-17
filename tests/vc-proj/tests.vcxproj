@@ -263,6 +263,7 @@
     <ClCompile Include="..\..\src\controls\selectMatchControls.cpp" />
     <ClCompile Include="..\..\src\controls\testControlsMenu.cpp" />
     <ClCompile Include="..\..\src\files\selectFilesMenu.cpp" />
+    <ClCompile Include="..\..\src\game\amigaMode.cpp" />
     <ClCompile Include="..\..\src\game\bench\benchControls.cpp" />
     <ClCompile Include="..\..\src\game\bench\drawBench.cpp" />
     <ClCompile Include="..\..\src\game\camera.cpp" />
@@ -276,7 +277,8 @@
     <ClCompile Include="..\..\src\game\replayExitMenu.cpp" />
     <ClCompile Include="..\..\src\game\result.cpp" />
     <ClCompile Include="..\..\src\game\stats.cpp" />
-    <ClCompile Include="..\..\src\game\updateBall.cpp" />
+    <ClCompile Include="..\..\src\game\updateGoals.cpp" />
+    <ClCompile Include="..\..\src\game\updateSprite.cpp" />
     <ClCompile Include="..\..\src\init.cpp" />
     <ClCompile Include="..\..\src\menus\continueAbortMenu.cpp" />
     <ClCompile Include="..\..\src\menus\continueMenu.cpp" />
@@ -389,6 +391,7 @@
     <ClInclude Include="..\..\src\controls\testControlsMenu.h" />
     <ClInclude Include="..\..\src\files\file.h" />
     <ClInclude Include="..\..\src\files\selectFilesMenu.h" />
+    <ClInclude Include="..\..\src\game\amigaMode.h" />
     <ClInclude Include="..\..\src\game\bench\benchControls.h" />
     <ClInclude Include="..\..\src\game\bench\drawBench.h" />
     <ClInclude Include="..\..\src\game\camera.h" />
@@ -403,6 +406,7 @@
     <ClInclude Include="..\..\src\game\bench\bench.h" />
     <ClInclude Include="..\..\src\game\referee.h" />
     <ClInclude Include="..\..\src\game\stats.h" />
+    <ClInclude Include="..\..\src\game\updateSprite.h" />
     <ClInclude Include="..\..\src\menus\continueAbortMenu.h" />
     <ClInclude Include="..\..\src\menus\continueMenu.h" />
     <ClInclude Include="..\..\src\menus\engine\drawMenu.h" />
