@@ -1,6 +1,6 @@
 #include "drawBench.h"
 #include "bench.h"
-#include "benchControls.h"
+#include "updateBench.h"
 #include "camera.h"
 #include "replays.h"
 #include "sprites.h"
@@ -11,7 +11,6 @@
 #include "drawPrimitives.h"
 #include "color.h"
 
-constexpr int kBenchNotVisibleCameraX = 35;
 constexpr int kBenchReservePlayersX = 27;
 constexpr int kBenchPlayerHeight = 7;
 constexpr int kMaxBenchPlayerIndex = 6;
@@ -28,9 +27,6 @@ constexpr int kFormationEntryWidth = 60;
 constexpr int kFormationEntryHeight = 9;
 
 constexpr int kFormationIndex = -1;
-
-static float m_cameraX;
-static float m_cameraY;
 
 static float m_xOffset;
 static float m_yOffset;
@@ -65,7 +61,6 @@ static void drawSubstitutesMenuEntry(int y, int playerIndex);
 static void drawFormationEntry(int i, int y);
 static void drawEntryHighlight(int y, int pos);
 static void drawLegend(MenuType menuType);
-static void updateCameraLeavingBench();
 static bool getPlayerArrowCoordinates(int& x, int& y);
 static int getCoachY(int y, bool drawTrainingTopHalf);
 static int getCoachSpriteIndex(BenchState state, const TeamGeneralInfo& team);
@@ -74,7 +69,6 @@ static void updateMenuTeamColorsPointer();
 static const Color& getSelectedPlayerHighlightColor(int pos);
 static void drawBenchSprite(int spriteIndex, int x, int y);
 static void drawRectWithShadow(int x, int y, int width, int height, const Color& color);
-static void updateCameraCoordinates();
 
 void initBenchMenusBeforeMatch()
 {
@@ -83,12 +77,8 @@ void initBenchMenusBeforeMatch()
 
 void drawBench(float xOffset, float yOffset)
 {
-    updateCameraLeavingBench();
-
     m_xOffset = xOffset;
     m_yOffset = yOffset;
-
-    updateCameraCoordinates();
 
     if (!swos.g_trainingGame || !trainingTopTeam())
         drawOpponentsBench();
@@ -122,7 +112,7 @@ static void drawBenchPlayerArrow()
 static void drawOpponentsBench()
 {
     auto team = getBenchTeam()->opponentTeam;
-    auto teamData = getBenchTeamData() == &swos.topTeamIngame ? &swos.bottomTeamIngame : &swos.topTeamIngame;
+    auto teamData = getBenchTeamData() == &swos.topTeamInGame ? &swos.bottomTeamInGame : &swos.topTeamInGame;
     int y = getOpponentBenchY();
 
     drawBenchPlayersAndCoach(BenchState::kOpponentsBench, y, *team, *teamData, !trainingTopTeam());
@@ -165,7 +155,7 @@ static void drawBenchPlayers(const PlayerGame *players, int reservePlayersFrameT
 {
     for (int currentPlayerIndex = 1; currentPlayerIndex < kMaxBenchPlayerIndex; currentPlayerIndex++) {
         const auto& player = *players++;
-        if (player.canBeSubstituted()) {
+        if (!player.wasSubstituted()) {
             int spriteIndex = reservePlayersFrameTeamOffset;
 
             bool isGoalkeeper = player.position == PlayerPosition::kGoalkeeper;
@@ -271,11 +261,6 @@ static void drawFormationMenu()
         drawFormationEntry(i, y);
         y += kFormationEntryHeight - 1; // overlap so the horizontal frame is 1 pixel thick
     }
-}
-
-static bool benchVisibleByX()
-{
-    return getCameraX() < kBenchNotVisibleCameraX;
 }
 
 static void drawPlayerFaceIcon(int y, int playerIndex)
@@ -452,12 +437,6 @@ static void drawLegend(MenuType menuType)
     drawMenuSprite(spriteIndex, spriteX, spriteY);
 }
 
-static void updateCameraLeavingBench()
-{
-    if (!inBench() && (!isCameraLeavingBench() || !benchVisibleByX()))
-        clearCameraLeavingBench();
-}
-
 static bool getPlayerArrowCoordinates(int& x, int& y)
 {
     constexpr int kBenchArrowXOffset = 15;
@@ -511,7 +490,7 @@ static int getCoachSpriteIndex(BenchState state, const TeamGeneralInfo& team)
     static const std::array<byte, 16> kOurCoachFrames = { 2, 1, 0, 2, 0, 1, 0, 1, 2, 2, 1, 1, 0, 2, 1, 0 };
     static const std::array<byte, 16> kOpponentCoachFrames = { 2, 1, 2, 2, 1, 2, 0, 1, 2, 0, 1, 1, 1, 0, 1, 2 };
 
-    int index = (swos.stoppageTimer & 0x1e0) >> 5;
+    int index = (swos.currentGameTick & 0x1e0) >> 5;
     const auto& frames = state != BenchState::kOpponentsBench ? kOurCoachFrames : kOpponentCoachFrames;
 
     return coachBaseFrame + coachFrameTeamOffset + frames[index];
@@ -520,8 +499,8 @@ static int getCoachSpriteIndex(BenchState state, const TeamGeneralInfo& team)
 static void determineMenuTeamColors()
 {
     const std::array<std::pair<ColorSet&, const TeamGame *>, 2> kTeamColorData = {{
-        { std::ref(m_topTeamColors), &swos.topTeamIngame },
-        { std::ref(m_bottomTeamColors), &swos.bottomTeamIngame },
+        { std::ref(m_topTeamColors), &swos.topTeamInGame },
+        { std::ref(m_bottomTeamColors), &swos.bottomTeamInGame },
     }};
 
     for (auto& colorData : kTeamColorData) {
@@ -580,8 +559,8 @@ static const Color& getSelectedPlayerHighlightColor(int pos)
 
 static void drawBenchSprite(int spriteIndex, int x, int y)
 {
-    auto xDest = x - m_cameraX;
-    auto yDest = y - m_cameraY;
+    auto xDest = x - getCameraX();
+    auto yDest = y - getCameraY();
     saveCoordinatesForHighlights(spriteIndex, xDest, yDest);
     drawSprite(spriteIndex, xDest, yDest, true, m_xOffset, m_yOffset);
 }
@@ -599,10 +578,4 @@ static void drawRectWithShadow(int x, int y, int width, int height, const Color&
     SDL_SetRenderDrawColor(renderer, baseColor.r, baseColor.g, baseColor.b, 255);
     const auto& rect = mapRect(x, y, width, height);
     SDL_RenderFillRectF(renderer, &rect);
-}
-
-void updateCameraCoordinates()
-{
-    m_cameraX = getCameraX();
-    m_cameraY = getCameraY();
 }

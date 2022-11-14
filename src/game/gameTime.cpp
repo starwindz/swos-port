@@ -16,6 +16,7 @@ using TimeDigitSprites = std::array<int, 4>;
 using GameTime = std::array<int, 4>;
 
 static GameTime m_gameTime;
+static int m_gameTimeInMinutes;
 static int m_endGameCounter;
 
 static int m_timeDelta;
@@ -32,6 +33,9 @@ static TimeDigitSprites getGameTimeSprites(const GameTime& gameTime);
 static LastPeriodMinuteHandler getPeriodEndHandler();
 static bool isNextMinuteLastInPeriod();
 static void bumpGameTime();
+static void bumpPlayersLastPlayedHalfAtHalfStart();
+static void bumpPlayersLastPlayedHalfAtHalfEnd();
+static void forEachPlayer(std::function<void(PlayerGame&)> f);
 static void setupLastMinuteSwitchNextFrame();
 
 void resetGameTime()
@@ -40,7 +44,9 @@ void resetGameTime()
 
     m_gameSeconds = 0;
     m_gameTime.fill(0);
+    m_gameTimeInMinutes = 0;
     m_secondsSwitchAccumulator = 0;
+    m_endGameCounter = 0;
 
     initTimeDelta();
 }
@@ -54,10 +60,10 @@ void updateGameTime()
 {
     m_showTime = true;
 
-    bool minuteSwitchAboutToHappen = m_gameSeconds < 0;
+    bool lastMinuteSwitchAboutToHappen = m_gameSeconds < 0;
 
-    if (minuteSwitchAboutToHappen) {
-        m_endGameCounter -= swos.timerDifference;
+    if (lastMinuteSwitchAboutToHappen) {
+        m_endGameCounter -= swos.lastFrameTicks;
         if (m_endGameCounter < 0) {
             if (auto periodEndHandler = getPeriodEndHandler()) {
                 m_gameSeconds = 0;
@@ -71,15 +77,17 @@ void updateGameTime()
     } else if (swos.gameStatePl == GameState::kInProgress && !swos.playingPenalties) {
         m_secondsSwitchAccumulator -= m_timeDelta;
         if (m_secondsSwitchAccumulator < 0) {
-            m_secondsSwitchAccumulator += amigaModeActive() ? 49 : 54;
-            m_gameSeconds += swos.timerDifference;
+            constexpr int kPcTicksPerGameSeconds = 70;
+            constexpr int kAmigaTicksPerGameSeconds = 49;
+            m_secondsSwitchAccumulator += amigaModeActive() ? kAmigaTicksPerGameSeconds : kPcTicksPerGameSeconds;
+            m_gameSeconds += swos.lastFrameTicks;
 
             if (m_gameSeconds >= 60) {
                 m_gameSeconds = 0;
                 bumpGameTime();
 
                 if (isGameAtMinute(1) || isGameAtMinute(46))
-                    BumpAllPlayersLastPlayedHalfAtGameStart();
+                    bumpPlayersLastPlayedHalfAtHalfStart();
 
                 if (isNextMinuteLastInPeriod())
                     setupLastMinuteSwitchNextFrame();
@@ -102,7 +110,7 @@ void drawGameTime(int digit1, int digit2, int digit3)
 
 dword gameTimeInMinutes()
 {
-    return m_gameTime[1] * 100 + m_gameTime[2] * 10 + m_gameTime[3];
+    return m_gameTimeInMinutes;
 }
 
 std::tuple<int, int, int> gameTimeAsBcd()
@@ -112,30 +120,30 @@ std::tuple<int, int, int> gameTimeAsBcd()
 
 bool gameAtZeroMinute()
 {
-    return m_gameTime[1] == 0 && m_gameTime[2] == 0 && m_gameTime[3] == 0;
+    return m_gameTimeInMinutes == 0;
 }
 
 static void initTimeDelta()
 {
     static const int kGameLenSecondsTable[] = { 30, 18, 12, 9 };
-    assert(swos.ingameGameLength <= 3);
-    m_timeDelta = kGameLenSecondsTable[swos.ingameGameLength];
+    assert(swos.gameLengthInGame <= 3);
+    m_timeDelta = kGameLenSecondsTable[swos.gameLengthInGame];
 }
 
 static bool isGameAtMinute(dword minute)
 {
-    return minute == gameTimeInMinutes();
+    return minute == m_gameTimeInMinutes;
 }
 
 static void endFirstHalf()
 {
     EndFirstHalf();
-    BumpAllPlayersLastPlayedHalfPostGame();
+    bumpPlayersLastPlayedHalfAtHalfEnd();
 }
 
 static void endSecondHalf()
 {
-    BumpAllPlayersLastPlayedHalfPostGame();
+    bumpPlayersLastPlayedHalfAtHalfEnd();
     swos.statsTeam1GoalsCopy = swos.statsTeam1Goals;
     swos.statsTeam2GoalsCopy = swos.statsTeam2Goals;
 
@@ -162,7 +170,7 @@ static void endSecondHalf()
         }
     }
 
-    swos.winningTeamPtr = totalTeam1Goals > totalTeam2Goals ? &swos.topTeamIngame : &swos.bottomTeamIngame;
+    swos.winningTeamPtr = totalTeam1Goals > totalTeam2Goals ? &swos.topTeamInGame : &swos.bottomTeamInGame;
     EndOfGame();
 }
 
@@ -174,7 +182,11 @@ static bool prolongLastMinute()
     constexpr int kUpperPenaltyAreaLowerLine = 216;
     constexpr int kLowerPenaltyAreaUpperLine = 682;
 
+#ifdef SWOS_TEST
+    auto ballY = swos.ballSprite.y.whole();
+#else
     auto ballY = swos.ballSprite.y;
+#endif
     auto ballInsidePenaltyArea = ballY <= kUpperPenaltyAreaLowerLine || ballY > kLowerPenaltyAreaUpperLine;
     auto attackingTeam = ballY > kPitchCenterY ? &swos.topTeamData : &swos.bottomTeamData;
     auto attackInProgress = swos.lastTeamPlayed == attackingTeam;
@@ -209,7 +221,7 @@ static void endSecondExtraTime()
         }
     }
 
-    swos.winningTeamPtr = totalTeam1Goals > totalTeam2Goals ? &swos.topTeamIngame : &swos.bottomTeamIngame;
+    swos.winningTeamPtr = totalTeam1Goals > totalTeam2Goals ? &swos.topTeamInGame : &swos.bottomTeamInGame;
     EndOfGame();
 }
 
@@ -233,7 +245,7 @@ static TimeDigitSprites getGameTimeSprites(const GameTime& gameTime)
 
 static LastPeriodMinuteHandler getPeriodEndHandler()
 {
-    switch (gameTimeInMinutes()) {
+    switch (m_gameTimeInMinutes) {
     case 45:  return endFirstHalf;
     case 90:  return endSecondHalf;
     case 105: return endFirstExtraTime;
@@ -270,6 +282,33 @@ static void bumpGameTime()
             m_gameTime[2] = 0;
             if (m_gameTime[1] < 9)
                 m_gameTime[1]++;
+        }
+    }
+    m_gameTimeInMinutes++;
+}
+
+static void bumpPlayersLastPlayedHalfAtHalfStart()
+{
+    forEachPlayer([](auto& player) {
+        if (player.cards < 2 && player.halfPlayed != 2)
+            player.halfPlayed = 1;
+    });
+}
+
+static void bumpPlayersLastPlayedHalfAtHalfEnd()
+{
+    forEachPlayer([](auto& player) {
+        if (player.cards < 2 && player.halfPlayed == 1)
+            player.halfPlayed = 2;
+    });
+}
+
+static void forEachPlayer(std::function<void(PlayerGame&)> f)
+{
+    for (auto players : { swos.topTeamInGame.players, swos.bottomTeamInGame.players }) {
+        for (size_t i = 0; i < 11; i++) {
+            auto& player = players[i];
+            f(player);
         }
     }
 }

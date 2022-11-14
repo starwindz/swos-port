@@ -1,13 +1,7 @@
 bin
 dll
 /tmp/*
-/vc-proj/.vs
-/vc-proj/Debug/
-/vc-proj/Release/
-/vc-proj/ida2asm
-/vc-proj/ipch
-/vc-proj/swos-asm
-/vc-proj/token-lookup-tester
+/project/vc++/.vs
 /tests/vc-proj/.vs
 /tests/vc-proj/tests/Release
 /tests/vc-proj/tests/Debug
@@ -17,7 +11,7 @@ dll
 /tests/sdl-address-table-fetcher/vc-proj/sdl-address-table-fetcher/Debug
 /tests/sdl-address-table-fetcher/vc-proj/sdl-address-table-fetcher/Release
 /doc/TODO.txt
-/src/swossym.h
+/assets/sprites/src
 __pycache__
 *.tlog
 *.opendb
@@ -27,4 +21,3 @@ __pycache__
 build
 /.tgitconfig
 v16
-/assets/sprites/src

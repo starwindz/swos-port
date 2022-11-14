@@ -646,7 +646,9 @@ bool InstructionOperandsInfoExtractor::RawOperandInfo::expandVariableStructField
             m_structField = true;
             if (!m_address) {
                 m_dereference = true;
-                m_size = fieldData->size();
+                // do not override size prefix, e.g. cmp word ptr ballSprite.z+2, 8
+                if (!m_size)
+                    m_size = fieldData->size();
             } else {
                 // mov A6, offset editTacticsCurrentTactics.someTable
                 m_size = 4;

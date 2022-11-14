@@ -1,20 +1,17 @@
 #include "bench.h"
-#include "benchControls.h"
+#include "updateBench.h"
 #include "drawBench.h"
 #include "pitchConstants.h"
 
-constexpr float kBenchX = 27;
+constexpr FixedPoint kBenchX = 27;
 
 constexpr int kTopBenchY = 389;
 constexpr int kBottomBenchY = 485;
 
 constexpr int kTrainingPitchBenchY = 456;
 
-constexpr int kPlayerGoingInX = 39;
+constexpr int kPlayerGoingInX = 26;
 constexpr int kPlayerGoingInY = kPitchCenterY;
-
-static bool m_benchOff;
-static bool m_leavingBench;
 
 static int m_benchY;
 static int m_opponentBenchY;
@@ -26,10 +23,8 @@ static void checkIfGoalkeeperClaimedTheBall();
 
 void initBenchBeforeMatch()
 {
-    m_benchOff = false;
     swos.g_inSubstitutesMenu = 0;
     swos.g_cameraLeavingSubsTimer = 0;
-    clearCameraLeavingBench();
     initBenchControls();
     initBenchMenusBeforeMatch();
     initBench();
@@ -52,23 +47,6 @@ bool inBenchMenus()
     return inBench() && getBenchState() == BenchState::kInitial;
 }
 
-bool isCameraLeavingBench()
-{
-    return m_leavingBench;
-}
-
-void clearCameraLeavingBench()
-{
-    m_leavingBench = false;
-}
-
-void setCameraLeavingBench()
-{
-    m_leavingBench = true;
-    checkIfGoalkeeperClaimedTheBall();
-    swos.g_inSubstitutesMenu = 0;
-}
-
 int getBenchY()
 {
     return m_benchY;
@@ -84,17 +62,13 @@ void swapBenchWithOpponent()
     std::swap(m_benchY, m_opponentBenchY);
 }
 
-bool getBenchOff()
-{
-    return m_benchOff;
-}
-
 void setBenchOff()
 {
-    m_benchOff = false;
+    checkIfGoalkeeperClaimedTheBall();
+    swos.g_inSubstitutesMenu = 0;
 }
 
-float benchCameraX()
+FixedPoint benchCameraX()
 {
     return kBenchX;
 }
@@ -125,13 +99,13 @@ static void initBench()
 
     m_benchY = kTopBenchY;
     m_opponentBenchY = kBottomBenchY;
-    bool topTeam = getBenchTeamData() == &swos.topTeamIngame;
+    bool topTeam = getBenchTeamData() == &swos.topTeamInGame;
 
     if (swos.g_trainingGame) {
         m_benchY = m_opponentBenchY = kTrainingPitchBenchY;
     } else {
         // bit 2 of the 2nd character of top team name... nice criteria :P
-        if (swos.topTeamIngame.teamName[1] & 2)
+        if (swos.topTeamInGame.teamName[1] & 2)
             std::swap(m_benchY, m_opponentBenchY);
         if (topTeam)
             std::swap(m_benchY, m_opponentBenchY);
@@ -156,7 +130,7 @@ static void checkForThrowInAndKeepersBall()
 {
     auto player = swos.lastTeamPlayedBeforeBreak->controlledPlayerSprite;
     if (player && player->state == PlayerState::kThrowIn) {
-        swos.hideBallShadow = 0;
+        swos.hideBall = 0;
         player->state = PlayerState::kNormal;
         A0 = &swos.playerNormalStandingAnimTable;
         A1 = player;

@@ -45,7 +45,7 @@ void menuCheckControls()
         exitCurrentMenu();
 
     events = filterResetEvents(events);
-    auto shortFire = getShortFireAndBumpFireCounter((events & kGameEventNonMovementMask) != 0) || m_fire;
+    auto shortFire = getFireStartedAndBumpFireCounter((events & kGameEventNonMovementMask) != 0) || m_fire;
     m_fire = false;
 
     if (swos.fireCounter > 0)   // used in EditTactics menu in two functions
@@ -112,7 +112,7 @@ static void updateLongFireTimer()
     if (swos.shortFire) {
         swos.longFireTime = swos.longFireFlag = 0;
     } else if (swos.fire) {
-        swos.longFireTime += swos.timerDifference;
+        swos.longFireTime += swos.lastFrameTicks;
         if (swos.longFireTime >= 24) {
             swos.longFireTime = 16;
             swos.longFireFlag++;

@@ -17,7 +17,7 @@
 #include "game.h"
 #include "gameLoop.h"
 #include "gameTime.h"
-#include "benchControls.h"
+#include "updateBench.h"
 #include "camera.h"
 #include "sprites.h"
 #include "renderSprites.h"
@@ -105,8 +105,8 @@ void initNewReplay()
 // called at the proper time, right after the game is finished, so the data is valid and fresh.
 void refreshReplayGameData()
 {
-    m_header.team1 = swos.topTeamIngame;
-    m_header.team2 = swos.bottomTeamIngame;
+    m_header.team1 = swos.topTeamInGame;
+    m_header.team2 = swos.bottomTeamInGame;
 
     // using strncpy here so the buffer gets cleared and we don't get any garbage in the file
     strncpy(m_header.gameName, swos.gameName, sizeof(m_header.gameName));
@@ -114,8 +114,8 @@ void refreshReplayGameData()
 
     m_header.team1Goals = swos.statsTeam1Goals;
     m_header.team2Goals = swos.statsTeam2Goals;
-    m_header.pitchNumber = swos.pitchNumberAndType >> 8;
-    m_header.pitchType = swos.pitchNumberAndType & 0xff;
+    m_header.pitchNumber = getPitchNumber();
+    m_header.pitchType = getPitchType();
     m_header.numMaxSubstitutes = swos.gameMaxSubstitutes;
 }
 
@@ -142,7 +142,7 @@ void startNewHighlightsFrame()
     }
 }
 
-void saveCoordinatesForHighlights(int spriteIndex, float x, float y)
+void saveCoordinatesForHighlights(int spriteIndex, FixedPoint x, FixedPoint y)
 {
     assert(spriteIndex >= 0 && spriteIndex < kNumSprites);
 
@@ -288,7 +288,6 @@ static void runReplay(bool inGame, bool isReplay)
     if (!inGame)
         showIntroMenus();
 
-    unloadMenuBackground();
     initGameAudio();
     playCrowdNoise();
 
@@ -455,11 +454,11 @@ static bool fetchAndRenderFrame(bool isReplay)
         switch (obj.type) {
         case ReplayDataStorage::ObjectType::kSprite:
             if (m_replayData.isLegacyFormat()) {
-                const auto& sprite = getSprite(obj.pictureIndex);
+                const auto& sprite = getSprite(obj.imageIndex);
                 obj.x += sprite.centerXF + sprite.xOffsetF;
                 obj.y += sprite.centerYF + sprite.yOffsetF;
             }
-            drawSprite(obj.pictureIndex, obj.x, obj.y, true, xOffset, yOffset);
+            drawSprite(obj.imageIndex, obj.x, obj.y, true, xOffset, yOffset);
             break;
 
         case ReplayDataStorage::ObjectType::kStats:
@@ -549,7 +548,7 @@ static void drawOverlay(const ReplayDataStorage::FrameData& frameData, bool isRe
 
 static void drawBigRotatingLetterR()
 {
-    int spriteIndex = ((swos.stoppageTimer >> 1) & 0x1f) + kReplayFrame00Sprite;
+    int spriteIndex = ((swos.currentGameTick >> 1) & 0x1f) + kReplayFrame00Sprite;
     drawMenuSprite(spriteIndex, 11, 14);
 }
 
@@ -560,7 +559,7 @@ static void drawPercentage(bool isReplay)
         sprintf(buf, "%.2f%%", m_replayData.percentageAt());
     else
         sprintf(buf, "(%d/%d) %.2f%%", m_replayData.currentScene() + 1, m_replayData.numScenes(), m_replayData.percentageAt());
-    drawText(isReplay ? 276 : 254, 190, buf, -1, kGrayText);
+    drawText(isReplay ? 276 : 254, 190, buf, -1, kGrayText, false, 191);
 }
 
 static void updateScreen(bool isReplay, bool& doFadeIn, bool aborted)
@@ -621,9 +620,9 @@ static bool isReplayAborted(bool blockNonScorerFire)
             checkWhichPlayerFire = 1;
         else if (swos.teamScoredDataPtr->playerNumber == 2)
             checkWhichPlayerFire = 2;
-        else if (swos.teamScoredDataPtr->plCoachNum == 1)
+        else if (swos.teamScoredDataPtr->playerCoachNumber == 1)
             checkWhichPlayerFire = 1;
-        else if (swos.teamScoredDataPtr->plCoachNum == 2)
+        else if (swos.teamScoredDataPtr->playerCoachNumber == 2)
             checkWhichPlayerFire = 2;
     }
 
@@ -636,7 +635,11 @@ static bool isReplayAborted(bool blockNonScorerFire)
 
 static bool shouldRecordReplayData()
 {
+#ifdef SWOS_TEST
+    return false;
+#else
     return m_recordingEnabled && !m_replaying && !inBenchOrGoingTo();
+#endif
 }
 
 static void createDirectories()

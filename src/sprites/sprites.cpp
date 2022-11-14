@@ -41,11 +41,12 @@ void finishSprites()
             texture.reset();
 }
 
-static void initMatchSprites()
+static void initMatchSprites(bool withGameSprites)
 {
     colorizeGameSprites(m_res, m_topTeam, m_bottomTeam);
     //CopyAdvertisementsData
-    initGameSprites(m_topTeam, m_bottomTeam);
+    if (withGameSprites)
+        initGameSprites(m_topTeam, m_bottomTeam);
     updateLegacySprites();
 }
 
@@ -54,7 +55,7 @@ void initMatchSprites(const TeamGame *topTeam, const TeamGame *bottomTeam)
     m_topTeam = topTeam;
     m_bottomTeam = bottomTeam;
 
-    initMatchSprites();
+    initMatchSprites(true);
 }
 
 static void traverseMenuTextures(std::function<void(int, int)> f)
@@ -193,6 +194,6 @@ static void loadSprites(AssetResolution oldResolution, AssetResolution newResolu
     if (newResolution != AssetResolution::kInvalid) {
         initMenuSprites();
         if (isMatchRunning())
-            initMatchSprites();
+            initMatchSprites(false);
     }
 }

@@ -466,9 +466,9 @@ static void finalizeMenu(Menu *dstMenu, char *menuEnd, int numEntries)
     dstMenu->numEntries = numEntries;
     MenuEntry *entries = getMenuEntry(0);
     for (int i = 0; i < numEntries; i++) {
-        if (entries[i].type == kEntryString && entries[i].fg.string == kSentinel) {
+        if (entries[i].type == kEntryString && entries[i].string() == kSentinel) {
             strcpy(menuEnd, "STDMENUTXT");
-            entries[i].fg.string = menuEnd;
+            entries[i].setString(menuEnd);
             menuEnd += kStdMenuTextSize;
             assert(menuEnd < swos.g_currentMenu + sizeof(swos.g_currentMenu));
         }

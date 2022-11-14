@@ -100,8 +100,8 @@ static void stadiumMenuOnDestroy()
 
 static void setupTeamNames()
 {
-    setTeamNameAndColor(leftTeamNameEntry, *m_team1, swos.leftTeamCoachNo, swos.leftTeamPlayerNo);
-    setTeamNameAndColor(rightTeamNameEntry, *m_team2, swos.rightTeamCoachNo, swos.rightTeamPlayerNo);
+    setTeamNameAndColor(leftTeamNameEntry, *m_team1, swos.topTeamCoachNo, swos.topTeamPlayerNo);
+    setTeamNameAndColor(rightTeamNameEntry, *m_team2, swos.bottomTeamCoachNo, swos.bottomTeamPlayerNo);
 }
 
 static void setupPlayerSprites()

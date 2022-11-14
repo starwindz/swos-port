@@ -54,7 +54,7 @@ void startMainMenuLoop()
     // flush controls
     SDL_FlushEvents(SDL_KEYDOWN, SDL_KEYUP);
 
-#ifndef NDEBUG
+#ifdef DEBUG
     // verify that the string offsets are OK
     assert(!memcmp(swos.aChairmanScenes + 0x4dc1, "YUGOSLAVIA", 11));
     assert(!memcmp(swos.aChairmanScenes + 0x2e5, "THE PRESIDENT", 14));
@@ -131,7 +131,9 @@ static void init()
     logInfo("Setting up base and extended memory pointers");
     setupExtraMemory();
 
+#ifndef SWOS_TEST
     patchPlayersLeavingPitchDestinations();
+#endif
 
     initTimer();
     initAudio();

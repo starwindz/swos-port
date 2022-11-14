@@ -87,7 +87,7 @@ size_t InputConverter::parseCommonPart(int length)
     Tokenizer tokenizer;
     tokenizer.tokenize(data, length);
 
-    auto symbolTableCopy = new SymbolTable(m_symFileParser.symbolTable());
+    auto symbolTableCopy = std::make_unique<SymbolTable>(m_symFileParser.symbolTable());
     IdaAsmParser parser(m_symFileParser, *symbolTableCopy, tokenizer, m_structs, m_defines);
     parser.parse();
     m_structs.seal();
@@ -166,7 +166,7 @@ std::vector<int> InputConverter::connectRanges()
     }
 
     if (!missingSymbol.empty())
-        Util::exit("End range symbol `%s' is missing", 1, missingSymbol.string().c_str());
+        Util::exit("End range symbol `%s' is missing", EXIT_FAILURE, missingSymbol.string().c_str());
 
     assert(m_workers.back()->parser().missingEndRangeSymbol().empty());
     activeChunks.back() = true;

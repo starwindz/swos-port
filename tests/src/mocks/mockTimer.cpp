@@ -2,8 +2,8 @@
 
 void initTimer() {}
 void initFrameTicks() {}
-double targetFps() { return 0; }
-void setTargetFps(double) {}
+int targetFps() { return 0; }
+void setTargetFps(int) {}
 void timerProc(int) {}
 void markFrameStartTime() {}
 void menuFrameDelay() {}

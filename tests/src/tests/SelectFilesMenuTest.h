@@ -25,9 +25,14 @@ private:
     void testAbortSave();
     void testSaveButtonShowHide();
     void testLongExtensions();
+    void setupSaveCompetitionTest();
     void testSaveCompetition();
     void testSaveCompetitionByClick();
 
     void testArrowBackground(const MenuEntry *arrowEntry);
     void checkArrowsOverlap();
+
+    static constexpr char kCanadaDiy[] = "canada.diy";
+    std::unique_ptr<const char> m_canadaDiyData;
+    size_t m_canadaDiySize;
 };

@@ -8,7 +8,7 @@
 class VmDataState
 {
 public:
-    VmDataState() {};
+    VmDataState() = default;
     void startNewProc();
     void reset();
     void processInstruction(InstructionNode& node);
@@ -50,7 +50,7 @@ private:
             return { kNoReg, 0, -1, 0 };
         }
 
-        ByteValue() {}
+        ByteValue() = default;
         ByteValue(RegisterEnum reg, int8_t value, int color, uint8_t isSignOf)
             : reg(reg), value(value), color(color), isSignOf(isSignOf) {}
         ByteValue(const ByteValue& other) {
@@ -113,7 +113,7 @@ private:
         std::array<ByteValue, Instruction::kRegSize> m_data;
 
     public:
-        Register() {}
+        Register() = default;
         bool operator==(const Register& other) const {
             return m_data == other.m_data;
         }

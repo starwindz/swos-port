@@ -26,10 +26,6 @@ String::String(const std::pair<const char *, const char *>& range) : String(rang
 {
 }
 
-String::String()
-{
-}
-
 void String::assign(const char *str, size_t length)
 {
     m_str = str;

@@ -32,12 +32,12 @@ void drawCharSprite(int spriteIndex, int x, int y, int alpha /* = 255 */)
 }
 
 // Returns true if the sprite is at least partially on the screen.
-bool drawSprite(int pictureIndex, float x, float y, bool applyZoom, float xOffset, float yOffset,
+bool drawSprite(int imageIndex, float x, float y, bool applyZoom, float xOffset, float yOffset,
     bool ignoreCenter /* = false */, int alpha /* = 255 */)
 {
     assert(alpha >= 0 && alpha <= 255);
 
-    const auto& sprite = getSprite(pictureIndex);
+    const auto& sprite = getSprite(imageIndex);
 
     auto scale = getGameScale();
 
@@ -73,15 +73,15 @@ bool drawSprite(int pictureIndex, float x, float y, bool applyZoom, float xOffse
         dst.h *= zoom;
     }
 
+    bool onScreen = dst.x < width && dst.y < height && dst.x > -dst.w && dst.y > -dst.h;
     if (sprite.rotated) {
         dst.x += dst.h / 2 - dst.w / 2;
         dst.y += dst.w / 2 - dst.h / 2;
         SDL_RenderCopyExF(renderer, texture, &sprite.frame, &dst, -90.0, nullptr, SDL_FLIP_NONE);
-        return dst.x < width && dst.y < height && dst.x > -dst.h && dst.y > -dst.w;
     } else {
         SDL_RenderCopyF(renderer, texture, &sprite.frame, &dst);
-        return dst.x < width && dst.y < height && dst.x > -dst.w && dst.y > -dst.h;
     }
+    return onScreen;
 }
 
 static void setAlpha(SDL_Texture *texture, int alpha)

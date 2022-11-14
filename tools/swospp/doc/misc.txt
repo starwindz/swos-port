@@ -1,0 +1,465 @@
+This is collection of random useful bits of knowledge, of which some are
+crucial for understanding and modifying the SWOS++ source code.
+
+
+Mixing assembly code with Watcom
+--------------------------------
+Watcom by default uses Watcom calling convention, and that is what we
+exclusively use throughout the entire program. Parameters are passed in
+registers, in the following order: eax, edx, ebx, ecx. If there are more than 4
+parameters they are passed via stack, just like stdcall (right to left). Return
+value goes through eax. By default function names will have underscore appended
+to it (in contrast to variables which will have it prepended).
+As for the asm functions that get called from Watcom, they have to abide to the
+following:
+- all registers must be preserved unless they are used to transfer parameters
+  (eax is exception - it is always considered used)
+- direction flag has to be clear (it is assumed to be clear on entry)
+- if there were any parameters on the stack, called function has to clean it up
+
+
+Mixing assembly code with GCC
+-----------------------------
+Source is compiled with -mregparm=3, so 3 registers will be used for argument
+passing, in the following order: eax, edx, ecx. If there are more than 3
+arguments they will be passed via stack as usual, and will be pushed from right
+to left (rightmost argument gets pushed first, second rightmost second, etc.).
+Due to compilation option -mrtd, all called functions are responsible for
+cleaning up the stack, and must pop any parameters that were sent via the
+stack.
+Assembly function must preserve ebx, esi, edi and ebp (this is general
+convention GCC is using for it's own functions too). When calling C function
+from assembly, expect eax, ecx and edx to be changed.
+On Windows, by default GCC will prepend underscore to function names, unlike
+Watcom which appends it. That's why compiler option "-fno-leading-underscore"
+is used, which removes the underscore. But still, since we're compiling as C++
+every function that needs to be used from asm code needs to be declared as
+extern "C".
+
+
+Intel x86 Stack
+---------------
+Stack grows downwards, pointer is set to highest address, and approaches lowest
+as the stack gets more full.
+PUSH - decrease stack pointer, put operand on top of the stack
+POP  - get operand from stack top, increase stack pointer
+
+PUSHAD
+------
++28 EAX
++24 ECX
++20 EDX
++16 EBX
++12 ESP (original)
++8  EBP
++4  ESI
++0  EDI
+
+
+Motorola 68k Registers
+----------------------
+[Disclaimer: I'm by no means expert on AMIGA or Motorola 68000 CPU or emulators
+or anything :) this is just what I believe was done in order to port SWOS to
+PC, and this basic info should help in understanding how SWOS++ and PC version
+of SWOS work.]
+PC version was built using technique called "binary translation", where
+sequences of code in 68k instruction set were translated into 80386 instruction
+set. Assembly code from AMIGA SWOS (or output from a compiler) was run through
+some sort of converter that created Intel x86 executable code out of it. Then
+PC specific and performance sensitive routines where hand-crafted.
+68k CPU has 16 general purpose 32-bit registers, labeled D0-D7, A0-A7. All
+registers except A7 were mapped to 32-bit memory locations. A7 is stack
+pointer, and it was mapped directly to Intel ESP register. A* registers are
+usually used for pointers.
+Oddly, memory locations for registers are not dword aligned -- as a matter of
+fact their addresses are odd.
+Parameters to SWOS subroutines seem to be passed almost exclusively in
+registers, and stack is only used for saving and restoring registers.
+Most integer variables are 2 bytes long, as it is optimal for 16-bit data bus.
+
+
+SWOS Stack
+----------
+We were very limited with stack, I think they left default 4kb setting. So
+start-up code will replace SWOS stack with our own - static buffer currently
+sized 64kb.
+
+
+DPMI host
+---------
+DOS4/GW partially implements DPMI standard. For memory allocation we can use:
+Int 31H Function 0501H: Allocate Memory Block
+Allocates and commits a block of linear memory.
+Call With
+AX = 0501H
+BX:CX = size of block (bytes, must be nonzero)
+
+
+Interfacing SWOS code
+---------------------
+Since we're not running in consecutive memory block with SWOS, calls have to be
+made using special macros - calla and jmpa, indirectly through register, so the
+location could be fixed up. Alternative was to implement calls as Win32 imports
+and handle them specially during conversion in pe2bin. However that was
+abandoned as it would use up more bytes per call: 4 bytes in memory for each
+call + indirect call instruction (6 bytes) = 10 bytes total. With macros we use
+7 bytes per call. In both cases one fixup is used.
+Since there is no way to relay information to GCC that ebp register is used by
+the assembly code, ebp is saved and restored each time. In case we know for
+sure ebp will be preserved there is also a version that doesn't save it.
+Most SWOS functions will not touch ebp but since it's used for parameters for
+DrawSpriteInGame and DrawSprite16Pixels these two and anything that calls them
+will trash it.
+
+
+Startup
+-------
+When SWOS++ is loaded successfully, initialization function will be called by
+the loader. That is actually entry point of the win32 PE executable that pe2bin
+converts. Currently that's start function in main.asm. On entry it is
+guaranteed that direction flag will be zero. Initial register values are:
+
+eax - init routine address, fixed up
+ebx - starting address of SWOS++ in memory
+ecx - size of SWOS++ in memory (code + data + bss size)
+edx - handle of SWOS++ memory block
+ebp - SWOS code base
+
+Once the initialization function finishes, control is returned to SWOS.
+
+
+BSS Section
+-----------
+BSS is completely implemented, so asm variables declared in .bss section and
+non-local uninitialized C variables will end up there without increasing final
+output file size.
+BSS size is difference between .data section virtual and raw size. For this to
+work properly all data sections are expected to be merged (including all rdata
+sections).
+
+
+Debugging
+---------
+Logging routine WriteToLog is at our disposal, available both from C and
+assembly. Parameters are printf-style. Output is saved to swospp.log file. In
+release version calls are eliminated. There is an overload that takes
+additional parameter - message class, so by changing output message bit mask
+entire message classes can be selectively logged or eliminated.
+WriteToLog is also available in assembly code, in the form of macro. Registers
+and flags are preserved, so it can be called from any place. Macro also takes
+care of parameters and stack balancing, so the user can just relax and focus on
+debugging. ;)
+assert() is also available, in more-less standard form. Output goes to both
+screen and swospp.log. Version with custom message is available, assert_msg().
+Variables can be dumped to screen real time while the game is running.
+Addresses and formats of variables to be dumped are written to dumpvars.asm.
+Details about it to be added later.
+Routine HexDumpToLog takes care of creation of hex dumps. Based on parameters
+it will save hex dump of specified memory region to log file. It's only
+compiled in debug version.
+Listings of all object files are available in var/ directory, as well as map
+file.
+Recently I patched DOSBox debugger, so it can load and show symbols. There is a
+Perl script that converts map files to text file which contains all public
+symbols and can be loaded into debugger.
+Enhanced DOSBox debug version is of great help, as it will automatically break
+into debugger whenever a bad memory access occurs.
+In DOSBox options CPU core must not be set to dynamic, or it will skip
+instructions in debugger, making it impossible to debug. Set it to normal and
+it will works just fine.
+Test programs in test directory are built with CodeView debug info, so they can
+be debugged with Visual C++ 6.0 debugger (only good debugger I managed to run
+successfully in a Windows 98 virtual machine). Functionality is limited - e.g.
+breakpoints aren't working, but they can be compensated by placing int 3's in
+user code. [tests are broken since switching to GCC]
+
+
+printf()
+--------
+sprintf() is present and it's basically Open Watcom rip off :P. It's mostly
+used for log file parameters formatting. Implementation isn't complete, but the
+most important things are there with few additions:
+- support for %hhd and %hhx was added (8-bit value is printed)
+- %#s combination is treated as hex string: bytes from the string are printed
+  as hex values, and if precision is added e.g. %#12s exactly 12 characters
+  will be printed whether they contain null-terminator or not
+
+
+strcpy()
+--------
+One important change was made that should be pointed out. strcpy() returns
+pointer to terminating zero of destination string rather than pointer to its
+beginning. This allows elimination of strcat() calls which would just iterate
+through same string again only to find that ending zero. This fact is used in
+several places through out the program where string concatenation is done. For
+example:
+    strcpy(strcpy(strcpy(resultBuffer, player1Score), " - "), player2Score);
+Same goes for strncpy() and strcat().
+strncpy has been patched to return a pointer to one character after the last
+character written if the string copying operation ran out of space, or pointer
+to terminating zero if the string could fit. This results in the following
+idiom for copying zero-terminated string to fixed buffer:
+    *strncpy(dst, src, dstSize - 1) = '\0';
+Note that this will work in any case: if the copy operation ran out of space,
+pointer to last character in dst will be returned - so the string gets
+terminating zero, and in case copy was successful terminating zero will just
+get written once more.
+
+
+Buffer size
+-----------
+By the convention buffer is always allocated one byte bigger to accommodate
+terminating zero. If the size of some name is e.g. 16 characters, 17 bytes must
+be set aside for the buffer, so we can store maximal 16 characters along with
+zero. That will represent a valid string, that can be used say with strncpy.
+
+
+There is no read-only section
+-----------------------------
+All const and read-only sections are merged into .data section. This is used in
+couple of places, where constants strings are modified to save some space.
+
+
+pe2bin
+------
+pe2bin converts win32 PE executable to SWOS++ custom binary format. This PE
+executable is somewhat specific, with certain limitations and assumptions.
+pe2bin only recognizes certain sections: .text, .data, .rdata, .swos, .reloc,
+.ptdata. All other sections are ignored. Only allowed directories are import,
+export, basereloc and iat. Anything else will cause program termination.
+Entry point is expected in .text section!
+bss is difference between virtual and actual size of .data section.
+Section containing exports must come before .ptdata.
+In latest version section do not have to be laid out in strict order.
+
+
+Data/Code Layout
+----------------
+TODO
+Code section contains merged sections from the PE, in the following order:
+code, data, rdata, bss (infered). After code comes patch data section - it
+contains patch records and is processed after loading, and before start up code
+runs.
+
+
+Alink
+-----
+Alink is a simple open-source linker I ran into on the Internet. It turned out
+that it has quite solid OMF support, and I managed to change it enough to be
+able to produce correct SWOS++ executables :)
+Now that SWOS++ isn't built with Watcom anymore technically we don't need
+alink, but added options for controlling section placement are still extremly
+useful, and not many linkers can do that in a straight forward manner.
+
+
+Network protocol
+---------------
+It is comprised of 3 parts:
+- Lobby protocol
+- Synchronization
+- Main loop part (game itself)
+
+There are two types of packet: 'simple' and 'important'. Simple packets are
+simply sent and forgotten - we can only hope that they arrive. They can't be
+fragmented, and have a size limit (depends on the implementation, but 1023
+bytes for DOSBox together with headers). For important packets delivery is
+guaranteed, and if they're too big for one physical packet they will be
+fragmented and sent in parts. Protocol used to guarantee delivery is:
+TODO
+Receiver is obligated to respond with 'ack' packet to each important packet.
+Sender will keep sending all unacknowledged packets until ack is received.
+Therefore the only way to find out if any client has disconnected is to send
+them something periodically.
+dword - packet id
+data...
+
+Menu integration is done through OnIdle (NetworkOnIdle()) function which is
+called by the menu loop (from MenuProc()).
+
+In synchronization phase players exchange teams and tactics. After successful
+completion each player or watcher will have teams and tactics of every player.
+Each player has their own "instance" of custom tactics, and they are shown when
+needed - in the team menu of currently controlling player, as well as in
+substitutes menu when showing bench. Correct tactics that each player chose are
+always applied to their corresponding teams in game, on both clients.
+While in sync phase SyncOnIdle() will be handling network packets.
+
+Main SWOS loop is modified to wait at the beginning for a corresponding frame
+that should arrive. If it's not there yet game is blocked in busy loop. During
+the wait previous frames are being resent in case we aren't receiving our frame
+yet because other client is waiting on some of our previous frames (that
+possibly got lost in transit).
+
+Incoming frames are stored to buffer until rendered:
+received frames -> framesToRender buffer -> frames that are rendered
+
+Game engine reads player controls in alternate frames (frame #n read player 1
+controls, frame #n+1 read player 2 controls). Multiplayer code follows this
+convention as this makes things more efficient.
+
+Each game frame is defined as combination of game 'state' and controls that
+each player is generating. State contains pause, are statistics on screen, is
+team management menu opened...
+
+Left and right teams are synchronized on both clients. On first client player 1
+input is dispatched to the left team, and input from the network to the right
+team. On second client situation is opposite. Variable teamPlayingUp might
+reverse this situation once more, if it has value 2 left and right team will be
+swapped (second allowed value is 1 and in that case there are no changes).
+Real local input is always read for player 1, because teams have a field that
+denotes which player are they taking input from, and that's set in
+initialization - for example left team is set to player 1 on first client, and
+to player 2 on second.
+In debug version we have assertion on team states - they must be equal between
+clients each frame. Each client sends to the other hash of its state, and other
+client compares it to its own and triggers assertion in case of mismatch.
+
+Skip frames works by cloning certain number of frames so we gain better
+performance at the expense of control lag, since one packet is sent and many
+rendered. At 3 lag becomes quite noticeable.
+
+Once we enter statistics display mode, change happens next frame, whence at
+pause we enter paused loop immediately (before the rendering).
+
+
+IPX
+---
+Sending is always non-blocking and releases the ECB, so we can use single ECB
+to serve all send requests. When new packet arrives internal list is searched
+for free ECB, and if there isn't one the packet is lost.
+IPXBUFFERSIZE (currently 1424) is packet size limitation in DOSBox, but from
+what I see package of that size will be rejected during the send. The effective
+send capacity is one byte less. As far as the receiving goes, packet of full
+IPXBUFFERSIZE can be received.
+IPX header must always be present as part of IPX packet data. ECB header is
+treated separately and is not part of data. Therefore maximum user data size is
+equal to maximum packet size reduced by size of IPX header.
+
+
+Join and Game ID
+--------------
+To avoid situation where client attempts to connect to server and fails, but
+server considers them connected, thus rejecting subsequent attempts we
+introduce join id. It is a random number that client generates and sends to
+server with each login attempt. Server keeps this id for each connected client,
+and can use it to differentiate between reconnecting echo and legitimate new
+attempts of connecting.
+Game id is introduced to avoid rare case - when client is attempting to join
+non-existent game on the same IP. It can happen if the game is closed and
+opened again before client started connecting to already enumerated game. It is
+implemented by broadcasting random game id when game is published, and only
+allowing clients with correct id to connect. When connecting from command line
+this is ignored (only IP matters).
+
+
+Multiplayer options
+-------------------
+To avoid multiplayer games interfering with single player game options,
+multiplayer options are kept separately. GetFreshMPOptions() will get fresh,
+up-to-date options, while ApplyOptions() will apply given options to SWOS.
+Since server and client must be in perfect sync, that means they also must use
+same options. Server sends its options within accepting packet when client
+first joins the lobby. Client has to save its own options first, and then
+overwrite them with server's.
+                                                     saved
+SWOS                           MP                    client
+options                      options                 options
++-----+ GetFreshMPOptions()  +-----+ GetMPOptions()  +-----+
+|     | -------------------> |     |---------------> |     |  (as well as
+|     | <------------------- |     |<--------------- |     |  other users)
++-----+ ApplyOptions()       +-----+ SetMPOptions()  +-----+
+
+
+
+Converting memory location to function
+--------------------------------------
+SWOS++ address, along with SWOS code and data load addresses can be found at
+the beginning of log file. Knowing these we can easily track any address in
+SWOS/SWOS++ address space. In order to get location in IDA after we need to
+subtract load address from the given address, and then add 0x10000 for code,
+and 0xc0000 for data.
+
+Standard DOSBox base locations are:
+SWOS++:     0x387000
+SWOS code:  0x220000
+SWOS data:  0x2c1000
+
+So assuming standard load addresses let's try to locate symbols for a couple of
+addresses. A data item shows up at address 0x369def in debugger:
+0x369def - 0x2c1000 = 0xa8def, 0xa8def + 0xc0000 = 0x168def, and in IDA we can
+see it's location of spritesIndex.
+Code item at 0x22f539:
+0x22f539 - 0x220000 = 0xf539, 0xf539 + 0x10000 = 0x1f539, an address belonging
+to GetTextSize function.
+If we're tracking an address belonging to SWOS++ we would need to consult map
+file (residing in var/ directory). It contains addresses of all public symbols.
+Combined code section starts at 0x401000, when we subtract that from public
+symbol address to get its raw offset in memory. If we're lucky and symbol is
+public, there will be exact match to the address from map file and our job is
+done. But if the symbol is private we need to look into disassembly listing of
+that object file. We have to locate object file which emitted the symbol by
+looking at the map file and finding addresses that the address is between (this
+might be ambiguous, and sometimes two files might have to be checked). It is a
+very tedious process alleviated greatly by getaddr.py script.
+Downside is that private symbols declared in file that has no public symbols
+(and therefore doesn't show up in map file) can not be found without manual
+search; example would be pdata.asm.
+If we need to find out offset in raw bin file, we need to add 48 to relative
+offset (ZKBF header size).
+Locating data items from SWOS++ requires subtracting section alignment; we need
+to take a look at map file, and see the length of code (for example 0x1c46c).
+Code starts at 0x401000, and ends at 0x41d46c (0x401000 + 0x1c46c). Let's say
+that .data section starts at 0x41e000. So the difference 0x41e000 - 0x41d46c =
+0xb94 needs to be added to every memory address in order to be able to
+precisely locate the symbol.
+
+
+Relative calls patching
+-----------------------
+If we intend on patching relative call (0xe8 opcode), we need to use following
+formula:
+address to write = address of new function that we want to call -
+                   address of location that is being patched -
+                   5
+(5 is because address of call is always calculated relative to next
+instruction, and length of call instruction is exactly 5 bytes). Same story
+goes for relative jmp (0xe9 opcode). This can only be done dynamically.
+
+
+Fixed point format
+------------------
+For more precise calculations SWOS uses 32-bit fixed point numbers, with 16
+bits for integer part and 16 bits for fractional part. Both parts have one bit
+for sign - highest bit, and remaining 15 bits for value. I'm not sure what's
+the effect of sign bit on fractional part, I think it's ignored.
+
+s|aaaaaaaaaaaaaaa.s|bbbbbbbbbbbbbbb
+
+Value = a + 2^-16 * b
+When stored in memory, first word is fractional part, second word is integer
+part (offset +2) - most of the time only integer part is used.
+
+
+Virtualized tactics
+-------------------
+Each player has their own 6 custom tactics.
+TODO :)
+
+
+XML - describe
+--------------
+TODO
+
+
+Menu macros
+-----------
+TODO
+
+
+Becoming:
+how the bytes were patched at first, then asm, then C (Watcom, then Open
+Watcom), and even C++ (via GCC)
+
+TODO: map file/mapcvt, listings
+.pdata and how to use it
+perhaps description of linker sections in more detail

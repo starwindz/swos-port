@@ -1,0 +1,2 @@
+*.rgd filter=lfs diff=lfs merge=lfs -text
+*.diy filter=lfs diff=lfs merge=lfs -text

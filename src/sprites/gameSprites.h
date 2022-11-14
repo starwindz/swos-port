@@ -1,5 +1,7 @@
 #pragma once
 
+using PlayerSprites = Sprite * const *;
+
 void initGameSprites(const TeamGame *topTeam, const TeamGame *bottomTeam);
 void initDisplaySprites();
 void initializePlayerSpriteFrameIndices();
@@ -8,6 +10,8 @@ int getGoalkeeperSpriteOffset(bool topTeam, int face);
 int getPlayerSpriteOffsetFromFace(int face);
 void updateCornerFlags();
 
+PlayerSprites getPlayerSprites();
 #ifdef SWOS_TEST
-Sprite *indexToSprite(unsigned index);
+Sprite *spriteAt(unsigned index);
+int totalSprites();
 #endif

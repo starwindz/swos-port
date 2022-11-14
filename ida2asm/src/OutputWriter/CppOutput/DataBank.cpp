@@ -48,7 +48,7 @@ auto DataBank::processRegion(const OutputItemStream& items, const StructStream& 
 
 void DataBank::addVariables(VarData&& vars)
 {
-    auto [ varsList, structVarsMap, offsetVarsMap ] = std::move(vars);
+    auto&& [ varsList, structVarsMap, offsetVarsMap ] = std::move(vars);
     m_vars.push_back(std::move(varsList));
     addStructVariables(structVarsMap);
     addOffsetVariables(offsetVarsMap);
@@ -67,44 +67,65 @@ void DataBank::consolidateVariables(const StructStream& structs)
 
     m_varToAddress.reset(varMapSizeEstimate);
 
+    std::vector<Var *> aliases;
+
+    auto unionSize = 0u;
+    auto unionAlignment = 0u;
     m_memoryByteSize = zeroRegionSize();
 
-    for (auto& varList : m_vars) {
-        for (auto& var : varList) {
-            if (amigaRegisterToIndex(var.name) < 0) {
-                if (var.name) {
-                    m_memoryByteSize += extractVarEffectiveAlignment(var, m_memoryByteSize, structs);
+	for (auto& varList : m_vars) {
+		for (size_t i = 0; i < varList.size(); i++) {
+			auto& var = varList[i];
+			if (amigaRegisterToIndex(var.name) < 0) {
+				if (var.name) {
+					auto effectiveAlignment = extractVarEffectiveAlignment(var, unionAlignment, m_memoryByteSize, structs);
+					if (var.type != kLabel) {
+                        // hold off from adding alias vars, they might be influenced by the variables they alias
+                        m_memoryByteSize += std::max(unionAlignment, effectiveAlignment);
+                        m_varToAddress.add(var.name, m_memoryByteSize);
+                    }
                     var.offset = m_memoryByteSize;
-                    m_varToAddress.add(var.name, m_memoryByteSize);
 
-                    assert(!var.exportedDecl || var.type == kString ||
-                        var.offset % (var.type == kStruct ? 4 : std::min<int>(var.size, 4)) == 0 ||
+                    assert(!var.exportedDecl || var.type == kString || var.type == kLabel ||
+                        var.offset % (var.type == kStruct ? 4 :
+                            var.exportedSize > 0 ? std::min(4, var.exportedSize) : 1) == 0 ||
                         std::get<3>(m_symFileParser.exportedDeclaration(var.name)) == 1);
                 }
 
-                m_memoryByteSize += var.dup * var.size;
+                auto varByteSkip = var.dup * var.size;
+                auto byteSkip = std::max<int>(unionSize, varByteSkip);
+                if (var.type == kLabel) {
+                    aliases.push_back(&var);
+                    byteSkip = std::max(byteSkip, 1);
+                    unionSize = std::max<int>(unionSize, byteSkip);
+                    unionAlignment = std::max<int>(unionAlignment, var.alignment);
+                } else {
+                    if (unionSize > varByteSkip)
+                        Util::exit("Alias size larger than the variable that follows it (`%.*s')", EXIT_FAILURE,
+                            var.name.length(), var.name.data());
+                    m_memoryByteSize += byteSkip;
+                    if (unionSize) {
+                        assert(!aliases.empty());
+                        // add alias variables only now, as the real variable might have a different alignment
+                        for (auto aliasVar : aliases) {
+                            aliasVar->offset = var.offset;
+                            aliasVar->alignment = 0;
+                            m_varToAddress.add(aliasVar->name, var.offset);
+                        }
+                        auto& first = *aliases.front();
+                        Util::assignSize(first.alignment, std::max<int>(var.alignment, unionAlignment));
+                        first.offset -= first.alignment;
+                        var.alignment = 0;
+                    }
+                    unionSize = 0;
+                    unionAlignment = 0;
+                    aliases.clear();
+                }
             }
         }
     }
 
-    // merge with introduced variables from @constant-to-variable
-    VarList introducedVars;
-    for (const auto& extraVar : m_symFileParser.introducedVariables()) {
-        m_varToAddress.add(extraVar.text, m_memoryByteSize);
-        Var var;
-        var.name = extraVar.text;
-        var.type = kInt;
-        var.size = 4;
-        var.offset = m_memoryByteSize;
-        var.exportedDecl = extraVar.cargo->decl();
-        var.intValue = extraVar.cargo->value();
-        var.originalValue = extraVar.cargo->stringValue();
-        var.comment = "[introduced by ida2asm]";
-
-        introducedVars.push_back(var);
-        m_memoryByteSize += 4;
-    }
-    m_vars.push_back(std::move(introducedVars));
+    consolidateIntroducedVariables();
 
     m_varToAddress.seal();
 
@@ -223,10 +244,14 @@ void DataBank::addVariable(const OutputItem& item, const DataItem *dataItem, con
                 } else {
                     if (element->text() == "<0>")
                         break;
-                    var.type = kInt;
-                    var.size = dataItem->size();
-                    auto def = defines.get(element->text());
-                    var.intValue = def->intValue();
+                    if (auto def = defines.get(element->text())) {
+                        var.type = kInt;
+                        var.size = dataItem->size();
+                        var.intValue = def->intValue();
+                    } else {
+                        var.type = kLabel;
+                        var.name = var.name.withoutLast();
+                    }
                 }
                 break;
 
@@ -389,7 +414,31 @@ void DataBank::consolidateOffsetVariables()
     fillProcIndicesAndFixupVars();
 }
 
-int DataBank::extractVarAlignment(Var& var, const StructStream& structs)
+// Merges introduced variables from @constant-to-variable to real, parsed variables.
+void DataBank::consolidateIntroducedVariables()
+{
+    VarList introducedVars;
+    for (const auto& extraVar : m_symFileParser.introducedVariables()) {
+        m_varToAddress.add(extraVar.text, m_memoryByteSize);
+        Var var;
+        var.name = extraVar.text;
+        var.type = kInt;
+        var.size = 4;
+        var.offset = m_memoryByteSize;
+        var.exportedDecl = extraVar.cargo->decl();
+        var.exportedArraySize = -1;
+        var.exportedSize = 0;
+        var.intValue = extraVar.cargo->value();
+        var.originalValue = extraVar.cargo->stringValue();
+        var.comment = "[introduced by ida2asm]";
+
+        introducedVars.push_back(var);
+        m_memoryByteSize += 4;
+    }
+    m_vars.push_back(std::move(introducedVars));
+}
+
+int DataBank::calculateDeclaredSize(Var& var, const StructStream& structs)
 {
     int alignment = var.type == kStruct ? 4 : var.size;
 
@@ -402,42 +451,49 @@ int DataBank::extractVarAlignment(Var& var, const StructStream& structs)
                     var.exportedBaseType.length(), var.exportedBaseType.data(), var.name.length(), var.name.data());
             alignment = 4;  // it's a known struct
         } else if (var.size != var.exportedSize) {
-            alignment = var.exportedSize;
             if (var.exportedArraySize > 1) {
                 var.size = var.exportedSize;
                 var.dup = var.exportedArraySize;
-            } else if (var.dup > 1 && var.exportedSize > static_cast<int>(var.size)) {
-                assert(var.dup % var.exportedSize == 0);
-                var.size = var.exportedSize;
-                var.dup /= var.exportedSize;
+            } else if (var.dup > 1 && var.exportedSize != var.size * var.dup && var.exportedSize > static_cast<int>(var.size)) {
+                if (var.exportedSize % var.size) {
+                    Util::exit("Exported size (%d) must be divisible with byte array size (%d) for variable `%.*s'",
+                        EXIT_FAILURE, var.exportedSize, var.dup, var.name.length(), var.name.data());
+                } else {
+                    var.size = var.exportedSize;
+                    var.dup /= var.exportedSize;
+                }
             }
-            alignment = std::min(alignment, 4);
+            // align big structs to 4
+            alignment = std::min(var.declaredSize(), 4);
         }
     }
 
     return alignment;
 }
 
-size_t DataBank::extractVarEffectiveAlignment(Var& var, size_t address, const StructStream& structs)
+unsigned DataBank::extractVarEffectiveAlignment(Var& var, int unionAlignment, size_t address, const StructStream& structs)
 {
     assert(!var.alignment);
 
     auto [exportedDecl, baseType, arraySize, alignment] = m_symFileParser.exportedDeclaration(var.name);
-    if (exportedDecl) {
-        var.exportedDecl = exportedDecl;
-        var.exportedBaseType = baseType;
-        var.exportedArraySize = arraySize;
-        var.exportedSize = var.size;
+    if (exportedDecl || unionAlignment) {
+        if (exportedDecl) {
+            var.exportedDecl = exportedDecl;
+            var.exportedBaseType = baseType;
+            var.exportedArraySize = arraySize;
+            var.exportedSize = var.size;
+        }
 
         if (var.type != kString) {
+            auto structAlignment = calculateDeclaredSize(var, structs);
             if (alignment < 1)
-                alignment = extractVarAlignment(var, structs);
+                alignment = structAlignment;
 
             assert(alignment <= 4);
 
-            if (auto misalignment = address % alignment) {
-                Util::assignSize(var.alignment, alignment - misalignment);
-                assert(var.alignment < 4 && (address + var.alignment) % alignment == 0);
+            if (auto misalignment = std::max<int>(address % alignment, unionAlignment)) {
+                Util::assignSize(var.alignment, std::max(alignment - misalignment, unionAlignment));
+                assert(unionAlignment >= 4 || var.alignment < 4 && (address + var.alignment) % alignment == 0);
             }
         }
     }

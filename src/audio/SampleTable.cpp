@@ -53,37 +53,26 @@ void SampleTable::loadSamples(const std::string& baseDir)
     const auto& dirPrefix = joinPaths(baseDir.c_str(), m_dir) + getDirSeparator();
     const auto& dirFullPath = pathInRootDir(dirPrefix.c_str());
 
-    if (auto dir = opendir(dirFullPath.c_str())) {
-        for (dirent *entry; entry = readdir(dir); ) {
-#ifdef _WIN32
-            auto len = entry->d_namlen;
-#else
-            auto len = strlen(entry->d_name);
-#endif
-            if (len < 4)
-                continue;
+    traverseDirectory(dirFullPath.c_str(), nullptr, [&](const char *filename, int len, const char *) {
+        auto samplePath = dirPrefix + filename;
+        int chance = parseSampleChanceMultiplier(filename, len);
+        SoundSample sample(samplePath.c_str(), chance);
 
-            auto samplePath = dirPrefix + entry->d_name;
-            int chance = parseSampleChanceMultiplier(entry->d_name, len);
-            SoundSample sample(samplePath.c_str(), chance);
-
-            if (sample.hasData()) {
-                if (std::find(m_samples.begin(), m_samples.end(), sample) == m_samples.end()) {
-                    m_samples.push_back(std::move(sample));
-                    m_totalSampleChance += chance;
+        if (sample.hasData()) {
+            if (std::find(m_samples.begin(), m_samples.end(), sample) == m_samples.end()) {
+                m_samples.push_back(std::move(sample));
+                m_totalSampleChance += chance;
 #ifndef DEBUG
-                    logInfo("`%s' loaded OK, chance: %d", samplePath.c_str(), chance);
+                logInfo("`%s' loaded OK, chance: %d", samplePath.c_str(), chance);
 #endif
-                } else {
-                    logInfo("Duplicate detected, rejecting: `%s'", samplePath.c_str());
-                }
             } else {
-                logWarn("Failed to load sample `%s'", samplePath.c_str());
+                logInfo("Duplicate detected, rejecting: `%s'", samplePath.c_str());
             }
+        } else {
+            logWarn("Failed to load sample `%s'", samplePath.c_str());
         }
-
-        closedir(dir);
-    }
+        return true;
+    });
 }
 
 void SampleTable::removeSample(int index)

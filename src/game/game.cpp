@@ -17,7 +17,7 @@
 #include "replays.h"
 #include "pitch.h"
 #include "bench.h"
-#include "benchControls.h"
+#include "updateBench.h"
 #include "sprites.h"
 #include "gameSprites.h"
 #include "gameTime.h"
@@ -131,7 +131,7 @@ void initializeIngameTeams(int minSubs, int maxSubs, TeamFile *team1, TeamFile *
     D2 = team1->prBasicColor;
     D3 = team1->prShortsColor;
     D4 = team1->prSocksColor;
-    A1 = &swos.topTeamIngame;
+    A1 = &swos.topTeamInGame;
     SetTeamSecondaryColors();
 
     D0 = team2->prShirtType;
@@ -139,12 +139,12 @@ void initializeIngameTeams(int minSubs, int maxSubs, TeamFile *team1, TeamFile *
     D2 = team2->prBasicColor;
     D3 = team2->prShortsColor;
     D4 = team2->prSocksColor;
-    A1 = &swos.bottomTeamIngame;
+    A1 = &swos.bottomTeamInGame;
     SetTeamSecondaryColors();
 
     A2 = team1;
     A3 = team2;
-    SetIngameTeamsPrimaryColors();
+    SetInGameTeamsPrimaryColors();
 
     if (swos.g_gameType != kGameTypeCareer && swos.g_allPlayerTeamsEqual) {
         GetAveragePlayerPriceInSelectedTeams();
@@ -152,14 +152,14 @@ void initializeIngameTeams(int minSubs, int maxSubs, TeamFile *team1, TeamFile *
     }
 
     A2 = team1;
-    A4 = &swos.topTeamIngame;
+    A4 = &swos.topTeamInGame;
     A6 = &swos.team1AppPercent;
-    InitIngameTeamStructure();
+    InitInGameTeamStructure();
 
     A2 = team2;
-    A4 = &swos.bottomTeamIngame;
+    A4 = &swos.bottomTeamInGame;
     A6 = &swos.team2AppPercent;
-    InitIngameTeamStructure();
+    InitInGameTeamStructure();
 
     if (swos.isGameFriendly) {
         swos.team1NumAllowedInjuries = 4;
@@ -183,15 +183,15 @@ void initializeIngameTeams(int minSubs, int maxSubs, TeamFile *team1, TeamFile *
     }
 
     if (showPreMatchMenus()) {
-        showVersusMenu(&swos.topTeamIngame, &swos.bottomTeamIngame, swos.gameName, swos.gameRound, []() {
-            loadStadiumSprites(&swos.topTeamIngame, &swos.bottomTeamIngame);
+        showVersusMenu(&swos.topTeamInGame, &swos.bottomTeamInGame, swos.gameName, swos.gameRound, []() {
+            loadStadiumSprites(&swos.topTeamInGame, &swos.bottomTeamInGame);
         });
     }
 
     if (!swos.isGameFriendly && swos.g_gameType != kGameTypeDiyCompetition)
-        swos.ingameGameLength = 0;
+        swos.gameLengthInGame = 0;
     else
-        swos.ingameGameLength = swos.g_gameLength;
+        swos.gameLengthInGame = swos.g_gameLength;
 }
 
 void matchEnded()
@@ -207,7 +207,7 @@ void startMainGameLoop()
     initNewReplay();
     updateCursor(true);
 
-    gameLoop(&swos.topTeamIngame, &swos.bottomTeamIngame);
+    gameLoop(&swos.topTeamInGame, &swos.bottomTeamInGame);
 
     updateCursor(false);
 }
@@ -307,11 +307,11 @@ bool checkGameKeys()
             }
             break;
         case SDL_SCANCODE_PAGEUP:
-            if (swos.bottomTeamData.playerNumber || swos.bottomTeamData.plCoachNum)
+            if (swos.bottomTeamData.playerNumber || swos.bottomTeamData.playerCoachNumber)
                 requestBench2();
             break;
         case SDL_SCANCODE_PAGEDOWN:
-            if (swos.topTeamData.playerNumber || swos.topTeamData.plCoachNum)
+            if (swos.topTeamData.playerNumber || swos.topTeamData.playerCoachNumber)
                 requestBench1();
             break;
         case SDL_SCANCODE_ESCAPE:
@@ -388,14 +388,14 @@ void togglePause()
 
 static void saveTeams()
 {
-    m_topTeamSaved = swos.topTeamIngame;
-    m_bottomTeamSaved = swos.bottomTeamIngame;
+    m_topTeamSaved = swos.topTeamInGame;
+    m_bottomTeamSaved = swos.bottomTeamInGame;
 }
 
 static void restoreTeams()
 {
-    swos.topTeamIngame = m_topTeamSaved;
-    swos.bottomTeamIngame = m_bottomTeamSaved;
+    swos.topTeamInGame = m_topTeamSaved;
+    swos.bottomTeamInGame = m_bottomTeamSaved;
 }
 
 static void rigTheScoreForPlayerToLose(int playerNo)
@@ -473,7 +473,7 @@ static void processPostGameData(TeamFile *team1, TeamFile *team2, int paramD7)
             if (paramD7 < 0) {
                 return;
             } else {
-                for (const auto teamData : { std::make_pair(team1, &swos.topTeamIngame), std::make_pair(team2, &swos.bottomTeamIngame) }) {
+                for (const auto teamData : { std::make_pair(team1, &swos.topTeamInGame), std::make_pair(team2, &swos.bottomTeamInGame) }) {
                     auto teamFile = teamData.first;
                     auto teamGame = teamData.second;
 
@@ -499,11 +499,11 @@ static void processPostGameData(TeamFile *team1, TeamFile *team2, int paramD7)
             swos.gameTeam1->andWith0xFE |= 1;
             swos.gameTeam2->andWith0xFE |= 1;
 
-            A1 = &swos.topTeamIngame;
+            A1 = &swos.topTeamInGame;
             A2 = team1;
             UpdatePlayerInjuries();
 
-            A1 = &swos.bottomTeamIngame;
+            A1 = &swos.bottomTeamInGame;
             A2 = team2;
             UpdatePlayerInjuries();
         }
@@ -512,9 +512,9 @@ static void processPostGameData(TeamFile *team1, TeamFile *team2, int paramD7)
 
 static void initPlayerCardChance()
 {
-    assert(swos.ingameGameLength <= 3);
+    assert(swos.gameLengthInGame <= 3);
 
-    // when the foul is made 4 bits (1-4) from stoppageTimer are extracted and compared to this value;
+    // when the foul is made 4 bits (1-4) from currentGameTick are extracted and compared to this value;
     // if greater the player gets a card (yellow or red)
     static const int kPlayerCardChancesPerGameLength[16][4] = {
         4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 7, 7, 8, 9, 10,    // 3 min
@@ -523,7 +523,7 @@ static void initPlayerCardChance()
         1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3,     // 10 min
     };
 
-    auto chanceTable = kPlayerCardChancesPerGameLength[swos.ingameGameLength];
+    auto chanceTable = kPlayerCardChancesPerGameLength[swos.gameLengthInGame];
 
     int chanceIndex = (SWOS::rand() & 0x1e) >> 1;
 
@@ -543,7 +543,7 @@ static void initPitchBallFactors()
     static const int kBallSpeedBounceFactorTable[] = { 24, 80, 80, 72, 64, 40, 32 };
     static const int kBallBounceFactorTable[] = { 88, 112, 104, 104, 96, 88, 80 };
 
-    int pitchType = swos.pitchNumberAndType & 0xff;
+    int pitchType = getPitchType();
     assert(static_cast<size_t>(pitchType) <= 6);
 
     const auto& pitchBallSpeedInfluence = amigaModeActive() ? kPitchBallSpeedInfluenceAmiga : kPitchBallSpeedInfluence;
@@ -575,11 +575,28 @@ static void initGameVariables()
 
     swos.team1NumSubs = 0;
     swos.team2NumSubs = 0;
-    swos.team1GoalkeeperReplaced = 0;
-    swos.team2GoalkeeperReplaced = 0;
 
     memset(&swos.team1StatsData, 0, sizeof(TeamStatsData));
     memset(&swos.team2StatsData, 0, sizeof(TeamStatsData));
+
+    memset((char *)&swos.topTeamData + 24, 0, sizeof(swos.topTeamData) - 24);
+    memset((char *)&swos.bottomTeamData + 24, 0, sizeof(swos.bottomTeamData) - 24);
+
+    swos.goalCounter = 0;
+    swos.stateGoal = 0;
+
+    swos.frameCount = 0;
+    swos.cameraXVelocity = swos.cameraYVelocity = 0;
+
+    swos.pl1Fire = 0;
+    swos.pl2Fire = 0;
+
+    swos.longFireFlag = swos.longFireTime = 0;
+
+    swos.currentGameTick = 0;
+    swos.currentTick = 0;
+
+    swos.AI_turnDirection = 1;
 }
 
 // in:
@@ -591,13 +608,17 @@ static void initGameVariables()
 //      A1 -> team 1 (structures from file)
 //      A2 -> team 2
 //
-void SWOS::InitializeIngameTeamsAndStartGame()
+void SWOS::InitializeInGameTeamsAndStartGame()
 {
     swos.plg_D0_param = D0;
     swos.plg_D3_param = D3;
 
     invokeWithSaved68kRegisters([]() {
-        initializeIngameTeamsAndStartGame(A1, A2, D1, D2, D7);
+        auto topTeamFile = A1.as<TeamFile *>();
+        auto bottomTeamFile = A2.as<TeamFile *>();
+        int minSubs = D1.asWord();
+        int maxSubs = D2.asWord();
+        initializeIngameTeamsAndStartGame(topTeamFile, bottomTeamFile, minSubs, maxSubs, D7.asWord());
     });
 
     SwosVM::ax = swos.gameCanceled;

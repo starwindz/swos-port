@@ -9,6 +9,7 @@
 #include "windowManager.h"
 #include "gameFieldMapping.h"
 #include "render.h"
+#include "sprites.h"
 #include "game.h"
 #include "replayExitMenu.h"
 

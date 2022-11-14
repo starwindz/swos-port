@@ -143,7 +143,7 @@ static void clampWindowSize(int& width, int& height)
 
 static void normalizeWindowSize(int& width, int& height, int defaultWidth, int defaultHeight)
 {
-    if (width < kMinimumWindowWidth || height <= kMinimumWindowHeight) {
+    if (width < kMinimumWindowWidth || height < kMinimumWindowHeight) {
         logInfo("Got invalid width/height (%dx%d), setting to default (%dx%d)", width, height, defaultWidth, defaultHeight);
         width = defaultWidth;
         height = defaultHeight;

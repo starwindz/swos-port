@@ -2,10 +2,44 @@
 
 #include "BaseTest.h"
 #include "KeyConfig.h"
-#include "file.h"
+#include "resData.h"
+
+#pragma pack(push, 1)
+struct BenchData {
+    byte pl1TapCount;
+    byte pl2TapCount;
+    int8_t pl1PreviousDirection;
+    int8_t pl2PreviousDirection;
+    byte pl1BlockWhileHoldingDirection;
+    byte pl2BlockWhileHoldingDirection;
+    int8_t controls;
+    int8_t teamData;
+    int8_t teamGame;
+    byte state;
+    int goToBenchTimer;
+    byte bench1Called;
+    byte bench2Called;
+    byte blockDirections;
+    int fireTimer;
+    byte blockFire;
+    int8_t lastDirection;
+    int movementDelayTimer;
+    bool trainingTopTeam;
+    bool teamsSwapped;
+    int alternateTeamsTimer;
+    int8_t arrowPlayerIndex;
+    int8_t selectedMenuPlayerIndex;
+    int8_t playerToEnterGameIndex;
+    int8_t playerToBeSubstitutedPos;
+    int8_t playerToBeSubstitutedOrd;
+    int8_t selectedFormationEntry;
+    byte shirtNumberTable[2 * kNumPlayersInTeam];
+};
+#pragma pack(pop)
 
 class RecordedDataTest : public BaseTest
 {
+protected:
     void init() override;
     void finish() override;
     void defaultCaseInit() override {};
@@ -16,15 +50,6 @@ class RecordedDataTest : public BaseTest
 private:
     static constexpr int kFrameNumSprites = 33;
 
-    enum InputControls : word {
-        kKeyboardOnly = 1,
-        kJoypadOnly = 2,
-        kJoypadAndKeyboard = 3,
-        kKeyboardAndJoypad = 4,
-        kTwoJoypads = 5,
-        kMouse = 6,
-    };
-
     enum ControlFlags : int16_t {
         kUp = 1,
         kDown = 2,
@@ -32,6 +57,7 @@ private:
         kRight = 8,
         kFire = 32,
         kBench = 64,
+        kEscape = 128,
     };
 
 #pragma pack(push, 1)
@@ -39,13 +65,32 @@ private:
         byte major;
         byte minor;
         byte fixedRandomValue;
+        int8_t pitchTypeOrSeason;
+        int8_t pitchType;
+        int8_t gameLength;
+        int8_t autoReplays;
+        int8_t allPlayerTeamsEqual;
         TeamFile topTeamFile;
         TeamFile bottomTeamFile;
+        byte topTeamCoachNo;
+        byte topTeamPlayerNo;
+        byte bottomTeamCoachNo;
+        byte bottomTeamPlayerNo;
+        byte extraTime;
+        byte penaltyShootout;
+        int8_t topTeamMarkedPlayer;
+        int8_t bottomTeamMarkedPlayer;
         TeamTactics userTactics[6];
-        InputControls inputControls;
+        word inputControls;
         dword initialFrame;
     };
-    struct Frame {
+    struct HeaderV1p2 : public Header {
+        dword trainingGameCareerSize;
+        int8_t season;
+        int8_t minSubstitutes;
+        int8_t maxSubstitutes;
+    };
+    struct FrameV1p0 {
         dword frameNo;
         ControlFlags player1Controls;
         ControlFlags player2Controls;
@@ -59,28 +104,52 @@ private:
         TeamStatsData bottomTeamStats;
         FixedPoint cameraX;
         FixedPoint cameraY;
-        dword gameTime;
+        int8_t cameraXVelocity;
+        int8_t cameraYVelocity;
+        byte gameTime[4];
+        byte team1Goals;
+        byte team2Goals;
+        byte gameState;
+        byte gameStatePl;
         Sprite sprites[kFrameNumSprites];
     };
+    struct FrameV1p3 : public FrameV1p0 {
+        BenchData bench;
+    };
+    using Frame = FrameV1p3;
 #pragma pack(pop)
 
     void setupRecordedDataVerification();
     void verifyRecordedData();
+    void verifyCalculateDeltaXandY();
     void finalizeRecordedDataVerification();
     void setFrameInput();
     void verifyFrame();
     void verifyTeam(const TeamGeneralInfo& recTeam, const TeamGeneralInfo& team);
-    void verifyShotChanceTable(int recOffset, int offset);
+    void verifyTeamGame(const TeamGame& recTeam, const TeamGame& team);
+    void verifySprites(const Sprite *sprites);
+    void verifyBench();
+    PlayerAnimationTable *convertAnimationTable(int offset);
+    int16_t *convertFrameIndicesTable(int offset);
+    void verifyPlayerSpriteOrder(char *players, const TeamGeneralInfo& team);
+    void verifyShotChanceTable(int recOffset, SwosDataPointer<int16_t> table);
     void verifySpritePointer(SwosDataPointer<Sprite> recSprite, SwosDataPointer<Sprite> sprite);
-    std::pair<SDL_RWops *, Header> openDataFile(const char *path);
+
+    ResFilenameList m_files;
+
+    std::pair<SDL_RWops *, HeaderV1p2> openDataFile(const std::string& file);
     Frame readNextFrame(SDL_RWops *f);
     static std::vector<SDL_Scancode> controlFlagsToKeys(ControlFlags flags, const DefaultKeySet& keySet);
 
-    FoundFileList m_files;
-
     SDL_RWops *m_dataFile;
-    Header m_header;
+    HeaderV1p2 m_header;
     Frame m_frame;
+    int m_frameSize;
+    bool m_firstFrame;
+    unsigned m_lastGameTick = 0;
+
+    int m_screenWidth;
+    int m_screenHeight;
 
     std::vector<SDL_Scancode> m_player1Keys;
     std::vector<SDL_Scancode> m_player2Keys;

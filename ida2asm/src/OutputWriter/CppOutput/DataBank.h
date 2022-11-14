@@ -15,12 +15,15 @@ class DataBank
 {
 public:
     enum VarType : uint8_t {
-        kInt, kConstant, kString, kOffset, kStruct,
+        kInt, kConstant, kString, kOffset, kStruct, kLabel,
     };
 
     struct Var
     {
         Var() {}
+        int declaredSize() const {
+            return exportedDecl && exportedSize > 0 ? exportedSize : size;
+        }
         String name;
         VarType type;
         uint8_t alignment = 0;
@@ -90,8 +93,9 @@ private:
     void addStructVariables(const StructVarsMap& localStructVars);
     void addOffsetVariables(const OffsetMap& offsetVarsMap);
     void consolidateOffsetVariables();
-    int extractVarAlignment(Var& var, const StructStream& structs);
-    size_t extractVarEffectiveAlignment(Var& var, size_t address, const StructStream& structs);
+    void consolidateIntroducedVariables();
+    int calculateDeclaredSize(Var& var, const StructStream& structs);
+    unsigned extractVarEffectiveAlignment(Var& var, int unionAlignment, size_t address, const StructStream& structs);
     int getElementSize(const String& type);
     void filterPotentialProcOffsetList();
     void fillExportedProcs();

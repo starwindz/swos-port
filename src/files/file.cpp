@@ -9,14 +9,18 @@
 
 static std::string m_rootDir;
 
+static bool isAbsolutePath(const char *path);
+static void traverseDirectory(DIR *dir, const char *extension, std::function<bool(const char *, int, const char *)> f);
+static bool isAnyExtensionAllowed(const char *ext, const char **allowedExtensions, size_t numAllowedExtensions);
+
 // Opens a file with consideration to SWOS root directory.
 SDL_RWops *openFile(const char *path, const char *mode /* = "rb" */)
 {
 #ifdef _WIN32
-    auto f = SDL_RWFromFile((m_rootDir + path).c_str(), mode);
+    auto f = SDL_RWFromFile(isAbsolutePath(path) ? path : (m_rootDir + path).c_str(), mode);
 #else
     // convert every path to lower case and replace backslashes with forward slashes
-    auto fullPath = m_rootDir + path;
+    auto fullPath = isAbsolutePath(path) ? path : m_rootDir + path;
     std::transform(fullPath.begin(), fullPath.end(), fullPath.begin(), [](unsigned char c) {
         return c == '\\' ? '/' : std::tolower(c);
     });
@@ -306,19 +310,6 @@ const char *getBasename(const char *path)
     return result ? result + 1 : path;
 }
 
-static bool isAnyExtensionAllowed(const char *ext, const char **allowedExtensions, size_t numAllowedExtensions)
-{
-    if (!allowedExtensions)
-        return true;
-
-    while (numAllowedExtensions--) {
-        if (!_stricmp(ext, *allowedExtensions++))
-            return true;
-    }
-
-    return false;
-}
-
 FoundFileList findFiles(const char *extension, const char *dirName /* = nullptr */,
     const char **allowedExtensions /* = nullptr */, size_t numAllowedExtensions /* = 0 */)
 {
@@ -342,6 +333,44 @@ FoundFileList findFiles(const char *extension, const char *dirName /* = nullptr 
         sdlErrorExit("Couldn't open %s directory", dirName ? dirName : "SWOS root");
 
     bool acceptAll = extension && (extension[0] == '\0' || extension[1] == '*');
+    if (acceptAll)
+        extension = nullptr;
+
+    traverseDirectory(dir, extension, [&](const char *filename, int, const char *dot) {
+        size_t extensionOffset = dot - filename + 1;
+        if (isAnyExtensionAllowed(dot + 1, allowedExtensions, numAllowedExtensions))
+            result.emplace_back(filename, extensionOffset);
+        return true;
+    });
+
+    logInfo("Found %d files", result.size());
+
+    return result;
+}
+
+void traverseDirectory(const char *directory, const char *extension,
+    std::function<bool(const char *, int, const char *)> f)
+{
+    if (auto dir = opendir(directory))
+        traverseDirectory(dir, extension, f);
+}
+
+static bool isAbsolutePath(const char *path)
+{
+#ifdef _WIN32
+    return isalpha(path[0]) && path[1] == ':' && path[2] == getDirSeparator();
+#else
+    return path[0] == getDirSeparator();
+#endif
+}
+
+// Traverses a given directory and invokes callback function for every encountered file/directory.
+// If an extension is given callback will only be invoked for the files with matching extension.
+// If not nullptr, extension is expected to start with a dot.
+static void traverseDirectory(DIR *dir, const char *extension,
+    std::function<bool(const char *, int, const char *)> f)
+{
+    assert(dir);
 
     for (dirent *entry; entry = readdir(dir); ) {
 #ifdef _WIN32
@@ -349,52 +378,48 @@ FoundFileList findFiles(const char *extension, const char *dirName /* = nullptr 
 #else
         auto len = strlen(entry->d_name);
 #endif
-
-        if (!len)
+        if (!len || entry->d_name[0] == '.' && (len == 1 || len == 2 && entry->d_name[1] == '.'))
             continue;
 
         auto dot = entry->d_name + len - 1;
         while (dot >= entry->d_name && *dot != '.')
             dot--;
 
-        if (dot < entry->d_name)
-            continue;
-
-        if (!acceptAll) {
-            if (len < 4)
+        if (extension && *extension) {
+            if (dot < entry->d_name)
                 continue;
 
-            bool match = true;
+            assert(extension[0] == '.' && dot[0] == '.');
 
-            int i = 0;
-            for (; i < 3; i++) {
-                if (!dot[i + 1])
-                    break;
-                if (toupper(extension[i + 1]) != toupper(dot[i + 1])) {
+            bool match = true;
+            int extLen = strlen(extension);
+
+            int i = 1;
+            for (; i < extLen && dot[i]; i++) {
+                if (toupper(extension[i]) != toupper(dot[i])) {
                     match = false;
                     break;
                 }
             }
 
-            if (!match || i == 3 && dot[4])
-                continue;
-        } else {
-            // skip "." and ".." entries
-            if (len == 1 && entry->d_name[0] == '.' ||
-                len == 2 && entry->d_name[0] == '.' && entry->d_name[1] == '.')
+            if (!match || i == extLen && dot[i] && i > 1)
                 continue;
         }
+        if (!f(entry->d_name, len, dot))
+            break;
+    }
+    closedir(dir);
+}
 
-        if (!isAnyExtensionAllowed(dot + 1, allowedExtensions, numAllowedExtensions))
-            continue;
+static bool isAnyExtensionAllowed(const char *ext, const char **allowedExtensions, size_t numAllowedExtensions)
+{
+    if (!allowedExtensions)
+        return true;
 
-        size_t extensionOffset = dot - entry->d_name + 1;
-        result.emplace_back(entry->d_name, extensionOffset);
+    while (numAllowedExtensions--) {
+        if (!_stricmp(ext, *allowedExtensions++))
+            return true;
     }
 
-    closedir(dir);
-
-    logInfo("Found %d files", result.size());
-
-    return result;
+    return false;
 }

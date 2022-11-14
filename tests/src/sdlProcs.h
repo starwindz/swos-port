@@ -23,11 +23,13 @@ enum SdlApiIndex : size_t {
     SDL_GetMouseStateIndex = 209,
     SDL_SetCursorIndex = 217,
     SDL_SetTextureColorModIndex = 272,
+    SDL_LowerBlitIndex = 430,
     SDL_GetTicksIndex = 444,
     SDL_DelayIndex = 447,
     SDL_GetNumDisplayModesIndex = 465,
     SDL_GetDisplayModeIndex = 466,
     SDL_RenderCopyFIndex = 664,
+    SDL_RenderCopyExFIndex = 665,
 };
 
 bool initSdlApiTable();
@@ -36,18 +38,22 @@ void *setSdlProc(SdlApiIndex index, void *hook);
 void restoreSdlProc(SdlApiIndex index);
 void restoreOriginalSdlFunctionTable();
 void takeOverInput();
+void resetKeyboardInput();
 
 void queueSdlEvent(const SDL_Event& event);
 void queueSdlMouseWheelEvent(int direction);
 void queueSdlMouseMotionEvent(int x, int y);
 void queueSdlMouseButtonEvent(bool mouseUp = false, int button = 1);
-void queueSdlKeyDown(SDL_Scancode keyCode);
-void queueSdlKeyUp(SDL_Scancode keyCode);
+void queueSdlKeyDown(SDL_Scancode keycode);
+void queueSdlKeyUp(SDL_Scancode keycode);
+void setSdlKeyDown(SDL_Scancode keycode);
+void setSdlKeyUp(SDL_Scancode keycode);
 
 void setSdlMouseState(int x, int y, bool leftClick = false, bool rightClick = false);
 void bumpMouse();
 void resetSdlInput();
 void killSdlDelay();
+void resurrectSdlDelay();
 
 void disableRendering();
 void enableRendering();

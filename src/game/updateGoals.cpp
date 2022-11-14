@@ -42,7 +42,7 @@ static void goalScored(int teamNum, Sprite *scorer)
     swos.lastPlayerScored = scorer;
     swos.currentScorer = scorer;
 
-    auto teamGame = teamNum == 1 ? &swos.topTeamIngame : &swos.bottomTeamIngame;
+    auto teamGame = teamNum == 1 ? &swos.topTeamInGame : &swos.bottomTeamInGame;
     auto team = swos.topTeamData.inGameTeamPtr.asAligned() == teamGame ? &swos.topTeamData : &swos.bottomTeamData;
 
     swos.lastTeamScored = team;

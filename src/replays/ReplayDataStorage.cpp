@@ -93,8 +93,8 @@ bool ReplayDataStorage::fetchFrameData(FrameData& data)
 
     m_replayOffset++;   // skip previous frame offset
 
-    data.cameraX = m_replayData[m_replayOffset++].asFloat();
-    data.cameraY = m_replayData[m_replayOffset++].asFloat();
+    data.cameraX.setRaw(m_replayData[m_replayOffset++]);
+    data.cameraY.setRaw(m_replayData[m_replayOffset++]);
 
     int goals = m_replayData[m_replayOffset++];
     data.team1Goals = goals & 0xffff;
@@ -105,7 +105,7 @@ bool ReplayDataStorage::fetchFrameData(FrameData& data)
     return true;
 }
 
-void ReplayDataStorage::recordSprite(int spriteIndex, float x, float y)
+void ReplayDataStorage::recordSprite(int spriteIndex, FixedPoint x, FixedPoint y)
 {
     updateSpriteSceneOffsets();
 
@@ -181,8 +181,7 @@ bool ReplayDataStorage::fetchObject(Object& obj)
             return false;
 
         obj.type = ObjectType::kSprite;
-        obj.pictureIndex = m_replayData[m_replayOffset++] & ~kObjectTypeMask;
-
+        obj.imageIndex = m_replayData[m_replayOffset++] & ~kObjectTypeMask;
         obj.x = m_replayData[m_replayOffset++].asFloat();
         obj.y = m_replayData[m_replayOffset++].asFloat();
         break;

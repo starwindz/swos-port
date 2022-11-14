@@ -16,7 +16,7 @@ void finishCurrentReplay();
 
 void setReplayRecordingEnabled(bool enabled);
 void startNewHighlightsFrame();
-void saveCoordinatesForHighlights(int spriteIndex, float x, float y);
+void saveCoordinatesForHighlights(int spriteIndex, FixedPoint x, FixedPoint y);
 void saveStatsForHighlights(const GameStats& stats);
 void saveSfxForHighlights(int sampleIndex, int volume);
 

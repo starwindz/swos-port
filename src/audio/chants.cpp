@@ -43,7 +43,7 @@ void loadIntroChant()
     if (!soundEnabled())
         return;
 
-    auto color = swos.topTeamIngame.prShirtCol;
+    auto color = swos.topTeamInGame.prShirtCol;
     assert(color < 16);
 
     static const int8_t kIntroTeamChantIndices[16] = {

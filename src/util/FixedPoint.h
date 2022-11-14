@@ -3,7 +3,7 @@
 // fixed point, 16.16, signed (sign bit in the whole part), fraction always positive
 struct FixedPoint {
     FixedPoint() = default;
-    FixedPoint(const FixedPoint& other) : m_value(other.m_value) {}
+    constexpr FixedPoint(const FixedPoint& other) : m_value(other.m_value) {}
     constexpr FixedPoint(int value, bool raw = false) : m_value(raw ? value : value << 16) {}
     constexpr FixedPoint(unsigned value) : m_value(value) {}
     constexpr FixedPoint(int whole, int fraction) : m_value((whole << 16) | fraction) {}
@@ -24,6 +24,12 @@ struct FixedPoint {
     }
     void set(int whole, int fraction) {
         m_value = (whole << 16) | fraction;
+    }
+    void setWhole(int whole) {
+        m_value = (whole << 16) | fraction();
+    }
+    void clearFraction() {
+        m_value &= 0xffff0000;
     }
     int32_t raw() const {
         return m_value;
@@ -46,6 +52,9 @@ struct FixedPoint {
     int sgn() const {
         return m_value < 0 ? -1 : 1;
     }
+    bool nearlyEqual(const FixedPoint& other) const {
+        return std::abs(other.m_value - m_value) < 0x100;
+    }
     operator float() const {
         return static_cast<float>(m_value & 0xffff) / 0x10000 + (m_value >> 16);
     }
@@ -58,6 +67,9 @@ struct FixedPoint {
     bool operator<(int value) const {
         return whole() < value;
     }
+    bool operator<=(const FixedPoint& other) const {
+        return m_value <= other.m_value;
+    }
     bool operator<=(int value) const {
         return !operator>(value);
     }
@@ -69,6 +81,9 @@ struct FixedPoint {
     }
     bool operator>(int16_t value) const {
         return operator>(static_cast<int>(value));
+    }
+    bool operator>=(const FixedPoint& other) const {
+        return m_value >= other.m_value;
     }
     bool operator>=(int value) const {
         return whole() >= value;

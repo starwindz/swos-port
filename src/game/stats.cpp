@@ -168,7 +168,7 @@ static std::pair<const TeamStatsData *, const TeamStatsData *> getTeamStatsPoint
     auto leftTeam = &swos.topTeamData;
     auto rightTeam = &swos.bottomTeamData;
 
-    if (leftTeam->inGameTeamPtr.asAligned() != &swos.topTeamIngame)
+    if (leftTeam->inGameTeamPtr.asAligned() != &swos.topTeamInGame)
         std::swap(leftTeam, rightTeam);
 
     return { leftTeam->teamStatsPtr.asAligned(), rightTeam->teamStatsPtr.asAligned() };
@@ -197,8 +197,8 @@ static void drawTeamNames()
         rightTeamX += 5;
     }
 
-    drawStatsText(leftTeamX, kTeamNamesY, swos.topTeamIngame.teamName);
-    drawStatsText(rightTeamX, kTeamNamesY, swos.bottomTeamIngame.teamName);
+    drawStatsText(leftTeamX, kTeamNamesY, swos.topTeamInGame.teamName);
+    drawStatsText(rightTeamX, kTeamNamesY, swos.bottomTeamInGame.teamName);
 }
 
 static void drawPossession(const TeamStatsData *leftTeamStats, const TeamStatsData *rightTeamStats)

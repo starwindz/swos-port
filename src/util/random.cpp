@@ -3,6 +3,10 @@
 static byte m_xorIndex;
 static byte m_xorKey;
 
+#ifdef SWOS_TEST
+static std::function<int()> m_hook;
+#endif
+
 static std::array<byte, 256> kRandomTable = {
     124, 154, 146, 70, 101, 250, 173, 89, 117, 26, 67, 12, 238, 147, 226,
     34, 78, 199, 253, 107, 125, 87, 170, 208, 188, 72, 5, 51, 224, 246,
@@ -23,15 +27,47 @@ static std::array<byte, 256> kRandomTable = {
     166, 165, 53, 112, 136, 23, 63, 49, 248, 215, 58,
 };
 
+static int random(byte& seed, byte& xorKey, byte& xorIndex);
+
 int SWOS::rand()
 {
-    if (!swos.seed)
-        m_xorKey = kRandomTable[++m_xorIndex];
+#ifdef SWOS_TEST
+    if (m_hook)
+        return m_hook();
+#endif
+    return random(swos.seed, m_xorKey, m_xorIndex);
+}
 
-    return kRandomTable[swos.seed++] ^ m_xorKey;
+int SWOS::rand2()
+{
+#ifdef SWOS_TEST
+    if (m_hook)
+        return m_hook();
+#endif
+    return random(swos.seed2, swos.randXorKey2, swos.randXorIndex2);
+}
+
+#ifdef SWOS_TEST
+void SWOS::setRandHook(std::function<int()> hook)
+{
+    m_hook = hook;
+}
+#endif
+
+static int random(byte& seed, byte& xorKey, byte& xorIndex)
+{
+    if (!seed)
+        xorKey = kRandomTable[++xorIndex];
+
+    return kRandomTable[seed++] ^ xorKey;
 }
 
 void SWOS::Rand()
 {
     D0 = SWOS::rand();
+}
+
+void SWOS::Rand2()
+{
+    D0 = SWOS::rand2();
 }

@@ -20,12 +20,13 @@ SetCameraCoordinates - ScrollToCurrent
 UpdateCornerFlagSprite - FadeAndPlayWinCupAnimation
 FadeAndPlayRelegatedAnimation - PlayNewSeasonAnimations
 ShowRestOfPics - StartingMatch
-ClearSaveFlagForGoalSprites - BookPlayer
+ClearSaveFlagForGoalSprites - MarkPlayer
 copySpriteAllowAND - stateGoal
 
-# advertisements
-CopyAdvertisementsData - BumpAllPlayersLastPlayedHalfAtGameStart
-advertIndex - yellowCardTable
+# advertisements + some of sprites code
+CopyAdvertisementsData - InitTeamsData
+# + game time + pitch type tables + ref. booking tables
+advertIndex - team1StatsData
 
 # result + bunch of sprites
 big_S_Sprite - playerMarkSprite
@@ -36,18 +37,16 @@ team1NameLength - dseg_114C96
 aSprite_dat
 UnchainSpriteInMenus - DrawSpriteCentered
 ClearSprite - ShowMenu
-InitDisplaySprites - InitTeamsData
 DrawSprite_entry2
 MakeSpritesFromPlayerNames - AI_SetControlsDirection
-# + game time + pitch type tables
-dseg_17D8EB - team1StatsData
+MovePlayers
 numberBuffer - prevLastPlayer
+bookedPlayerCardOrNumberSprite
 allSpritesArray - lastSelectedTeam
 numSpritesToRender
 
 # game init & sprite coloring
-LoadSpritesAndFixOffsets
-teamFilenamesTable - ingameTeamPlayerOffsets
+teamFilenamesTable - inGameTeamPlayerOffsets
 useIndividualPlayerSkinColor - fireCounter
 team1Ptr - aCharset_dat
 spriteFixupFlag - g_skipNonCompetitionFiles
@@ -55,7 +54,7 @@ spriteFixupFlag - g_skipNonCompetitionFiles
 #topTeamSaved - numSpritesToRender
 playerCardChances3min - ballOutOfGameTimer
 team1MostFrequentFace - statsTimer
-#whiteGuyConvertTable - pitchNumberAndType #ref: FillSkinColorConversionTable
+whiteGuyConvertTable - topTeamPtr
 ballSpeedBounceFactorTable - kGravityConstant
 
 # pitches
@@ -149,12 +148,12 @@ g_gotExtraMemoryForSamples - playingCornerSample
 substituteSampleTimer - playingThrowInSample
 
 # referee
-UpdateReferee
+UpdateReferee - PlayStopGoodPassSampleIfNeeded
 InitRefereeAnimationTable
 refereeSpeed
 
 # big S sprite + some misc.
-big_S_pictureIndexArray - passingState
+big_S_pictureIndexArray - goodPassSampleCommand
 bumpBigSFrame
 
 # big removal: all the EGA crap + AIL + C-lib
@@ -297,8 +296,6 @@ SetDefaultNameAndSurname
 InitHighestScorersTable
 InitUserTactics
 EndFirstHalf
-BumpAllPlayersLastPlayedHalfAtGameStart
-BumpAllPlayersLastPlayedHalfPostGame
 EndOfGame
 EndFirstExtraTime
 StartPenalties
@@ -340,6 +337,8 @@ SetExitMenuFlag, function
 CalcMenuEntryAddress, function
 # enforce dword alignment
 g_currentMenu, array char[6500] (align: 4)
+# play match menu symbol not needed, but we must force dword alignment
+playMatchMenu, array char (align: 4)
 previousMenuItem, MenuEntry *
 g_exitMenu, word
 menuCursorFrame, word
@@ -452,10 +451,8 @@ team2Player11Sprite, Sprite
 team1CurPlayerNumSprite, Sprite
 team2CurPlayerNumSprite, Sprite
 playerMarkSprite, Sprite
-bookedPlayerCardOrNumberSprite, Sprite
 
 # pitch
-pitchNumberAndType, word
 g_pitchDatBuffer, array char[10032]
 pitchBallSpeedFactor, word
 gamePitchTypeOrSeason, word
@@ -482,7 +479,7 @@ aNotAHighlights, array const char
 
 # camera
 cameraCoordinatesValid, word
-cameraDirection, word
+cameraDirection, int16_t
 cameraXVelocity, int16_t
 cameraYVelocity, int16_t
 breakCameraMode, word
@@ -511,8 +508,9 @@ g_inSubstitutesMenu, word
 g_substituteInProgress, int16_t
 plComingX, word
 plComingY, word
-hideBallShadow, word
-playerNormalStandingAnimTable, PlayerAnimationTable
+hideBall, word
+# make sure no alignment or it breaks tests
+playerNormalStandingAnimTable, PlayerAnimationTable (align: 1)
 stoppageTimerTotal, word
 stoppageTimerActive, word
 pl1Tactics, word
@@ -537,10 +535,8 @@ dosMemOfs60c00h, char *
 
 # game loop
 UpdateBall, function
-MovePlayers, function
 DoGoalkeeperSprites, function
 MarkPlayer, function
-BookPlayer, function
 UpdateControlledPlayerNumbers, function
 SetBallPosition, function
 frameCount, word
@@ -559,7 +555,8 @@ UpdatePlayerBeingPassedTo, function
 UpdatePlayersAndBall, function
 UpdatePlayerInjuries, function
 AssignFakeGoalsToScorers, function
-SetIngameTeamsPrimaryColors, function
+SetInGameTeamsPrimaryColors, function
+SetNextPlayerFrame, function
 cseg_2F0E2, function
 cseg_2F194, function
 cseg_2F3AB, function
@@ -568,7 +565,7 @@ cseg_8F66C, function
 SetTeamSecondaryColors, function
 GetAveragePlayerPriceInSelectedTeams, function
 GetNumberOfAvailablePlayers, function
-InitIngameTeamStructure, function
+InitInGameTeamStructure, function
 team1AppPercent, word
 team2AppPercent, word
 averagePlayerPrice, word
@@ -597,13 +594,15 @@ kGravityConstant, dword
 kGoalkeeperDiveDeltas, array FixedPoint[8]
 
 # referee
-refComingAnimTable, word
-refWaitingAnimTable, word
-refYellowCardAnimTable, word
-refRedCardAnimTable, word
-refSecondYellowAnimTable, word
+# careful with these tables, must be no alignment bytes or they ruin all frame tables
+refComingAnimTable, word (align: 1)
+refWaitingAnimTable, word (align: 1)
+refYellowCardAnimTable, word (align: 1)
+refRedCardAnimTable, word (align: 1)
+refSecondYellowAnimTable, word (align: 1)
 foulXCoordinate, word
 foulYCoordinate, word
+refTimer, word
 
 # result
 resultTimer, int16_t
@@ -627,8 +626,8 @@ team2PenaltyGoals, word
 # teams
 gameTeam1, TeamFile *
 gameTeam2, TeamFile *
-topTeamIngame, TeamGame
-bottomTeamIngame, TeamGame
+topTeamInGame, TeamGame
+bottomTeamInGame, TeamGame
 topTeamPtr, TeamGame *
 bottomTeamPtr, TeamGame *
 topTeamData, TeamGeneralInfo
@@ -657,20 +656,21 @@ g_cameraLeavingSubsTimer, word
 g_waitForPlayerToGoInTimer, word
 team1NumSubs, word
 team2NumSubs, word
-team1GoalkeeperReplaced, word
-team2GoalkeeperReplaced, word
 showFansCounter, word
 
 # random number generator
 randomSeed, word
 seed, byte
-randomTable, array byte[256]
+seed2, byte
+randXorIndex2, byte
+randXorKey2, byte
+kRandomTable, array byte[256]
 
 # versus/stadium menus
-leftTeamCoachNo, word
-rightTeamCoachNo, word
-leftTeamPlayerNo, word
-rightTeamPlayerNo, word
+topTeamCoachNo, word
+bottomTeamCoachNo, word
+topTeamPlayerNo, word
+bottomTeamPlayerNo, word
 
 # misc
 Randomize2, function
@@ -681,8 +681,8 @@ StartingMatch, function
 aSensibleWorldOfSoccerV2_0, array const char
 skillsPerQuadrant, array char[245]
 currentTick, word
-stoppageTimer, word
-lastStoppageTimerValue, word
+currentGameTick, word
+lastGameTick, word
 aChairmanScenes, array const char
 animPatternsState, word
 playGame, word
@@ -710,17 +710,16 @@ careerFileBuffer, word
 g_exitGameFlag, word
 gameCanceled, word
 careerTeam, array char[1292]
+currentTeam, TeamFile (align: 1)
 
 # play match menu
 playerNumThatStarted, word
-careerTeamSetupDone, word
+careerTeamCoachOnly, word
 isFirstPlayerChoosingTeam, word
 playMatchTeam1Ptr, TeamFile *
 playMatchTeam2Ptr, TeamFile *
 squadChangesAllowed, word
 
-BumpAllPlayersLastPlayedHalfAtGameStart, function
-BumpAllPlayersLastPlayedHalfPostGame, function
 StartPenalties, function
 gameStatePl, GameState
 gameState, GameState
@@ -734,9 +733,9 @@ EndFirstHalf, function
 EndFirstExtraTime, function
 EndOfGame, function
 StartFirstExtraTime, function
-timerDifference, word
+lastFrameTicks, word
 extraTimeState, word
-ingameGameLength, word
+gameLengthInGame, word
 
 # update ball
 goalScored, word
@@ -747,12 +746,26 @@ goalTypeScored, word
 
 # keep these so the competition buffer integrity static assert could work
 competitionFileBuffer, word
+g_numSelectedTeams, word (align: 1)
 g_selectedTeams, array char[68400]
 
 # needed for tests
-animTableStart, array char
+PlayTrainingGame, function
+pitchTypeOrSeason, word
+friendlySeason, word
+minSubstitutes, word
+maxSubstitutes, word
+animTablesStart, array char (align: 2)
+animTablesEnd, array char
+frameIndicesTablesStart, array char (align: 2)
+strongHeaderUpFrames, array char
+refSecondYellowFrames, array int16_t
+ballMovingFrameIndices, array int16_t
+ballStaticFrameIndices, array int16_t
 playerShotChanceTable, array int16_t[30]
-goalieSkill0Table, array int16_t[30]
+goalieSkillTables, array int16_t *[8]
+AI_turnDirection, word
+USER_A, TeamTactics (align: 1)
 
 ### debug dump
 #AI_attackHalf, word
@@ -776,7 +789,7 @@ goalieSkill0Table, array int16_t[30]
 #
 
 @insert-hook
-AdjustPlayerSkills, 246, FixTwoCPUsGameCrash
+AdjustPlayerSkills, 248, FixTwoCPUsGameCrash
 ViewOpponentsSelect, 66, RecalculateReachableEntries
 ReturnFromViewOpponent, 9, RecalculateReachableEntries
 
@@ -800,6 +813,7 @@ AI_SetControlsDirection, 820, WriteAmigaModeDirectionFlip
 WaitRetrace
 DrawAnimatedPatterns
 Rand
+Rand2
 
 # files
 LoadFile, int
@@ -827,11 +841,10 @@ Player2StatusProc
 
 # referee
 ActivateReferee
-SetRefereeToLeavingState
 RemoveReferee
 
 # game
-InitializeIngameTeamsAndStartGame
+InitializeInGameTeamsAndStartGame
 ToMainGameLoop
 GoalScored
 GameOver
@@ -897,10 +910,10 @@ UpdateCameraBreakMode, 281, goalCameraInterval, 55
 UpdateCameraBreakMode, 537, letPlayerControlCameraInterval, 550
 PlayerBeginTackling, 15, playerDownTacklingInterval, 55
 PlayerHeading, 9, playerDownHeadingInterval, 55
-UpdatePlayersAndBall, 346, penaltyLockInterval, 55
-UpdatePlayersAndBall, 1189, goalkeeperCatchLimitZ, 27
-UpdatePlayersAndBall, 2131, hideResultInterval, 55
-UpdatePlayersAndBall, 2955, hideResultInterval, 55
+UpdatePlayersAndBall, 343, penaltyLockInterval, 55
+UpdatePlayersAndBall, 1187, goalkeeperCatchLimitZ, 27
+UpdatePlayersAndBall, 2133, hideResultInterval, 55
+UpdatePlayersAndBall, 2958, hideResultInterval, 55
 AI_SetControlsDirection, 128, clearResultInterval, 660
 AI_SetControlsDirection, 134, clearResultInterval, 660
 AI_SetControlsDirection, 140, clearResultHalftimeInterval, 385
@@ -916,3 +929,6 @@ TeamStatsData, 14
 FixedPoint, 4
 PlayerAnimationTable, 130
 PositionsTable, 72
+TeamTactics, 370
+TeamFile, 684
+TeamGame, 1704

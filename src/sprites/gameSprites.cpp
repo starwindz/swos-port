@@ -5,13 +5,18 @@
 #include "referee.h"
 #include "replays.h"
 #include "camera.h"
+#ifdef SWOS_TEST
+# include "render.h"
+#endif
+
+static constexpr int kPlayerSpritesStart = 4;
 
 static Sprite m_cornerFlagSpriteTopLeft, m_cornerFlagSpriteTopRight,
     m_cornerFlagSpriteBottomLeft, m_cornerFlagSpriteBottomRight;
 
 static const std::array<Sprite *, 4> kCornerFlagSprites = {
     &m_cornerFlagSpriteTopLeft, &m_cornerFlagSpriteTopRight,
-    &m_cornerFlagSpriteBottomLeft, &m_cornerFlagSpriteBottomRight
+    &m_cornerFlagSpriteBottomLeft, &m_cornerFlagSpriteBottomRight,
 };
 
 static Sprite * const kAllSprites[] = {
@@ -44,13 +49,12 @@ static Sprite * const kAllSprites[] = {
     &swos.team1CurPlayerNumSprite,
     &swos.team2CurPlayerNumSprite,
     &swos.playerMarkSprite,
-    &swos.bookedPlayerCardOrNumberSprite,
+    bookedPlayerNumberSprite(),
     refereeSprite(),
     &m_cornerFlagSpriteTopLeft,
     &m_cornerFlagSpriteTopRight,
     &m_cornerFlagSpriteBottomLeft,
     &m_cornerFlagSpriteBottomRight,
-    &swos.currentPlayerNameSprite,
 };
 
 static std::array<Sprite *, std::size(kAllSprites)> m_sortedSprites;
@@ -60,21 +64,36 @@ static const TeamGame *m_topTeam;
 static const TeamGame *m_bottomTeam;
 
 static void sortDisplaySprites();
-static bool shouldZoomSprite(int pictureIndex);
+static bool shouldZoomSprite(int imageIndex);
 
 void initGameSprites(const TeamGame *topTeam, const TeamGame *bottomTeam)
 {
     m_topTeam = topTeam;
     m_bottomTeam = bottomTeam;
 
-    for (auto& sprite : kCornerFlagSprites) {
+    for (auto sprite : kAllSprites)
+        sprite->init();
+    for (auto sprite : kCornerFlagSprites) {
+        sprite->init();
         sprite->teamNumber = 3;
-        sprite->frameIndex = -1;
-        sprite->frameDelay = 5;
-        sprite->cycleFramesTimer = 1;
-        sprite->unk003[4] = 1;
-        sprite->show();
     }
+
+    constexpr int kGoalX = 300;
+    constexpr int kTopGoalY = 129;
+    constexpr int kBottomGoalY = 778;
+
+    swos.goal1TopSprite.x = kGoalX;
+    swos.goal1TopSprite.y = kTopGoalY;
+    swos.goal1TopSprite.destX = kGoalX;
+    swos.goal1TopSprite.destY = kTopGoalY;
+    swos.goal1TopSprite.setImage(kTopGoalSprite);
+    swos.goal2BottomSprite.x = kGoalX;
+    swos.goal2BottomSprite.y = kBottomGoalY;
+    swos.goal2BottomSprite.destX = kGoalX;
+    swos.goal2BottomSprite.destY = kBottomGoalY;
+    swos.goal2BottomSprite.setImage(kBottomGoalSprite);
+
+    bookedPlayerNumberSprite()->setImage(kPlayerMarkSprite);
 
     initializePlayerSpriteFrameIndices();
 }
@@ -120,18 +139,18 @@ static void verifySprites()
 {
     for (const auto& sprite : kAllSprites) {
         auto assertIn = [sprite](int start, int end, bool allowEmpty = false) {
-            if (!allowEmpty || sprite->pictureIndex != -1)
-                assert(sprite->pictureIndex >= start && sprite->pictureIndex <= end);
+            if (!allowEmpty || sprite->hasImage())
+                assert(sprite->imageIndex >= start && sprite->imageIndex <= end);
         };
 
         if (sprite == &swos.ballShadowSprite)
-            assert(sprite->pictureIndex == kBallShadowSprite || sprite->pictureIndex == -1);
+            assert(sprite->imageIndex == kBallShadowSprite || sprite->hasNoImage());
         else if (sprite == &swos.ballSprite)
             assertIn(kBallSprite1, kBallSprite4, true);
         else if (sprite == &swos.goal1TopSprite)
-            assert(sprite->pictureIndex == kTopGoalSprite);
+            assert(sprite->imageIndex == kTopGoalSprite);
         else if (sprite == &swos.goal2BottomSprite)
-            assert(sprite->pictureIndex == kBottomGoalSprite);
+            assert(sprite->imageIndex == kBottomGoalSprite);
         else if (sprite == &swos.goalie1Sprite)
             assertIn(kTeam1MainGoalkeeperSpriteStart, kTeam1ReserveGoalkeeperSpriteEnd);
         else if (sprite == &swos.goalie2Sprite)
@@ -151,18 +170,16 @@ static void verifySprites()
         else if (sprite == &swos.team1CurPlayerNumSprite || sprite == &swos.team2CurPlayerNumSprite)
             assertIn(kSmallDigit1, kSmallDigit16, true);
         else if (sprite == &swos.playerMarkSprite)
-            assert(sprite->pictureIndex == kPlayerMarkSprite || sprite->pictureIndex == -1);
-        else if (sprite == &swos.bookedPlayerCardOrNumberSprite)
-            assert(sprite->pictureIndex >= kSmallDigit1 && sprite->pictureIndex <= kSmallDigit16 ||
-                sprite->pictureIndex == kRedCardSprite || sprite->pictureIndex == kYellowCardSprite ||
-                sprite->pictureIndex == -1);
+            assert(sprite->imageIndex == kPlayerMarkSprite || sprite->imageIndex == -1);
+        else if (sprite == bookedPlayerNumberSprite())
+            assert(sprite->imageIndex >= kSmallDigit1 && sprite->imageIndex <= kSmallDigit16 ||
+                sprite->imageIndex == kRedCardSprite || sprite->imageIndex == kYellowCardSprite ||
+                sprite->hasNoImage());
         else if (sprite == refereeSprite())
             assertIn(kRefereeSpriteStart, kRefereeSpriteEnd, true);
         else if (sprite == &m_cornerFlagSpriteTopLeft || sprite == &m_cornerFlagSpriteTopRight ||
             sprite == &m_cornerFlagSpriteBottomLeft || sprite == &m_cornerFlagSpriteBottomRight)
             assertIn(kCornerFlagSpriteStart, kCornerFlagSpriteEnd);
-        else if (sprite == &swos.currentPlayerNameSprite)
-            assertIn(kTeam1PlayerNamesStartSprite, kTeam2PlayerNamesEndSprite, true);
     }
 }
 #endif
@@ -185,20 +202,29 @@ void drawSprites(float xOffset, float yOffset)
     for (int i = 0; i < m_numSpritesToRender; i++) {
         auto sprite = m_sortedSprites[i];
 
-        if (sprite->pictureIndex == -1)
+        if (sprite->hasNoImage())
             continue;
 
         assert(sprite->visible);
 
-        auto x = sprite->x.asFloat() - cameraX;
-        auto y = sprite->y.asFloat() - cameraY - sprite->z.asFloat();
+        auto x = sprite->x - cameraX;
+        auto y = sprite->y - cameraY - sprite->z;
 
-        auto zoom = shouldZoomSprite(sprite->pictureIndex);
-        sprite->onScreen = drawSprite(sprite->pictureIndex, x, y, zoom, xOffset, yOffset);
+        auto zoom = shouldZoomSprite(sprite->imageIndex);
+        sprite->onScreen = drawSprite(sprite->imageIndex, x, y, zoom, xOffset, yOffset);
+
+#ifdef SWOS_TEST
+        const auto& sprImage = getSprite(sprite->imageIndex);
+        int iX = sprite->x.whole() - cameraX.whole() - static_cast<int>(sprImage.centerXF);
+        int iY = sprite->y.whole() - cameraY.whole() - sprite->z.whole() - static_cast<int>(sprImage.centerYF);
+        // SWOS uses 336 instead of 320 for clipping
+        constexpr int kClipWidth = 336;
+        sprite->onScreen = iX < kClipWidth && iY < kVgaHeight && iX > -sprImage.width && iY > -sprImage.height;
+#endif
 
         // since screen can potentially be huge don't reject any sprites for highlights, just dump them all there
         if (sprite->teamNumber)
-            saveCoordinatesForHighlights(sprite->pictureIndex, x, y);
+            saveCoordinatesForHighlights(sprite->imageIndex, x, y);
     }
 }
 
@@ -245,18 +271,35 @@ void updateCornerFlags()
         sprite->x = kCornerFlagCoordinates[i].first;
         sprite->y = kCornerFlagCoordinates[i].second;
 
-        int frame = (swos.stoppageTimer >> 1) & 0x1f;
-        sprite->pictureIndex = kCornerFlagSpriteStart + kCornerFlagFrameOffsets[frame];
+        int frame = (swos.frameCount >> 1) & 0x1f;
+        sprite->setImage(kCornerFlagSpriteStart + kCornerFlagFrameOffsets[frame]);
 
         sprite->show();
     }
 }
 
-#ifdef SWOS_TEST
-Sprite *indexToSprite(unsigned index)
+PlayerSprites getPlayerSprites()
 {
-    assert(index < 33);
-    return kAllSprites[index < 32 ? index : std::size(kAllSprites) - 1];
+    assert(std::all_of(&kAllSprites[kPlayerSpritesStart], &kAllSprites[kPlayerSpritesStart] + 2 * kNumPlayersInLineup,
+        [](const auto& sprite) {
+            int index = &sprite - &kAllSprites[kPlayerSpritesStart];
+            return sprite->teamNumber == (index > 10 ? 2 : 1) &&
+                sprite->playerOrdinal == (index + 1 - (sprite->teamNumber == 2 ? 11 : 0));
+        }
+    ));
+    return &kAllSprites[kPlayerSpritesStart];
+}
+
+#ifdef SWOS_TEST
+Sprite *spriteAt(unsigned index)
+{
+    assert(index < std::size(kAllSprites));
+    return kAllSprites[index];
+}
+
+int totalSprites()
+{
+    return std::size(kAllSprites);
 }
 #endif
 
@@ -267,8 +310,8 @@ static void sortDisplaySprites()
     });
 }
 
-static bool shouldZoomSprite(int pictureIndex)
+static bool shouldZoomSprite(int imageIndex)
 {
-    return pictureIndex >= kTeam1WhitePlayerSpriteStart && pictureIndex <= kBottomGoalSprite ||
-        pictureIndex >= kRefereeSpriteStart;
+    return imageIndex >= kTeam1WhitePlayerSpriteStart && imageIndex <= kBottomGoalSprite ||
+        imageIndex >= kRefereeSpriteStart;
 }

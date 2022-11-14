@@ -1,13 +1,12 @@
 #pragma once
 
-constexpr double kTargetFpsPC = 70;
-constexpr double kTargetFpsAmiga = 50;
+constexpr int kTargetFpsPC = 70;
+constexpr int kTargetFpsAmiga = 50;
 
 void initTimer();
 void initFrameTicks();
-double targetFps();
-void setTargetFps(double fps);
-void timerProc(int factor = 1);
+int targetFps();
+void setTargetFps(int fps);
 void markFrameStartTime();
 void menuFrameDelay();
 void gameFrameDelay();

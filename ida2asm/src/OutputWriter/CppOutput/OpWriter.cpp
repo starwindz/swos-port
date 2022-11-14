@@ -329,16 +329,20 @@ void OpWriter::outputOp(const OpInfo& op, ValueCategory category)
                 else if (op.size == 2)
                     out(m_flags & kSigned ? "(int16_t)" : "(word)");
             }
-            out(category == kRvalue ? "read" : "write");
-            out("Memory(");
-            outputOpValue(op, category);
-            out(", ");
-            out(op.size);
-            if (category == kLvalue) {
+            if (op.opInfo.base.reg == kEsp) {
+                out("stack[stackTop]");
+            } else {
+                out(category == kRvalue ? "read" : "write");
+                out("Memory(");
+                outputOpValue(op, category);
                 out(", ");
-                outputOpValue(op.otherOp, category);
+                out(op.size);
+                if (category == kLvalue) {
+                    out(", ");
+                    outputOpValue(op.otherOp, category);
+                }
+                out(')');
             }
-            out(')');
         }
     } else {
         outputOpValue(op, category);
@@ -693,9 +697,7 @@ void OpWriter::outputData(DestMemoryData source)
 
 bool OpWriter::handleLocalVariable(const OperandInfo& op)
 {
-    if (op.base.reg == kEsp) {
-        assert(!op.scale.val.str.empty());
-
+    if (op.base.reg == kEsp && !op.scale.val.str.empty()) {
         auto var = &op.scale.val;
         if (op.scale.val.str.empty()) {
             assert(!op.displacement.str.empty());

@@ -1,7 +1,7 @@
 #include "Struct.h"
 #include "Util.h"
 
-constexpr int kStructBufferSize = 37'000;
+constexpr int kStructBufferSize = 42'000;
 
 static bool structStrCmp(const String& s1, const String& s2)
 {
@@ -170,7 +170,7 @@ auto Struct::end() const -> Iterator::Iterator<Field>
 }
 
 StructStream::StructStream()
-    : m_structs(kStructBufferSize), m_structMap(kAverageBytesPerStruct * 50)
+    : m_structs(kStructBufferSize), m_structMap(kAverageBytesPerStruct * 60)
 {
 }
 

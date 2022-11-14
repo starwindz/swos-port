@@ -15,22 +15,50 @@
 static int m_pl1FireCounter;
 static int m_pl2FireCounter;
 
+static int m_teamSwitchCounter;
+static bool m_pl1LastFired;
+static bool m_pl2LastFired;
+static GameControlEvents m_oldPl1Events;
+static GameControlEvents m_oldPl2Events;
+static GameControlEvents m_pl1LastVertical;
+static GameControlEvents m_pl1LastHorizontal;
+static GameControlEvents m_pl2LastVertical;
+static GameControlEvents m_pl2LastHorizontal;
+
 static GameControlEvents filterOverlappedEvents(PlayerNumber player, GameControlEvents events);
 static void updateGameControls(PlayerNumber player, GameControlEvents events);
 static bool updateFireBlocked();
 static void updateTeamControls(TeamGeneralInfo *team, PlayerNumber player, GameControlEvents events);
 static void updatePlayerFire(PlayerNumber player, GameControlEvents events);
 
+void resetGameControls()
+{
+    m_teamSwitchCounter = 0;
+    m_pl1LastFired = false;
+    m_pl2LastFired = false;
+    m_pl1FireCounter = 0;
+    m_pl2FireCounter = 0;
+    m_oldPl1Events = kNoGameEvents;
+    m_oldPl2Events = kNoGameEvents;
+    m_pl1LastVertical = kNoGameEvents;
+    m_pl1LastHorizontal = kNoGameEvents;
+    m_pl2LastVertical = kNoGameEvents;
+    m_pl2LastHorizontal = kNoGameEvents;
+}
+
+TeamGeneralInfo *selectTeamForUpdate()
+{
+    auto team = ++m_teamSwitchCounter & 1 ? &swos.topTeamData : &swos.bottomTeamData;
+    return team;
+}
+
 // Sets control related fields in team structure. Called once per frame.
 // Handles one team per frame (next team next frame).
 // Returns a function to run after the main game update.
-std::function<void()> updateTeamControls()
+std::function<void()> updateTeamControls(TeamGeneralInfo *team)
 {
     if (updateFireBlocked())
         return [] {};
-
-    static int s_teamSwitchCounter;
-    auto team = ++s_teamSwitchCounter & 1 ? &swos.topTeamData : &swos.bottomTeamData;
 
     A6 = team;
     UpdateControlledPlayer();
@@ -97,15 +125,12 @@ bool isPlayerFiring(PlayerNumber player)
     return (events & kGameEventKick) != 0;
 }
 
-bool getShortFireAndBumpFireCounter(bool currentFire, PlayerNumber player /* = kPlayer1 */)
+bool getFireStartedAndBumpFireCounter(bool currentFire, PlayerNumber player /* = kPlayer1 */)
 {
-    static bool s_pl1LastFired;
-    static bool s_pl2LastFired;
-
     auto& fireCounter = player == kPlayer1 ? m_pl1FireCounter : m_pl2FireCounter;
-    auto& lastFired = player == kPlayer1 ? s_pl1LastFired : s_pl2LastFired;
+    auto& lastFired = player == kPlayer1 ? m_pl1LastFired : m_pl2LastFired;
 
-    bool shortFire = false;
+    bool fireStartedThisFrame = false;
 
     if (lastFired) {
         if (currentFire) {
@@ -115,13 +140,17 @@ bool getShortFireAndBumpFireCounter(bool currentFire, PlayerNumber player /* = k
             lastFired = false;
             fireCounter = -fireCounter;
         }
-    } else if (currentFire) {
-        shortFire = true;
-        lastFired = true;
-        fireCounter = -1;
+    } else {
+        if (currentFire) {
+            fireStartedThisFrame = true;
+            lastFired = true;
+            fireCounter = -1;
+        } else {
+            lastFired = false;
+        }
     }
 
-    return shortFire;
+    return fireStartedThisFrame;
 }
 
 int16_t eventsToDirection(GameControlEvents events)
@@ -188,16 +217,9 @@ bool isAnyPlayerFiring()
 // events in a way that up always trumps down if they're both active at the same time).
 static GameControlEvents filterOverlappedEvents(PlayerNumber player, GameControlEvents events)
 {
-    static GameControlEvents s_oldPl1Events;
-    static GameControlEvents s_oldPl2Events;
-    static GameControlEvents s_pl1LastVertical;
-    static GameControlEvents s_pl1LastHorizontal;
-    static GameControlEvents s_pl2LastVertical;
-    static GameControlEvents s_pl2LastHorizontal;
-
-    auto& oldEvents = player == kPlayer1 ? s_oldPl1Events : s_oldPl2Events;
-    auto& forceVertical = player == kPlayer1 ? s_pl1LastVertical : s_pl2LastVertical;
-    auto& forceHorizontal = player == kPlayer1 ? s_pl1LastHorizontal : s_pl2LastHorizontal;
+    auto& oldEvents = player == kPlayer1 ? m_oldPl1Events : m_oldPl2Events;
+    auto& forceVertical = player == kPlayer1 ? m_pl1LastVertical : m_pl2LastVertical;
+    auto& forceHorizontal = player == kPlayer1 ? m_pl1LastHorizontal : m_pl2LastHorizontal;
 
     if ((events & kGameEventUp) && (events & kGameEventDown)) {
         events &= ~(kGameEventUp | kGameEventDown);
@@ -280,10 +302,10 @@ void updateTeamControls(TeamGeneralInfo *team, PlayerNumber player, GameControlE
 
     team->currentAllowedDirection = direction;
     team->direction = direction;
-    team->fireThisFrame = getShortFireAndBumpFireCounter(fire, player);
+    team->fireThisFrame = getFireStartedAndBumpFireCounter(fire, player);
     team->secondaryFire = (events & kGameEventBench) != 0;
 
-    if (team->firePressed = fire)
+    if (team->firePressed = (fire ? -1 : 0))
         team->fireCounter++;
     else
         team->fireCounter = 0;

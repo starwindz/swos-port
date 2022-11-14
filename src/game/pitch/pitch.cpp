@@ -61,6 +61,16 @@ void setPitchTypeAndNumber()
     setPitchNumber();
 }
 
+int getPitchType()
+{
+    return m_pitchType;
+}
+
+int getPitchNumber()
+{
+    return m_pitchNumber;
+}
+
 void loadPitch()
 {
     logInfo("Loading pitch %d (type: %d), asset resolution %d", m_pitchNumber, m_pitchType, m_res);
@@ -84,7 +94,7 @@ void loadPitch()
 }
 
 // Renders pitch at cameraX and cameraY.
-std::pair<float, float> drawPitch(float cameraX, float cameraY)
+std::pair<float, float> drawPitch(FixedPoint cameraX, FixedPoint cameraY)
 {
     // clip zoom first since the screen dimensions might have changed
     clipZoom();
@@ -99,8 +109,8 @@ std::pair<float, float> drawPitch(float cameraX, float cameraY)
     auto widthNormalized = width / m_zoom;
     auto heightNormalized = height / m_zoom;
 
-    auto x = cameraX + (kVgaWidth - widthNormalized) / 2;
-    auto y = cameraY + (kVgaHeight - heightNormalized) / 2;
+    auto x = cameraX.asFloat() + (kVgaWidth - widthNormalized) / 2;
+    auto y = cameraY.asFloat() + (kVgaHeight - heightNormalized) / 2;
 
     auto offsets = clipPitch(widthNormalized, heightNormalized, x, y);
 
@@ -127,7 +137,9 @@ std::pair<float, float> drawPitch(float cameraX, float cameraY)
 
     assert(row >= 0 && column >= 0);
 
+#ifndef SWOS_TEST
     drawPitch(xOfs, yOfs, row, column, static_cast<int>(numPatternsX), static_cast<int>(numPatternsY));
+#endif
 
     // unfortunately, this has to stay until UpdateCameraBreakMode() is converted
     swos.cameraCoordinatesValid = 1;
@@ -137,7 +149,12 @@ std::pair<float, float> drawPitch(float cameraX, float cameraY)
 
 std::pair<float, float> drawPitchAtCurrentCamera()
 {
+#ifndef SWOS_TEST
     return drawPitch(getCameraX(), getCameraY());
+#else
+    swos.cameraCoordinatesValid = 1;
+    return { 0.f, 0.f };
+#endif
 }
 
 void SWOS::ScrollToCurrent()
@@ -225,7 +242,8 @@ static void setPitchType()
     m_pitchType = 0;
 
     if (swos.gamePitchTypeOrSeason || swos.gamePitchType == -1) {
-        auto probabilities = swos.gamePitchTypeOrSeason ? kPitchTypeProbabilities.data() : kPitchTypeSeasonalProbabilities[swos.gameSeason].data();
+        auto probabilities = swos.gamePitchTypeOrSeason ?
+            kPitchTypeSeasonalProbabilities[swos.gameSeason].data() : kPitchTypeProbabilities.data();
         auto probability = SWOS::rand() * 100 / 256;    // range 0..99
         while (probability >= *probabilities) {
             probability -= *probabilities++;
@@ -253,9 +271,9 @@ static void setPitchNumber()
             index = SWOS::rand() & 0xf;
         } else {
             // pseudo-random, but always the same in regards to the teams that are playing; used in career
-            index = swos.topTeamIngame.teamName[0] | (swos.topTeamIngame.teamName[1] << 8);
-            index ^= swos.topTeamIngame.prShirtCol;
-            index ^= swos.topTeamIngame.prShortsCol;
+            index = swos.topTeamInGame.teamName[0] | (swos.topTeamInGame.teamName[1] << 8);
+            index ^= swos.topTeamInGame.prShirtCol;
+            index ^= swos.topTeamInGame.prShortsCol;
             index &= 0xf;
         }
 

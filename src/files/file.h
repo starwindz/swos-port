@@ -45,3 +45,5 @@ using FoundFileList = std::vector<FoundFile>;
 
 FoundFileList findFiles(const char *extension, const char *dirName = nullptr,
     const char **allowedExtensions = nullptr, size_t numAllowedExtensions = 0);
+void traverseDirectory(const char *directory, const char *extension,
+    std::function<bool(const char *, int, const char *)> f);

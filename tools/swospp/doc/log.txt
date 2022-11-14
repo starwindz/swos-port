@@ -1,0 +1,566 @@
+01.01.2017.
+- all bugs should be fixed, preparing the release
+- GAH! just found out that the watchers were broken ever since port to GCC :(
+  it was caused by parentheses added stupidly to wrong place when sign
+  extending coordinates from 10 bits to full int... Parentheses ARE evil!
+31.12.2016.
+- implemented joystick reading via BIOS, it made wonders in DOSBox, as it just
+  gets the value directly instead of polling game port in loop; still a bit
+  buggy but getting there
+19.12.2016.
+- broke 5000 fixups limit... raising to 6000
+18.12.2016.
+- refactored variable names to use `m_' prefix if internal to module, `g_` if
+  global (still converting those, only heavily used for now)
+11.12.2016.
+- 1.9.2.0 sent to Playa; did some fixed for "coach" bug blindly, but can't
+  reproduce, so just hoping for the best
+- bunch of small bugs fixed that were there for a long time
+06.12.2016.
+- added saving of player positions in play match menu, as well as current
+  tactics; that damn bug when "play match" changes to "coach match" still
+  eludes me
+- changed file ordering to alphabetically, order by modification time was too
+  annoying when trying to fix multiple errors in one file with rebuilding in
+  between
+03.12.2016.
+- I fixed that damn and so annoying bug where swapping players in starting
+  lineup wouldn't work after first game... seems that I was adding selected
+  teams to selected teams buffer without resetting number of teams first...
+  that caused SWOS' elaborate caching system to pick up first team (which is
+  now obsolete), and return it when looking for players... in turn causing
+  player positions table not to get updated when players are swapped (or more
+  accurately it gets updated, but in wrong team).... ugh, so finally found it
+  after looking at ALL the wrong places...
+22.11.2016.
+- fixed bug which was causing matches to last too short - it was actually one
+  wrong constant in UpdateTime, that was probably left over from Amiga where
+  frame rate is different
+14.11.2016.
+- SWOS 2016/2017 anniversary edition is out!
+11.11.2016.
+- preparing new version, for 20th SWOS anniversary
+01.05.2016.
+- v1.9.1.7 sent to Playaveli
+- fixed options not being saved to disk (skip frames and network timeout weren't
+  updated inside MP options, and standard SWOS options got overwritten with
+  default ones since FinishMultiplayer called RestoreOptions on exit even if we
+  weren't in multiplayer menu - boolean was introduced to prevent this from
+  happening, there might be a race condition but this is just a quick fix to
+  make SWOS++ more playable during wait for win32 port ;))
+- removed some unused variables from main.asm
+- renamed etc/ dir to var/
+- removed Switch module dependency from Makefile.pl
+22.09.2015.
+- v1.9.1.6 released, possibly last version, as the work on win32 SWOS is in
+  progress; fixed TONS of stuff since last entry
+13.07.2015.
+- WriteToLog parameters finally enclosed in only one parentheses pair :)
+27.06.2015.
+- development is going fine, lot of bugs have been fixed and it feels like I
+  might be back on track; the reason I was writing this entry was to note that
+  GCC is treating bool as single byte value, while Watcom was treating it as
+  full double word - this is what asm code was expecting and it already caused
+  few weird and hard to track bugs
+22.06.2015.
+- some small bugs fixed, artifacts of porting are still showing up; today was
+  forced to merge .rdata into .data despite having support for it in pe2bin -
+  it seems executable was built in such a way that beginning of an array in bss
+  section was before the end of data (despite alignment, probably to use space
+  more efficiently); however I have no idea how to detect this, and correctly
+  offset fixup to point to bss (since reference is within raw size of .data
+  section)
+  edit: lowering file-align in alink fixed that problem even without merging,
+  but both lowering alignment and merging .rdata lowered executable size, so I'm
+  using both now ;)
+  edit 2: just discovered that I did some testing with -Os and forgot it on; the
+  whole deal was probably some size optimization... right now on -O3 it leaves
+  plenty of space between last data and first bss byte
+29.05.2015.
+- wrote IPX server in Python to be used in stress testing the network (still
+  gotta implement packet loss, lag inducing and packet reordering)
+24.05.2015.
+- there are still some bugs, but porting to GCC is almost done!
+15.05.2015.
+- lots of fixes during the porting; especially to pe2bin and alink, and even
+  bindmp
+02.05.2014.
+- porting the source to GCC is under-way
+- fixed Perl makefile to include it's own timestamp in rebuild calculation - now
+  everything rebuilds if script is changed (as it should)
+11.11.2014.
+- was well on my way implementing SWOS calls through dll import table, but
+  after giving it some more thought decided against it; if implemented that
+  way, each API would need to have 4 bytes set aside to hold function address,
+  and indirect call would take 6 bytes, so 10 bytes in total per call; current
+  calla implementation only requires 7; we don't really need separate table for
+  those function addresses, since they're actually known before hand - it's
+  enough to reference the symbol; entire problem stems from a fact that it's
+  hard to instruct compiler to call functions in a specific way - normally
+  they're just relative calls, or go through a pointer; we actually need
+  absolute call to be generated (like calla does)
+- thought I could change calla macro in asm to generate absolute call from
+  memory location, but Intel never made instruction to do that.. we can only
+  call indirect or far absolute.. no near absolute
+- and fixed a little buffer overflow when we receive game name from network...
+  oopsie!
+10.11.2014.
+- caught a mistake renaming 68k registers in two places.. yikes! so double
+  checked everything again, it looks good now
+07.11.2014.
+- finally switched to real 68k register names... finally!
+06.11.2014.
+- changed bitmap drawing function from asm to C but forgot to set which
+  register gets which param... wooops, and found out just now; seemingly small
+  changes can have potent effect, one can never be too careful
+05.11.2014.
+- found out iswhat macros were vulnerable (isspace, isdigit...), they weren't
+  normalizing input index before accessing the table, they were assuming it was
+  a char; this caused infinite loop in xml parser when last character was
+  whitespace following non-whitespace - ouch...
+30.10.2014.
+- xml parser finally passed tests... note to self: never make your own xml(ish)
+  parser again, not even primitive and simplified as this one
+16.10.2014.
+- xml lexer passed tests
+01.10.2014.
+- buffered file tests passed, now the log will go through it, increasing
+  performances in debug version and hopefully making it usable for game play
+29.09.2014.
+- did a funny thing today - wrote a simple DOS file access to WinAPI layer to
+  do a test of buffered files: it worked by replacing each file-related int 21h
+  call with invalid opcode (ud2), then installing exception handler which would
+  inspect registers, re-route everything through WinAPI, sort returned data
+  back to registers, and continue execution right after invalid bytes; it
+  actually worked surprisingly well!
+15.09.2014.
+- big fuss with test build symbols - in util.c we had some functions such as
+  memmove which were only wrappers for SWOS' memmove (swos_libc_memmove_), and
+  in mock file I was trying to reroute it to Watcom's memmove, but the linker
+  was discovering symbol in util.c and linked to it - resulting in lovely stack
+  overflow due to infinite recursion :P; managed to fix it by explicitly
+  listing object files from lib files _BEFORE_ user obj files
+14.09.2014.
+- source ported to OpenWatcom - he's complaining more than his daddy and has
+  already caught some errors that have been sanitized; now SWOS++ might compile
+  on modern Windows, I'll see if I can switch to it at next opportunity
+01.09.2014.
+- another merry buggie solved: I've noticed that bss section wasn't working in
+  some cases, the exe file bloated after adding stack buffer to main.asm; after
+  some testing it was determined that in C files bss was working, but not in
+  asm.. that led me to believe the bug was in alink, and related to coff;
+  however everything was fine, the problem lied in section merging order -
+  command for merging .bss into .data was added to the beginning of the linked
+  list, and later we had more merging into .data (ie. .strdata to .data) which
+  had real data in them and canceled bss property... C files were placing
+  variables to _BSS which got merged later and that's why they worked; so now
+  alink defers automatic .bss to .data conversion until user given merges have
+  been completed (unless user explicitly lists .bss to .data, then we respect
+  user given order)
+31.08.2014.
+- switched to our own 64kb stack, by simply copying stack to static buffer and
+  setting esp :) (best I could come up with in the end :P); it works
+  surprisingly well, now at least there's some breathing space, and I can
+  increase it compile-time if needed
+30.08.2014.
+- GNU make strangled in a shallow pond - Perl build script written (took about a
+  week); build environment is now far better - I can move files to
+  subdirectories as I see fit without updating paths and dependencies -
+  everything is done automagically :)
+  + it works way faster, I didn't even expect that but accepting it both
+  handedly :)
+- fixed a bug in alink, alto I'm not sure how well - there was a problem moving
+  entry point if it was located inside a section that's getting merged (it
+  didn't manifest before because main.obj used to be first in the link list
+  of files that contain .text section, so all others were merged into main's obj
+  file); once the rewrite is done make sure it's fixed properly
+23.08.2014.
+- callCdecl macro introduced to invoke cdecl functions correctly and modified
+  WriteToLog to use it
+- test cases introduced, only for crash logger and qAlloc at the moment
+- crash handler finished, and working very nicely ;)
+17.08.2014.
+- devilish custom tactics finally passed tests
+- all headers switched to #pragma once
+16.08.2014.
+- it took a while, but I finally fixed crippled DOSBox debugger! now I can view
+  variable contents, and use them in expressions, as well as set breakpoint
+  directly to function; debugging is way more comfortable now
+27.07.2014.
+- beautiful syntax highlighting for UltraEdit defined
+- finally changed TRUE to true :P
+13.07.2014.
+- added object file name from which the symbol originated to map file - now it's
+  much easier to map address back to symbol during debugging
+09.07.2014.
+- great lack of functionality discovered - tactics couldn't be edited for teams
+  containing players with numbers greater than 16, and no one noticed it for all
+  this time; took a while to implement it too
+07.07.2014.
+- bug found - high player numbers aren't working in edit tactics menu; one part
+  is fixed, but more remains
+03.06.2014.
+- I found that little zero in player numbers wasn't clipped well... lost lot of
+  time on it, but it's now benT!
+- just seen (and fixed) improper sending of negative coordinates, sign got lost
+  in casting
+01.06.2014.
+- wasn't updating this log much, but development is moving slowly... just had
+  another case of patching the patch :P added hook to flip but overwritten old
+  one that was checking keys for replays... and also killed output of dump
+  variables
+21.04.2014.
+- cleansed this log file
+20.04.2014.
+- parsemap.pl improved, now symbols for C header can be defined using simple
+  syntax
+17.04.2014.
+- ugh finally fixed that diabolic bug - desync during second game in a row; it
+  was in fact variable frameCount which I SAW in memory diff dumps, but I
+  THOUGHT IT BELONGED TO MENUS (AAAAAAAAAAARGHHHH)... get me a hammer to batter
+  my head... so I went further and used DOSBox logcpu command to log every
+  single instruction executed on both clients before the decync; then compared
+  log files, starting from OnGameLoopEnd(), from currentFrameNo increment -
+  chopped everything before that - and fed the result to a Perl script which had
+  defined memory ranges used to discard instructions - in order to remove
+  interrupts that were randomly popping in, as well as irrelevant code which
+  truly is (and should be) different on both clients.. so, day or two of
+  debugging went by, but I'm very satisfied to have solved it in the end :P
+15.04.2014.
+- in-game Sprite structure added, and old Sprite renamed to SpriteGraphics
+12.04.2014.
+- there, after lot of effort I finally have a version that can be called usable
+  (I hope!); sent it to Davor, let's see how this will turn out
+  contacted Playaveli too but he didn't respond yet
+01.04.2014.
+- funny bug fixed accidentally, while looking for something else - value for
+  function offset was + 48 where 48 was supposed to be hexadecimal, but somehow
+  ended up being decimal; stuff like this is hell to find...
+18.03.2014.
+- no idea how this could have worked at all before, but joy2Status wasn't
+  initialized and had left-over value from the menus because I had setup of 2
+  players on keyboard (and 2nd one masquerades as joypad); that was causing
+  desync, I couldn't find what was it for a month (even if I wasn't trying too
+  hard)... there is a good side to it, while investigating it I've found and
+  fixed bunch of other bugs ;)
+09.03.2014.
+- don't know why was OpenLogFile() in main.asm instead of debug.c - moved it to
+  where it belongs, now the interface is more sane and this also allowed
+  removing big-ish #ifdef out of main
+31.01.2014.
+- finally all of menu cases passed - it was giving me a lot of trouble, with a
+  lot of messing on the stack and SWOS internals (cases when client
+  automatically moves to next, or goes back to previous menu, not by user
+  interaction but externally - by signal from the network)
+29.01.2014.
+- added dword alignment for menus, data wasn't aligned properly before (and the
+  alignment value is 'z' :)); tried online play last weekend against my friend
+  Deja but it's not playable, it's too slow, I must add skip frames
+08.01.2014.
+- created dos.h header and moved DOS-related stuff out of swos.h into it
+02.01.2014.
+- what a silly SWOS bug, that cost me at least a couple days; ClearBackground
+  initializes dx with mov dx, 384 and then does sub dx, ax; but afterwards it
+  adds entire edx to edi - that worked only accidentally as it happened that
+  SWOS called function with upper part of edx clear; as soon as I called it from
+  Watcom it crashed (puked all over the screen to be more precise)
+26.12.2013.
+- incredible what wrong opcode can cause, instead of eb I typed ee (no idea
+  how), so instead of jump some mess was executed (in, out and such) and by some
+  wonder some jump came in and _somehow_ continued with approximately correct
+  execution... wtf... found it only when I spotted out of place call in log
+  file, then placed int 1 and looked for myself what was happening at the
+  function exit in the debugger (follow up: seems I inverted bytes)
+25.11.2013.
+- yesterday I solved synchronization problem; SWOS was using stoppageTimer value
+  in various calculations around the engine (as well as currentTick in one place
+  when calculating which player takes the ball), and that gets incremented
+  inside hardware interrupt handler which is highly machine dependent... not too
+  cool for 2 simulations that are supposed to be synchronized, so I moved
+  increment code from handler and incremented it in each frame instead; I think
+  this might affect game length and maybe some other things, it should be tested
+  more thoroughly later, right now at first glance it seems to work well
+22.11.2013.
+- fixed swos_data_base symbol to have proper value; now Perl is generating it,
+  pretty cool how it's possible to do that compile time ;)
+23.10.2013.
+- today I fixed interesting thing, and I'm not sure how it worked at all before;
+  when un-patching is done to remove support for 2nd player on keyboard original
+  bytes from IDA are written back... don't we need a fixup there? maybe it
+  worked since load address is always the same, who knows, anyway I fixed that
+  now [EDIT 25.11.2013.] it's ok if it's call, those bytes are always the same
+  (since calls are relative)
+13.10.2013.
+- unbelievable - checksum wasn't working... in fact it worked, but only for
+  first 32 bytes (lol); shifting kicked out informations about first bytes bit
+  by bit; replaced it with rotation and it's ok now (no wonder I found that some
+  Polish guy "cracked" SWOS++, I thought he patched the checksum routine, but
+  instead it was this...)
+11.10.2013.
+- finally first, big, part is finished, and that is game lobby :)))
+  (mi iz veri hepi)
+- mplayer.c renamed to mplobby.c
+28.09.2013.
+- today I learned just how big difference between extern char *x and extern
+  char x[] really is - if I put * compiler picks up dword value from there, as
+  if it was a variable, and program crashes; if I put [] then everything is
+  fine, since it gets treated as an offset
+22.09.2013.
+- Perl script for finding unused symbols from filter.txt created (simple text
+  search), unneeded obsolete symbols removed
+21.09.2013.
+- fixed a bug in printf - specification wasn't reinitialized between fields, and
+  added support for %hhd and %hhx
+18.09.2013.
+- changed name of create game menu to game lobby menu and updated all references
+16.09.2013.
+- bug fixed in bindmp: loop went from 16 until >= 0, it needed to be > 0 (it was
+  writing 17 bytes per line)
+- bug fixed in pe2bin: value wasn't decremented when deciding whether to assign
+  fixup to SWOS code or data, so it was wrongly assigned to data instead of code
+  for functions close to 0xb0000 (if they're near SWOS virtual size it will
+  happen), which of course resulted in crashes (earlier I wasn't using those C
+  functions near the top, near data, or .swos section was in different position,
+  with higher address)
+- I omitted swos_libc_ prefix with 2 new functions and kaboom... killed entire
+  Windows as well :P
+13.09.2013.
+- now WriteToLog preserves flags as well (yes, that happened too)
+12.09.2013.
+- ok, I think join game is finished (aside from connecting to the game - I'm
+  gonna give it a shot now)
+- upgraded to UltraEdit 13.10 btw ;)
+- fucking nop wasted almost half an hour
+11.09.2013.
+- gosh what an ugly bug, I was refactoring and somehow left sizeof(IPX_Address)
+  instead of member_size(IPX_Address, node) so the program was merrily
+  overwriting socket and source network address... no wonder it kept failing to
+  send reply
+- I'm changing system of access to C functions inside SWOS, they will now have
+  prefix swos_libc_, and util.c will have C prototype that calls SWOS function
+  indirectly through pointer; this way they shouldn't accidentally be called
+  directly
+10.09.2013.
+- log file now has time-stamp on each line
+- after investigating frequent crashes due to stack overflow I've discovered
+  that stack memory is very limited (3.7kb at startup); moved lot of buffers
+  from stack to bss
+- I'm amazed how fast build works now
+- wow I found bug in memset... who knows what I was thinking when I was writing
+  that, just gonna use the one from SWOS
+09.09.2013.
+- no wonder file was smaller, bastard wasn't linking half of stuff...
+  binary file is now per-fect!
+- only thing swospp.bin has increased by 3kb, must be due to some alignment, off
+  to see about that...
+- work on alink is finally done, and it WORKKKKSSSSSSS!!! millennium bug is
+  solved and MS link kicked out! FUCK YOU MS LINK! GTFO!
+06.09.2013.
+- haha old UltraEdit by default doesn't use Unix style regular expressions -
+  those have to be turned on, but I thought it was buggy and installed new
+  version
+- due to unstoppable avalanche of progress, even if nobody believed it was
+  possible anymore, miraculous menu macro system got further enhanced by
+  advanced state-of-the-art macros equipped by functionality for defining
+  symbols having menu item ordinals as values
+05.09.2013.
+- I finally solved why it wouldn't receive a packet, problem was in FP_SEG and
+  FP_OFF macros, they simply didn't perform translation in a way I needed
+  (perhaps they would work if I allocated memory via that other interrupt?), and
+  of course that was fucking last place I looked at, after trying out shit load
+  of other things...
+- fixed bug in vsprintf, it wasn't working properly for %c (surprisingly library
+  function had that bug - more likely my adaptation of it)
+- logo bitmap kicked out of source directory + make rule made; I don't want it
+  polluting the source tree when I wanna check the size :P
+03.09.2013.
+- fixed part of code and documentation pertaining to menus (kinda surprising,
+  since it's otherwise very well explored), it was in connection to rarely used
+  "skipping" of items feature (when the item user tries to go to is disabled or
+  invisible, decision is made which item to go to instead)
+31.08.2013.
+- amazing bug fixed; ordinary lack of attention and memory overwrite, but the
+  things I tried in those few hours... at least I set up shaky DOSBox debugger
+  :)
+29.08.2013.
+- seems I've solved one of mysteries that have been tormenting me; sometimes the
+  assembler+linker combination seemed to generate invalid call; call xxxxx
+  instruction would jump god-knows-where and program would crash; I remember how
+  frustrating that was; but today I was surprisingly calm and in a bit over half
+  day found a reason :) not exact, but at least approximate :P - problem was in
+  having code in data section; I don't know exactly what went wrong but most
+  likely the alignment got messed up + sections get merged so who knows what
+  becomes of it in the end; once the code goes to .text section (as it should)
+  everything works out just fine
+  and it seem I've predicted string menu entries. Kudos. To me.
+07.01.2005.
+- GoalScored disintegrated!
+- ShowResult disintegrated!
+  I have all the sprite names except for one which seems to be dead variable;
+  gonna fill in now what I couldn't before about the sprites
+- game_state 22 figured out
+06.01.2005.
+- continued work from yesterday... those penalty variables really pulled things
+  through... figured out field 40 in ingame team structure - it's number of own
+  goals
+05.01.2005.
+- after quite a while, finally some sort of progress; game_state almost entirely
+  figured out; figured out lot of variables related to penalties after the game,
+  and some more stuff... in the prime of Clan Lord, waiting for the Dutchman...
+19.07.2004.
+- version 1.4 published
+- Watcom/M$ link combination is making _horrible_ problems; after certain
+  combination of static and non-static variables/functions, compiler (and/or
+  linker) freaks out - it accesses variables with random offsets, jumps into
+  random parts of code...
+15.07.2004.
+- area of bug definitely narrowed to bench - each corrupted recording crashes
+  after bench is shown
+- problem was in a function that gets called when returning from bench to game;
+  this function deletes contents of current hil buffer, and resets pointer to
+  the beginning; bug happens in the following situation:
+  - contents of the buffer are saved, last and one before last dword are camera
+    coordinates and goals, pointer was reset to the beginning and flags were
+    written there
+  - buffer continues to fill up, let's say until half full
+  - bench is called, and there we stay until say 3/4 of the buffer
+  - bench is left, buffer is emptied, pointer is reset and unsaved flags get
+    deleted (ouch)
+  - writing to buffer is resumed, starting with camera, goals, flags...
+  - so we get situation that happens in corrupted .rpl files:
+    camera, goals, [flags are missing!!!], camera, goals, flags...
+- thinking about how to solve the problem: perhaps best thing to do is to wait
+  until camera goes to the bench, save one frame, turn off recording until
+  camera starts going back to the field; currently it's set up to record
+  everything
+14.07.2004.
+- load addresses of SWOS and SWOS++ logged at startup so we can find exact
+  instruction in case of crash
+- investigated replay saving - it's possible that bug is showing up if some
+  function is changing goal_base_ptr (which is used for saving) and sets it
+  slightly in front of base buffer
+- returned listing creating for .asm files - it's only a notch slower
+- bug is not because of goal_base_ptr - it remains constant
+08.07.2004.
+- fixed rounding to 4 code inside pe2bin, x += 4 - x % 4 is not good, in case of
+  x divisible by 4 (d-oooh)
+18.06.2004.
+- very important things are hidden inside UpdateBall - I believe it could even
+  be entire ball physics and its interaction with the pitch depending on weather
+  conditions
+15.06.2004.
+- SWOS2004 preliminary version shipped
+02.06.2004.
+- and the question of the day remains: Where's The Walrus?
+01.06.2004.
+- big event, discovered (for sure) first AI routine; it handles throw-ins, but
+  it could be more general
+30.05.2004.
+- version check fixed, and it works well, I hope it doesn't have any holes (it
+  tests if "real" DOS is less than 6.0, and then displays a warning - int 0x2f
+  doesn't work on win2k)
+- released SWOS++ 1.3 and SWPE 0.8
+22.05.2004.
+- size of code section rounded to 4 bytes so the data section would be dword
+  aligned
+- Windows version check added (but not tested under Windows 2000)
+21.05.2004.
+- Aminta found a bug: seems when team controls are changed, and game is saved,
+  there is some memory overwrite inside the team which causes SWOS to crash when
+  that team later plays a game
+- bug was found and fixed: problem was that when saving diy SWOS function is
+  called that contains call to CommonMenuExit - it expects to be called in
+  context of main menu; so it happily takes pointer to tenth entry (which is
+  title), forms competition name and writes it to the pointer; since my menu is
+  active and the entry in question points to name of the team, that name will be
+  overwritten, as well as some important data that follows it; seems when I
+  tested I wasn't using long names so everything worked fine (and I wasn't
+  paying attention to the team name); fixed it by moving top PrepareMenu call
+  below if
+- configured cp in make store to preserve original file dates
+- turned off listing creating during assembly - will test to see if it's working
+  any faster now
+20.05.2004.
+- diy menu modified to work same as load menu
+19.05.2004.
+- ta da!!! finished f*cking duy edit menu and it works!!! it's 12:10 am; gonna
+  send this to Aminta, and let him deal with it (will publish later)
+17.05.2004.
+- choose team menus have wrong names (too narrow); figured out one of greatest
+  secrets about choose team menus; also figured out dynamic menu item resizing
+  (easy peasy)
+16.05.2004.
+- managed to remove vsprintf from release: remembered that I could use SWOS'
+  PrimitivePrintf - primitive but enough for my current needs
+- it's past 12... sooo tired and getting up early tomorrow... need to find exact
+  location of menu that displays selected teams in diy competition and does
+  dynamic adjustment of entry size based on number of teams (and snatch that
+  code, bwahahaha...)
+15.05.2004.
+- work on the menu is underway
+- unfortunately, I had to bring vsprintf.c back to release version (because of
+  sprintf which is currently only used in one place - maybe remove that later),
+  and the binary file bloated...
+14.05.2004.
+- begun working on new version - started with inserting new menu entry
+03.05.2004.
+- version 1.2.3 released with _completely_ fixed bugs regarding display of
+  player numbers greater than 16
+- I just noticed that SWOS++ blocks normal functioning of highlights: only first
+  highlight gets saved to file
+02.05.2004.
+- I just found out that SWOS++ isn't compatible with EGA graphics - once the
+  game starts all there is on the screen are some blotches dancing around, and
+  after a while it crashes
+- EGA graphics murdered entirely
+- fixed player numbers while they're getting booked
+- EGA graphics turned off in debug mode only (seems it's in conflict with debug
+  system)
+27.04.2004.
+- lot of stuff done
+26.04.2004.
+- great success, large amount of data obtained, and lot of mistakes in the
+  documentation fixed
+- added new type for dump: 'p' = pointer, just write its value as dword
+25.04.2004.
+- size of release swospp.bin chopped down by a kilobyte - PrintString() and
+  associated stuff went under #ifdef DEBUG
+- lot of interesting things found using dump-var debug system (long live)
+- confirmed that x, y and z coordinates of sprites begin at +30 (and not at +32
+  as it was written in the docs earlier)
+- version 1.2.2 published, took down versions 1.2.1 and 1.2 from the download
+  page so people wouldn't download them (they're buggy)
+23.04.2004.
+- fixed bench player numbers (disabled the procedure that sets them)
+22.04.2004.
+- released new version, 1.2.1, and fixed link page to open links in new window
+  instead of frame
+- beginnings of sections in swospp.bin are now aligned to 4 bytes
+21.04.2004.
+- fixed bug in substitutes menu when garbage was showing up instead of player
+  numbers greater than 16; menu was extended a bit and names and positions moved
+  so everything could fit nicely
+20.04.2004.
+- dependencies in make files fixed - I was listing include files as dependencies
+  of c and .asm files (instead they should be .obj files dependencies) - d-oh!
+  (thanks Dule)
+17.04.2004.
+- all this packed up and new version 1.2 released
+- rar archives removed from the site
+- winzip reinstated as default packer, because of long file names (and case)
+- added third executable name to patcher, for underdogs SWOS; size mismatch is
+  not fatal error anymore but only a warning so the entire thing can work with
+  Aminta's patched version of SWOS
+- player numbers finished - centering implemented and added special treatment
+  for the case when two ones go one after another, in this case we tuck them
+  closer together by one pixel - it looks much nicer
+15.04.2004.
+- aaand fixed... at least it should be, I played entire game and watched replay
+  without problems, only thing I saw was messed up S sprite over the referee
+  while he was booking a player
+- so, at 20:46 I'm writing a fix; it was negative value of y (-1) that was
+  causing the problems all this time
+- isolated random crash bug with drawing player numbers higher than 16: when
+  drawing small zero, in VerLine, exactly at the place of memory access
+  (near the mov [esi], al instruction)
+- started this log file

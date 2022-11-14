@@ -1,5 +1,6 @@
 #include "quickConfigMenu.h"
 #include "menuBackground.h"
+#include "sprites.h"
 #include "renderSprites.h"
 #include "text.h"
 #include "drawPrimitives.h"

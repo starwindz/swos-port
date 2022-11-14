@@ -35,7 +35,7 @@ private:
     FILE *outputFile(const char *filename, const char *contents, size_t size);
     void outputZeroMemoryRegion();
     void outputComment(const String& comment, bool skipInitialCommentMark = false);
-    String trimComment(const String& comment);
+    std::pair<String, size_t> trimComment(const String& comment);
     void outputOriginalValue(const DataBank::Var& var, size_t offset);
     void outputInt(size_t val, size_t size);
     void outputString(const DataBank::Var& var);

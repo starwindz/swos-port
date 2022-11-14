@@ -39,7 +39,7 @@ void SWOS::PlayMatchSelected()
     m_fadedOut = false;
 
     if (reinterpret_cast<TeamFile *>(swos.careerTeam)->teamControls == kComputerTeam)
-        swos.careerTeamSetupDone = 1;
+        swos.careerTeamCoachOnly = 1;
 
     swos.g_allowShorterMenuItemsWithFrames = 0;
 

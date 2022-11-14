@@ -1,6 +1,7 @@
 #include "SelectFilesMenuTest.h"
 #include "selectFilesMenu.h"
 #include "unitTest.h"
+#include "resData.h"
 #include "mockFile.h"
 #include "mockRenderSprites.h"
 #include "sprites.h"
@@ -11,7 +12,6 @@
 #include "text.h"
 #include "controls.h"
 #include "sdlProcs.h"
-#include "data/canada.diy.h"
 #include <initializer_list>
 
 #define SWOS_STUB_MENU_DATA
@@ -26,11 +26,13 @@ static std::string m_swosDir;
 void SelectFilesMenuTest::init()
 {
     takeOverInput();
+    enableFileMocking(true);
 }
 
 void SelectFilesMenuTest::finish()
 {
     SWOS_UnitTest::setMenuCallback(nullptr);
+    enableFileMocking(false);
 }
 
 struct {
@@ -167,9 +169,10 @@ auto SelectFilesMenuTest::getCases() -> CaseList
         { "test abort save", "select-files-abort-save", nullptr, bind(&SelectFilesMenuTest::testAbortSave) },
         { "test save button show/hide", "select-files-show-save-button", nullptr, bind(&SelectFilesMenuTest::testSaveButtonShowHide) },
         { "test list with long extensions", "select-files-long-extension-list", nullptr, bind(&SelectFilesMenuTest::testLongExtensions) },
-        { "test save competition", "select-files-save-competition", nullptr, bind(&SelectFilesMenuTest::testSaveCompetition) },
+        { "test save competition", "select-files-save-competition",
+            bind(&SelectFilesMenuTest::setupSaveCompetitionTest), bind(&SelectFilesMenuTest::testSaveCompetition) },
         { "test save competition by click", "select-files-save-competition-by-click",
-            nullptr, bind(&SelectFilesMenuTest::testSaveCompetitionByClick) },
+            bind(&SelectFilesMenuTest::setupSaveCompetitionTest), bind(&SelectFilesMenuTest::testSaveCompetitionByClick) },
     };
 }
 
@@ -362,11 +365,11 @@ void SelectFilesMenuTest::testLayout()
     }
 }
 
-static void simulateKey(SDL_Scancode keyCode)
+static void simulateKey(SDL_Scancode keycode)
 {
-    queueSdlKeyDown(keyCode);
+    queueSdlKeyDown(keycode);
     menuProc();
-    queueSdlKeyUp(keyCode);
+    queueSdlKeyUp(keycode);
 }
 
 int findNextLeftEntry(int i, int j, const MenuEntry *entry)
@@ -511,9 +514,9 @@ void SelectFilesMenuTest::testEntryTransitions()
                     std::make_pair(SDL_SCANCODE_DOWN, findNextBottomEntry),
                 };
 
-                for (auto [keyCode, findNextEntry] : kKeyFunctionPairs) {
+                for (auto [keycode, findNextEntry] : kKeyFunctionPairs) {
                     highlightEntry(entry);
-                    simulateKey(keyCode);
+                    simulateKey(keycode);
                     auto expectedNextEntry = findNextEntry(i, j, entry);
                     assertEqual(expectedNextEntry, getCurrentEntryOrdinal());
                 }
@@ -593,8 +596,9 @@ void SelectFilesMenuTest::testSelectingFiles()
                 column = 1;
             }
 
+            assert(numScrollClicks > 0);
             if (column >= kMaxEntriesPerColumn) {
-                if (numScrollClicks > 0 && column < kMaxEntriesPerColumn + numScrollClicks) {
+                if (column < kMaxEntriesPerColumn + numScrollClicks) {
                     column++;
                     for (int i = 0; i < column - kMaxEntriesPerColumn; i++)
                         selectItem(arrowDown);
@@ -840,6 +844,12 @@ static void verifyDiyFilesEqual(const char *path1, const char *path2)
     }
 }
 
+void SelectFilesMenuTest::setupSaveCompetitionTest()
+{
+    if (!m_canadaDiyData)
+        std::tie(m_canadaDiyData, m_canadaDiySize) = loadResFile(kCanadaDiy);
+}
+
 void SelectFilesMenuTest::testSaveCompetition()
 {
     resetFakeFiles();
@@ -849,7 +859,7 @@ void SelectFilesMenuTest::testSaveCompetition()
     addFakeDirectory(root.c_str());
 
     auto path = joinPaths(root.c_str(), "canada.diy");
-    MockFile canadaDiy(path.c_str(), kCanadaDiyData, kCanadaDiySize);
+    MockFile canadaDiy(path.c_str(), m_canadaDiyData.get(), m_canadaDiySize);
     addFakeFile(canadaDiy);
 
     showMainMenu();
@@ -904,7 +914,7 @@ void SelectFilesMenuTest::testSaveCompetitionByClick()
     addFakeDirectory(root.c_str());
 
     auto path = joinPaths(root.c_str(), "canada.diy");
-    MockFile canadaDiy(path.c_str(), kCanadaDiyData, kCanadaDiySize);
+    MockFile canadaDiy(path.c_str(), m_canadaDiyData.get(), m_canadaDiySize);
     addFakeFile(canadaDiy);
 
     auto fillerPath = joinPaths(root.c_str(), "ddd.diy");
@@ -950,15 +960,15 @@ void SelectFilesMenuTest::testSaveCompetitionByClick()
     size_t size, numWrites;
     auto data = getFakeFileData(path.c_str(), size, numWrites);
 
-    assertEqual(size, kCanadaDiySize);
+    assertEqual(size, m_canadaDiySize);
     assertEqual(numWrites, 1);
 
     // despicable
     constexpr int kSelTeamsPtrOffset = 5170;
     constexpr int k2ndPartOffset = kSelTeamsPtrOffset + 4;
 
-    assertFalse(memcmp(data, kCanadaDiyData, kSelTeamsPtrOffset));
-    assertFalse(memcmp(data + k2ndPartOffset, kCanadaDiyData + k2ndPartOffset, size - k2ndPartOffset));
+    assertFalse(memcmp(data, m_canadaDiyData.get(), kSelTeamsPtrOffset));
+    assertFalse(memcmp(data + k2ndPartOffset, m_canadaDiyData.get() + k2ndPartOffset, size - k2ndPartOffset));
 
     assertEqual(getNumFakeFiles(), 2);
 }

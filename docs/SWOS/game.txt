@@ -86,6 +86,21 @@ da li je igrac cimnuo unazad, i ako jeste koriste se vrednosti za visoki sut.
 Nakon suta umanji brzinu lopte na 87.5% ako je sut u dijagonalnom pravcu,
 na 75% za ostale pravce.
 
+=== Pass
+
+The AI has a certain chance to botch the pass. It happens only during the game, and depends on player's passing
+skill. There's a table with chances:
+6, 4, 3, 2, 1, 0, 0, 0
+Table is indexed by player's passing skill, and the value is compared to bits 1-4 from current tick counter shifted
+one position to the right (0..15). If the value from the table is less than the counter bits value, the pass is
+botched. Translated to probabilities:
+37.5%, 25%, 18.75%, 12.5%, 6.25%, 0%, 0%, 0%
+So the elite passers never make such rookie mistakes ;) Bad pass has an angle messed up: it's initially aimed to the
+correct player position, but then one dimension gets divided by 2 which ruins it. The ball destination x and y are
+set to: current ball x/y + (player x/y - ball x/y) * 32, or 16. Whether it's 16 or 32 is decided by game tick
+counter bit 5: if set multiply x by 32 and y by 16, if clear vice versa. When multiplying with 16, the delta value
+is first shifted to the right once, so it losses the least significant bit.
+
 === Lob kick
 
 Lob kick test starts 4 ticks after kick has been initiated. If controls are

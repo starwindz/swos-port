@@ -5,6 +5,7 @@
 #include "file.h"
 #include "util.h"
 #include "color.h"
+#include "menuBackground.h"
 
 static_assert(kPlayerBackground.size() == kNumFaces, "The air is dry");
 
@@ -310,7 +311,11 @@ void colorizeBenchPlayers(const TeamGame *topTeam, const TeamGame *bottomTeam,
         auto backSurface = std::get<1>(teamData);
         auto texture = std::get<2>(teamData);
 
+        if (!backSurface)
+            continue;
+
         for (size_t i = 0; i < kBenchBackground[m_res].size(); i++) {
+
             const auto& back = kBenchBackground[m_res][i];
             const auto& shirt = kBenchShirt[m_res][i];
             copyShirtPixels(team->prShirtCol, team->prStripesCol, back, shirt, backSurface, shirtSurface);
@@ -400,16 +405,17 @@ static PlayerSurfaces createPlayerFaceSurfaces(const TeamGame *team, const Playe
 static BenchPlayerSurfaces createBenchPlayerSurfaces(const SharedTexture& topTeamTexture, const SharedTexture& bottomTeamTexture)
 {
     BenchPlayerSurfaces surfaces{};
-    auto surface = loadSurface(kBenchBackground);
-
-    if (!topTeamTexture)
-        surfaces[0] = surface;
-    if (!bottomTeamTexture) {
-        surfaces[1] = surface;
-        if (surfaces[0]) {
-            surfaces[1] = SDL_DuplicateSurface(surface);
-            if (!surfaces[1])
-                errorExit("Failed to duplicate bench surface %#x", surface);
+    if (!topTeamTexture || !bottomTeamTexture) {
+        auto surface = loadSurface(kBenchBackground);
+        if (!topTeamTexture)
+            surfaces[0] = surface;
+        if (!bottomTeamTexture) {
+            surfaces[1] = surface;
+            if (surfaces[0]) {
+                surfaces[1] = SDL_DuplicateSurface(surface);
+                if (!surfaces[1])
+                    errorExit("Failed to duplicate bench surface %#x", surface);
+            }
         }
     }
 
@@ -508,7 +514,10 @@ static void convertTextures(SharedTexture *textures, SDL_Surface **surfaces, int
         if (surfaces[i]) {
             textures[i] = SharedTexture::fromSurface(surfaces[i]);
             if (!textures[i]) {
-                // try releasing cached textures, maybe there wasn't enough GPU RAM
+                // maybe there wasn't enough GPU RAM, first to go is menu background
+                unloadMenuBackground();
+
+                // then release any unnecessary cached textures
                 trimCache();
 
                 textures[i] = SharedTexture::fromSurface(surfaces[i]);

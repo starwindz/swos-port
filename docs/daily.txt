@@ -2620,7 +2620,7 @@ earlier:
 - updated verifySafeMemoryAreas() to check all newly added safe areas
 - fixed a bug in convertMenu(), didn't bump data pointer when handling custom foreground function
 - implemented native menu codes (to support out-of-SWOS menus)
-- starting with mnu2h and menu system modifications but it's revealing more complex than I thought;
+- starting with mnu2h and menu system modifications but it's revealing to be more complex than I thought;
   lucky I took over convertMenu() or it would be impossible; and it's even greater luck I wrote a little
   language for describing menus, which allows this big change without myself going insane (just barely)
 13.09.2020.
@@ -2885,7 +2885,7 @@ earlier:
 - fixed load files menu, now highlights/replays work, tactics importing etc.
 - fixed video options menu
 02.09.2020.
-- had some fun & learning profiling while ida2asm, shaved of another ~50ms :D
+- had some fun & learning while profiling ida2asm, shaved of another ~50ms :D
 - optimized optimizer a bit ;) it now deletes a bit more instructions
 - trying to compile SDL2 for Android, this will be death on the dance floor
 03.09.2020.
@@ -5180,8 +5180,8 @@ earlier:
   already in the pitch
 - app doesn't ask to save changes when everything has been undone
 - quit prompt can be dismissed by pressing escape again
-- patterns can be highlighted now (very useful to find where in the pitch a particular pattern is placed); it can be
-  done by ctrl-shift clicking the pattern, or pressing h while it's displayed in pattern mode
+- patterns can be highlighted now (very useful to find where in the pitch a particular pattern is placed); it can
+  be done by ctrl-shift clicking the pattern, or pressing h while it's displayed in pattern mode
 - middle click in pitch mode shows pattern number outside edit mode as well
 - fixed index file saving to skip invisible rows
 - added ctrl+insert command to pattern mode which adds new empty pattern to the end
@@ -5194,10 +5194,10 @@ earlier:
 - finished pitch1 in swpe + port conversion, mostly OK, there are just a few mistakes
 - removed first and last two rows from pitch optimizations, they aren't visible and only mess up tile numbering
   (they are all set to 0 tile in the output and the top-left tile gets assigned number 0)
-- argh... I haven't included other two types of shirts in the archive for the artist, so there's only one shirt type
-  converted; messed with sprite resizer software a bit more to see if I can convert them and got better results
-  than the first time, this looks even better than the converted sprites :P I'll play with this some more, might
-  reconvert all the sprites
+- argh... I haven't included other two types of shirts in the archive for the artist, so there's only one shirt
+  type converted; messed with sprite resizer software a bit more to see if I can convert them and got better
+  results than the first time, this looks even better than the converted sprites :P I'll play with this some more,
+  might reconvert all the sprites
 25.08.2022.
 - pitch1 mistakes fixed, officially done
 - added "change all instances of tile to" command, on C, useful when some tiles are shifted and can be quickly
@@ -5293,13 +5293,14 @@ earlier:
   things noticeably slower, the bigger the padding the slower it got)
 - started converting CalculateDeltaXAndY()
 14.09.2022.
-- finished CalculateDeltaXAndY(), got it returning exactly the same results, interesting thing is when I do straight
-  multiplication (x * 41 / 64) instead of the expression with sequence of shifts/subtracts, the result is off by
-  1-4 (less when I do integer rounding, but never was able to match it with mul/div) -- typical example is
+- finished CalculateDeltaXAndY(), got it returning exactly the same results, interesting thing is when I do
+  straight multiplication (x * 41 / 64) instead of the expression with sequence of shifts/subtracts, the result is
+  off by 1-4 (less when I do integer rounding, but never was able to match it with mul/div) -- typical example is
   -142,000; decided to go with mul/div, it's much shorter and the error is only about 0.00006
 - started implementing Amiga mode, will need some additions in ida2asm
 15.09.2022.
-- expanded ida2asm documentation, added new section I'm planning to implement, for converting constants to variables
+- expanded ida2asm documentation, added new section I'm planning to implement, for converting constants to
+  variables
 - implemented it partially as well
 16.09.2022.
 - [ida2asm] @constant-to-variable section fully implemented
@@ -5335,3 +5336,407 @@ earlier:
   as constants in code for now and in case someone complains it's super easy to change
 - fixed window size input in options only accepting input up to and including 3 digits
 - published a new version and pushed to Github
+22.09.2022.
+- went back to recorded data tester, some discrepancies are creeping in with player skills, I haven't hooked other
+  random function (Rand2) but it's possible there's another source of indeterminism
+23.09.2022.
+- fixed a bug in saving players pointer in TeamData, and also skipped saving the first frame, since it's called
+  from Flip() which runs once before the game loop to handle the fades; fixed chance table comparison, now need to
+  add the rest of the comparisons
+- [ida2asm] added support for exporting multidimensional arrays (thought this was there all along)
+24.09.2022.
+- added rest of team verification checks except sprites, AI timer is triggering, pending investigation; also will
+  need to figure out how to map sprites to SWOS sprites now that there is no all sprites array anymore
+25.09.2022.
+- added sprite index verification in team
+26.09.2022.
+- analyzed why AITimer is 11 when it should be 1, seems like playerNumber wasn't set so team appeared as CPU team,
+  but I've fixed player numbers and AITimer is still wrong
+27.09.2022.
+- just debugged DOS version, AI routine is only called once for CPU team, while in port it's called 11 times (for
+  each player it seems), and the caller is UpdatePlayersAndBall(), so this will be rough; eliminated some possible
+  causes for this discrepancy, but still not sure what's going on, will rig random value on SWOS++, debug in
+  parallel and watch where UpdatePlayersAndBall() executions diverge
+28.09.2022.
+- traced the execution and found where it differed: when the "local" variable was accessed: it turned out it's not
+  really a local variable, but a D4 value pushed earlier, holding number of players left to process (one less
+  actually); I'm not entirely sure how this works, but there is a variable in the team structure that is bumped
+  each frame and holds values 0..10 (wraps at 11), which corresponds to players on the pitch; then this index gets
+  compared with the number of players left to process, and only if it matches the AI routine is called (at least at
+  this spot in the function); ida2asm generated access of a local variable, which held 0 and never changed, and
+  that resulted in AI routine getting called 10 times per frame instead of once; this is a huge discrepancy, and
+  it's interesting it wasn't discovered, as the gameplay is seemingly unaffected
+- [ida2asm] now generates proper output when esp is directly referenced
+- and with this fix team verification at frame 0 passes!
+- did a little test on ida2asm parser processing UpdatePlayersAndBall() and then the rest of the file in regards to
+  the mistake in line numbering, thought I'll catch it right there, but it turned out to work flawlessly; I'm
+  beginning to think the error could be happening in between the segments
+29.09.2022.
+- solved a verification failure on team quickFire field: pl1FireCounter and pl2FireCounter were never reset and
+  were causing team's quickFire field to become active with pre-game input (with no real fire issued); solved by
+  resetting them, and as a precaution reset all timer fields of both teams
+- fixed sprite validation issue: interesting, there is an unused sprite right after the referee sprite, no idea if
+  it could be some kind of leftover from Amiga, but it was messing up the sprite indices (players were getting
+  indices higher by one); counted unused sprite properly, renumbered the sprites and now it's passing
+- changed team firePressed field to use 255 when pressed to match SWOS value
+30.09.2022.
+- only got around for a small peek, moved next frame reading to game loop beginning for input to be fresh; team
+  fireThisFrame field is desynced -- it updates at two spots, AI routine and team controls update, it will be
+  interesting to see which one it is
+01.10.2022.
+- fixed it in a very round about way, but it was damn last fired flag that wasn't reset on the SWOS++ side, as
+  SWOS++ tracks fire before the match and port doesn't; once those were reset (in addition to counters), it all
+  clicked; of course, now on to the next challenge
+02.10.2022.
+- added camera coordinates checking, but had to disable it for now, there's some discrepancy and I need to find out
+  why (the camera code was converted to floats, but I forgot how it works :))
+- added sprite checks (except pointers), getting desync on onScreen field, that will also require some research
+03.10.2022.
+- onScreen is not set because drawing has been stubbed out in tests, enabled it and that seems to be fine
+- fixed referee and corner flag sprites to be more similar to SWOS ones and pass verification
+- now some player coordinates are slightly different, will implement the same algorithm in CalculateDeltaXAndY()
+  and try again
+04.10.2022.
+- prevented stoppageTimer from getting incremented in an interrupt handler, switched to incrementing it every frame
+  (like SWOS++ multiplayer)
+- replicated variable initialization from SWOS++ multiplayer game, and thoroughly cleaned sprite fields
+- implemented "near" comparisons for fixed point/float/ball distance fields, it's starting to look like something
+- now getting a discrepancy in frame 133 sprite 14 (team 1 player 11), even a sprite graphics is different, seems
+  like their sprite started moving while ours lazy slowpoke only lies down and rests all day long
+05.10.2022.
+- chased the discrepancy down to the difference in onScreen field, sprite only gets animated if it was drawn, so
+  the code diverges there (the check is in SetNextPlayerFrame()); not sure how to handle it: ignore it, or set the
+  tester resolution to 320x200, or something else...
+06.10.2022.
+- came up with a cunning plan, if both sprites are visible, I will just simulate animation update of the SWOS
+  sprite until frameSwitchCounter fields match, and then do the comparison of remaining fields; only catch is I
+  have to implement proper indices frame table comparison and assignment
+07.10.2022.
+- [ida2asm] added support for label aliases (was needed to mark animation and frame indices tables start & end)
+- implementation of animation and frame indices table verification in progress (turned out not to be quite
+  straightforward as it initially seemed, but we're getting there slowly)
+08.10.2022.
+- [ida2asm] removed class from Offsets enum, since it's really more like an int, and needs to be available for
+  calculations
+- [ida2asm] fixed invalid variable offsets generated when exported declaration overrides parsed size of a variable
+- animation and frame indices table verification implemented, but failing a basic test, after a long investigation
+  discovered an unauthorized alignment for one exported table
+- [ida2asm] removed 4-byte alignment on large exported structures
+- [ida2asm] fixed some text output misalignments in comments
+- the error was actually on the SWOS++ side, frame indices table index wasn't calculated properly; fixed and now
+  dealing with some precision errors again (most likely), in the player-ball distance field
+09.10.2022.
+- added test cases for calculateDeltaXAndY(), since it's a prime suspect for the source of discrepancy; fixed it by
+  replacing divisions with shifts, seems with divisions compiler does some adjusting for the sign; much better now,
+  no more drifting away
+- had to scratch simulation update :( since the switch counter only updates in one branch and not the others, the
+  fields can still be out of sync, but at least the picture index must be the same... but its wooden stake was the
+  problem of player changing animation tables (e.g. running left, then up while being off-screen in DOS); how do we
+  know which one to apply? so it got axed
+- now getting a mismatch in ball speed, interesting
+10.10.2022.
+- found that the ball speed is assigned during the pass, figured out that part nicely, learned about CPU botched
+  pass chance ;)
+- there is a second place where the ball speed is tampered, and that is UpdateBall(); discrepancy happens there,
+  traced it to different values of pitchBallSpeedFactor (-3 port, 4 DOS), which is due to not synced game options
+  (in this case game length), argh
+11.10.2022.
+- added game options to the format, now there's a desync in team firing flag, it's not set at SWOS++ side even if
+  the input is fire
+- creating a way to replay these files in SWOS++ so I can debug the exact frame, still not working properly though
+12.10.2022.
+- it was a mess with file access, and finally sorted it: buffering of input file interfered with seeking operation,
+  these two should really not be mixed so switched to non-buffered file and that's fine now
+- still it's desyncing quickly, it looks hilarious though
+- fixed invalid sign conversion when reading game settings from header in tests
+- argh, SWOS++ is so difficult to debug, why is it desyncing with itself?!
+- turned all function static variables to file static in game controls, and reset them before each game to remove
+  non-determinism
+13.10.2022.
+- added gameState and gameStatePl to frame
+- added frame reading and verification to SWOS++ in order to be able debug game replays, and to be able to trace
+  exact troublesome frames.. however it's still desyncing, sometimes even at the same frame as the port tests,
+  maybe something is off with saving/recreating the environment (especially the controls)
+- forgot to increment stoppageTimer, that made it go further, but still desyncs
+14.10.2022.
+- looked a bit more into desync, it happens when a player takes the ball, controlled player field is updated in the
+  recording, but when replayed it doesn't happen (pointer remains null)
+- started incremented currentTick in tests, was alway 0
+- it dawned on me what the problem is while brushing teeth: keyboard control flags which I'm reading at the end of
+  the frame are set asynchronously by a keyboard interrupt handler; therefore they might be overwritten by the next
+  frame keys... will need to recreate it back from the variables set by Player1StatusProc() -- which are exactly
+  what the current frame uses
+15.10.2022.
+- yup, the best ideas come in bathroom, after that fix and additional variables reset, SWOS++ can successfully
+  replay its own replay files, focusing on repairing the port now
+- already getting results! fixed mistake in pitch type generating routine, condition to pick seasonal or random
+  pitch type was inverted, d-oh! also deleted more SWOS variables
+- advanced 2 frames, and now there's a mismatch on passed to player by CPU team: should be 9 but it's 10
+16.10.2022.
+- this is the first proof of altered game logic: CPU chooses a player to control that is closest to the ball AND
+  visible, and since the port screen shows more, it picks a closer, different player than in DOS original...
+  nothing really to do here, except executing tests in 320x200 resolution so the logic must match
+- now the center-the-ball-camera isn't matching original and logic diverges due to different visible sprites...
+17.10.2022.
+- changed camera coordinates from floating to fixed point (better for multiplayer)
+- reminded myself how SWOS camera works; I seem to have already converted it, and the code seems very solid
+  (*shakes hand with self*); then I went and finished camera documentation, which I forgot it even needed finishing
+  :) but that's how it is, anything ever unfinished always jumps out of nowhere sooner or later and bites you in
+  the ass
+- fixed menu background disappearing when asset resolution changes
+- fixed invalid minimum height expression when setting window size
+- not sure if it was broken, but I changed the code that determines if sprite was drawn in the case the sprite is
+  rotated; just did the test before the rotation, much simpler and am pretty sure it's correct now
+- getting a mismatch in the camera coordinates even at 320x200 and zoom=1, will need to investigate this
+18.10.2022.
+- new camera code calculates deltas with more precision, that's why there's a discrepancy, made it less precise for
+  the tests
+- another discrepancy in onScreen sprite field: seems SWOS clips width at 336 pixels not 320 (VGA width), had to
+  make 336 a minimum width in clipping test, ugly but it worked
+- forced int-only code for onScreen detection to be exactly aligned with the original game, now halfPlayed field in
+  PlayerGame desyncs
+19.10.2022.
+- halfPlayed investigation led to UpdateTime(), it should be updated from there but it didn't seem to happen, after
+  more digging discovered this in SWOS++ pdata.asm:
+    PatchByte UpdateTime + 0xfa, 1;54/70
+  argh, who knows since when was that sitting there
+- fixed the game length problem, it's now really 3 minutes
+- game time synced, now triggering some camera x discrepancy again -- the reason is that I've used integers for
+  camera movement deltas, but in case the game isn't stopped the ball deltas are used which are full 32-bit fixed
+  point variables (so must use FixedPoint here)
+- current player sprite is triggering some asserts, but seems it's not implemented as a sprite at all, so will need
+  to figure out some better way to test it
+20.10.2022.
+- removed unused player name display sprite
+- implemented proper player name display sprite verification
+- oh noes, discrepancy again :) this time in team stats, wrong team got the ball possession bumped, since
+  lastTeamPlayed somehow had a wrong value; traced it to inside AI_DecideWhetherToTriggerFire(), it's an error in
+  VM, dword access is generated instead of word, as in: cmp word ptr ballSprite.z, <val>
+- [ida2asm] fixed setting invalid operand size for instructions that access struct fields, wrongly overriding size
+  specifier (byte/word/dword) with field size
+- on to frame 4287! camera x coordinate mismatch, seems x velocity is out of sync from previous frame(s), will
+  extend data collection with those variables; also had them reset before the game, better safe than sorry; this
+  was caused by wrong additional SWOS compatibility code that was supposed to fix what I thought were left-over
+  fractions (luckily I was able to remove all that crap)
+- in a new recorded game corner flag isn't drawn even though it is in the original; the cause was wrong field used
+  for width/height when mimicking SWOS clipping test
+- went for 7688 frames! now a discrepancy in animation frame indices table, first time seeing this; port sprite has
+  the table set, SWOS++ doesn't
+- added /rf option to SWOS++, to replay the file fast, without waiting on retrace
+21.10.2022.
+- frame indices table problem was on SWOS++ side, needed to set highest bit for header-related tables, and I used
+  AND instead of OR... sheesh...
+- after the fix it still wasn't working, but found the root cause of the problem on port side: tables inside frame
+  tables are were declared as words and picked up automatic 2-byte alignment, 1 inserted byte of alignment ruined
+  entire frame tables area; their alignment had to be turned off (hope it won't trigger unaligned access)
+22.10.2022.
+- [ida2asm] removed extraneous space after type name for exported variables with alignment specifier
+- [ida2asm] fixed offset generation when real variable after alias variables has an alignment
+- [ida2asm] fixed invalid data bytes generated when exported variable is declared as a struct type over an ordinary
+  variable in assembly source
+- added static assert for animation and frame tables, so that's immediately detected if they are not contiguous
+- [ida2asm] fixed alignment directive not working on exported structs
+- all this fixed table comparisons and we're off to frame 9511 where camera y velocity has diverged
+23.10.2022.
+- the reason for camera divergence was that the camera direction field was declared as word, and then read into int
+  variable; so -1 became 65535 and wrongly passed < 0 test; converted it to int16_t and it's good, now reaching
+  frame 9609
+- re-enabled verification of sprite picture frame fields, already fixed small discrepancy in corner flag sprite
+- player number sprite visibility mismatch, investigation reveals wrong width for sprite 1198 (player number 11)
+- current replay desyncs in SWOS++ when CPU is about to take penalty (direction = -1 (saved) = 4 (in game)); funny
+  thing happened during the game, it wouldn't take it for a while, I was changing formations and suddenly camera
+  went to the center without penalty taking place (or at least I didn't see it)
+- ahh, desync in frame 9609 is due to modified player exit coordinates to look better when unzoomed, completely
+  forgot about this :) swoosh to frame 18470, camera x disparity
+24.10.2022.
+- camera is different because g_inSubstitutesMenu is true in port and false in SWOS++; created a short replay with
+  lots of bench fiddling, but even SWOS++ desyncs on it, so have to resolve this first and make sure it's not an
+  error on the recording side
+- solved it, Player1StatusProc() was called from bench code (why really? this code is so junky); similar to
+  previous desync, keyboard handler is async, and the keyboard input flags changed between two readings (got no
+  input on first read -> that went into teams, then had down key on second read, and that was saved in the file, so
+  when playing back the program expects teams to correspond to input down key and they don't); there are few more
+  places that call the routine, so patched it up so it only does its work once per frame
+- fixed desync where port calls the bench while SWOS++ doesn't (lowered number of taps needed, this was possibly
+  intentional, but reverting it for now)
+- fixed potential source of indeterminism in bench controls (reset pick bench team counter)
+25.10.2022.
+- fixed tap timeout counter being reset slightly prematurely when invoking the bench
+- fixed camera x mismatch at frame 1920 due to new camera implementation being more precise
+- mismatch at frame 2694, invalid sprite direction: turned out that x coordinate constant of a player that's coming
+  to the game from the bench was wrong
+- didn't get far, 2706, seems like a mistake in substitute player routine
+26.10.2022.
+- the bug in substitute player routine was that ApplyTactics() were called without setting A4 to TeamGame pointer,
+  it was randomly set to some location in the team, causing overwrite of speed skill 0 with 2 for the player that
+  was coming in to play
+- getting to frame 23773! desync is because camera is out of leaving subs menu mode 1 frame too early; slightly
+  invalid logic fixed
+- did a small refactoring of bench and camera code, removed some unnecessary stuff
+- frame 25615 now, seems GameOver is calling Flip and saves a superfluous frame to the file, but even with deleting
+  this frame the next one still desyncs
+27.10.2020.
+- fixed ball set to invalid x coordinate when game ends
+- ball is fine but now the desync is on camera y coordinate -- because SWOS only sets whole part and not the
+  fraction
+- that was the last issue, and finally, one whole match passes! :)
+- however, 2nd one triggers on referee ;) but it's just a silly difference, SWOS has a referee-specific update
+  animation routine (for no reason, really), and it doesn't update fullDirection field while the generic one (we
+  use) does + mismatch due to more precision using rounded coordinates (really need to switch CalculateDeltaXAndY()
+  to fixed points sometime)
+- there was also referee coordinates desync at 7159, I missed some weird code that turned out to be necessary for
+  detecting if the destination was reached
+- frame 11934: direct assignment to x/y referee coordinates when sending it off-screen, clears fraction
+- frame 23494: forgot to update SWOS extraTimeState and penaltyState variables with values from replay file
+- frame 31149: mismatch in stats; caused again by more precise coordinate comparison, this time in the code that
+  prolongs the last minute of the game; spent a while looking at this code and trying unsuccessfully to find a
+  mistake, couldn't believe I've nailed it... which is a good thing cause I can barely understand it now lol
+- and that was the last assert, the complicated match with extra time and penalties, yellow cards, own goals and
+  what not has passed
+- marked player in play match menu desyncs SWOS++ itself, gotta fix that, and also record one where marked player
+  gets substituted
+28.10.2022.
+- added marked player fields to the rgd header, now player marking works properly
+- testing another match, breaks at frame 6076; it was just a subtly different logic when decrementing bench delay
+  timer
+- 12474: fire time in subs has to have exact value of tick to substitute, must be a != and not < comparison
+- 21415: pretty much the same thing, in a different spot (had to reset bench timers at an exact tick, not with >=),
+  but also resetting the variable that blocks further bench input when it shouldn't be reset (shouldn't be reset
+  together with everything else in reset() method)
+- 22171: when leaving bench, player needs to press *only* left or right, without up/down (which was the logic up
+  until now)
+29.10.2022.
+- 22402: similar to above, when moving up/down to select a player to go in, only up/down counts (no left/right)
+- 25490: original game resets game ticks when fading in in the main loop, really an unimportant implementation
+  detail, but it was very easy to add
+- 2nd, very complex match passes!
+- cleaned up .gitignore a bit and added sprites to the repo that somehow ended up not there
+- getting desyncs when running 2nd game, found that frameIndicesTable and pictureIndex must be reset between the
+  games (in case of ball sprite, but will do it for everyone), tacklingTimer also
+- a desync in team at frame 640, static variable AI_turnDirection used in AI state machine must be restored to 1
+  between the games
+- new desync at 796, TeamGame
+- found that m_endGameCounter wasn't reset between the games
+- yikes, found a nasty bug in verifyTeamGame, memcmp was comparing size of m_frame.top/bottomTeam, but it should
+  have compared m_frame.top/bottomTeamGame bytes (shortened the comparison and let one other bug slip unnoticed)
+- fixed halfPlayed being set for all 16 players in team (should be only 11 that are playing)
+- and with that both matches pass!!!
+30.10.2022.
+- disabled game keys (replay, save replay, pause etc.) in SWOS++ since they mess up the replays
+- disabled replay coordinates saving while replaying in tests, should be a bit faster
+- reset player mark sprite between games, included onScreen field too
+- added a third match, got a desync at frame 4825, only when ran after another game
+- made replay tests verify first file again after the last one, to check the first file too for some between-match
+  state corruptions
+- fixed forgotten m_lastGameTick initialization between matches, everything passes now
+- added another match where I'm coaching only, and it desynced; there was a bug with reading bench controls, player
+  coach combination wasn't considered
+- yikes, same bug with reordering players as with substitutes: ApplyTactics() called without setting A4
+- 3765: when swapping players in subs menu only pointers were swapped instead of actual sprite memory (couple of *
+  did the trick ;))
+- 21927: this discrepancy made me discover an interesting bug: when booking a player, there are three tables that
+  control the behavior of player number (which is blinking); all three tables seem identical, but in case of double
+  yellow card the table is missing last three bytes (only 27 bytes long instead of 30); so it reaches into some
+  stuff that just happens to be after it in memory, and that follow-up table was removed in port with something
+  that has initial 3 zeros, which triggers a different behaviour... there also seems to be code that never gets
+  executed (expected values in the table seems to be <0,0,1,2,3 and it only contains -1,0,9)
+- refactored a bit, separated sprites to its own header and added a few convenience methods
+- fixed Menu struct not being under #pragma pack(push, 1)
+31.10.2022.
+- switched to VS2022, latest toolset and 64-bit build for tests
+- fixed 32-bit libjpeg-9.dll and libpng16-16.dll being in 64-bit DLL directory
+- wrote win32 resource loader for custom files, but had to scrape it since LockResource() consistently returns
+  a pointer to wrong data; switched to ordinary files with data location embedded via a predefined preprocessor
+  define
+- fixed a texture loading bug which happens when a team's bench texture is already present in the cache and doesn't
+  need to be recreated
+- haven't been reseting m_frameNo to 0 before the match in SWOS++ (never really recorded two in a row)
+- fixed iterating directories in virtual file system for tests
+- fixed invalid sprite width in several characters (especially in big font)
+- optimized recorded replay tests, they finish a bit faster now
+01.11.2022.
+/
+02.11.2022.
+/
+03.11.2022.
+/
+04.11.2022.
+/
+05.11.2022.
+/
+06.11.2022.
+- found a mistake in SWOS++ replays (by extension port's too): haven't set g_numSelectedTeams to 2, and then I
+  guess team loading routine went to reload them from the disk instead of using my planted ones from the header
+- replaying Playa's games, desync at 11630
+07.11.2022.
+- the desync happens when he changes formation to custom tactics, I haven't copied them to proper place after the
+  replay header was loaded in port tests...
+- got some problems when I declared USER_A as TeamTactics, generated data for it is too wrong, too short, and on
+  top of that there's an assert triggering in ida2asm (something about instruction tokens)
+08.11.2022.
+- [ida2asm] fixed accessing invalid replacement tokens, deallocated on stack (made them static)
+- the previous fix solved both the assert and USER_A getting very short length instead of 370 bytes in memory array
+- the first game now passes verification but the second one triggers an assert with quick fire being active
+  locally, and that's because fire counters weren't initialized between matches
+- getting an assert, relatively recently added, at the long 120 min game at the end: game ends with plenty of
+  frames left in the file (~3mb); the problem was that when currentGameTick was reset after fade-in at the end of
+  the game, lastGameTick had to be reset as well; with this change all tests pass! :)
+- applied SWOS variable initialization learned while fixing tests to the game itself
+09.11.2022.
+- checked update bench code and in two places fixed return to game action to react only when clear left/right was
+  pressed, without up/down
+- added support for ending games with escape to SWOS++ recorder and port, and recorded one aborted game (with lots
+  of bench menu twiddling)
+- fixed the code to prevent keyboard shortcuts doing what they normally do if they're selected as any player key
+- desync in latest game on marked player in frame 1815; bench stuff, surprisingly more of the similar movement
+  control issues (only move on up/down without left/right), however THIS time I fixed it all!
+- fixed wrong control variable assignment in SWOS++, patched Player1StatusProc() and Player1StatusProc()
+- [ida2asm] made registerPointer() return -1 if the point pool is filled
+10.11.2022.
+- added support for aborting recording games
+- added support for recording training games (no support for changing starting lineup before the match though),
+  supported by recorded game data file v1.2
+- whoops, USER_A getting very short length problem wasn't really fixed, it was coming back if I set its type to
+  TeamTactics (size to 370 in @type-size), opposed to declaring it as an ordinary array
+- [ida2asm] fixed exporting char arrays as structures getting their size clamped to 4 bytes
+- recorded a training game, successfully checked it on SWOS++, but getting a desync in port at frame 4070
+- fixed not properly setting training top team flag when going to bench after substitute
+- getting wrong coach/substituted player at frame 3803
+11.11.2022.
+- fixed the last issue, the code in question looks very fishy, I think it's a bug that just somehow works because
+  the condition has superfluous parts: in IsThisPlayerOkToSelect() D0 is returned as a result, but in case
+  substituted field is false and player's position is -1 (meaning he was substituted) D0 isn't initialized properly
+  (holds positive value from previous calculation as a player offset) and makes the function return true; emulated
+  this behavior in port for now, but it's possible that the whole condition would be rewritten in the future
+- finally all tests passing again!
+- converted MovePlayers() and MovePlayer(), game tests are already showing value
+12.11.2022.
+- did a little play through, and found bench doesn't work correctly anymore; after substitute it goes to wrong
+  bench + it shows menu while going to bench, and responds to commands -- this actually happens in SWOS too, which
+  I think is a bug, just doesn't draw it until the camera is there; fixed it, it was a consequence of changing was
+  player substituted routine to be inline with original buggy behavior, it was called in several other places which
+  assume it works correctly
+- extended gathered data with pretty much complete set of bench variables, recorded game data file is now v1.3
+- added SWOS++ and SWPE to the repository
+- fixed selected player menu index not getting reset in bench between matches, and a few more variables
+- ran static analysis but didn't find anything significant
+- changing resolution during the game (e.g. maximizing the window) crashes the game, there's a possible memory
+  overwrite, postponing the release
+13.11.2022.
+- fixed resolution change during the game crash, it was caused by additional sprite reset before the match, it was
+  called on resolution change when it really shouldn't (it's a strictly pre-match operation)
+- fixed invalid assertion when menu background is reloaded, it required that the background was empty while the
+  match was running, but we also have replay/exit menu after the match where isMatchRunning() still returns true;
+  in the end I ditched menu background unloading during the game because if there's enough GPU RAM it only slows
+  things down, moved the unload to when we fail to create GPU textures -- there the game unloads menu background
+  and any unnecessary cached textures and tries again
+- fixed replays that got broken on float -> FixedPoint coordinates conversion
+- fixed FPS going wild occasionally after alt-tab
+- tried adding a bit more precision to the FPS calculation, but blew it completely; at least made the code nicer
+  and menu FPS calculations more precise (without incurring anymore CPU)
+- investigated a little why was crash reporter reporting an error at initialization (couldn't find language file),
+  seems it was looking for ini at the path where it was finding its 64-bit DLL, in swos-port\dll... placed ini file
+  there and it seems to be happy now
+- fixed colored frame showing up on columns 2 & 3 of select files menu tests (g_allowShorterMenuItemsWithFrames
+  wasn't reset back to 0 by recorded games tester)
+- pushed to Github

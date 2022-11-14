@@ -419,7 +419,7 @@ CToken *IdaAsmParser::parseInstruction(CToken *token, TokenList& comments)
             return token;
 
         case Token::T_COMMA:
-            if (operandNo < opTokens.size())
+            if (operandNo < opTokens.size() / 2)
                 operandNo++;
             else
                 unexpected(token);
@@ -593,6 +593,12 @@ CToken *IdaAsmParser::parseLabel(CToken *token, TokenList& comments)
     if (token->isComment()) {
         comment = token;
         advance(token);
+    }
+
+    // this catches empty alias labels, such as "animTablesStart"
+    if (token->isNewLine() && token->next()->isId() && !m_currentProc) {
+        m_outputItems.addDataItem(comments, comment, name, nullptr, 0);
+        m_outputItems.addDataElement(name, false, 0, 0);
     }
 
     m_outputItems.addLabel(comments, comment, name);
@@ -1101,17 +1107,17 @@ void IdaAsmParser::replaceConstantWithVariable(CToken *token, const String& varN
         error("immediate operand value mismatch (" + std::to_string(actualValue) + " but " +
             std::to_string(value) + " expected)", token);
 
-    union {
-        Token token = { Token::T_ID, Token::kId, };
+    static union {
+        Token replacementToken = { Token::T_ID, Token::kId, };
         char buf[sizeof(Token) + ProcHookList::kProcNameLength + 2 * sizeof(Token) + 2];
     };
     assert(varName.length() <= ProcHookList::kProcNameLength);
-    token.textLength = varName.length();
+    replacementToken.textLength = varName.length();
     varName.copy(buf + sizeof(Token));
 
     opTypes[operandNo] |= Instruction::kVariable | Instruction::kIndirect;
-    opTokens[2 * operandNo] = &token;
-    opTokens[2 * operandNo + 1] = token.next();
+    opTokens[2 * operandNo] = &replacementToken;
+    opTokens[2 * operandNo + 1] = replacementToken.next();
 
     moveToNextHook();
 }

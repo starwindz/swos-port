@@ -2,6 +2,7 @@
 
 #include "MenuEntry.h"
 
+#pragma pack(push, 1)
 struct Menu
 {
     SwosProcPointer onInit;
@@ -18,3 +19,4 @@ struct Menu
         return entries() + numEntries;
     }
 };
+#pragma pack(pop)

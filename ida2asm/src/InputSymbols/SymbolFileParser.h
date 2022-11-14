@@ -91,6 +91,7 @@ private:
         bool functionPointer = false;
         bool array = false;
         bool trailingArray = false;
+        bool multiDimensionalArray = false;
         int8_t alignment = -1;
     };
 

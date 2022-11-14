@@ -269,8 +269,24 @@ void SymbolFileParser::outputExports()
 
         if (m_cppOutput && !exp.function) {
             int arraySize = -1;
-            if (exp.array)
-                arraySize = exp.arraySize ? exp.arraySize.toInt() : 0;
+            if (exp.array) {
+                arraySize = 0;
+                if (exp.arraySize) {
+                    if (exp.multiDimensionalArray) {
+                        arraySize = 1;
+                        for (auto p = exp.arraySize.data(); p < exp.arraySize.end(); ) {
+                            int dim = 0;
+                            while (Util::isDigit(*p))
+                                dim = 10 * dim + *p++ - '0';
+                            arraySize *= dim;
+                            while (p < exp.arraySize.end() && !Util::isDigit(*p))
+                                p++;
+                        }
+                    } else {
+                        arraySize = exp.arraySize.toInt();
+                    }
+                }
+            }
             m_exportTypes.add(exp.symbol, buf, len, exp.type, arraySize, exp.alignment);
         } else {
             xfwrite(buf, len);
@@ -636,6 +652,17 @@ const char *SymbolFileParser::handlePotentialArray(const char *start, const char
 
         if (e.array && *p++ != ']')
             error("missing ending `]'");
+
+        while (*p == '[') {
+            e.multiDimensionalArray = true;
+            std::tie(start, p) = getNextToken(p + 1);
+            if (*p++ != ']')
+                error("missing ending `]'");
+            e.arraySize.assign(e.arraySize.data(), e.arraySize.length() + p - start + 2);
+        }
+
+        if (e.arraySize.endsWith(']'))
+            e.arraySize.removeLast();
     }
 
     return p;
@@ -920,6 +947,9 @@ const char *SymbolFileParser::addExportEntry(const char *start, const char *p)
     if (*p != '\n' && *p != '\r')
         error("unexpected input after end of export declaration");
 
+    while (e.type.length() > 1 && Util::isSpace(e.type.last()))
+        e.type.removeLast();
+
     return p;
 }
 
@@ -972,6 +1002,7 @@ std::pair<const char *, const char *> SymbolFileParser::getNextToken(const char 
         if (*q == '*')
             p = q + 1;
     }
+
 
     return { start, p };
 }

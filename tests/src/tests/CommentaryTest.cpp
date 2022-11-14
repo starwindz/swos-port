@@ -714,10 +714,9 @@ void CommentaryTest::testResultChants()
                 assertEqual(getPlayChants10lFunction(), PlayResultSample);
                 PlayResultSample();
 
-                int numSampledPlayed = index >= 0;
-                assertEqual(numTimesPlayChunkCalled(), numSampledPlayed);
+                assertEqual(numTimesPlayChunkCalled(), 1);
                 const auto& playedChunks = getLastPlayedChunks();
-                assertEqual(playedChunks.size(), numSampledPlayed);
+                assertEqual(playedChunks.size(), 1);
 
                 auto expectedSamplePath = swos.resultChantFilenames[index];
                 auto expectedBasename = getBasename(expectedSamplePath);

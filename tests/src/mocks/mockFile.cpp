@@ -11,6 +11,8 @@
 
 static bool m_enableMocking;
 
+static bool isAbsolutePath(const char *path);
+
 enum NodeType { kFile, kDirectory, };
 
 struct Node
@@ -31,7 +33,7 @@ struct Node
 
     std::string name;
     NodeType type;
-    dirent ent;
+    dirent ent{};
 
     // union with vector seems unsafe, so let's just waste a bit of memory
     const char *data;
@@ -109,12 +111,6 @@ void resetFakeFiles()
 {
     m_nodes.resize(1);
     m_nodes[0].children.clear();
-}
-
-static bool isAbsolutePath(const char *path)
-{
-    assert(path);
-    return isalpha(*path) && path[1] == ':' && path[2] == getDirSeparator();
 }
 
 static std::string ignoreVolume(std::string& path)
@@ -234,7 +230,7 @@ static std::tuple<int, int, int> findNodeAndParent(const char *path)
     return { currentNodeIndex, parentNodeIndex, childIndex };
 }
 
-static int findNode(const char *path)
+static intptr_t findNode(const char *path)
 {
     const auto& normalPath = normalizePath(path);
     auto result = findNodeAndParent(normalPath.c_str());
@@ -330,6 +326,7 @@ DIR *opendir(const char *dirName)
     auto dir = new DIR();
 
     dir->ent.d_ino = nodeIndex;
+    dir->ent.d_off = 0; // steal this field to mark current file when reading dir
     const auto& node = m_nodes[nodeIndex];
 
     dir->ent.d_namlen = node.name.size();
@@ -355,12 +352,13 @@ dirent *readdir(DIR *dirp)
         return nullptr;
 
     const auto& parentNode = m_nodes[parentNodeIndex];
-    auto& childIndex = dirp->ent.d_ino;
+    auto& childIndex = dirp->ent.d_off;
 
-    if (dirp->ent.d_ino < parentNode.children.size()) {
+    if (childIndex < parentNode.children.size()) {
         auto nodeIndex = parentNode.children[childIndex++];
         auto& node = m_nodes[nodeIndex];
-        node.ent.d_ino = nodeIndex;
+        assert(!node.ent.d_ino || node.ent.d_ino == parentNodeIndex);
+        node.ent.d_ino = parentNodeIndex;
         strcpy(node.ent.d_name, node.name.c_str());
         node.ent.d_namlen = node.name.size();
         return &node.ent;
@@ -418,7 +416,7 @@ SDL_RWops *openFile(const char *path, const char *mode /* = "rb" */)
     if (!m_enableMocking)
         return openFile_REAL(path, mode);
 
-    int node = findNode(path);
+    auto node = findNode(path);
     return node >= 0 ? reinterpret_cast<SDL_RWops *>(node) : nullptr;
 }
 

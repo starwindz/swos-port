@@ -5,8 +5,10 @@ constexpr int kPitchHeight = 848;
 
 void initPitches();
 void setPitchTypeAndNumber();
+int getPitchType();
+int getPitchNumber();
 void loadPitch();
-std::pair<float, float> drawPitch(float cameraX, float cameraY);
+std::pair<float, float> drawPitch(FixedPoint cameraX, FixedPoint cameraY);
 std::pair<float, float> drawPitchAtCurrentCamera();
 bool zoomIn(float step = 0);
 bool zoomOut(float step = 0);

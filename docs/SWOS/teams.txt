@@ -311,7 +311,7 @@ offset:  size:  desc.
   11       1    not sure what it is, but if it's negative the player can not be
                 substituted -- that is only in the case bench state is 3, which
                 never happens, so this might be unused
-  12      14    player number + name (or first letter of name + surname)
+  12      14    player number + name (or first letter of name + surname) (string)
   26       1    probably zero terminator for field above
   27       1    passing (values 0..7)
   28       1    shooting
@@ -331,24 +331,27 @@ offset:  size:  desc.
                 bits 5, 6 and 7 represent degree of injury, and based on their
                 value player speed value gets handicapped via the table:
                 0, -96, -128, -160, -192, -224, -256, -288
-  36       1    seems to be the number of the half in which the player was
-                substituted, values can be [0, 1, 2]:
-                0 = wasn't substituted
-                1 = first half
-                2 = second half (or even later)
+  36       1    seems to be the number of the half the player was in the game, values can be [0, 1, 2]:
+                0 = didn't play or was substituted/not in starting team
+                1 = started first or second half
+                2 = started second half (or later)
                 - these values change by the following algorithm:
                   initialized before the game starts: 0
                   at minute 1 and 46: if (value != 2) value = 1
                   at minute 45 and 90: if (value == 1) value = 2
                 - they are only changed if player has less than 2 cards.
                 - fresh played entering the game starts from value 0.
-                - this interpretation makes sense only for players from the
-                  starting 11
+                - this interpretation makes sense only for players from the starting 11
   37       1    player face index, used when drawing player icon in stadium menu before the game; it gets
                 initialized differently from face field at offset 5, player index is gotten via
                 GetPlayerGameBreakPosition() instead of GetPlayerAtIndex()
   38      23    full name of the player, it's actually wrong during the game, since it's initialized the same
                 way as previous field (luckily it's never used)
+
+61 is the size of player structure. Players seems to be sorted by numbers
+inside the file structure.
+
+686 unknown bytes follow, which are always zero in hil files.
 
 Seems there is some mess in the code regarding the last two fields: when drawing player sprites in the stadium
 menu right before the game, players are traversed linearly from topTeamIngame and bottomTeamIngame. Face field
@@ -356,11 +359,6 @@ from offset 37 and full name from offset 38 are used. But in the game face field
 players are iterated in a different manner: by GetPlayerAtIndex() which returns players in the order of
 tactics team uses. Ingame teams end up initialized with wrong data in fields at offset 37 and 38, but it
 doesn't manifest itself as they aren't used during the game.
-
-61 is the size of player structure. Players seems to be sorted by numbers
-inside the file structure.
-
-686 unknown bytes follow, which are always zero in hil files.
 
 
 ===============================================================================
@@ -400,8 +398,8 @@ offset:  size:  desc.
                 word 58  - gets compared to random value based on bits 4-7 of
                            stoppageTimer
   28       2    team tactics
-  30       2    holds index of the player which gets updated at current frame
-                (of the players in the field, [0..10])
+  30       2    holds a player index possibly, gets bumped every frame, starts from 0, ends at 10 (wraps around)
+                compared to a number of players left to process, so if it's a player index it indexes from the back
                 goalkeepers are exception, they are updated each frame
   32       4    pointer to sprite structure of controlled player
                 (ofs12 of that sprite has to be zero)
@@ -420,7 +418,7 @@ offset:  size:  desc.
                 slightly longer press than rapid fire, it's set to -1 for only
                 a single frame
   50       1    fire, = -1 as long as it's pressed, 0 when released
-  51       1    current fire, set to 1 very shortly (for one frame)
+  51       1    short fire, set to 1 very shortly (for one frame), when starting firing
                 set from pl1ShortFire, joystick fire but only in this cycle
   52       2    ??? (UpdatePlayers sets it) (zero during the game)
                 if non-zero, reset pl1ShortFireCounter to zero (for CPU team)

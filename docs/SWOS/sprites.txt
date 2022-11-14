@@ -269,7 +269,7 @@ well, such as the ball and corner flags.
 
 offset  length  description
 ------  ------  -----------
-   0        2   team number; for the ball, referee, corner flag = 3
+   0        2   team number, 1 or 2 for the players; for the ball, referee, corner flag = 3
                 0 = sprites that are not shown in the highlights
    2        2   player ordinal (shirt number)
    4        2   ??? (zero during the game)
@@ -318,8 +318,8 @@ offset  length  description
                 "inoperable"; this field is also used when player takes
                 throw-in, heads the ball, etc...
   14        2   ??? (ball has it 0 always)
-  16        2   something with x
-  18        2   something with y
+  16        2   something related to x
+  18        2   something related to y
                 for referee, player and ball shadow this is a dword, pointer to
                 something; dword from sprite table is written here; seems to be
                 a pointer to an array of picture indices, extracted from table at offset 6
@@ -334,7 +334,7 @@ offset  length  description
                 could be number of pictures, or the highest index
   26        2   cyclic timer for images, ticks whenever the sprite is visible
                 once it goes down to zero, next frame is drawn
-  28        2   unlimited image timer, with delay
+  28        2   unlimited image timer, incremented each time sprite picture is changed
   30        4   x coordinate in fixed point signed word.signed word (+2 offset contains the whole part)
   34        4   y coordinate in fixed point
   38        4   z coordinate in fixed point (makes sense only for the ball)
@@ -353,16 +353,16 @@ offset  length  description
                     players: 928, 974, 1020, 1066, 1112, 1158, 1204, 1250
                              (depending on the speed skill)
                     referee = 1024
-                    ball kick = 2560
-                    ball high kick = 2208
+                    ball kicked = 2560
+                    ball high kicked = 2208
                     goalkeeper diving = 1024..2048
                     player after doing static header = 256
                     player after doing strong header = 1726
   46        4   delta x, fixed point word.word (per frame movement by x)
   50        4   delta y, fixed point word.word (per frame movement by y)
   54        4   delta z, fixed point word.word (per frame movement by z)
-  58        2   destination x, whole part
-  60        2   destination y, whole part
+  58        2   destination x, whole part only
+  60        2   destination y, whole part only
   62        6   ??? (ball sprite: 62, 64 = 0, 66 = -1 const.)
   68        2   is sprite visible? !0 - yes, 0 - no
   70        2   sprite picture index, if negative no image
@@ -390,9 +390,8 @@ offset  length  description
                 values: 0,1,2,3
                 initialized to 1 when the game is starting
                 3 is when they're arrived at their destination and are ready for kick off
-                izgleda se inicijalizuje na 1, ako je ofs 142 tima != 0 (za igrace)
-                za golmane = 3
-                u MovePlayers, ako je lopta van igre ako je 1 stavi na 2
+                seems to be initialized to 1, if ofs 142 of team != 0 (for players), for goalkeepers = 3
+                in MovePlayers(), if the ball is out of play and it's 1, set it to 2
  102        2   if < 0 the player has a red card, if > 0 the player has a yellow card
                 if zero no cards
  104        2   seems like something about injuries, seems if -2 => injury

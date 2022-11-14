@@ -254,65 +254,109 @@ void VmFileWriter::outputVariablesStruct()
 
     size_t lastOffset = 0;
     size_t anonCounter = 0;
+    bool unionField = false;
+
+    auto outputFiller = [&](int size) {
+        xfprintf("    byte filler__%04u[%u];\n", anonCounter++, size);
+    };
 
     auto outputVar = [&](const auto& var, const auto *next) {
-        assert(!var.name || var.offset + var.alignment >= lastOffset);
+        assert(!var.name || (unionField && var.type != DataBank::kLabel ? var.offset == lastOffset : var.offset >= lastOffset));
 
         bool skipNext = false;
+        bool isUnion = false;
+        const auto& decl = var.exportedDecl;
 
-        if (var.exportedDecl) {
-            const auto& decl = var.exportedDecl;
+        if (decl || unionField) {
+            auto offset = var.offset;
+            if (var.type == DataBank::kLabel)
+                offset += var.alignment;
 
-            if (var.offset > lastOffset) {
-                auto fillSize = var.offset - lastOffset;
-                xfprintf("    byte filler__%04u[%u];\n", anonCounter++, fillSize);
+            if (offset > lastOffset) {
+                auto fillSize = offset - lastOffset;
+                outputFiller(fillSize);
+            } else if (offset < lastOffset) {
+                if (offset + var.declaredSize() > lastOffset)
+                    Util::exit("Variable overlap detected (before `%.*s')", EXIT_FAILURE,
+                        var.name.length(), var.name.data());
+                return false;
             }
 
-            auto byteSkip = std::max<int>(var.size, var.exportedSize) * var.dup;
+            int byteSkip = var.declaredSize() * var.dup;
 
-            if (decl.endsWith("()")) {
-                assert(decl.startsWith("void (*"));
-                xfprintf("    SwosProcPointer %.*s;\n", var.name.length(), var.name.data());
-            } else if (decl.contains('*')) {
-                byteSkip = outputPointerVariable(var, byteSkip);
-            } else if (decl.endsWith("[]")) {
-                auto arraySize = var.type == DataBank::kString ? byteSkip : var.dup;
-
-                char lenBuf[128];
-                lenBuf[0] = '\0';
-
-                if (var.type == DataBank::kString && next && !next->name && next->type == DataBank::kInt &&
-                    next->size == 1 && next->dup == 1 && !next->intValue) {
-                    arraySize++;
-                    byteSkip++;
-                    skipNext = true;
-                } else if (var.type == DataBank::kOffset) {
-                    arraySize = 1;
+            if (unionField) {
+                xfputs("    ");
+            } else if (var.type == DataBank::kLabel) {
+				lastOffset = offset;
+                if (next) {
+                    assert(offset == next->offset);
+                    isUnion = true;
+                    xfprintf("    union {\n    ");
+                } else {
+                    lastOffset += byteSkip;
                 }
+            }
 
-                arraySize = std::max<size_t>(arraySize, 1);
-                _itoa(arraySize, lenBuf, 10);
+            if (decl) {
+                if (decl.endsWith("()")) {
+                    assert(decl.startsWith("void (*"));
+                    xfprintf("    SwosProcPointer %.*s;\n", var.name.length(), var.name.data());
+                } else if (decl.contains('*')) {
+                    byteSkip = outputPointerVariable(var, byteSkip);
+                } else if (decl.endsWith("[]")) {
+                    auto arraySize = var.type == DataBank::kString ? byteSkip : var.dup;
 
-                xfprintf("    %.*s[%s];\n", decl.length() - 2, decl.data(), lenBuf);
-            } else {
-                if (var.exportedArraySize >= 0) {
-                    if (var.dup > 1) {
-                        if (var.exportedArraySize != var.dup)
-                            throw OutputException("exported array size mismatch for variable `"s + var.name.string() +
-                                "', " + std::to_string(byteSkip) + " vs " + std::to_string(var.exportedArraySize) +
-                                " (exported)", m_filename);
-                    } else {
-                        byteSkip = var.exportedArraySize * var.exportedSize;
+                    char lenBuf[128];
+                    lenBuf[0] = '\0';
+
+                    if (var.type == DataBank::kString && next && !next->name && next->type == DataBank::kInt &&
+                        next->size == 1 && next->dup == 1 && !next->intValue)
+                    {
+                        arraySize++;
+                        byteSkip++;
+                        skipNext = true;
+                    } else if (var.type == DataBank::kOffset) {
+                        arraySize = 1;
                     }
-                } else if (auto structName = m_dataBank.structNameFromVar(var.name)) {
-                    auto structSize = m_structs.getStructSize(structName->string());
-                    byteSkip = structSize;
-                }
 
-                xfprintf("    %.*s;\n", decl.length(), decl.data());
+                    arraySize = std::max<size_t>(arraySize, 1);
+                    _itoa(arraySize, lenBuf, 10);
+
+                    xfprintf("    %.*s[%s];\n", decl.length() - 2, decl.data(), lenBuf);
+                } else {
+                    if (var.exportedArraySize >= 0) {
+                        if (var.dup > 1) {
+                            if (var.exportedArraySize != var.dup)
+                                throw OutputException("exported array size mismatch for variable `"s + var.name.string() +
+                                    "', " + std::to_string(byteSkip) + " vs " + std::to_string(var.exportedArraySize) +
+                                    " (exported)", m_filename);
+                        } else {
+                            byteSkip = var.exportedArraySize * var.exportedSize;
+                        }
+                    } else if (auto structName = m_dataBank.structNameFromVar(var.name)) {
+                        auto structSize = m_structs.getStructSize(structName->string());
+                        byteSkip = structSize;
+                    } else {
+                        if (var.exportedSize > 0)
+                            byteSkip = var.exportedSize;
+                    }
+                    xfprintf("    %.*s;\n", decl.length(), decl.data());
+                }
             }
 
-            lastOffset = var.offset + byteSkip;
+            if (var.type == DataBank::kLabel) {
+                if (isUnion)
+                    unionField = true;
+            } else {
+                if (unionField) {
+                    // we must include non-exported variable in the union since their offsets are the same
+                    if (!decl)
+                        outputFiller(byteSkip);
+                    xfputs("    };\n");
+                }
+                lastOffset = var.offset + byteSkip;
+                unionField = false;
+            }
         }
 
         return skipNext;
@@ -328,7 +372,7 @@ void VmFileWriter::outputVariablesStruct()
 
 void VmFileWriter::outputVariablesEnum()
 {
-    xfputs("\nenum class Offsets : dword\n{\n");
+    xfputs("\nenum Offsets : dword\n{\n");
     const DataBank::Var *lastVar = nullptr;
 
     std::vector<const DataBank::Var *> varsToCheck;
@@ -341,7 +385,10 @@ void VmFileWriter::outputVariablesEnum()
             if (varOrd++ % 16 == 0)
                 varsToCheck.push_back(&var);
 
-            xfprintf("    %.*s = %u,\n", var.name.length(), var.name.data(), var.offset);
+            int offset = var.offset;
+            if (var.type == DataBank::kLabel)
+                offset += var.alignment;
+            xfprintf("    %.*s = %u,\n", var.name.length(), var.name.data(), offset);
         }
     });
     xfputs("};\n\n");
@@ -444,12 +491,14 @@ void VmFileWriter::outputMemoryArray()
     outputZeroMemoryRegion();
     size_t offset = DataBank::zeroRegionSize();
 
-    auto outputVar = [this, &offset](const auto& var, const auto *) {
+    auto outputVar = [this, &offset](const auto& var, const auto) {
         xfputs("\n    ", true);
 
-        assert(!var.name || var.offset == offset + var.alignment && m_dataBank.getVarOffset(var.name) == var.offset);
-        assert(!var.exportedDecl || var.type == DataBank::kString ||
-            var.offset % (var.type == DataBank::kStruct ? 4 : std::min<uint32_t>(var.size, 4)) == 0 ||
+        assert(!var.name || var.type == DataBank::kLabel || var.size > 0 &&
+            var.offset == offset + var.alignment && m_dataBank.getVarOffset(var.name) == var.offset);
+        assert(!var.exportedDecl || var.type == DataBank::kString || var.type == DataBank::kLabel ||
+            var.offset % (var.type == DataBank::kStruct ? 4 :
+                var.exportedSize > 0 ? std::min(4, var.exportedSize) : 1) == 0 ||
             std::get<3>(m_symFileParser.exportedDeclaration(var.name)) == 1);
 
         outputComment(var.leadingComment);
@@ -461,6 +510,7 @@ void VmFileWriter::outputMemoryArray()
 
         switch (var.type) {
         case DataBank::kInt:
+            assert(var.size <= 4);
             for (size_t i = 0; i < var.dup; i++)
                 outputInt(var.intValue, std::min(var.size, 4u));
             break;
@@ -475,12 +525,18 @@ void VmFileWriter::outputMemoryArray()
             for (size_t i = 0; i < var.size * var.dup; i++)
                 outputInt(0, 1);
             break;
+        case DataBank::kLabel:
+            // nothing needed
+            break;
         default:
             assert(false);
         }
 
         outputOriginalValue(var, offset);
-        offset += var.size * var.dup + var.alignment;
+        if (var.type == DataBank::kLabel)
+            offset += var.alignment;
+        else
+            offset += var.size * var.dup + var.alignment;
 
         return false;
     };
@@ -766,6 +822,9 @@ void VmFileWriter::outputMemoryAccessFunctions()
         "        if (kPointerPool[i] == ptr)\n"
         "            return i | kExternalPointerMask;\n"
         "\n"
+        "    if (m_numPointers >= kMaxPointers)\n"
+        "        return -1;\n"
+        "\n"
         "    kPointerPool[m_numPointers] = (char *)ptr;\n"
         "    return m_numPointers++ | kExternalPointerMask;\n"
         "}\n"
@@ -888,7 +947,7 @@ void VmFileWriter::outputZeroMemoryRegion()
 {
     xfputs("\n    ");
     outputComment("this is a special region for catching null pointer access");
-    xfputs("\n    ");
+    xfputs("\n    ", true);
 
     assert(DataBank::zeroRegionSize() > 4);
 
@@ -904,7 +963,7 @@ void VmFileWriter::outputZeroMemoryRegion()
 
 void VmFileWriter::outputComment(const String& comment, bool skipInitialCommentMark /* = false */)
 {
-    auto trComm = trimComment(comment);
+    auto [trComm, actualLength] = trimComment(comment);
 
     while (!trComm.empty()) {
         int len = trComm.indexOf('\r');
@@ -914,14 +973,17 @@ void VmFileWriter::outputComment(const String& comment, bool skipInitialCommentM
             len = trComm.length();
 
         if (!skipInitialCommentMark)
-            xfputs("// ");
+            xfputs("// ", true);
 
-        const auto& commentLine = trimComment(trComm.substr(0, len));
+        const auto& [commentLine, actualLength] = trimComment(trComm.substr(0, len));
         xfputs(commentLine);
+
+        assert(actualLength <= commentLine.length());
+        m_pos -= commentLine.length() - actualLength;
 
         skipInitialCommentMark = false;
 
-        trComm = trimComment(trComm.substr(len));
+        trComm = trimComment(trComm.substr(len)).first;
         if (!trComm.empty())
             xfputs("\n    ");
         else
@@ -929,9 +991,9 @@ void VmFileWriter::outputComment(const String& comment, bool skipInitialCommentM
     }
 }
 
-String VmFileWriter::trimComment(const String& comment)
+std::pair<String, size_t> VmFileWriter::trimComment(const String& comment)
 {
-    size_t start = 0;
+    auto start = 0u;
     while (start < comment.length() && Util::isSpace(comment[start]))
         start++;
 
@@ -939,16 +1001,34 @@ String VmFileWriter::trimComment(const String& comment)
     while (len != 0 && Util::isSpace(comment[len - 1]))
         len--;
 
-    return comment.substr(start, len - start);
+    auto actualLength = len - start;
+    for (size_t i = start; i < len; i++) {
+        if (comment[i] & 0x80) {
+            auto seqStart = i;
+            do {
+                i++;
+            } while (i < len && comment[i] & 0x80);
+            actualLength -= i - seqStart - 1;
+        }
+    }
+
+    return { comment.substr(start, len - start), actualLength };
 }
 
 void VmFileWriter::outputOriginalValue(const DataBank::Var& var, size_t offset)
 {
-    xfputs("// ");
+    xfputs("// ", true);
+
+    if (var.type == DataBank::kLabel) {
+        xfprintf("label alias: %.*s (%d)", var.name.length(), var.name.data(), var.offset);
+        if (var.alignment)
+            xfprintf(" [+%d alignment byte(s)]", var.alignment);
+        return;
+    }
 
     if (!var.name.empty()) {
         xfputs(var.name);
-        xfputs(": ");
+        xfputs(": ", true);
     }
 
     xfputs(var.originalValue);
@@ -1145,7 +1225,7 @@ void VmFileWriter::xfprintf(const char *format, ...)
 
     va_list argList;
     va_start(argList, format);
-    vsnprintf(buf, sizeof(buf), format, argList);
+    m_pos += vsnprintf(buf, sizeof(buf), format, argList);
     va_end(argList);
 
     xfputs(buf);

@@ -3,6 +3,7 @@
 #include "gameFieldMapping.h"
 #include "render.h"
 #include "text.h"
+#include "sprites.h"
 #include "renderSprites.h"
 #include "darkRectangle.h"
 
@@ -126,7 +127,7 @@ void updateResult()
             m_showResult = true;
         }
 
-        swos.resultTimer -= swos.timerDifference;
+        swos.resultTimer -= swos.lastFrameTicks;
         if (swos.resultTimer <= 0) {
             if (swos.gameState == GameState::kResultOnHalftime || swos.gameState == GameState::kResultAfterTheGame)
                 swos.statsTimer = kMaxResultTicks;

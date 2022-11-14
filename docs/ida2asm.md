@@ -27,7 +27,8 @@ C++ output:
 
 `--disable-optimizations` - disable conversion-time optimizations
 
-Short help can be listed by passing `-h` or `--help` parameter. See more about optimizations in [Optimizations section](#optimizations).
+Short help can be listed by passing `-h` or `--help` parameter. See more about optimizations in [Optimizations
+section](#optimizations).
 
 ## Input file
 
@@ -91,11 +92,11 @@ g_menuMusic, int16_t                            # becomes: int16_t g_menuMusic
 skipIntro, word                                 # becomes: word skipIntro
 dosMemLinAdr, char *                            # becomes: char *dosMemLinAdr
 FadeOutToBlack, function                        # becomes: void FadeOutToBlack();
-hilFileBuffer, array char                       # becomes: char hilFileBuffer[];
+hilFileBuffer, array char                       # becomes: char hilFileBuffer[1];
 keyBuffer, array char[10]                       # becomes: char keyBuffer[10];
 introTeamChantIndices, array const int8_t[16]   # becomes: const int8_t introTeamChantIndices[16];
 sortedSprites, array Player * [79]              # becomes: Player *sortedSprites[79]
-spriteGraphicsPtr, array SpriteGraphics *(*)    # becomes: SpriteGraphics *(*spriteGraphicsPtr)[];
+spriteGraphicsPtr, array SpriteGraphics *(*)    # becomes: SpriteGraphics *(*spriteGraphicsPtr)[1];
 g_currentMenu, array char[6500] (align: 4)      # becomes: char g_currentMenu[6500]; (with 4 byte alignment)
 ```
 
@@ -206,8 +207,8 @@ beginning of the procedure, starting with 1. If the specified line does not hold
 value, or a constant value does not match a specified value, an error will be reported. Supplied constant value
 isn't strictly necessary, but it helps validating it's the right line.
 
-`ida2asm` will replace the constant with a variable when generating output. Given variable will be added to the end
-of SWOS data memory and initialized with original constant value. The variable will appear as any other SWOS
+`ida2asm` will replace the constant with a variable when generating output. Given variable will be added to the
+end of SWOS data memory and initialized with original constant value. The variable will appear as any other SWOS
 variable, and can be accessed with `swos.<variable name>` syntax. Variable name is expected to be valid and unique
 in this context.
 
@@ -304,8 +305,8 @@ function prototypes (for both SWOS code -> external code and external code -> SW
 variables and some compile-time checks.
 
 `vm.cpp` and `vm.h` contain implementation of the SWOS Virtual Machine™, which will be further explained.
-`swos*.cpp` files contain the actual SWOS binary code, converted to C++ that runs in the SWOS Virtual Machine™. The
-number of files is decided by the command line parameter.
+`swos*.cpp` files contain the actual SWOS binary code, converted to C++ that runs in the SWOS Virtual Machine™.
+The number of files is decided by the command line parameter.
 
 #### SWOS Virtual Machine™
 
@@ -318,19 +319,17 @@ Each instruction is translated when the input file is processed and converted to
 CPU register access is converted to global variable access, and memory access to VM data area access. Generated
 statements update the virtual CPU state in the same way as the original instructions.
 
-Since it's a compile-time emulator custom tailored to SWOS, and implements only a minimal subset of x86 instruction
-set required to run the game, it is able to achieve much higher performance than a general purpose dynamic emulator
-would. Also, it's able to exploit very good optimization capabilities of modern C++ compilers that will compile the
-generated code, although it does implement a few optimizations of its own. Thus the generated code has excellent
-performance, very close to native.
+Since it's a compile-time emulator custom tailored to SWOS, and implements only a minimal subset of x86
+instruction set required to run the game, it is able to achieve much higher performance than a general purpose
+dynamic emulator would. Also, it's able to exploit very good optimization capabilities of modern C++ compilers
+that will compile the generated code, although it does implement a few optimizations of its own. Thus the
+generated code has excellent performance, very close to native.
 
 TODO:
 - vars struct
     - memory address space, accessing
     - wanted to remove the offsets(in comments), but left them (very useful for debugging)
 - procs/handling of proc pointers
-- native pointers/accessing host memory
-- pointer problem: fixed to 32-bits, can't access 64-bit address spaces
 - namespaces: SWOS and SwosVM
 - memory allocation
 - alignment
@@ -339,15 +338,44 @@ TODO:
 
 #### Memory layout
 
+Entire SWOS data area is laid out in an array linearly, thus resolving problems with non-consecutive locations in
+assembly version -- when segmented assembly files were linked, linker would realign them and sometimes these
+alignment bytes would fall inside SWOS tables and areas that are expected to be contiguous.
+
 Memory space is divided into 4 parts. First part contains variables from the game -- the game's data area. Second
 part holds the extended memory the game allocates from the DOS extender. Third part is so called "pointer pool
-area", it is an array of native pointers and is the way native memory can be accessed from within the game. Fourth
-part holds memory which can be allocated to clients outside the virtual machine.
+area", an array of native pointers and the way native memory can be accessed from within the game. Fourth part
+holds memory which can be allocated to clients outside the virtual machine.
 
 Each part is separated by a "safe area", filled with a fixed byte pattern. Checking if this pattern is intact can
 discover memory overwrites. It's a curiosity that the first safe area (at offset 0) had to be modified to have the
 first four bytes zeroed out, to emulate DOS/Amiga behavior since there are some null pointer accesses in the
 original game (or perhaps the conversion, but it's not clear) that rely on getting zero value to work properly.
+
+Memory layout diagram:
+```
+  +---------------+
+  |   safe area   |
+  +---------------+
+  |   basic mem   |    (all the variables)
+  +---------------+
+  |   safe area   |
+  +---------------+
+  |  extended mem |    (memory the game allocates from the OS)
+  +---------------+
+  |   safe area   |
+  +---------------+
+  | pointer pool  |    (native pointers, pointing outside the SWOS VM)
+  |     area      |
+  +---------------+
+  |   safe area   |
+  +---------------+
+  |  dynamic mem  |    (memory allocated by the code outside the SWOS VM)
+  |  (allocated)  |
+  +---------------+
+  |   safe area   |
+  +---------------+
+```
 
 #### Access by external code
 
@@ -366,12 +394,63 @@ if (swos.ballSprite.y >= kPitchCenterY) ...
 if (swos.topTeamData.playerNumber != m_playerNumber) ...
 ```
 
-Only concern is alignment.
+Registers are instances of special class `Register` which has some special sauce:
+```
+pointer access, conversions... [TODO]
+```
 
--accessing pointers probljem
+Registers and flags are inside the `SwosVM` namespace and can be accessed as normal variables:
+```
+SwosVM::eax++;
+SwosVM::ax = swos.gameCanceled;
+SwosVM::flags.zero = !SwosVM::ax;
+```
+-flags struct (4 bool flags)
+
+#### Alignment
+
+One thing external code has to look out for is the data alignment. SWOS very often accesses unaligned data since
+the Intel processor allows that. To be portable across platforms that don't support unaligned access, or have high
+performance penalty, care must be taken.
+
+SWOS pointers, alignment... [TODO]
+
+Note that the code inside the SWOS Virtual Machine™ is safe, as the VM automatically splits unaligned access into several aligned accesses.
+
+#### Pointer pool area
+
+Sometimes there's a need to pass outside data to a code running inside the virtual machine, or execute some new
+non-game code inside it that needs outside memory access. SWOS is a 32-bit program using 32-bit pointers, so on a
+32-bit system native and VM pointers are interchangeable and can be passed around freely, but running on a 64-bit
+system poses a challenge.
+
+To address this, pointer pool was introduced. It is a list of native pointers that can be used by the VM code.
+Special 32-bit VM pointers are created that are actually indices into the pointer pool with the highest bit set.
+Virtual machine detects these special pointers when trying to access the memory, and translates them
+appropriately. This way code inside the VM is allowed to break free and access host memory.
+
+Code that needs to access native memory doesn't need to know how this mechanism works. There is an interface
+function to register a native pointer:
+```
+dword SwosVM::registerPointer(const void *ptr);
+```
+It will register a native pointer `ptr` inside the pool pointer area, and return a 32-bit pointer valid inside the
+virtual machine. Virtual machine will dereference a given native pointer each time a returned VM pointer is
+accessed. In case of an error the function returns -1: if `ptr` is null or if the pointer pool is full.
+
+One example of usage is in menu system: string tables contain a pointer to an index of the currently selected
+string, which gets updated by the user actions. Without pool pointers it would be very difficult to create any new
+string table and seamlessly support this functionality.
+
+It could also be used if some game buffers accessed via pointers would need to be extended: all it would take
+would be to initialize those pointers with registered pool pointers tied to larger buffers outside the VM.
+
+#### Function pointers
+
+;
+
 TODO:
 
-- pointer pool
 - allocating/releasing VM memory (all the functions in header)
 `vm.h` contains declarations of ...
 - read/writeMemory (normally only used by VM itself)
@@ -438,7 +517,7 @@ if (*p++ == 'm')
 ...
 ```
 
-It was selected by "winning" a performance war against a few alternatives:
+It was selected by winning a "performance war" against a few alternatives:
 
 * looking up tokens via `std::unordered_map`
 * looking up tokens via custom hash map

@@ -63,9 +63,9 @@ bit   7|6|5|4|3|2|1|0
 
 pl1FireCounter is calculated by the following algorithm:
 
-if (pl1LastFired) {
-    pl1ShortFire = 0;                   // initialize short fire, assume none
+pl1ShortFire = 0;                       // initialize short fire, assume none
 
+if (pl1LastFired) {
     if (pl1Fire) {
         if (pl1FireCounter)             // there was fire in the last frame, and it's still going
             --pl1FireCounter;           // decrease the counter but test it too, for overflow

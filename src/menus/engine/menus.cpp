@@ -186,7 +186,7 @@ void showMenu(const BaseMenu& menu)
 void saveCurrentMenuAndStartGameLoop()
 {
     logInfo("Starting the game...");
-    logInfo("Top team: %s, bottom team: %s", swos.topTeamIngame.teamName, swos.bottomTeamIngame.teamName);
+    logInfo("Top team: %s, bottom team: %s", swos.topTeamInGame.teamName, swos.bottomTeamInGame.teamName);
 
     saveCurrentMenu();
     startMainGameLoop();

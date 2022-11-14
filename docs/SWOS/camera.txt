@@ -1,5 +1,5 @@
 MoveCamera():
-- if showFansCounter is non-zero bail
+- if showFansCounter is non-zero bail (counts 100 frames at the very start of the game/fire interrupts)
 - initialize camera destination coordinates
     cameraDestX = ballSprite.deltaX
     cameraDestY = ballSprite.deltaY
@@ -27,18 +27,33 @@ MoveCamera():
     - vertical limit is 37
     - velocity is 0
 4) camera at bench or going to
-    - destination: x = g_cameraLeavingSubsLimit, y = 449
-    - vertical limit is variable here, if player is being substituted (coming or going) it moves to 51, while
+    - destination: x = g_benchXLimit (=27), y = 449
+    - vertical limit is variable here, if a player is being substituted (coming or going) it moves to 51, while
       going to bench it's 37 (throw-in line), and when reaching bench area (y in [339..359]) it's 0 (all the way
       to the left edge)
     - velocity is 0
-
-...
-
-8)
-    - maximum velocity is 40 pixels
+5) camera waiting on players to leave
+    - game state must be one of: kStartingGame, kCameraGoingToShowers, kGoingToHalftime, kPlayersGoingToShower
+    - destination: x = 590, y = 449
+    - vertical limit is 63
+    - velocity is 0
+6) showing result on half-time (at the pitch center, game states: kResultOnHalftime, kFirstExtraStarting,
+   kFirstExtraEnded, kFirstHalfEnded, kGameEnded -- but in this state only if penalties after the game are on)
+    - destination: x = 336, y = 449
+    - vertical limit is 63
+    - velocity is 0
+7) showing result after the game (at the top of the pitch, game state must be kResultAfterTheGame)
+    - destination: x = 336, y = 129
+    - vertical limit is 63
+    - velocity is 0
+8) standard follow-the-ball mode (game state less than kStartingGame or game state greater than kGameEnded, or game
+   state equal to kFirstHalfEnded, or kGameEnded if there are no penalties after the game)
+    - x/y set to ball coordinates
+    - vertical limit 37 if corner or throw-in, 63 otherwise
+    - velocity unchanged
 
 - after destination coordinates, vertical limit and velocity have been set, velocity gets applied
+- maximum velocity is 40 pixels
 - notice that velocity is added additionally to delta x/y, on top of standard deltas
 - then the vertical limit is applied, it stretches on both sides of the pitch, depending on the state
     x gets clamped: limit <= x <= 352 - limit

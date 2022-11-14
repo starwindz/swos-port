@@ -368,6 +368,6 @@ bool gotMousePlayer()
 // Returns true if the key belongs to selected keys of any currently active player.
 bool testForPlayerKeys(SDL_Scancode key)
 {
-    return swos.playMatchTeam1Ptr && swos.playMatchTeam1Ptr->teamControls != kComputerTeam && m_pl1Controls == kKeyboard1 && keyboard1HasScancode(key) ||
-        swos.playMatchTeam2Ptr && swos.playMatchTeam2Ptr->teamControls != kComputerTeam && m_pl2Controls == kKeyboard2 && keyboard2HasScancode(key);
+    return (swos.topTeamData.playerNumber == 1 || swos.bottomTeamData.playerNumber == 1) && m_pl1Controls == kKeyboard1 && keyboard1HasScancode(key) ||
+        (swos.topTeamData.playerNumber == 2 || swos.bottomTeamData.playerNumber == 2) && m_pl2Controls == kKeyboard2 && keyboard2HasScancode(key);
 }

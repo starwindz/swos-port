@@ -96,11 +96,9 @@ static void loadMenuBackground(const std::string& name)
 
 static void reloadMenuBackground(AssetResolution, AssetResolution)
 {
-    if (!isMatchRunning()) {
-        loadMenuBackground(m_backgroundName);
-    } else {
-        assert(m_backgroundName.empty());
-    }
+    // copy the string so the reference doesn't get cleared on unload
+    auto backgroundName = m_backgroundName;
+    loadMenuBackground(backgroundName);
 }
 
 static SDL_RWops *openImageFile(const std::string& path)

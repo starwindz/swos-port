@@ -69,7 +69,7 @@ auto BaseTest::doRunTests(const TestOptions &options, const TestNamesSet& testLi
         if (!testListContains(test->name()))
             continue;
 
-        std::cout << "Running " << test->displayName() << " tests\n  ";
+        std::cout << "Running " << test->displayName() << " tests [" << test->name() << "]\n";
         test->init();
 
         const auto cases = test->getCases();
@@ -106,7 +106,7 @@ auto BaseTest::doRunTests(const TestOptions &options, const TestNamesSet& testLi
 
 void BaseTest::timeoutCheck(int timeout)
 {
-    constexpr int kTestTimeoutMs = 4'000;
+    constexpr int kTestTimeoutMs = 6'000;
     constexpr int kCheckIntervalMs = 500;
 
     auto checkInterval = std::chrono::milliseconds(std::min(timeout, kCheckIntervalMs));

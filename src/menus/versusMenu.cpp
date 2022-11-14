@@ -59,8 +59,8 @@ static void versusMenuOnInit()
         gameNameEntry.y += 5;
     }
 
-    setTeamNameAndColor(leftTeamNameEntry, *m_team1, swos.leftTeamCoachNo, swos.leftTeamPlayerNo);
-    setTeamNameAndColor(rightTeamNameEntry, *m_team2, swos.rightTeamCoachNo, swos.rightTeamPlayerNo);
+    setTeamNameAndColor(leftTeamNameEntry, *m_team1, swos.topTeamCoachNo, swos.topTeamPlayerNo);
+    setTeamNameAndColor(rightTeamNameEntry, *m_team2, swos.bottomTeamCoachNo, swos.bottomTeamPlayerNo);
 
     drawMenu(false);
 

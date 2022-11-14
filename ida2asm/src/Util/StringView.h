@@ -13,7 +13,7 @@ public:
     String(const std::pair<const char *, const char *>& range);
     template <size_t N>
     String(const char (&str)[N]) : m_str(str), m_length(N - 1) {}
-    String();
+    String() = default;
 
     void assign(const char *str, size_t length);
     void assign(const char *begin, const char *end);

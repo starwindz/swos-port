@@ -1,6 +1,6 @@
 // Handling of current player indicator displayed top-left (number + surname).
 #include "playerNameDisplay.h"
-#include "benchControls.h"
+#include "updateBench.h"
 #include "referee.h"
 #include "camera.h"
 #include "text.h"
@@ -69,6 +69,13 @@ void drawPlayerName()
     }
 }
 
+#ifdef SWOS_TEST
+std::pair<bool, int> getDisplayedPlayerNumberAndTeam()
+{
+    return { m_topTeam, m_playerOrdinal };
+}
+#endif
+
 static void getPlayerNumberAndSurname(char *buf, const PlayerGame& player)
 {
     SDL_itoa(player.shirtNumber, buf, 10);
@@ -86,7 +93,7 @@ static void showCurrentPlayerName(const Sprite *lastPlayer, const TeamGeneralInf
 {
     assert(lastPlayer && lastTeam);
 
-    m_topTeam = lastTeam->inGameTeamPtr.asAligned() == &swos.topTeamIngame;
+    m_topTeam = lastTeam->inGameTeamPtr.asAligned() == &swos.topTeamInGame;
 
     int index = lastPlayer->playerOrdinal - 1;
     m_playerOrdinal = getBenchPlayerShirtNumber(m_topTeam, index);
@@ -100,7 +107,7 @@ static void hideCurrentPlayerName()
 
 static void showNameBlinking(const Sprite *lastPlayer, const TeamGeneralInfo *lastTeam)
 {
-    bool showName = (swos.stoppageTimer & 8) != 0;
+    bool showName = (swos.currentGameTick & 8) != 0;
     showName ? showCurrentPlayerName(lastPlayer, lastTeam) : hideCurrentPlayerName();
 }
 

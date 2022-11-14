@@ -20,6 +20,7 @@ static void *m_realHookSetTextureColorModIndex;
 static int m_getTicksDelta;
 static Uint32 m_lastGetTicks;
 static bool m_timeFrozen;
+static void *m_realSdlDelay;
 
 static FakeJoypadList m_joypads;
 static int m_joypadId;
@@ -206,6 +207,11 @@ void takeOverInput()
     m_table[SDL_JoystickGetButtonIndex] = getJoystickButton;
 }
 
+void resetKeyboardInput()
+{
+    memset(m_scancodes, 0, sizeof(m_scancodes));
+}
+
 void queueSdlEvent(const SDL_Event& event)
 {
     m_eventQueue.push_back(event);
@@ -251,24 +257,33 @@ void queueSdlMouseButtonEvent(bool mouseUp /* = false */, int button /* = 1 */)
     queueSdlEvent(event);
 }
 
-static void queueSdlKeyEvent(SDL_Scancode keyCode, bool keyDown)
+static void queueSdlKeyEvent(SDL_Scancode keycode, bool keyDown)
 {
     SDL_Event event {};
     event.type = keyDown ? SDL_KEYDOWN : SDL_KEYUP;
     event.key.state = keyDown ? SDL_PRESSED : SDL_RELEASED;
-    event.key.keysym.scancode = keyCode;
+    event.key.keysym.scancode = keycode;
     queueSdlEvent(event);
-    m_scancodes[keyCode] = keyDown;
+    m_scancodes[keycode] = keyDown;
 }
 
-void queueSdlKeyDown(SDL_Scancode keyCode)
+void queueSdlKeyDown(SDL_Scancode keycode)
 {
-    queueSdlKeyEvent(keyCode, true);
+    queueSdlKeyEvent(keycode, true);
 }
 
-void queueSdlKeyUp(SDL_Scancode keyCode)
+void queueSdlKeyUp(SDL_Scancode keycode)
 {
-    queueSdlKeyEvent(keyCode, false);
+    queueSdlKeyEvent(keycode, false);
+}
+
+void setSdlKeyDown(SDL_Scancode keycode)
+{
+    m_scancodes[keycode] = true;
+}
+void setSdlKeyUp(SDL_Scancode keycode)
+{
+    m_scancodes[keycode] = false;
 }
 
 void setSdlMouseState(int x, int y, bool leftClick /* = false */, bool rightClick /* = false */)
@@ -309,21 +324,35 @@ void resetSdlInput()
 
 void killSdlDelay()
 {
+    m_realSdlDelay = m_table[SDL_DelayIndex];
     m_table[SDL_DelayIndex] = SDL_Delay_NOP;
 }
 
+void resurrectSdlDelay()
+{
+    assert(m_realSdlDelay);
+    m_table[SDL_DelayIndex] = m_realSdlDelay;
+}
+
 static void *m_savedRenderCopyF;
+static void *m_savedRenderCopyExF;
+static void *m_savedLowerBlit;
 static int dummyRenderCopyF(void *, void *, void *, void *) { return 0; }
+static int dummyRenderCopyExF(void *, void *, void *, void *, double, void *, int) { return 0; }
+static int dummyLowerBlit(void *, void *, void *, void *) { return 0; }
 
 void disableRendering()
 {
     m_savedRenderCopyF = setSdlProc(SDL_RenderCopyFIndex, dummyRenderCopyF);
+    m_savedRenderCopyExF = setSdlProc(SDL_RenderCopyExFIndex, dummyRenderCopyExF);
+    m_savedLowerBlit = setSdlProc(SDL_LowerBlitIndex, dummyLowerBlit);
 }
 
 void enableRendering()
 {
-    assert(m_savedRenderCopyF);
+    assert(m_savedRenderCopyF && m_savedRenderCopyExF && m_savedLowerBlit);
     setSdlProc(SDL_RenderCopyFIndex, m_savedRenderCopyF);
+    setSdlProc(SDL_RenderCopyExFIndex, m_savedRenderCopyExF);
 }
 
 static int fakeGetNumDisplayModes(int)

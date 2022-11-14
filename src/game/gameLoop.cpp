@@ -6,7 +6,9 @@
 #include "gameControls.h"
 #include "spinningLogo.h"
 #include "playerNameDisplay.h"
+#include "sprites.h"
 #include "gameSprites.h"
+#include "updateSprite.h"
 #include "gameTime.h"
 #include "bench.h"
 #include "drawBench.h"
@@ -30,9 +32,10 @@
 #include "stadiumMenu.h"
 #include "replayExitMenu.h"
 #include "util.h"
+#include "FixedPoint.h"
 
-constexpr float kGameEndCameraX = 176;
-constexpr float kGameEndCameraY = 80;
+constexpr FixedPoint kGameEndCameraX = 176;
+constexpr FixedPoint kGameEndCameraY = 80;
 
 static bool m_fadeAndSaveReplay;
 static bool m_fadeAndInstantReplay;
@@ -91,6 +94,8 @@ void gameLoop(TeamGame *topTeam, TeamGame *bottomTeam)
                 gameFadeIn();
                 m_doFadeIn = false;
                 skipUpdate = true;
+                swos.currentGameTick = 0;   // for tests (to remain original game compatible)
+                swos.lastGameTick = 0;
             }
 
             handleHighlightsAndReplays();
@@ -162,8 +167,6 @@ static void initGameLoop()
     m_playingMatch = true;
     m_doFadeIn = true;
 
-    unloadMenuBackground();
-
     initGameAudio();
     playCrowdNoise();
 
@@ -189,15 +192,14 @@ static void initGameLoop()
 
     waitForKeyboardAndMouseIdle();
 
-    swos.stoppageTimer = 0;
-    swos.lastStoppageTimerValue = 0;
+    swos.currentGameTick = 0;
+    swos.lastFrameTicks = 0;
 
     initFrameTicks();
+
+    resetGameControls();
 }
 
-#ifdef SWOS_TEST
-static void drawFrame(bool) {}
-#else
 static void drawFrame(bool recordingEnabled)
 {
     setReplayRecordingEnabled(recordingEnabled);
@@ -212,7 +214,6 @@ static void drawFrame(bool recordingEnabled)
     drawResult();
     drawSpinningLogo();
 }
-#endif
 
 static void gameFadeOut()
 {
@@ -252,11 +253,13 @@ static void coreGameUpdate()
     updateGameTime();
     initGoalSprites();
     UpdateCameraBreakMode();    // convert
-    auto postUpdateTeamControls = updateTeamControls();
+    auto team = selectTeamForUpdate();
+    auto postUpdateTeamControls = updateTeamControls(team);
+    A6 = team;
     UpdatePlayersAndBall();    // main game engine update
     postUpdateTeamControls();
     UpdateBall();
-    MovePlayers();
+    movePlayers();
     updateReferee();
     updateCornerFlags();
     updateSpinningLogo();
@@ -265,7 +268,7 @@ static void coreGameUpdate()
     UpdateControlledPlayerNumbers();
     MarkPlayer();
     updateCurrentPlayerName();
-    BookPlayer();
+    updateBookedPlayerNumberSprite();
     updateResult();
     SWOS::DrawAnimatedPatterns(); // remove/re-implement
     updateBench();
@@ -313,16 +316,23 @@ static void handleHighlightsAndReplays()
     }
 }
 
-// Executed when the game is over.
+// Executed when the match finishes.
 static void gameOver()
 {
+    constexpr int kBallOffCourtX = 1672;
+
     gameFadeOut();
 
+#ifdef SWOS_TEST
+    setCameraX(FixedPoint(kGameEndCameraX.whole(), getCameraX().fraction()));
+    setCameraY(FixedPoint(kGameEndCameraY.whole(), getCameraY().fraction()));
+#else
     setCameraX(kGameEndCameraX);
     setCameraY(kGameEndCameraY);
+#endif
     drawPitchAtCurrentCamera();
 
-    D1 = kPitchCenterX;
+    D1 = kBallOffCourtX;
     D2 = kPitchCenterY;
     SetBallPosition();
 
@@ -364,8 +374,6 @@ static bool gameEnded(TeamGame *topTeam, TeamGame *bottomTeam)
     bool replaySelected = showReplayExitMenuAfterFriendly();
     if (!replaySelected)
         return true;
-
-    unloadMenuBackground();
 
     swos.team1NumAllowedInjuries = 4;
     swos.team2NumAllowedInjuries = 4;
@@ -435,6 +443,6 @@ static void loadCrowdChantSampleIfNeeded()
 
 static void initGoalSprites()
 {
-    swos.goal1TopSprite.pictureIndex = kTopGoalSprite;
-    swos.goal2BottomSprite.pictureIndex = kBottomGoalSprite;
+    swos.goal1TopSprite.setImage(kTopGoalSprite);
+    swos.goal2BottomSprite.setImage(kBottomGoalSprite);
 }

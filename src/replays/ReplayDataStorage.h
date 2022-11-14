@@ -31,7 +31,7 @@ public:
         ObjectType type;
         union {
             struct {
-                int pictureIndex;
+                int imageIndex;
                 float x;
                 float y;
             };
@@ -45,10 +45,10 @@ public:
 
     struct FrameData {
         FrameData() = default;
-        FrameData(float cameraX, float cameraY, int team1Goals, int team2Goals, int gameTime)
+        FrameData(FixedPoint cameraX, FixedPoint cameraY, int team1Goals, int team2Goals, int gameTime)
             : cameraX(cameraX), cameraY(cameraY), team1Goals(team1Goals), team2Goals(team2Goals), gameTime(gameTime) {}
-        float cameraX;
-        float cameraY;
+        FixedPoint cameraX;
+        FixedPoint cameraY;
         int team1Goals;
         int team2Goals;
         int gameTime;
@@ -64,7 +64,7 @@ public:
     void recordFrame(const FrameData& data);
 
     bool fetchFrameData(FrameData& data);
-    void recordSprite(int spriteIndex, float x, float y);
+    void recordSprite(int spriteIndex, FixedPoint x, FixedPoint y);
     void recordStats(const GameStats& stats);
     void recordSfx(int sampleIndex, int volume);
     bool fetchObject(Object& obj);
@@ -91,11 +91,11 @@ struct RawInt32 {
     RawInt32() {}
     RawInt32(int data) : data(data) {}
     RawInt32(int64_t data) : data(static_cast<int32_t>(data)) {}
+    RawInt32(uint64_t data) : data(static_cast<int32_t>(data)) {}
     RawInt32(unsigned data) : data(data) {}
-    RawInt32(float data) : dataF(data) {}
+    RawInt32(FixedPoint data) : data(data.raw()) {}
+    float asFloat() const { return FixedPoint(data, true).asFloat(); }
     operator int() const { return data; }
-    explicit operator float() const { return dataF; }
-    float asFloat() const { return dataF; }
     RawInt32& operator+=(int value) {
         data += value;
         return *this;
@@ -104,13 +104,10 @@ struct RawInt32 {
         data -= value;
         return *this;
     }
-    union {
-        int32_t data;
-        float dataF;
-    };
-    static_assert(sizeof(float) == sizeof(int32_t), "Comet");
+    int32_t data;
 };
 #pragma pack(pop)
+    static_assert(sizeof(FixedPoint) == sizeof(int32_t), "Comet");
     static_assert(sizeof(RawInt32) == sizeof(int32_t), "Life is full of obstacles");
 
     using DataStore = std::vector<RawInt32>;

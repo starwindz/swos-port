@@ -29,9 +29,6 @@
     <Filter Include="Source Files\lib">
       <UniqueIdentifier>{3ebd6a1a-d5bd-4c33-b52a-084450159766}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\tests\data">
-      <UniqueIdentifier>{e4eb1364-0e4b-4afc-b3c1-0e0ea29cfd2e}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\project-files\replays">
       <UniqueIdentifier>{97499e64-6ec8-43b3-a197-fd09d03c2b50}</UniqueIdentifier>
     </Filter>
@@ -77,12 +74,18 @@
     <Filter Include="Source Files\project-files\options">
       <UniqueIdentifier>{ba9b647f-41f3-47d1-80d6-443edd34cc8c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\project-files\swos">
+      <UniqueIdentifier>{7864c027-d0a8-4cbd-ad4c-517603b3f716}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\res">
+      <UniqueIdentifier>{d0fd679d-dd08-494c-868b-251e1c356a21}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\project-files\sprites\util">
+      <UniqueIdentifier>{896cb19f-70f2-4126-a5da-5718792d3184}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\stdinc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\controls\controlOptionsMenu.cpp">
@@ -259,9 +262,6 @@
     <ClCompile Include="..\..\src\controls\keyboard\testKeyboardMenu.cpp">
       <Filter>Source Files\project-files\controls\keyboard</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\tests\SetupKeyboardMenuTest.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\controls\joypads\ui\configureAxisMenu.cpp">
       <Filter>Source Files\project-files\controls\joypads\ui</Filter>
     </ClCompile>
@@ -328,9 +328,6 @@
     <ClCompile Include="..\..\src\sprites\gameSprites.cpp">
       <Filter>Source Files\project-files\sprites</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\sprites\loadTexture.cpp">
-      <Filter>Source Files\project-files\sprites</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\game\camera.cpp">
       <Filter>Source Files\project-files\game</Filter>
     </ClCompile>
@@ -346,16 +343,13 @@
     <ClCompile Include="..\..\src\game\playerNameDisplay.cpp">
       <Filter>Source Files\project-files\game</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\sprites\spinningLogo.cpp">
-      <Filter>Source Files\project-files\sprites</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\game\gameLoop.cpp">
       <Filter>Source Files\project-files\game</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\util\random.cpp">
       <Filter>Source Files\project-files\util</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\game\bench\benchControls.cpp">
+    <ClCompile Include="..\..\src\game\bench\updateBench.cpp">
       <Filter>Source Files\project-files\game\bench</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\game\bench\drawBench.cpp">
@@ -442,23 +436,35 @@
     <ClCompile Include="..\src\tests\RecordedDataTest.cpp">
       <Filter>Source Files\tests</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\game\updateSprite.cpp">
-      <Filter>Source Files\project-files\game</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\game\amigaMode.cpp">
       <Filter>Source Files\project-files\game</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\sprites\SharedTexture.cpp">
-      <Filter>Source Files\project-files\sprites</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\menus\engine\menuControls.cpp">
       <Filter>Source Files\project-files\menus\engine</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\tests\SetupKeyboardMenuTest.cpp">
+      <Filter>Source Files\tests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\stdinc.cpp">
+      <Filter>Source Files\project-files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\res\resData.cpp">
+      <Filter>Source Files\res</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\game\spinningLogo.cpp">
+      <Filter>Source Files\project-files\game</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\sprites\util\loadTexture.cpp">
+      <Filter>Source Files\project-files\sprites\util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\sprites\util\SharedTexture.cpp">
+      <Filter>Source Files\project-files\sprites\util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\sprites\updateSprite.cpp">
+      <Filter>Source Files\project-files\sprites</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\src\stdinc.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\controls\controlOptionsMenu.h">
       <Filter>Source Files\project-files\controls</Filter>
     </ClInclude>
@@ -512,9 +518,6 @@
     </ClInclude>
     <ClInclude Include="..\src\mocks\mockSdlMixer.h">
       <Filter>Source Files\mocks</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\tests\canada.diy.h">
-      <Filter>Source Files\tests\data</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\replays\replays.h">
       <Filter>Source Files\project-files\replays</Filter>
@@ -582,7 +585,6 @@
     <ClInclude Include="..\..\src\controls\keyboard\testKeyboardMenu.h">
       <Filter>Source Files\project-files\controls\keyboard</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\tests\SetupKeyboardMenuTest.h" />
     <ClInclude Include="..\..\src\controls\joypads\ui\configureAxisMenu.h">
       <Filter>Source Files\project-files\controls\joypads\ui</Filter>
     </ClInclude>
@@ -646,9 +648,6 @@
     <ClInclude Include="..\..\src\sprites\gameSprites.h">
       <Filter>Source Files\project-files\sprites</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\sprites\loadTexture.h">
-      <Filter>Source Files\project-files\sprites</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\game\camera.h">
       <Filter>Source Files\project-files\game</Filter>
     </ClInclude>
@@ -657,9 +656,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\game\playerNameDisplay.h">
       <Filter>Source Files\project-files\game</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\sprites\spinningLogo.h">
-      <Filter>Source Files\project-files\sprites</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\game\gameLoop.h">
       <Filter>Source Files\project-files\game</Filter>
@@ -670,7 +666,7 @@
     <ClInclude Include="..\..\src\util\random.h">
       <Filter>Source Files\project-files\util</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\game\bench\benchControls.h">
+    <ClInclude Include="..\..\src\game\bench\updateBench.h">
       <Filter>Source Files\project-files\game\bench</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\game\bench\drawBench.h">
@@ -763,14 +759,44 @@
     <ClInclude Include="..\..\src\game\amigaMode.h">
       <Filter>Source Files\project-files\game</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\game\updateSprite.h">
-      <Filter>Source Files\project-files\game</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\sprites\SharedTexture.h">
-      <Filter>Source Files\project-files\sprites</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\menus\engine\menuControls.h">
       <Filter>Source Files\project-files\menus\engine</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\sprites\Sprite.h">
+      <Filter>Source Files\project-files\sprites</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\swos\swos.h">
+      <Filter>Source Files\project-files\swos</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\swos\SwosPointer.h">
+      <Filter>Source Files\project-files\swos</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\tests\SetupKeyboardMenuTest.h">
+      <Filter>Source Files\tests</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\stdinc.h">
+      <Filter>Source Files\project-files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\res\resData.h">
+      <Filter>Source Files\res</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\game\spinningLogo.h">
+      <Filter>Source Files\project-files\game</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\sprites\util\loadTexture.h">
+      <Filter>Source Files\project-files\sprites\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\sprites\util\PackedSprite.h">
+      <Filter>Source Files\project-files\sprites\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\sprites\util\SharedTexture.h">
+      <Filter>Source Files\project-files\sprites\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\sprites\updateSprite.h">
+      <Filter>Source Files\project-files\sprites</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="cpp.hint" />
   </ItemGroup>
 </Project>
