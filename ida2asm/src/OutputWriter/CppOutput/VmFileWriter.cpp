@@ -5,10 +5,10 @@
 
 #define kVmStackSize "1024"
 
-VmFileWriter::VmFileWriter(const std::string& baseDir, int extraMemorySize, const SymbolFileParser& symFileParser,
-    const DataBank& dataBank, const StructStream& structs)
+VmFileWriter::VmFileWriter(const std::string& baseDir, int extraMemorySize, bool disableAlignmentChecks,
+    const SymbolFileParser& symFileParser, const DataBank& dataBank, const StructStream& structs)
 :
-    m_baseDir(baseDir), m_extendedMemorySize(extraMemorySize),
+    m_baseDir(baseDir), m_extendedMemorySize(extraMemorySize), m_disableAlignmentChecks(disableAlignmentChecks),
     m_symFileParser(symFileParser), m_dataBank(dataBank), m_structs(structs)
 {
     m_extendedMemorySize = (m_extendedMemorySize + 7) & ~7;
@@ -121,8 +121,8 @@ void VmFileWriter::outputHeaderFile()
         "extern Flags flags;\n"
         "extern int32_t stack[" kVmStackSize "];\n"
         "extern int32_t stackTop;\n\n"
-        "extern word * const g_memWord;\n"
-        "extern dword * const g_memDword;\n"
+        "extern uint16_t * const g_memWord;\n"
+        "extern uint32_t * const g_memDword;\n"
         "extern SwosVariables * const vars;\n"
         "#define swos (*SwosVM::vars)\n\n"
 
@@ -130,31 +130,31 @@ void VmFileWriter::outputHeaderFile()
         "# define sizeofarray(a) (sizeof(a) / sizeof((a)[0]))\n"
         "#endif\n\n"
 
-        "size_t readMemory(dword addr, size_t size);\n"
-        "void writeMemory(dword addr, size_t size, size_t value);\n"
-        "char *offsetToPtr(dword offset);\n"
+        "uint32_t readMemory(uint32_t addr, int size);\n"
+        "void writeMemory(uint32_t addr, int size, uint32_t value);\n"
+        "char *offsetToPtr(uint32_t offset);\n"
         "char *getExtraMemoryArea();\n"
         "SwosDataPointer<char> allocateMemory(size_t size);\n"
         "SwosDataPointer<char> allocateString(const char *str);\n"
         "SwosDataPointer<char> cacheString(const char *str);\n"
-        "void resetStringCache(dword mark);\n"
-        "void releaseMemory(dword mark);\n"
-        "dword getMemoryMark();\n"
-        "dword registerPointer(const void *ptr);\n"
-        "dword getPointerPoolMark();\n"
-        "void releasePointers(dword mark);\n\n"
+        "void resetStringCache(uint32_t mark);\n"
+        "void releaseMemory(uint32_t mark);\n"
+        "uint32_t getMemoryMark();\n"
+        "uint32_t registerPointer(const void *ptr);\n"
+        "uint32_t getPointerPoolMark();\n"
+        "void releasePointers(int mark);\n\n"
 
         "using VoidFunction = void (*)();\n"
         "VoidFunction fetchProc(int index);\n"
         "void invokeProc(int index);\n"
         "int registerProc(VoidFunction proc);\n"
-        "dword getProcMark();\n"
-        "void releaseProcs(dword mark);\n\n"
+        "uint32_t getProcMark();\n"
+        "void releaseProcs(uint32_t mark);\n\n"
 
-        "using MemoryMark = std::tuple<dword, dword, dword, dword>;\n"
+        "using MemoryMark = std::tuple<uint32_t, uint32_t, uint32_t, uint32_t>;\n"
         "MemoryMark markAllMemory();\n"
         "void releaseAllMemory(const MemoryMark& mark);\n"
-        "bool isExternalPointer(dword addr);\n\n"
+        "bool isExternalPointer(uint32_t addr);\n\n"
 
         "#ifdef DEBUG\n"
         "# ifndef debugBreak\n"
@@ -194,7 +194,7 @@ void VmFileWriter::outputHeaderFile()
         "    return ptr >= g_memByte + kSafeMemAreaSize && ptr + 4 <= g_memByte + kMemSize - kSafeMemAreaSize;\n"
         "}\n"
         "\n"
-        "inline dword ptrToOffset(const void *ptr) {\n"
+        "inline uint32_t ptrToOffset(const void *ptr) {\n"
         "    assert(!ptr || ptr == kSentinel || isSwosPtr(ptr));\n"
         "\n"
         "    if (!ptr)\n"
@@ -287,7 +287,7 @@ void VmFileWriter::outputVariablesStruct()
             if (unionField) {
                 xfputs("    ");
             } else if (var.type == DataBank::kLabel) {
-				lastOffset = offset;
+                lastOffset = offset;
                 if (next) {
                     assert(offset == next->offset);
                     isUnion = true;
@@ -372,7 +372,7 @@ void VmFileWriter::outputVariablesStruct()
 
 void VmFileWriter::outputVariablesEnum()
 {
-    xfputs("\nenum Offsets : dword\n{\n");
+    xfputs("\nenum Offsets : uint32_t\n{\n");
     const DataBank::Var *lastVar = nullptr;
 
     std::vector<const DataBank::Var *> varsToCheck;
@@ -546,8 +546,8 @@ void VmFileWriter::outputMemoryArray()
     xfputs("\n};\n\n");
 
     xfputs("SwosVariables * const vars = reinterpret_cast<SwosVariables *>(g_memByte);\n");
-    xfputs("word * const g_memWord = reinterpret_cast<word *>(g_memByte);\n");
-    xfputs("dword * const g_memDword = reinterpret_cast<dword *>(g_memByte);\n");
+    xfputs("uint16_t * const g_memWord = reinterpret_cast<uint16_t *>(g_memByte);\n");
+    xfputs("uint32_t * const g_memDword = reinterpret_cast<uint32_t *>(g_memByte);\n");
 }
 
 void VmFileWriter::outputProcExterns()
@@ -558,7 +558,7 @@ void VmFileWriter::outputProcExterns()
         xfprintf("extern void %s%.*s();\n", imported ? "SWOS::" : "", procName.length(), procName.data());
     });
 
-    xfputs("\n\nnamespace SwosVM {\n\n");
+    xfputs("\nnamespace SwosVM {\n\n");
 }
 
 void VmFileWriter::outputProcVector()
@@ -609,12 +609,12 @@ void VmFileWriter::outputProcFunctions()
         "    return -1 - static_cast<int>(m_userProcs.size()) - static_cast<int>(kNumProcs);\n"
         "}\n"
         "\n"
-        "dword getProcMark()\n"
+        "uint32_t getProcMark()\n"
         "{\n"
         "    return m_userProcs.size();\n"
         "}\n"
         "\n"
-        "void releaseProcs(dword mark)\n"
+        "void releaseProcs(uint32_t mark)\n"
         "{\n"
         "    assert(mark <= m_userProcs.size());\n"
         "    m_userProcs.resize(mark);\n"
@@ -626,18 +626,18 @@ void VmFileWriter::outputProcFunctions()
 void VmFileWriter::outputMemoryAccessFunctions()
 {
     const char kMemFunctions[] = "\n"
-        "constexpr dword kExternalPointerMask = 1 << 31;\n"
-        "SDL_UNUSED constexpr size_t kMaxPointers = kPointerPoolSize / sizeof(void *);\n"
-        "const auto kPointerPool = reinterpret_cast<char **>(kPointerPoolStart);\n"
+        "constexpr uint32_t kExternalPointerMask = 1 << 31;\n"
+        "SDL_UNUSED constexpr int kMaxPointers = kPointerPoolSize / sizeof(void *);\n"
+        "const auto m_pointerPool = reinterpret_cast<char **>(kPointerPoolStart);\n"
         "\n"
-        "static size_t m_numPointers;\n"
-        "static std::vector<std::pair<const char *, dword>> m_stringCache;\n"
+        "static int m_numPointers;\n"
+        "static std::vector<std::pair<const char *, uint32_t>> m_stringCache;\n"
         "\n"
-        "static size_t readExternalPointer(size_t index, size_t size)\n"
+        "static uint32_t readExternalPointer(int index, int size)\n"
         "{\n"
         "    assert(index < m_numPointers);\n"
         "\n"
-        "    auto ptr = kPointerPool[index];\n"
+        "    auto ptr = m_pointerPool[index];\n"
         "    // trust the compiler that the pointers are aligned\n"
         "    switch (size) {\n"
         "    case 1: return *reinterpret_cast<const uint8_t *>(ptr);\n"
@@ -649,81 +649,24 @@ void VmFileWriter::outputMemoryAccessFunctions()
         "    }\n"
         "}\n"
         "\n"
-        "size_t readMemory(dword addr, size_t size)\n"
+        "static void writeExternalPointer(int index, int size, uint32_t value)\n"
         "{\n"
-        "    if (addr & kExternalPointerMask)\n"
-        "        return readExternalPointer(addr & ~kExternalPointerMask, size);\n"
+        "    assert(index < m_numPointers);\n"
         "\n"
-        "    assert(size == 1 || size == 2 || size == 4);\n"
-        "    assert(addr >= kMemStartOfs && addr + size <= kMemSize);\n"
-        "\n"
-        "    if (size == 1)\n"
-        "        return g_memByte[addr];\n"
-        "\n"
-        "    switch (addr % size) {\n"
-        "    case 0:\n"
-        "        return size == 2 ? g_memWord[addr / 2] : g_memDword[addr / 4];\n"
-        "        break;\n"
-        "    case 1:\n"
-        "        if (size == 2)\n"
-        "            return g_memByte[addr] | (g_memByte[addr + 1] << 8);\n"
-        "        else\n"
-        "            return (g_memDword[(addr - 1) / 4] >> 8) | (g_memByte[addr + 3] << 24);\n"
-        "        break;\n"
-        "    case 2:\n"
-        "        return g_memWord[addr / 2] | (g_memWord[addr / 2 + 1] << 16);\n"
-        "        break;\n"
-        "    case 3:\n"
-        "        return g_memByte[addr] | (g_memDword[(addr + 1) / 4] << 8);\n"
-        "        break;\n"
-        "    default:\n"
-        "        assert(false);\n"
-        "        return 0;\n"
+        "    auto ptr = m_pointerPool[index];\n"
+        "    switch (size) {\n"
+        "    case 1: *reinterpret_cast<uint8_t *>(ptr) = static_cast<uint8_t>(value); break;\n"
+        "    case 2: *reinterpret_cast<uint16_t *>(ptr) = static_cast<uint16_t>(value); break;\n"
+        "    case 4: *reinterpret_cast<uint32_t *>(ptr) = value; break;\n"
+        "    default: assert(false);\n"
         "    }\n"
         "}\n"
         "\n"
-        "void writeMemory(dword addr, size_t size, size_t value)\n"
-        "{\n"
-        "    assert(size == 1 || size == 2 || size == 4);\n"
-        "    assert(addr >= kMemStartOfs && addr + size <= kMemSize);\n"
-        "\n"
-        "    if (size == 1) {\n"
-        "        g_memByte[addr] = (byte)value;\n"
-        "        return;\n"
-        "    }\n"
-        "\n"
-        "    switch (addr % size) {\n"
-        "    case 0:\n"
-        "        if (size == 2)\n"
-        "            g_memWord[addr / 2] = (word)value;\n"
-        "        else\n"
-        "            g_memDword[addr / 4] = value;\n"
-        "        break;\n"
-        "    case 1:\n"
-        "        if (size == 2) {\n"
-        "            g_memByte[addr] = value & 0xff;\n"
-        "            g_memByte[addr + 1] = (byte)(value >> 8);\n"
-        "        } else {\n"
-        "            g_memDword[(addr - 1) / 4] = g_memByte[addr - 1] | (value << 8);\n"
-        "            g_memByte[addr + 3] = value >> 24;\n"
-        "        }\n"
-        "        break;\n"
-        "    case 2:\n"
-        "        g_memWord[addr / 2] = value & 0xffff;\n"
-        "        g_memWord[addr / 2 + 1] = value >> 16;\n"
-        "        break;\n"
-        "    case 3:\n"
-        "        g_memByte[addr] = value & 0xff;\n"
-        "        g_memDword[(addr + 1) / 4] = (g_memByte[addr + 4] << 24) | (value >> 8);\n"
-        "        break;\n"
-        "    }\n"
-        "}\n"
-        "\n"
-        "char *offsetToPtr(dword offset)\n"
+        "char *offsetToPtr(uint32_t offset)\n"
         "{\n"
         "    assert(!offset || offset == -1 || (offset & kExternalPointerMask ?\n"
-        "        m_numPointers < kMaxPointers && (offset & ~kExternalPointerMask) < m_numPointers :\n"
-        "        offset >= kMemStartOfs && offset + 4 <= kMemSize));\n"
+        "        m_numPointers < kMaxPointers && static_cast<int>(offset & ~kExternalPointerMask) < m_numPointers :\n"
+        "        static_cast<int>(offset) >= kMemStartOfs && static_cast<int>(offset) + 4 <= kMemSize));\n"
         "\n"
         "    if (!offset)\n"
         "        return nullptr;\n"
@@ -731,7 +674,7 @@ void VmFileWriter::outputMemoryAccessFunctions()
         "    if (offset == -1)\n"
         "        return kSentinel;\n"
         "\n"
-        "    return offset & kExternalPointerMask ? kPointerPool[(offset & ~kExternalPointerMask)] :\n"
+        "    return offset & kExternalPointerMask ? m_pointerPool[(offset & ~kExternalPointerMask)] :\n"
         "        (char *)g_memByte + offset;\n"
         "}\n"
         "\n"
@@ -740,7 +683,7 @@ void VmFileWriter::outputMemoryAccessFunctions()
         "    return (char *)kExtendedMemStart;\n"
         "}\n"
         "\n"
-        "static dword m_dynaMemMarker;\n"
+        "static uint32_t m_dynaMemMarker;\n"
         "\n"
         "SwosDataPointer<char> allocateMemory(size_t size)\n"
         "{\n"
@@ -790,13 +733,13 @@ void VmFileWriter::outputMemoryAccessFunctions()
         "    return swosPtr;\n"
         "}\n"
         "\n"
-        "void resetStringCache(dword mark)\n"
+        "void resetStringCache(uint32_t mark)\n"
         "{\n"
         "    assert(mark <= m_stringCache.size());\n"
         "    m_stringCache.resize(mark);\n"
         "}\n"
         "\n"
-        "void releaseMemory(dword mark)\n"
+        "void releaseMemory(uint32_t mark)\n"
         "{\n"
         "    assert(mark <= m_dynaMemMarker && m_dynaMemMarker < kDynamicMemSize);\n"
         "#ifdef DEBUG\n"
@@ -805,37 +748,37 @@ void VmFileWriter::outputMemoryAccessFunctions()
         "    m_dynaMemMarker = mark;\n"
         "}\n"
         "\n"
-        "dword getMemoryMark()\n"
+        "uint32_t getMemoryMark()\n"
         "{\n"
         "    return m_dynaMemMarker;\n"
         "}\n"
         "\n"
         "// register a pointer accessible from SWOS VM via pointer pool\n"
-        "dword registerPointer(const void *ptr)\n"
+        "uint32_t registerPointer(const void *ptr)\n"
         "{\n"
         "    assert(m_numPointers < kMaxPointers && (intptr_t)ptr != -1);\n"
         "\n"
         "    if (!ptr)\n"
         "        return -1;\n"
         "\n"
-        "    for (size_t i = 0; i < m_numPointers; i++)\n"
-        "        if (kPointerPool[i] == ptr)\n"
+        "    for (int i = 0; i < m_numPointers; i++)\n"
+        "        if (m_pointerPool[i] == ptr)\n"
         "            return i | kExternalPointerMask;\n"
         "\n"
         "    if (m_numPointers >= kMaxPointers)\n"
         "        return -1;\n"
         "\n"
-        "    kPointerPool[m_numPointers] = (char *)ptr;\n"
+        "    m_pointerPool[m_numPointers] = (char *)ptr;\n"
         "    return m_numPointers++ | kExternalPointerMask;\n"
         "}\n"
         "\n"
-        "void releasePointers(dword mark)\n"
+        "void releasePointers(int mark)\n"
         "{\n"
         "    assert(mark < kMaxPointers && mark <= m_numPointers);\n"
         "    m_numPointers = mark;\n"
         "}\n"
         "\n"
-        "dword getPointerPoolMark()\n"
+        "uint32_t getPointerPoolMark()\n"
         "{\n"
         "    return m_numPointers;\n"
         "}\n"
@@ -845,7 +788,7 @@ void VmFileWriter::outputMemoryAccessFunctions()
         "    auto memMark = getMemoryMark();\n"
         "    auto pointerMark = getPointerPoolMark();\n"
         "    auto procMark = getProcMark();\n"
-        "    dword cacheMark = m_stringCache.size();\n"
+        "    uint32_t cacheMark = m_stringCache.size();\n"
         "    return { memMark, pointerMark, procMark, cacheMark };\n"
         "}\n"
         "\n"
@@ -857,18 +800,115 @@ void VmFileWriter::outputMemoryAccessFunctions()
         "    resetStringCache(std::get<3>(mark));\n"
         "}\n"
         "\n"
-        "bool isExternalPointer(dword addr)\n"
+        "bool isExternalPointer(uint32_t addr)\n"
         "{\n"
         "    return (addr & kExternalPointerMask) != 0;\n"
         "}\n\n";
 
     xfputs(kMemFunctions);
+    xfputs(
+        "uint32_t readMemory(uint32_t addr, int size)\n"
+        "{\n"
+        "    if (addr & kExternalPointerMask)\n"
+        "        return readExternalPointer(addr & ~kExternalPointerMask, size);\n"
+        "\n"
+        "    assert(size == 1 || size == 2 || size == 4);\n"
+        "    assert(addr >= kMemStartOfs && addr + size <= kMemSize);\n"
+        "\n"
+    );
+    if (m_disableAlignmentChecks) {
+        xfputs(
+            "    switch (size) {\n"
+            "    case 1: return g_memByte[addr];\n"
+            "    case 2: return *reinterpret_cast<uint16_t *>(&g_memByte[addr]);\n"
+            "    case 4: return *reinterpret_cast<uint32_t *>(&g_memByte[addr]);\n"
+            "    default: return 0;\n"
+            "    }\n"
+        );
+    } else {
+        xfputs(
+            "    if (size == 1)\n"
+            "        return g_memByte[addr];\n"
+            "\n"
+            "    switch (addr % size) {\n"
+            "    case 0:\n"
+            "        return size == 2 ? g_memWord[addr / 2] : g_memDword[addr / 4];\n"
+            "    case 1:\n"
+            "        if (size == 2)\n"
+            "            return g_memByte[addr] | (g_memByte[addr + 1] << 8);\n"
+            "        else\n"
+            "            return (g_memDword[(addr - 1) / 4] >> 8) | (g_memByte[addr + 3] << 24);\n"
+            "    case 2:\n"
+            "        return g_memWord[addr / 2] | (g_memWord[addr / 2 + 1] << 16);\n"
+            "    case 3:\n"
+            "        return g_memByte[addr] | (g_memDword[(addr + 1) / 4] << 8);\n"
+            "    default:\n"
+            "        assert(false);\n"
+            "        return 0;\n"
+            "    }\n"
+        );
+    }
+    xfputs(
+        "}\n"
+        "\n"
+        "void writeMemory(uint32_t addr, int size, uint32_t value)\n"
+        "{\n"
+        "    if (addr & kExternalPointerMask)\n"
+        "        return writeExternalPointer(addr & ~kExternalPointerMask, size, value);\n"
+        "\n"
+        "    assert(size == 1 || size == 2 || size == 4);\n"
+        "    assert(addr >= kMemStartOfs && addr + size <= kMemSize);\n"
+        "\n"
+    );
+    if (m_disableAlignmentChecks) {
+        xfputs(
+            "    switch (size) {\n"
+            "    case 1: g_memByte[addr] = static_cast<byte>(value); break;\n"
+            "    case 2: *reinterpret_cast<uint16_t *>(&g_memByte[addr]) = static_cast<uint16_t>(value); break;\n"
+            "    case 4: *reinterpret_cast<uint32_t *>(&g_memByte[addr]) = value; break;\n"
+            "    }\n"
+        );
+    } else {
+        xfputs(
+            "    if (size == 1) {\n"
+            "        g_memByte[addr] = (byte)value;\n"
+            "        return;\n"
+            "    }\n"
+            "\n"
+            "    switch (addr % size) {\n"
+            "    case 0:\n"
+            "        if (size == 2)\n"
+            "            g_memWord[addr / 2] = (uint16_t)value;\n"
+            "        else\n"
+            "            g_memDword[addr / 4] = value;\n"
+            "        break;\n"
+            "    case 1:\n"
+            "        if (size == 2) {\n"
+            "            g_memByte[addr] = value & 0xff;\n"
+            "            g_memByte[addr + 1] = (byte)(value >> 8);\n"
+            "        } else {\n"
+            "            g_memDword[(addr - 1) / 4] = g_memByte[addr - 1] | (value << 8);\n"
+            "            g_memByte[addr + 3] = value >> 24;\n"
+            "        }\n"
+            "        break;\n"
+            "    case 2:\n"
+            "        g_memWord[addr / 2] = value & 0xffff;\n"
+            "        g_memWord[addr / 2 + 1] = value >> 16;\n"
+            "        break;\n"
+            "    case 3:\n"
+            "        g_memByte[addr] = value & 0xff;\n"
+            "        g_memDword[(addr + 1) / 4] = (g_memByte[addr + 4] << 24) | (value >> 8);\n"
+            "        break;\n"
+            "    }\n"
+        );
+    }
+    xfputs("}\n");
 }
 
 void VmFileWriter::outputDebugFunctions()
 {
     const char kFunctions[] =
-        "\n#ifdef DEBUG\n\n"
+        "\n#ifdef DEBUG\n"
         "# ifndef debugBreak\n"
         "void debugBreak()\n"
         "{\n"

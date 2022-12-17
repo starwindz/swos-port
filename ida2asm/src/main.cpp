@@ -17,6 +17,7 @@ struct CommandLineParameters {
     int numOutputFiles;
     int extraMemorySize;
     bool disableOptimizations;
+    bool disableAlignmentChecks;
 };
 
 constexpr int kMaxOutputFiles = 20;
@@ -49,11 +50,14 @@ static CommandLineParameters getCommandLineParameters(int argc, char **argv)
 
     int extraMemorySize = 0;
     bool disableOptimizations = false;
+    bool disableAlignmentChecks = false;
     for (int i = 7; i < argc; i++) {
         if (argv[i][0] == '-' && argv[i][1] == '-') {
             constexpr char kExtraMemorySize[] = "extra-memory-size=";
             if (!strcmp(argv[i] + 2, "disable-optimizations")) {
                 disableOptimizations = true;
+            } else if (!strcmp(argv[i] + 2, "disable-alignment-checks")) {
+                disableAlignmentChecks = true;
             } else if (!strncmp(argv[i] + 2, kExtraMemorySize, sizeof(kExtraMemorySize) - 1)) {
                 auto sizePtr = argv[i] + 2 + sizeof(kExtraMemorySize) - 1;
                 extraMemorySize = atoi(sizePtr);
@@ -61,7 +65,7 @@ static CommandLineParameters getCommandLineParameters(int argc, char **argv)
         }
     }
 
-    return { argv[1], argv[2], argv[3], argv[4], argv[5], numFiles, extraMemorySize, disableOptimizations };
+    return { argv[1], argv[2], argv[3], argv[4], argv[5], numFiles, extraMemorySize, disableOptimizations, disableAlignmentChecks };
 }
 
 static auto start = std::chrono::high_resolution_clock::now();
@@ -86,7 +90,8 @@ int main(int argc, char **argv)
 
     SymbolFileParser symFileParser(params.symbolFilePath, params.swosHeaderPath, params.outputPath);
     InputConverter converter(params.inputPath, params.outputPath, params.swosHeaderPath, format,
-        params.numOutputFiles, params.extraMemorySize, params.disableOptimizations, symFileParser);
+        params.numOutputFiles, params.extraMemorySize, params.disableOptimizations,
+        params.disableAlignmentChecks, symFileParser);
     converter.convert();
 
     return EXIT_SUCCESS;

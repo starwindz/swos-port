@@ -1,6 +1,5 @@
 #include "util.h"
 #include "log.h"
-#include <dirent.h>
 #include <ctime>
 #include <chrono>
 #include <random>
@@ -148,37 +147,6 @@ void restore68kRegisters()
         errorExit("Saved 68k registers stack underflow");
 
     SwosVM::load68kRegistersFrom(m_savedRegisters[--m_regStorageIndex]);
-}
-
-constexpr size_t kInitialHashValue = 1021;
-
-static size_t updateHash(size_t hash, char c, size_t index)
-{
-    hash += index + c;
-    hash = _rotl(hash, 1);
-    return hash ^ index + c;
-}
-
-unsigned hash(const char *str)
-{
-    size_t hash = kInitialHashValue;
-    size_t index = 0;
-
-    while (*str++)
-        hash = updateHash(hash, str[-1], index++);
-
-    return hash;
-}
-
-unsigned hash(const void *buffer, size_t length)
-{
-    size_t hash = kInitialHashValue;
-    auto p = reinterpret_cast<const char *>(buffer);
-
-    for (size_t i = 0; i < length; i++, p++)
-        hash = updateHash(hash, *p, i);
-
-    return hash;
 }
 
 int getRandomInRange(int min, int max)

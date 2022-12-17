@@ -71,6 +71,12 @@
     <Filter Include="Source Files\sprites\util">
       <UniqueIdentifier>{afa9f105-294f-468b-9994-1f99f9d6c175}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\game\updatePlayers">
+      <UniqueIdentifier>{e4bcfc26-1dfb-4fe4-9c62-5b76a5542390}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\game\ball">
+      <UniqueIdentifier>{72eedfbe-32bd-4e25-9383-3c64af0f36d8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\src\main.cpp">
@@ -414,6 +420,18 @@
     </ClCompile>
     <ClCompile Include="..\..\..\src\game\spinningLogo.cpp">
       <Filter>Source Files\game</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\util\zip.cpp">
+      <Filter>Source Files\util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\util\hash.cpp">
+      <Filter>Source Files\util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\game\updatePlayers\updatePlayers.cpp">
+      <Filter>Source Files\game\updatePlayers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\game\ball\ball.cpp">
+      <Filter>Source Files\game\ball</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -770,6 +788,18 @@
     </ClInclude>
     <ClInclude Include="..\..\..\src\game\spinningLogo.h">
       <Filter>Source Files\game</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\util\zip.h">
+      <Filter>Source Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\util\hash.h">
+      <Filter>Source Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\game\updatePlayers\updatePlayers.h">
+      <Filter>Source Files\game\updatePlayers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\game\ball\ball.h">
+      <Filter>Source Files\game\ball</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

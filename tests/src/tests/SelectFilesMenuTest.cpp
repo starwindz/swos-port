@@ -251,7 +251,7 @@ static char *generateFilename(int num, bool useLongNames)
     return filenameBuf;
 }
 
-static size_t getExtensionOffset(char *filename)
+static int getExtensionOffset(char *filename)
 {
     auto ext = strchr(filename, '.');
     assert(ext);
@@ -832,7 +832,7 @@ static MenuEntry *findEntry(const char *text, bool caseInsensitive = false)
 
 static void verifyDiyFilesEqual(const char *path1, const char *path2)
 {
-    size_t size1, size2, numWrites;
+    int size1, size2, numWrites;
     auto data1 = getFakeFileData(path1, size1, numWrites);
     auto data2 = getFakeFileData(path2, size2, numWrites);
     assertTrue(data1 && data2);
@@ -957,7 +957,7 @@ void SelectFilesMenuTest::testSaveCompetitionByClick()
     auto entry = findEntry("SAVE CANADA ROGERS CUP");
     selectItem(entry);
 
-    size_t size, numWrites;
+    int size, numWrites;
     auto data = getFakeFileData(path.c_str(), size, numWrites);
 
     assertEqual(size, m_canadaDiySize);

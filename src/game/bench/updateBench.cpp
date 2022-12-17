@@ -36,10 +36,10 @@ struct TapCounterState {
         tapTimeoutCounter = 0;
         previousDirection = kNoGameEvents;
     }
-    bool anyDirectionPressedLastFrame() const {
+    bool gotLastTapDirection() const {
         return (previousDirection & kGameEventMovementMask) != kNoGameEvents;
     }
-    bool holdingSameDirectionAsLastFrame(GameControlEvents controls) const {
+    bool holdingSameDirectionAsLastTap(GameControlEvents controls) const {
         return previousDirection == (controls & kGameEventMovementMask);
     }
 };
@@ -710,7 +710,7 @@ static void updateBenchControls()
     assert(!!team->playerNumber != !!team->playerCoachNumber);
 
     auto player = team->playerNumber == 1 || team->playerCoachNumber == 1 ? kPlayer1 : kPlayer2;
-	m_controls = getPlayerEvents(player);
+    m_controls = getPlayerEvents(player);
 }
 
 static bool bumpGoToBenchTimer()
@@ -771,11 +771,11 @@ static bool benchInvoked(const TeamGeneralInfo *team)
     if ((m_controls & kGameEventMovementMask) == kNoGameEvents) {
         state.blockWhileHoldingDirection = false;
         if (++state.tapTimeoutCounter == kTapTimeoutTicks)
-			state.reset();
+            state.reset();
     } else if (!state.blockWhileHoldingDirection) {
-        if (state.anyDirectionPressedLastFrame()) {
-            if (state.holdingSameDirectionAsLastFrame(m_controls)) {
-				state.tapTimeoutCounter = 0;
+        if (state.gotLastTapDirection()) {
+            state.tapTimeoutCounter = 0;
+            if (state.holdingSameDirectionAsLastTap(m_controls)) {
                 if (++state.tapCount >= kNumTapsForBench)
                     return true;
                 else
@@ -944,6 +944,8 @@ void fillBenchData(BenchData& data)
 {
     data.pl1TapCount = m_pl1TapState.tapCount;
     data.pl2TapCount = m_pl2TapState.tapCount;
+    data.pl1TapTimeoutCounter = m_pl1TapState.tapTimeoutCounter;
+    data.pl2TapTimeoutCounter = m_pl2TapState.tapTimeoutCounter;
     data.pl1PreviousDirection = gameEventsToSwosDirection(m_pl1TapState.previousDirection);
     data.pl2PreviousDirection = gameEventsToSwosDirection(m_pl2TapState.previousDirection);
     data.pl1BlockWhileHoldingDirection = m_pl1TapState.blockWhileHoldingDirection;

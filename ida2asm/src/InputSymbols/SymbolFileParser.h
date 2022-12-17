@@ -122,7 +122,7 @@ private:
     std::pair<const char *, const char *> getNextToken(const char *p);
     static const char *skipWhiteSpace(const char *p);
     std::pair<int32_t, const char *> parseInt32(const char *start, const char *end);
-    void error(const std::string& desc, int lineNo = -1) const;
+    [[noreturn]] void error(const std::string& desc, int lineNo = -1) const;
     void commaExpectedError() const;
 
     void xfwrite(const char *buf, size_t len);

@@ -1,6 +1,356 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <ClCompile Include="..\..\..\src\audio\audio.cpp">
+      <Filter>Source Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\audio\chants.cpp">
+      <Filter>Source Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\audio\comments.cpp">
+      <Filter>Source Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\audio\music.cpp">
+      <Filter>Source Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\audio\sfx.cpp">
+      <Filter>Source Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\audio\SoundSample.cpp">
+      <Filter>Source Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\controls\controlOptionsMenu.cpp">
+      <Filter>Source Files\controls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\controls\controls.cpp">
+      <Filter>Source Files\controls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\debug\dump.cpp">
+      <Filter>Source Files\debug</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\files\file.cpp">
+      <Filter>Source Files\files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\files\selectFilesMenu.cpp">
+      <Filter>Source Files\files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\menus\mainMenu.cpp">
+      <Filter>Source Files\menus</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\replays\ReplayDataStorage.cpp">
+      <Filter>Source Files\replays</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\game\replayExitMenu.cpp">
+      <Filter>Source Files\replays</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\replays\replays.cpp">
+      <Filter>Source Files\replays</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\replays\replaysMenu.cpp">
+      <Filter>Source Files\replays</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\util\util.cpp">
+      <Filter>Source Files\util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\video\render.cpp">
+      <Filter>Source Files\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\text\text.cpp">
+      <Filter>Source Files\text</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\controls\joypads\Joypad.cpp">
+      <Filter>Source Files\controls\joypads</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\controls\joypads\JoypadConfig.cpp">
+      <Filter>Source Files\controls\joypads</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\controls\joypads\JoypadConfigRegister.cpp">
+      <Filter>Source Files\controls\joypads</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\controls\joypads\JoypadElementValue.cpp">
+      <Filter>Source Files\controls\joypads</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\controls\joypads\JoypadGuidConfig.cpp">
+      <Filter>Source Files\controls\joypads</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\controls\joypads\joypads.cpp">
+      <Filter>Source Files\controls\joypads</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\controls\keyboard\keyboard.cpp">
+      <Filter>Source Files\controls\keyboard</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\controls\keyboard\keyBuffer.cpp">
+      <Filter>Source Files\controls\keyboard</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\controls\keyboard\KeyConfig.cpp">
+      <Filter>Source Files\controls\keyboard</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\controls\gameControlEvents.cpp">
+      <Filter>Source Files\controls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\controls\mouse\mouse.cpp">
+      <Filter>Source Files\controls\mouse</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\controls\joypads\VirtualJoypad.cpp">
+      <Filter>Source Files\controls\joypads</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\controls\keyboard\setupKeyboardMenu.cpp">
+      <Filter>Source Files\controls\keyboard</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\controls\selectGameControlEventsMenu.cpp">
+      <Filter>Source Files\controls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\controls\keyboard\redefineKeysMenu.cpp">
+      <Filter>Source Files\controls\keyboard</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\controls\keyboard\testKeyboardMenu.cpp">
+      <Filter>Source Files\controls\keyboard</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\controls\joypads\ui\joypadConfigMenu.cpp">
+      <Filter>Source Files\controls\joypads\ui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\controls\joypads\ui\joypadQuickConfigMenu.cpp">
+      <Filter>Source Files\controls\joypads\ui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\controls\joypads\ui\configureAxisMenu.cpp">
+      <Filter>Source Files\controls\joypads\ui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\controls\joypads\ui\configureHatMenu.cpp">
+      <Filter>Source Files\controls\joypads\ui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\controls\joypads\ui\configureTrackballMenu.cpp">
+      <Filter>Source Files\controls\joypads\ui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\controls\joypads\ui\testJoypadMenu.cpp">
+      <Filter>Source Files\controls\joypads\ui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\controls\testControlsMenu.cpp">
+      <Filter>Source Files\controls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\controls\selectMatchControls.cpp">
+      <Filter>Source Files\controls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\controls\gameControls.cpp">
+      <Filter>Source Files\controls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\video\windowManager.cpp">
+      <Filter>Source Files\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\video\videoOptionsMenu.cpp">
+      <Filter>Source Files\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\text\textInput.cpp">
+      <Filter>Source Files\text</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\video\windowModeMenu.cpp">
+      <Filter>Source Files\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\sprites\sprites.cpp">
+      <Filter>Source Files\sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\game\game.cpp">
+      <Filter>Source Files\game</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\game\gameTime.cpp">
+      <Filter>Source Files\game</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\sprites\colorizeSprites.cpp">
+      <Filter>Source Files\sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\util\log.cpp">
+      <Filter>Source Files\util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\game\camera.cpp">
+      <Filter>Source Files\game</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\game\darkRectangle.cpp">
+      <Filter>Source Files\game</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\game\playerNameDisplay.cpp">
+      <Filter>Source Files\game</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\sprites\gameSprites.cpp">
+      <Filter>Source Files\sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\sprites\renderSprites.cpp">
+      <Filter>Source Files\sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\game\bench\bench.cpp">
+      <Filter>Source Files\game\bench</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\game\gameLoop.cpp">
+      <Filter>Source Files\game</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\util\random.cpp">
+      <Filter>Source Files\util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\game\bench\updateBench.cpp">
+      <Filter>Source Files\game\bench</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\game\bench\drawBench.cpp">
+      <Filter>Source Files\game\bench</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\game\color.cpp">
+      <Filter>Source Files\game</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\menus\continueAbortMenu.cpp">
+      <Filter>Source Files\menus</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\game\stats.cpp">
+      <Filter>Source Files\game</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\menus\engine\drawMenu.cpp">
+      <Filter>Source Files\menus\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\menus\engine\menuAlloc.cpp">
+      <Filter>Source Files\menus\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\menus\engine\menuBackground.cpp">
+      <Filter>Source Files\menus\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\menus\engine\MenuEntry.cpp">
+      <Filter>Source Files\menus\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\menus\engine\menuItemRenderer.cpp">
+      <Filter>Source Files\menus\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\menus\engine\menuMouse.cpp">
+      <Filter>Source Files\menus\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\menus\engine\menuProc.cpp">
+      <Filter>Source Files\menus\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\menus\engine\menus.cpp">
+      <Filter>Source Files\menus\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\menus\versusMenu.cpp">
+      <Filter>Source Files\menus</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\menus\stadiumMenu.cpp">
+      <Filter>Source Files\menus</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\menus\continueMenu.cpp">
+      <Filter>Source Files\menus</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\replays\LegacyReplayConverter.cpp">
+      <Filter>Source Files\replays</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\video\timer.cpp">
+      <Filter>Source Files\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\game\pitch\pitch.cpp">
+      <Filter>Source Files\game\pitch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\game\referee.cpp">
+      <Filter>Source Files\game</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\video\overlay.cpp">
+      <Filter>Source Files\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\audio\audioOptionsMenu.cpp">
+      <Filter>Source Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\audio\SampleTable.cpp">
+      <Filter>Source Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\options\options.cpp">
+      <Filter>Source Files\options</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\options\optionsMenu.cpp">
+      <Filter>Source Files\options</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\video\assetManager.cpp">
+      <Filter>Source Files\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\video\drawPrimitives.cpp">
+      <Filter>Source Files\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\video\gameFieldMapping.cpp">
+      <Filter>Source Files\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\game\amigaMode.cpp">
+      <Filter>Source Files\game</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\menus\engine\menuControls.cpp">
+      <Filter>Source Files\menus\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\game\spinningLogo.cpp">
+      <Filter>Source Files\game</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\sprites\util\loadTexture.cpp">
+      <Filter>Source Files\sprites\util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\sprites\util\SharedTexture.cpp">
+      <Filter>Source Files\sprites\util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\sprites\updateSprite.cpp">
+      <Filter>Source Files\sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\controls\quickConfigMenu.cpp">
+      <Filter>Source Files\controls\joypads\ui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\game\result.cpp">
+      <Filter>Source Files\game</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\controls\keyboard\scanCodes.cpp">
+      <Filter>Source Files\controls</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\controls\joypads\SdlMappingParser.cpp">
+      <Filter>Source Files\controls\joypads</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\menus\engine\unpackMenu.cpp">
+      <Filter>Source Files\menus\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\game\updateGoals.cpp">
+      <Filter>Source Files\game</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\init.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\crash.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\3rd-party\ConvertUTF\ConvertUTF.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-64\swos-01.cpp">
+      <Filter>Source Files\swos-cpp-64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-64\swos-02.cpp">
+      <Filter>Source Files\swos-cpp-64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-64\swos-03.cpp">
+      <Filter>Source Files\swos-cpp-64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-64\swos-04.cpp">
+      <Filter>Source Files\swos-cpp-64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-64\swos-05.cpp">
+      <Filter>Source Files\swos-cpp-64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-64\swos-06.cpp">
+      <Filter>Source Files\swos-cpp-64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-64\swos-07.cpp">
+      <Filter>Source Files\swos-cpp-64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-64\swos-08.cpp">
+      <Filter>Source Files\swos-cpp-64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-64\vm.cpp">
+      <Filter>Source Files\swos-cpp-64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\util\hash.cpp">
+      <Filter>Source Files\util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\util\zip.cpp">
+      <Filter>Source Files\util</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
     <ClInclude Include="..\..\..\src\audio\audio.h">
       <Filter>Source Files\audio</Filter>
     </ClInclude>
@@ -61,20 +411,8 @@
     <ClInclude Include="..\..\..\src\android\pch.h">
       <Filter>Source Files\android</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\assert.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\src\crash.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\src\stdinc.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\src\text\text.h">
       <Filter>Source Files\text</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\src\controls\joypads\joypads.h">
-      <Filter>Source Files\controls\joypads</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\src\controls\joypads\Joypad.h">
       <Filter>Source Files\controls\joypads</Filter>
@@ -85,26 +423,26 @@
     <ClInclude Include="..\..\..\src\controls\joypads\JoypadConfigRegister.h">
       <Filter>Source Files\controls\joypads</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\src\controls\joypads\JoypadElementValue.h">
+      <Filter>Source Files\controls\joypads</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\..\src\controls\joypads\JoypadGuidConfig.h">
       <Filter>Source Files\controls\joypads</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\controls\joypads\SdlMappingParser.h">
+    <ClInclude Include="..\..\..\src\controls\joypads\joypads.h">
       <Filter>Source Files\controls\joypads</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\src\controls\keyboard\keyBuffer.h">
-      <Filter>Source Files\controls\keyboard</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\src\controls\keyboard\scanCodes.h">
-      <Filter>Source Files\controls\keyboard</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\src\controls\gameControlEvents.h">
-      <Filter>Source Files\controls</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\src\controls\keyboard\keyboard.h">
       <Filter>Source Files\controls\keyboard</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\src\controls\keyboard\keyBuffer.h">
+      <Filter>Source Files\controls\keyboard</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\..\src\controls\keyboard\KeyConfig.h">
       <Filter>Source Files\controls\keyboard</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\controls\gameControlEvents.h">
+      <Filter>Source Files\controls</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\src\controls\mouse\mouse.h">
       <Filter>Source Files\controls\mouse</Filter>
@@ -124,26 +462,20 @@
     <ClInclude Include="..\..\..\src\controls\keyboard\testKeyboardMenu.h">
       <Filter>Source Files\controls\keyboard</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\src\controls\joypads\ui\joypadConfigMenu.h">
+      <Filter>Source Files\controls\joypads\ui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\controls\joypads\ui\joypadQuickConfigMenu.h">
+      <Filter>Source Files\controls\joypads\ui</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\..\src\controls\joypads\ui\configureAxisMenu.h">
       <Filter>Source Files\controls\joypads\ui</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\src\controls\joypads\ui\configureHatMenu.h">
       <Filter>Source Files\controls\joypads\ui</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\controls\joypads\ui\joypadConfigMenu.h">
-      <Filter>Source Files\controls\joypads\ui</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\src\controls\joypads\ui\configureTrackballMenu.h">
       <Filter>Source Files\controls\joypads\ui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\src\controls\joypads\ui\joypadQuickConfigMenu.h">
-      <Filter>Source Files\controls\joypads\ui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\src\controls\quickConfigMenu.h">
-      <Filter>Source Files\controls</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\src\controls\joypads\JoypadElementValue.h">
-      <Filter>Source Files\controls\joypads</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\src\controls\joypads\ui\testJoypadMenu.h">
       <Filter>Source Files\controls\joypads\ui</Filter>
@@ -280,10 +612,10 @@
     <ClInclude Include="..\..\..\src\video\overlay.h">
       <Filter>Source Files\video</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\audio\SampleTable.h">
+    <ClInclude Include="..\..\..\src\audio\audioOptionsMenu.h">
       <Filter>Source Files\audio</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\audio\audioOptionsMenu.h">
+    <ClInclude Include="..\..\..\src\audio\SampleTable.h">
       <Filter>Source Files\audio</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\src\options\options.h">
@@ -337,424 +669,109 @@
     <ClInclude Include="..\..\..\src\sprites\updateSprite.h">
       <Filter>Source Files\sprites</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\src\controls\quickConfigMenu.h">
+      <Filter>Source Files\controls\joypads\ui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\controls\keyboard\scanCodes.h">
+      <Filter>Source Files\controls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\controls\joypads\SdlMappingParser.h">
+      <Filter>Source Files\controls\joypads</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\assert.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\crash.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\stdinc.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\init.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\util\hash.h">
+      <Filter>Source Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\util\zip.h">
+      <Filter>Source Files\util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source Files">
-      <UniqueIdentifier>{446c3088-a312-4bd9-a62b-036b46ac4f1a}</UniqueIdentifier>
+      <UniqueIdentifier>{e13f52e8-99ad-448e-89e7-be21de257afd}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\audio">
-      <UniqueIdentifier>{59614996-c9ce-450c-8d31-f690c2e2fc03}</UniqueIdentifier>
+      <UniqueIdentifier>{5359b058-acbb-42b7-80eb-e03a80e14efd}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\controls">
-      <UniqueIdentifier>{02e2e7b0-c26a-4f26-a543-84b6a70cc853}</UniqueIdentifier>
+      <UniqueIdentifier>{f9273496-97cc-4333-91b4-6c585641f26e}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\debug">
-      <UniqueIdentifier>{b5a0bc12-5591-4d0e-a2f7-d4840646a52e}</UniqueIdentifier>
+      <UniqueIdentifier>{209a132e-cb3a-4db7-b6e3-fef12078ee6c}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\files">
-      <UniqueIdentifier>{a349dca6-6508-4717-9b94-e4363ceed7be}</UniqueIdentifier>
+      <UniqueIdentifier>{e51a11a9-5ae1-4214-9509-a8def735591c}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\menus">
-      <UniqueIdentifier>{21500068-e1d0-464b-aa3d-4153293d522d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\game\bench">
-      <UniqueIdentifier>{10d6b7c5-9c6d-48d1-99dc-152d63982688}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\video">
-      <UniqueIdentifier>{67e44202-240d-4761-ad7a-be37f9d1d01c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\util">
-      <UniqueIdentifier>{9e7f9490-e380-4d43-9773-e7a041fb2114}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\swos-cpp">
-      <UniqueIdentifier>{44dc1d5e-37b5-40e0-b8e9-b8cbd4288d45}</UniqueIdentifier>
+      <UniqueIdentifier>{89feda4f-f55e-40b9-94c4-f0aac37be4c3}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\replays">
-      <UniqueIdentifier>{6d13b094-db2a-4528-8283-f6da4f8dd749}</UniqueIdentifier>
+      <UniqueIdentifier>{0d1ba871-f4eb-4924-bc0a-e4b9b3fe37d7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\util">
+      <UniqueIdentifier>{83c5edb4-f190-4ef5-8d2e-bd55ec1347f9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\video">
+      <UniqueIdentifier>{32c35c63-84c1-4698-b34c-bb6983d319d0}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\android">
-      <UniqueIdentifier>{76608d68-640f-4b0e-b111-c9d3e90d2fb7}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ConvertUTF">
-      <UniqueIdentifier>{dccc900f-61e6-4068-baf8-bf38240b7d57}</UniqueIdentifier>
+      <UniqueIdentifier>{c83f491a-6f69-402b-af33-5ff6dddb74d7}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\text">
-      <UniqueIdentifier>{4743f581-fde5-4078-9567-e0c1834b74fe}</UniqueIdentifier>
+      <UniqueIdentifier>{ac1f4465-68e2-475b-8f8a-ac7f1fa49aae}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\controls\joypads">
-      <UniqueIdentifier>{00c93686-86d7-490b-836f-8dae831c9d6a}</UniqueIdentifier>
+      <UniqueIdentifier>{65d3f364-909e-404d-bd08-4d76ad26fc73}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\controls\keyboard">
-      <UniqueIdentifier>{422d74e1-7a90-4045-b138-7b1f8eb157f9}</UniqueIdentifier>
+      <UniqueIdentifier>{a49f3226-a418-4410-87dd-dbf4586efe9c}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\controls\mouse">
-      <UniqueIdentifier>{c2614ab8-6381-4dd3-a3a6-0a4312518f73}</UniqueIdentifier>
+      <UniqueIdentifier>{57def21e-13ef-462d-b861-c8bb71ca388c}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\controls\joypads\ui">
-      <UniqueIdentifier>{3de1dad7-dc41-48ee-90ec-590d3d5de456}</UniqueIdentifier>
+      <UniqueIdentifier>{92f12f6f-9cfb-4802-bbb0-37cdd5393b44}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\sprites">
-      <UniqueIdentifier>{3f812fc3-eb0e-405e-9b21-a85827f333ef}</UniqueIdentifier>
+      <UniqueIdentifier>{05bbf23b-54a3-4624-b9c5-649283c26bbd}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\game">
-      <UniqueIdentifier>{610c4129-7816-4a21-8965-2e0a657b0ef5}</UniqueIdentifier>
+      <UniqueIdentifier>{d9d96292-dc44-4272-b3d9-ab6645bbe817}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\game\bench">
+      <UniqueIdentifier>{f89dd799-aad8-4694-b02f-8e828ed5b892}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\menus\engine">
-      <UniqueIdentifier>{f0dab818-5f7c-4da5-8efe-889b111e7bf3}</UniqueIdentifier>
+      <UniqueIdentifier>{21151426-7fe4-48e7-8bf4-c308c3b9693d}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\game\pitch">
-      <UniqueIdentifier>{c22f13eb-9965-441c-afe3-f154e4b00cda}</UniqueIdentifier>
+      <UniqueIdentifier>{dea34263-d9b2-483c-851c-61fb1a325976}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\options">
-      <UniqueIdentifier>{4d3fe30c-0e13-461f-9d04-bf4af366d93f}</UniqueIdentifier>
+      <UniqueIdentifier>{e972b023-95e6-4541-9207-452e2355f1ee}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\swos">
-      <UniqueIdentifier>{aa102525-a222-46ad-945d-8a1919111434}</UniqueIdentifier>
+      <UniqueIdentifier>{dc457afe-d8ec-442c-9405-18e7978846c5}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\sprites\util">
-      <UniqueIdentifier>{31aec911-5172-4300-9dc3-74631d9d9960}</UniqueIdentifier>
+      <UniqueIdentifier>{f4f494ec-d0ed-4cfb-b33e-5c14f109d925}</UniqueIdentifier>
     </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\..\..\src\audio\audio.cpp">
-      <Filter>Source Files\audio</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\audio\chants.cpp">
-      <Filter>Source Files\audio</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\audio\comments.cpp">
-      <Filter>Source Files\audio</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\audio\music.cpp">
-      <Filter>Source Files\audio</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\audio\sfx.cpp">
-      <Filter>Source Files\audio</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\audio\SoundSample.cpp">
-      <Filter>Source Files\audio</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\controls\controlOptionsMenu.cpp">
-      <Filter>Source Files\controls</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\controls\controls.cpp">
-      <Filter>Source Files\controls</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\debug\dump.cpp">
-      <Filter>Source Files\debug</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\files\file.cpp">
-      <Filter>Source Files\files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\files\selectFilesMenu.cpp">
-      <Filter>Source Files\files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\menus\mainMenu.cpp">
-      <Filter>Source Files\menus</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\replays\ReplayDataStorage.cpp">
-      <Filter>Source Files\replays</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\replays\replays.cpp">
-      <Filter>Source Files\replays</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\replays\replaysMenu.cpp">
-      <Filter>Source Files\replays</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\game\bench\bench.cpp">
-      <Filter>Source Files\game\bench</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\util\util.cpp">
-      <Filter>Source Files\util</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\video\render.cpp">
-      <Filter>Source Files\video</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\video\videoOptionsMenu.cpp">
-      <Filter>Source Files\video</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\crash.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\init.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\text\text.cpp">
-      <Filter>Source Files\text</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\controls\joypads\joypads.cpp">
-      <Filter>Source Files\controls\joypads</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\controls\joypads\Joypad.cpp">
-      <Filter>Source Files\controls\joypads</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\controls\joypads\JoypadConfig.cpp">
-      <Filter>Source Files\controls\joypads</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\controls\joypads\JoypadConfigRegister.cpp">
-      <Filter>Source Files\controls\joypads</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\controls\joypads\JoypadGuidConfig.cpp">
-      <Filter>Source Files\controls\joypads</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\controls\joypads\SdlMappingParser.cpp">
-      <Filter>Source Files\controls\joypads</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\controls\keyboard\keyBuffer.cpp">
-      <Filter>Source Files\controls\keyboard</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\controls\keyboard\scanCodes.cpp">
-      <Filter>Source Files\controls\keyboard</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\controls\keyboard\keyboard.cpp">
-      <Filter>Source Files\controls\keyboard</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\controls\keyboard\KeyConfig.cpp">
-      <Filter>Source Files\controls\keyboard</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\controls\mouse\mouse.cpp">
-      <Filter>Source Files\controls\mouse</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\controls\joypads\VirtualJoypad.cpp">
-      <Filter>Source Files\controls\joypads</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\controls\keyboard\setupKeyboardMenu.cpp">
-      <Filter>Source Files\controls\keyboard</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\controls\gameControlEvents.cpp">
-      <Filter>Source Files\controls</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\lib\src\ConvertUTF\ConvertUTF.cpp" />
-    <ClCompile Include="..\..\..\src\controls\selectGameControlEventsMenu.cpp">
-      <Filter>Source Files\controls</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\controls\keyboard\redefineKeysMenu.cpp">
-      <Filter>Source Files\controls\keyboard</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\controls\keyboard\testKeyboardMenu.cpp">
-      <Filter>Source Files\controls\keyboard</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\controls\joypads\ui\configureAxisMenu.cpp">
-      <Filter>Source Files\controls\joypads\ui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\controls\joypads\ui\configureHatMenu.cpp">
-      <Filter>Source Files\controls\joypads\ui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\controls\joypads\ui\joypadConfigMenu.cpp">
-      <Filter>Source Files\controls\joypads\ui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\controls\joypads\ui\configureTrackballMenu.cpp">
-      <Filter>Source Files\controls\joypads\ui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\controls\joypads\ui\joypadQuickConfigMenu.cpp">
-      <Filter>Source Files\controls\joypads\ui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\controls\quickConfigMenu.cpp">
-      <Filter>Source Files\controls</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\controls\joypads\ui\testJoypadMenu.cpp">
-      <Filter>Source Files\controls\joypads\ui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\controls\testControlsMenu.cpp">
-      <Filter>Source Files\controls</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\controls\joypads\JoypadElementValue.cpp">
-      <Filter>Source Files\controls\joypads</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\controls\selectMatchControls.cpp">
-      <Filter>Source Files\controls</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\controls\gameControls.cpp">
-      <Filter>Source Files\controls</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\video\windowManager.cpp">
-      <Filter>Source Files\video</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\text\textInput.cpp">
-      <Filter>Source Files\text</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\video\windowModeMenu.cpp">
-      <Filter>Source Files\video</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\sprites\sprites.cpp">
-      <Filter>Source Files\sprites</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\game\game.cpp">
-      <Filter>Source Files\game</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\game\gameTime.cpp">
-      <Filter>Source Files\game</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-32\swos-01.cpp">
-      <Filter>Source Files\swos-cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-32\swos-02.cpp">
-      <Filter>Source Files\swos-cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-32\swos-03.cpp">
-      <Filter>Source Files\swos-cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-32\swos-04.cpp">
-      <Filter>Source Files\swos-cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-32\swos-05.cpp">
-      <Filter>Source Files\swos-cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-32\swos-06.cpp">
-      <Filter>Source Files\swos-cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-32\swos-07.cpp">
-      <Filter>Source Files\swos-cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-32\swos-08.cpp">
-      <Filter>Source Files\swos-cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\game\replayExitMenu.cpp">
-      <Filter>Source Files\game</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\sprites\colorizeSprites.cpp">
-      <Filter>Source Files\sprites</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\tmp\swos-cpp-gen-32\vm.cpp">
-      <Filter>Source Files\swos-cpp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\util\log.cpp">
-      <Filter>Source Files\util</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\game\camera.cpp">
-      <Filter>Source Files\game</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\game\result.cpp">
-      <Filter>Source Files\game</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\game\darkRectangle.cpp">
-      <Filter>Source Files\game</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\game\stats.cpp">
-      <Filter>Source Files\game</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\game\playerNameDisplay.cpp">
-      <Filter>Source Files\game</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\game\updateGoals.cpp">
-      <Filter>Source Files\game</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\sprites\gameSprites.cpp">
-      <Filter>Source Files\sprites</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\sprites\renderSprites.cpp">
-      <Filter>Source Files\sprites</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\game\gameLoop.cpp">
-      <Filter>Source Files\game</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\util\random.cpp">
-      <Filter>Source Files\util</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\game\bench\updateBench.cpp">
-      <Filter>Source Files\game\bench</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\game\bench\drawBench.cpp">
-      <Filter>Source Files\game\bench</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\game\color.cpp">
-      <Filter>Source Files\game</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\menus\continueAbortMenu.cpp">
-      <Filter>Source Files\menus</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\menus\engine\drawMenu.cpp">
-      <Filter>Source Files\menus\engine</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\menus\engine\menuAlloc.cpp">
-      <Filter>Source Files\menus\engine</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\menus\engine\menuBackground.cpp">
-      <Filter>Source Files\menus\engine</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\menus\engine\MenuEntry.cpp">
-      <Filter>Source Files\menus\engine</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\menus\engine\menuItemRenderer.cpp">
-      <Filter>Source Files\menus\engine</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\menus\engine\menuMouse.cpp">
-      <Filter>Source Files\menus\engine</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\menus\engine\menuProc.cpp">
-      <Filter>Source Files\menus\engine</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\menus\engine\menus.cpp">
-      <Filter>Source Files\menus\engine</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\menus\engine\unpackMenu.cpp">
-      <Filter>Source Files\menus\engine</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\menus\versusMenu.cpp">
-      <Filter>Source Files\menus</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\menus\stadiumMenu.cpp">
-      <Filter>Source Files\menus</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\menus\continueMenu.cpp">
-      <Filter>Source Files\menus</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\replays\LegacyReplayConverter.cpp">
-      <Filter>Source Files\replays</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\video\timer.cpp">
-      <Filter>Source Files\video</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\game\pitch\pitch.cpp">
-      <Filter>Source Files\game\pitch</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\game\referee.cpp">
-      <Filter>Source Files\game</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\video\overlay.cpp">
-      <Filter>Source Files\video</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\audio\SampleTable.cpp">
-      <Filter>Source Files\audio</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\audio\audioOptionsMenu.cpp">
-      <Filter>Source Files\audio</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\options\options.cpp">
-      <Filter>Source Files\options</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\options\optionsMenu.cpp">
-      <Filter>Source Files\options</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\video\assetManager.cpp">
-      <Filter>Source Files\video</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\video\drawPrimitives.cpp">
-      <Filter>Source Files\video</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\video\gameFieldMapping.cpp">
-      <Filter>Source Files\video</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\game\amigaMode.cpp">
-      <Filter>Source Files\game</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\menus\engine\menuControls.cpp">
-      <Filter>Source Files\menus\engine</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\game\spinningLogo.cpp">
-      <Filter>Source Files\game</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\sprites\util\loadTexture.cpp">
-      <Filter>Source Files\sprites\util</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\sprites\util\SharedTexture.cpp">
-      <Filter>Source Files\sprites\util</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\sprites\updateSprite.cpp">
-      <Filter>Source Files\sprites</Filter>
-    </ClCompile>
+    <Filter Include="Source Files\swos-cpp-64">
+      <UniqueIdentifier>{0c28d8b6-274c-474d-b57c-7c44b4789561}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\swos-cpp-32">
+      <UniqueIdentifier>{c63189e7-c71b-409f-9f63-c93a4c580073}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>

@@ -1,3 +1,4 @@
+
 /*
    Swos Sprite Viewer (former)
    Swos Picture Editor
@@ -13,13 +14,13 @@
 
 const char class_name[] = "SWOS";                /* name of the window class */
 const char prog_name[]  = "SWOS Picture Editor"; /* name of the program      */
-const char version[]    = "v0.99";               /* version of the program   */
+const char version[]    = "v0.99.2023";          /* version of the program   */
 
 /* copyright string - "(C) Zlatko Karakas 2002-2022." */
 uchar acopyright[] = {
     0x12, 0x25, 0x07, 0xfa, 0x38, 0x86, 0xaf, 0xde, 0x9d, 0x41, 0xfa, 0x7d,
     0xaf, 0x00, 0xaf, 0x9d, 0xaf, 0x35, 0xfa, 0x40, 0xaa, 0xaa, 0x40, 0xeb,
-    0x40, 0xaa, 0x40, 0x40, 0x9c,
+    0x40, 0xaa, 0x40, 0x75, 0x9c
 };
 
 /* global informations used throughout the program */

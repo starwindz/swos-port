@@ -42,7 +42,7 @@ static void goalScored(int teamNum, Sprite *scorer)
     swos.lastPlayerScored = scorer;
     swos.currentScorer = scorer;
 
-    auto teamGame = teamNum == 1 ? &swos.topTeamInGame : &swos.bottomTeamInGame;
+    auto teamGame = scorer->teamNumber == 1 ? &swos.topTeamInGame : &swos.bottomTeamInGame;
     auto team = swos.topTeamData.inGameTeamPtr.asAligned() == teamGame ? &swos.topTeamData : &swos.bottomTeamData;
 
     swos.lastTeamScored = team;
@@ -64,7 +64,7 @@ static void goalScored(int teamNum, Sprite *scorer)
 }
 
 // in:
-//      D0 - number of team that scored (1 or 2)
+//      D0  - number of team that scored (1 or 2)
 //      A0 -> in-game sprite of the player that scored
 //
 // Updates goal variables. Puts name of scorer and minute into scorers list.

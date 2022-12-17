@@ -7,7 +7,8 @@ class CppOutput;
 class X86InstructionWriter
 {
 public:
-    X86InstructionWriter(CppOutput *outputWriter, const DataBank& dataBank, const SymbolFileParser& symFileParser, const StringSet& inProcLabels);
+    X86InstructionWriter(bool disableAlignmentChecks, CppOutput *outputWriter, const DataBank& dataBank,
+        const SymbolFileParser& symFileParser, const StringSet& inProcLabels);
     void outputInstruction(const InstructionNode& node);
     void outputFunctionCall(const String& target);
 
@@ -66,6 +67,8 @@ private:
     void outputFunctionInvoke(const String& target);
     void outputLabel(const String& label);
     static bool isRetnNext(const InstructionNode& node);
+
+    bool m_disableAlignmentChecks;
 
     CppOutput& m_outputWriter;
     const DataBank& m_dataBank;

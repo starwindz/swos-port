@@ -38,8 +38,8 @@ constexpr int kCameraMaxX = kPitchMaxX;
 constexpr int kCameraMinY = kPitchMinY;
 constexpr int kCameraMaxY = 680;
 
-static FixedPoint  m_cameraX;
-static FixedPoint  m_cameraY;
+static FixedPoint m_cameraX;
+static FixedPoint m_cameraY;
 
 static bool m_leavingBenchMode;
 

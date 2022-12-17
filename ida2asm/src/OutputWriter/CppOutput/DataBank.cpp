@@ -73,13 +73,13 @@ void DataBank::consolidateVariables(const StructStream& structs)
     auto unionAlignment = 0u;
     m_memoryByteSize = zeroRegionSize();
 
-	for (auto& varList : m_vars) {
-		for (size_t i = 0; i < varList.size(); i++) {
-			auto& var = varList[i];
-			if (amigaRegisterToIndex(var.name) < 0) {
-				if (var.name) {
-					auto effectiveAlignment = extractVarEffectiveAlignment(var, unionAlignment, m_memoryByteSize, structs);
-					if (var.type != kLabel) {
+    for (auto& varList : m_vars) {
+        for (size_t i = 0; i < varList.size(); i++) {
+            auto& var = varList[i];
+            if (amigaRegisterToIndex(var.name) < 0) {
+                if (var.name) {
+                    auto effectiveAlignment = extractVarEffectiveAlignment(var, unionAlignment, m_memoryByteSize, structs);
+                    if (var.type != kLabel) {
                         // hold off from adding alias vars, they might be influenced by the variables they alias
                         m_memoryByteSize += std::max(unionAlignment, effectiveAlignment);
                         m_varToAddress.add(var.name, m_memoryByteSize);

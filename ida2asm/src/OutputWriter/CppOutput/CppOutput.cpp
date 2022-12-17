@@ -6,14 +6,14 @@
 constexpr auto kDefsFilename = "defs.h";
 constexpr int kInProcLabelsCapacity = 38'000;
 
-CppOutput::CppOutput(const char *path, int index, int extraMemorySize, bool disableOptimizations, const SymbolFileParser& symFileParser,
-    const StructStream& structs, const DefinesMap& defines, const References& references, const OutputItemStream& outputItems,
-    const DataBank& dataBank)
+CppOutput::CppOutput(const char *path, int index, int extraMemorySize, bool disableOptimizations, bool disableAlignmentChecks,
+    const SymbolFileParser& symFileParser, const StructStream& structs, const DefinesMap& defines, const References& references,
+    const OutputItemStream& outputItems, const DataBank& dataBank)
 :
-    OutputWriter(path, symFileParser, structs, defines, references, outputItems), m_index(index),
-    m_extendedMemorySize(extraMemorySize), m_dataBank(dataBank),
+    m_disableAlignmentChecks(disableAlignmentChecks), OutputWriter(path, symFileParser, structs, defines, references, outputItems),
+    m_index(index), m_extendedMemorySize(extraMemorySize), m_dataBank(dataBank),
     m_irConverter(disableOptimizations, structs, defines, references, m_dataBank), m_inProcLabels(kInProcLabelsCapacity),
-    m_x86Writer(this, m_dataBank, symFileParser, m_inProcLabels)
+    m_x86Writer(disableAlignmentChecks, this, m_dataBank, symFileParser, m_inProcLabels)
 {
 }
 
@@ -45,7 +45,7 @@ bool CppOutput::output(OutputFlags flags, CToken *)
 
         bool isDefineFile = flags & (kStructs | kDefines) && !(flags & kFullDisasembly);
         if (isDefineFile) {
-            VmFileWriter vmFileWriter(getOutputBaseDir(), m_extendedMemorySize, m_symFileParser, m_dataBank, m_structs);
+            VmFileWriter vmFileWriter(getOutputBaseDir(), m_extendedMemorySize, m_disableAlignmentChecks, m_symFileParser, m_dataBank, m_structs);
             vmFileWriter.outputVmFiles();
             out("#pragma once", Util::kDoubleNewLine);
         } else {
@@ -90,6 +90,11 @@ bool CppOutput::output(OutputFlags flags, CToken *)
 const char *CppOutput::getDefsFilename() const
 {
     return kDefsFilename;
+}
+
+bool CppOutput::disableAlignmentChecks() const
+{
+    return m_disableAlignmentChecks;
 }
 
 void CppOutput::outputStructs()

@@ -32,9 +32,9 @@
 # undef WriteFile
 #endif
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include <SDL_mixer.h>
-#include <SDL2_Image/SDL_image.h>
+#include <SDL_image.h>
 
 #if SDL_BYTEORDER != SDL_LIL_ENDIAN
 #error "Big endian not supported!"

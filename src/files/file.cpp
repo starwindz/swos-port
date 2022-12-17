@@ -11,7 +11,7 @@ static std::string m_rootDir;
 
 static bool isAbsolutePath(const char *path);
 static void traverseDirectory(DIR *dir, const char *extension, std::function<bool(const char *, int, const char *)> f);
-static bool isAnyExtensionAllowed(const char *ext, const char **allowedExtensions, size_t numAllowedExtensions);
+static bool isAnyExtensionAllowed(const char *ext, const char **allowedExtensions, int numAllowedExtensions);
 
 // Opens a file with consideration to SWOS root directory.
 SDL_RWops *openFile(const char *path, const char *mode /* = "rb" */)
@@ -52,7 +52,7 @@ static std::pair<SDL_RWops *, int> openFileAndGetSize(const char *path, bool req
 }
 
 // Internal routine that does all the work.
-static int doLoadFile(SDL_RWops *f, const char *path, void *buffer, size_t bufferSize, size_t skipBytes, bool required)
+static int doLoadFile(SDL_RWops *f, const char *path, void *buffer, int bufferSize, int skipBytes, bool required)
 {
     assert(f);
 
@@ -80,7 +80,7 @@ static int doLoadFile(SDL_RWops *f, const char *path, void *buffer, size_t buffe
     return bufferSize;
 }
 
-int loadFile(const char *path, void *buffer, int maxSize /* = -1 */, size_t skipBytes /* = 0 */, bool required /* = true */)
+int loadFile(const char *path, void *buffer, int maxSize /* = -1 */, int skipBytes /* = 0 */, bool required /* = true */)
 {
     SDL_RWops *f;
     int size;
@@ -112,7 +112,7 @@ int loadFile(const char *path, void *buffer, int maxSize /* = -1 */, size_t skip
 // its size. Can optionally extend the buffer by a given size, leaving that much initial bytes uninitialized,
 // convenient for writing custom data at the start of the buffer (such as header).
 //
-std::pair<char *, size_t> loadFile(const char *path, size_t bufferOffset /* = 0 */, size_t skipBytes /* = 0 */)
+std::pair<char *, int> loadFile(const char *path, int bufferOffset /* = 0 */, int skipBytes /* = 0 */)
 {
     SDL_RWops *f;
     int size;
@@ -163,7 +163,7 @@ int SWOS::LoadFile()
     return 0;
 }
 
-bool saveFile(const char *path, void *buffer, size_t size)
+bool saveFile(const char *path, void *buffer, int size)
 {
     logInfo("Writing `%s' [%s bytes]", path, formatNumberWithCommas(size).c_str());
 
@@ -247,7 +247,7 @@ int pathCompare(const char *path1, const char *path2)
     return isFileSystemCaseSensitive() ? strcmp(path1, path2) : _stricmp(path1, path2);
 }
 
-int pathNCompare(const char *path1, const char *path2, size_t count)
+int pathNCompare(const char *path1, const char *path2, int count)
 {
     return isFileSystemCaseSensitive() ? strncmp(path1, path2, count) : _strnicmp(path1, path2, count);
 }
@@ -321,7 +321,7 @@ const char *getBasename(const char *path)
 }
 
 FoundFileList findFiles(const char *extension, const char *dirName /* = nullptr */,
-    const char **allowedExtensions /* = nullptr */, size_t numAllowedExtensions /* = 0 */)
+    const char **allowedExtensions /* = nullptr */, int numAllowedExtensions /* = 0 */)
 {
     assert(extension && (extension[0] == '\0' || extension[0] == '.'));
 
@@ -352,7 +352,7 @@ FoundFileList findFiles(const char *extension, const char *dirName /* = nullptr 
         extension = nullptr;
 
     traverseDirectory(dir, extension, [&](const char *filename, int, const char *dot) {
-        size_t extensionOffset = dot - filename + 1;
+        int extensionOffset = dot - filename + 1;
         if (isAnyExtensionAllowed(dot + 1, allowedExtensions, numAllowedExtensions))
             result.emplace_back(filename, extensionOffset);
         return true;
@@ -413,7 +413,7 @@ static void traverseDirectory(DIR *dir, const char *extension,
     closedir(dir);
 }
 
-static bool isAnyExtensionAllowed(const char *ext, const char **allowedExtensions, size_t numAllowedExtensions)
+static bool isAnyExtensionAllowed(const char *ext, const char **allowedExtensions, int numAllowedExtensions)
 {
     if (!allowedExtensions)
         return true;

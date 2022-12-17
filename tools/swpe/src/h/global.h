@@ -1,5 +1,4 @@
-#ifndef __GLOBAL_H_
-#define __GLOBAL_H_
+#pragma once
 
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -110,7 +109,7 @@ extern const Mode *const g_modes[];
 #define MAX_ZOOM 10               /* maximum zoom factor                     */
 
 #define FSW_SIZE 2048             /* max warning characters                  */
-#define WARNING_INTERVAL 1000     /* standard warning length in miliseconds  */
+#define WARNING_INTERVAL 1000     /* standard warning length in milliseconds */
 
 #define WM_USER_SAVE_ALL   (WM_USER + 1000 + 0)
 #define WM_USER_INSERT_ALL (WM_USER + 1000 + 1)
@@ -122,8 +121,8 @@ void SetErrorMsg(char *msg);
 extern uchar acopyright[];
 
 /* hashes for copyright string */
-#define HASH1 60940548240ull
-#define HASH2 458242u
+#define HASH1 60940548442ull
+#define HASH2 458971u
 
 /* length of copyright string */
 #define COPYRIGHT_LEN 29
@@ -164,5 +163,3 @@ enum timers {
     PITCH_TIMER_ID,      /* timer ID for pitch cursor (in edit mode)         */
     HIL_TIMER_ID         /* timer for highlights menu current entry          */
 };
-
-#endif

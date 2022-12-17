@@ -34,11 +34,7 @@ void updateAssetResolution(int width, int height)
 
     if (m_resolution != oldResolution)
         for (const auto& handler : m_resChangeHandlers)
-{
-_CrtCheckMemory();
             handler(oldResolution, m_resolution);
-_CrtCheckMemory();
-}
 }
 
 AssetResolution getAssetResolution()

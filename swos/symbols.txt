@@ -14,7 +14,6 @@ OptionsMenuBeforeDraw
 FindFiles
 InitMenuEntry - Int2Ascii
 QuitToDosPromptLoop - SWOSMainMenuInit
-SetCameraCoordinates - ScrollToCurrent
 
 # game loop + intro pics + animations
 UpdateCornerFlagSprite - FadeAndPlayWinCupAnimation
@@ -38,7 +37,7 @@ aSprite_dat
 UnchainSpriteInMenus - DrawSpriteCentered
 ClearSprite - ShowMenu
 DrawSprite_entry2
-MakeSpritesFromPlayerNames - AI_SetControlsDirection
+UpdatePlayers - AI_SetControlsDirection
 MovePlayers
 numberBuffer - prevLastPlayer
 bookedPlayerCardOrNumberSprite
@@ -55,7 +54,7 @@ spriteFixupFlag - g_skipNonCompetitionFiles
 playerCardChances3min - ballOutOfGameTimer
 team1MostFrequentFace - statsTimer
 whiteGuyConvertTable - topTeamPtr
-ballSpeedBounceFactorTable - kGravityConstant
+kBallSpeedBounceFactorTable - kGravityConstant
 
 # pitches
 ReadPitchFile - ActivateReferee
@@ -126,7 +125,7 @@ g_joy1Fire2 - dosMemOfs60c00h
 # commentary & SFX
 PlayHitFrameComment
 SetVolumeOrStopChants - EnqueueCornerSample
-PlayFansChant4lSample
+nullsub_1 - PlayFansChant10lSample
 PlayEndGameWhistleSample
 #g_commentary   # career file buffer
 # + intro stuff
@@ -150,7 +149,7 @@ substituteSampleTimer - playingThrowInSample
 # referee
 UpdateReferee - PlayStopGoodPassSampleIfNeeded
 InitRefereeAnimationTable
-refereeSpeed
+kRefereeSpeed
 
 # big S sprite + some misc.
 big_S_pictureIndexArray - goodPassSampleCommand
@@ -175,15 +174,15 @@ aSfxFx11Bgcrd3l - aSfxFxCombrown_
 EnqueueTacticsChangedSample - PlayPenaltyComment
 PlayGoodPassComment
 subsWriteOnly
-subTeamsSwapped - g_inSubstitutesMenu
+subsTeamsSwapped - g_inSubstitutesMenu
 benchOff - g_waitForPlayerToGoInTimer
 g_goToSubsTimer - plComingX
 benchWriteOnly02 - g_substituteInProgress
 g_benchPlayerIndex - seed
 # + camera and some of hil variables
-benchPickTeamTimer - currentScorer
+benchPickTeamCounter - currentScorer
 # also includes goal minute placeholder strings
-substitutedPlX - passOrKick
+substitutedPlX - throwInPassOrKick
 tacticsStringTable - avgTeamValueBases
 
 # stats + bench, highlights, sprite coloring
@@ -217,8 +216,10 @@ LoadHilFile - SetTeamGlobalNumbers
 # gets rid of darkened calculation and some of the sample loading routines too
 MainKeysCheck - AssignFakeGoalsToScorers
 ReplayExitMenuAfterFriendly - PlayMissGoalSample
-SetPitchTypeAndNumber - cseg_67646
-dseg_1327EE
+# highlights + camera
+SetPitchTypeAndNumber - ScrollToCurrent
+
+throwInDeadVar
 hilStarted
 deadHilVar
 # removes some pitch variables too
@@ -239,7 +240,6 @@ dosMemLinAdr - aSensibleWorldOfSoccerV2_0
 
 @null
 ProgramPIT
-cseg_67646
 CallDrawMultipleItems
 
 # sound
@@ -526,7 +526,7 @@ plSubstitutedY, word
 g_tacticsTable, array TeamTactics * [18]
 
 # current player indicator
-GetSurname, function
+ExtractSurname, function
 currentPlayerNameSprite, Sprite
 nobodysBallTimer, word
 
@@ -552,7 +552,6 @@ InitAndPlayGame, function
 UpdateCameraBreakMode, function
 UpdateControlledPlayer, function
 UpdatePlayerBeingPassedTo, function
-UpdatePlayersAndBall, function
 UpdatePlayerInjuries, function
 AssignFakeGoalsToScorers, function
 SetInGameTeamsPrimaryColors, function
@@ -758,12 +757,12 @@ maxSubstitutes, word
 animTablesStart, array char (align: 2)
 animTablesEnd, array char
 frameIndicesTablesStart, array char (align: 2)
-strongHeaderUpFrames, array char
+jumpHeaderTeam1UpFrames, array char
 refSecondYellowFrames, array int16_t
 ballMovingFrameIndices, array int16_t
 ballStaticFrameIndices, array int16_t
-playerShotChanceTable, array int16_t[30]
-goalieSkillTables, array int16_t *[8]
+kPlayerShotChanceTable, array int16_t[30]
+kGoalieSkillTables, array int16_t *[8]
 AI_turnDirection, word
 USER_A, TeamTactics (align: 1)
 
@@ -794,7 +793,7 @@ ViewOpponentsSelect, 66, RecalculateReachableEntries
 ReturnFromViewOpponent, 9, RecalculateReachableEntries
 
 CheckIfBallOutOfPlay, 252, FixPenaltyBug
-PlayerDoingHeader, 161, PlayHeaderComment
+PlayerHittingJumpHeader, 161, PlayHeaderComment
 PlayerTackled, 59, PlayInjuryComment
 UpdateCameraBreakMode, 321, EnqueueCrowdChantsReload
 
@@ -909,14 +908,10 @@ UpdateCameraBreakMode, 39, initalKickInterval, 825
 UpdateCameraBreakMode, 281, goalCameraInterval, 55
 UpdateCameraBreakMode, 537, letPlayerControlCameraInterval, 550
 PlayerBeginTackling, 15, playerDownTacklingInterval, 55
-PlayerHeading, 9, playerDownHeadingInterval, 55
-UpdatePlayersAndBall, 343, penaltyLockInterval, 55
-UpdatePlayersAndBall, 1187, goalkeeperCatchLimitZ, 27
-UpdatePlayersAndBall, 2133, hideResultInterval, 55
-UpdatePlayersAndBall, 2958, hideResultInterval, 55
-AI_SetControlsDirection, 128, clearResultInterval, 660
-AI_SetControlsDirection, 134, clearResultInterval, 660
-AI_SetControlsDirection, 140, clearResultHalftimeInterval, 385
+PlayerAttemptingJumpHeader, 9, playerDownHeadingInterval, 55
+AI_SetControlsDirection, 127, clearResultInterval, 660
+AI_SetControlsDirection, 133, clearResultInterval, 660
+AI_SetControlsDirection, 139, clearResultHalftimeInterval, 385
 
 #
 # Let ida2asm know about the sizes of types used in the export section so it can generate offsets properly.

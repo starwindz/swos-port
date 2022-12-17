@@ -1,0 +1,528 @@
+\documentclass[a4paper,12pt]{article}
+
+\addtolength{\oddsidemargin}{-15mm}
+\addtolength{\textwidth}{25mm}
+\addtolength{\textheight}{35mm}
+\setlength{\topmargin}{-0.5in}
+\pdfpagewidth=\paperwidth
+\pdfpageheight=\paperheight
+
+\author{Karaka\v s Zlatko $<$\href{mailto:zlatko.karakas@gmail.com}{zlatko.karakas@gmail.com}$>$}
+\title{{\bf SWOS Picture Editor User Manual}\\v0.99.2023}
+
+\usepackage[pdftex,colorlinks,bookmarks=false,pdfstartview=FitH]{hyperref}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{enumitem}
+\usepackage{longtable}
+
+\setcounter{secnumdepth}{5}
+
+\begin{document}
+
+\maketitle
+
+\section{Intro}
+Thank you for using {\bf SWOS Picture Editor}, or {\bf SWPE}. It is a tool capable of editing/replacing (almost) any graphics in the game, by reading and writing original {\bf SWOS} files.
+
+The first iteration of the program sprang to life back in 2002., and in some way could be thought of as a piece of {\bf SWOS} history. It was written primarily as a {\bf SWOS} exploration and experimentation tool, especially for data files, and codifies the stuff I've discovered over the years. Over the time it has evolved randomly in many directions, has had pieces of {\bf SWOS} code and various kludges slapped in and as a consequence user interface suffered: it's mostly keyboard based, although this version introduces mouse support for pitch editing. {\bf PITCH} mode is the epicenter of the most recent additions and this is where you will probably get the most value out of the software.
+
+
+This manual will list all the commands and show useful tips and ways of using the program effectively. In addition, there's also a \href{https://youtu.be/MOIL5FJbcWQ}{short demo video} demonstrating the new pitch editing features.
+
+Be aware not to start {\bf SWOS} while using {\bf SWPE}, as it locks the graphic files and prevents {\bf SWOS} from accessing them.
+
+\newpage
+\section{Program modes}
+
+The program is divided into 5 different
+modes: {\bf SPRITE}, {\bf PICTURE}, {\bf PITCH}, {\bf TILE} and
+{\bf REPLAY}. Each mode has different use and commands.
+Press {\bf F1} in any mode to see which keys are valid.
+
+\vspace{\baselineskip}
+
+\noindent Commands available on all screens are:
+
+\vspace{\baselineskip}
+
+\begin{tabular}{lll}
+{\bf F1}          &--& toggle help\\
+{\bf F5}          &--& switch to sprites mode\\
+{\bf F6}          &--& switch to pictures mode\\
+{\bf F7}          &--& switch to pitch mode\\
+{\bf F8}          &--& switch to tile mode\\
+{\bf F9}          &--& switch to replay mode\\
+{\bf ALT}+{\bf ENTER} &--& toggle fullscreen mode\footnotemark[1]\\
+{\bf ESCAPE}      &--& end program\\
+{\bf A}           &--& about program\\
+\end{tabular}
+
+\footnotetext[1]{Fullscreen is broken, and there are no plans to fix it}
+
+\begin{verbatim}
+\end{verbatim}
+
+Main window can be moved by dragging it with the left mouse button (unless in pitch edit mode). You can minimize it by double clicking on main window while holding {\bf CONTROL} key.
+
+\newpage
+\subsection{Sprite mode}
+
+Sprite mode was all there was in the first version. The program used to be called {\bf SWSPR} -- {\bf SWOS Sprite Viewer} in those days. Now it's just one of program modes used for viewing and replacing sprites. There are 1334 sprites
+in {\bf SWOS}. Index file is SPRITE.DAT, and data files are CHARSET.DAT, SCORE.DAT,
+TEAM1.DAT, TEAM2.DAT, TEAM3.DAT, GOAL1.DAT, BENCH.DAT.
+
+\vspace{\baselineskip}
+
+\noindent Commands:
+
+\vspace{\baselineskip}
+
+\begin{tabular}{lll}
+{\bf SPACE/BACKSPACE}\\
+{\bf ARROWS RIGHT/LEFT} &--& next/previous sprite\\
+{\bf G}                 &--& go directly to sprite\\
+{\bf PAGE UP/DOWN}      &--& 10 sprites forward/backward\\
+{\bf 0..9}              &--& change background color\\
+{\bf HOME/END}          &--& first/last sprite\\
+{\bf +/-}               &--& zoom/unzoom\\
+{\bf F2}                &--& save current sprite to bitmap\\
+{\bf SHIFT}+{\bf F2}    &--& save all sprites\\
+{\bf I}                 &--& toggle sprite information on/off\\
+{\bf INSERT}            &--& replace current sprite with\\
+                        &  & corresponding bitmap\\
+{\bf SHIFT}+{\bf INSERT} &--& replace all sprites with corresponding\\
+                        &  & bitmaps from current directory\\
+{\bf CONTROL}+{\bf R}   &--& revert sprites to saved state\\
+{\bf CONTROL}+{\bf T}   &--& switch between team2.dat and team3.dat
+\end{tabular}
+
+\begin{verbatim}
+
+\end{verbatim}
+
+Arrow keys and space/backspace are provided for navigation within sprites. Use
+{\bf G} for quick jump to specific sprite.
+
+{\bf F2} saves sprite to disk in
+bitmap format for easy editing. If the sprite has center coordinates a text file with the same base name will be created, containing x center coordinate in the first line, and y in the second. If the sprite center is at (0, 0) text file will not be created.
+
+{\bf INSERT} key will cause replacement of an in-game sprite with external bitmap. Mass save and insert sprite features are
+provided by holding shift. {\bf SHIFT}+{\bf F2} will save all sprites to disk, and
+{\bf SHIFT}+{\bf INSERT} will read in as many sprites as possible from external
+files.
+
+By default, sprites 644 -- 946 are mapped to team2.dat. By pressing
+{\bf CONTROL}+{\bf T}, sprites 644 -- 946 will show graphics from team3.dat, so it too
+can be edited. Pressing same keys again returns to team2.dat.
+
+\subsubsection{Replacing sprites}
+
+When inserting sprite, the program looks for bitmap filename in the form of \verb|spr|{\it nnnn}\verb|.bmp|, where
+{\it nnnn} is number of current sprite (e.g. \verb|spr0007.bmp|). Bitmap must be 8-bit 256 color,
+without compression. Dimensions must be: 0 $\le$ width $<$ 320, 0 $\le$ height
+$<$ 200.
+
+Recommended way of altering sprites is:
+
+\begin{enumerate}
+\item Find sprite you wish to change (you should see it in front of you)
+\item Note its number (shown in the upper left corner)
+\item Press {\bf F2} -- now the sprite is saved on your disk as a bitmap
+\item Find the bitmap, which is in the same directory, and begins with ``spr'',
+followed by four digit number of sprite
+\item Load bitmap into some graphics editing program and make your changes
+\item Go back to {\bf SWOS Picture Editor}, find the same sprite again and press
+{\bf INSERT} on your keyboard
+\item Press {\bf ESCAPE}, press {\bf Y} when asked whether to save changes
+\item Start {\bf SWOS} and enjoy your new graphics\ldots
+\end{enumerate}
+
+Be careful with resizing sprites -- this could have unpredictable results,
+especially when enlarging. I have tried it out, and with some sprites
+everything went okay, but with others {\bf SWOS} tended to crash at random times.
+
+When editing sprite bitmap in graphics editor there are couple things that you
+should be aware of. Transparent color will be color number 17 in palette. If
+you'd like to add some transparent areas to sprite, just draw with that color.
+You can also ``delete'' sprite by making it 100\% transparent. Transparent
+color will be background color in the moment of saving, so you should pick some
+color not used in the sprite.
+
+Also note that colors will be converted according to skin color of player and
+dress color of teams that are playing:
+
+\begin{tabular}{lll}
+ 0 &--& no change\\
+ 1 &--& no change\\
+ 2 &--& no change\\
+ 3 &--& no change\\
+ 4 &--& skin color (light shade)\\
+ 5 &--& skin color (normal shade)\\
+ 6 &--& skin color (dark shade)\\
+ 7 &--& turned to zero\\
+ 8 &--& no change\\
+ 9 &--& hair color (normal shade)\\
+10 &--& shirt basic color\\
+11 &--& shirt stripes color (swapped with 10 when vertical stripes)\\
+12 &--& hair color (dark shade)\\
+13 &--& hair color (light shade)\\
+14 &--& shorts color\\
+15 &--& socks color
+\end{tabular}
+
+\newpage
+\subsection{Picture mode}
+
+Primary purpose of this mode is watching *.256 pictures. It is possible to save
+them to bitmaps by pressing {\bf F2}.
+
+\vspace{\baselineskip}
+
+\noindent Commands:
+
+\vspace{\baselineskip}
+
+\begin{tabular}{lll}
+{\bf SPACE/BACKSPACE}\\
+{\bf ARROWS RIGHT/LEFT} &--& next/previous picture\\
+{\bf F2}                &--& save picture as bitmap\\
+{\bf F3}                &--& reload picture\\
+{\bf +/-}               &--& brighten/darken picture\\
+\end{tabular}
+
+\begin{figure}[H]
+  \begin{center}
+    \includegraphics{images/picture-mode}
+    \caption{Picture mode}
+  \end{center}
+\end{figure}
+
+\newpage
+\subsection{Pitch mode}
+
+This mode shows the pitch, can scroll through it and also edit it.
+Pitch is composed of 42 x 53 tiles, dimensions 16 x 16 pixels. By pressing
+{\bf CONTROL}+{\bf E}, edit mode is activated, and flashing cursor shown. See more in \ref{editingPitch}.
+
+To show tile number for each tile press {\bf CONTROL}+{\bf N}. Press {\bf CONTROL}+{\bf N} again to turn it off. Pressing {\bf CONTROL}+{\bf U} shows usage count of every tile -- the number of times it appears on the pitch. Pressing it again turns it off.
+
+When saving and loading pitches, the filename pattern is simply:
+
+\verb|pitch|$<${\it pitch number}$>$\verb|.bmp|, e.g. \verb|pitch3.bmp|.
+
+\begin{figure}[H]
+  \begin{center}
+    \includegraphics[width=320px,height=200px]{images/pitch-mode}
+    \caption{Pitch mode}
+  \end{center}
+\end{figure}
+
+\begin{figure}[H]
+  \begin{center}
+    \includegraphics[width=320px,height=200px]{images/pitch-mode-tile-numbers}
+    \caption{Pitch mode with tile numbers on}
+  \end{center}
+\end{figure}
+
+\pagebreak
+\begin{samepage}
+\noindent Commands:
+
+\vspace{\baselineskip}
+
+\begin{longtable}{@{\extracolsep{\fill}}lll} 
+{\bf ARROWS}            &--& scroll pitch\\
+{\bf PAGE UP/DOWN}      &--& scroll up/down by about half of screen\\
+{\bf SPACE/BACKSPACE}   &--& go to next/previous pitch\\
+{\bf HOME/END}          &--& go to up-left/down-right corner of pitch\\
+{\bf +/-}               &--& change pitch type (frozen, muddy etc.)\\
+{\bf CONTROL}+{\bf N}   &--& show/hide tile numbers\\
+{\bf CONTROL}+{\bf U}   &--& show/hide tile usage count\\
+{\bf CONTROL}+{\bf Z}   &--& undo\\
+{\bf CONTROL}+{\bf Y}   &--& redo\\
+{\bf CONTROL}+{\bf S}   &--& save changes\\
+{\bf CONTROL}+{\bf SHIFT}+{\bf S} &--& force save (even if no changes)\\
+{\bf CONTROL}+{\bf R}   &--& reload from disk\\
+{\bf CONTROL}+{\bf O}   &--& optimize pitch tiles\\
+{\bf CONTROL}+{\bf E}   &--& toggle edit mode\\
+{\bf F2}                &--& save pitch to bitmap\\
+{\bf INSERT}            &--& read pitch from corresponding bitmap\\
+& &\\
+In edit mode:           &  &\\
+{\bf CONTROL}+{\bf ARROWS UP/DOWN} &--& change tile number plus/minus one\\
+{\bf G}          &--& input current tile number from\\
+& &keyboard\\
+{\bf C}          &--& change all instances of selected tile
+\end{longtable}
+\end{samepage}
+
+\subsubsection{Pitch editing}\label{editingPitch}
+Pressing {\bf CONTROL+E} switches pitch view into edit mode. The most notable visual change is display of tile grid, which makes it easier to see where the tiles are.
+
+Key concept in edit mode is the cursor. It is flashing and designating the tile under it as the current tile. Many operations use current tile as a destination. The cursor can be moved around the pitch using the mouse or arrow keyboard keys.
+
+Note that in this mode we are only changing which tile gets displayed within the pitch, and not the contents of the tiles themselves (pixels). For that see \nameref{tileMode}.
+
+\begin{figure}[H]
+  \begin{center}
+    \includegraphics[width=1.0\textwidth]{images/pitch-edit-mode}
+    \caption{Pitch edit mode with cursor highlighting the current tile }
+  \end{center}
+\end{figure}
+
+\paragraph{Mouse navigation}\mbox{}
+\vspace{\baselineskip}
+
+Latest program version uses mouse for pitch mode navigation and editing. Left clicking the pitch and dragging will scroll it. Mouse wheel will scroll up/down.
+
+When left clicking a tile while holding {\bf CONTROL}+{\bf SHIFT}, the tile becomes highlighted. It will be drawn with darker colors and outlined with a blue rectangle. Every tile having the same number on the pitch will also become highlighted. This can be very useful to differentiate between similar tiles, and to discover the leftover ones. To dismiss the highlight {\bf CONTROL}+{\bf SHIFT} left click on an already highlighted tile.
+
+To temporarily show tile number of a single tile without turning on numbers for all tiles, click it with the middle mouse button. It will only display while the button is down. Same effect can be achieved by holding {\bf TAB} key on the keyboard.
+
+By {\bf ALT} left clicking on the tile, tile mode opens with that tile displayed.
+
+These operations, except for pitch dragging, work outside the edit mode as well.
+
+\paragraph{Changing tiles}\mbox{}
+\vspace{\baselineskip}
+
+There are several options available to change tile numbers. In all cases except tile painting the first step is always to move the cursor to the tile you want to change.
+
+\begin{itemize}
+\setlength\itemsep{0em}
+\item Cycling through tiles: {\bf CONTROL}+{\bf UP}/{\bf DOWN} or {\bf CONTROL}+mouse wheel 
+\item Entering the tile number directly: {\bf G} or mouse left button double click
+\item Change tile en mass {\bf C} 
+\item Tile painting: mouse right click or {\bf SHIFT+ARROW} keys
+\end{itemize}
+
+{\bf CONTROL}+{\bf UP}/{\bf DOWN} goes through available tiles at the selected spot one at a time. {\bf UP} increases tile number and {\bf DOWN} decreases it. This can be very useful if the tiles are sorted by the order of appearance. Same effect can be achieved with the mouse, by holding {\bf CONTROL} and scrolling with the wheel. Scrolling up increases tile number, scrolling down decreases it.
+
+If you need to a set tile to an exact number you can press {\bf G} on the keyboard. {\bf SWPE} will prompt for a number, and if it's valid assign tile with that number to the slot. Double clicking the tile with left mouse button achieves the same effect.
+
+Pressing {\bf C} will make {\bf SWPE} ask for a tile number, and if valid, replace every occurrence of the selected tile with the newly entered number. For example, if the current tile number is 40, and entered number is 41, this action will cause every tile \#40 in the pitch to change to \#41.
+
+\begin{figure}[H]
+  \begin{center}
+    \includegraphics[width=1.0\textwidth]{images/pitch-mode-mass-replace-before}
+    \caption{Tile \#40 that's about to be mass-replaced highlighted}
+  \end{center}
+\end{figure}
+
+\begin{figure}[H]
+  \begin{center}
+    \includegraphics[width=1.0\textwidth]{images/pitch-mode-mass-replace-after}
+    \caption{After replacing tile \#40 with \#41}
+  \end{center}
+\end{figure}
+
+
+\paragraph{Tile painting}\mbox{}
+\vspace{\baselineskip}
+
+Using the mouse you can do ``tile painting'': click with the right mouse on a tile you want to duplicate, and drag. Initially clicked tile will get a red outline, specifying it as a master or ``brush'' tile. Any dragged upon tile becomes the same as the brush tile. Holding {\bf SHIFT} key while dragging restricts ``painting'' to straight lines.
+
+Alternative way of setting the brush tile is by {\bf CONTROL}-left clicking on it. This is useful when the brush tile isn't adjacent to the intended painting area.
+
+Same operations can be done via the keyboard:
+\begin{itemize}[noitemsep,topsep=0pt]
+\item pressing {\bf CONTROL}+{\bf ENTER} toggles tile brush
+\item {\bf SHIFT}+{\bf ARROWS} keys move the cursor and duplicate the master tile
+\end{itemize}
+
+\begin{figure}[H]
+  \begin{center}
+    \includegraphics[width=1.0\textwidth]{images/pitch-mode-tile-painting}
+    \caption{Tile painting, note the brush tile highlighted with a red frame}
+  \end{center}
+\end{figure}
+
+\paragraph{Deleting tiles}\mbox{}
+\vspace{\baselineskip}
+
+Selected tile can be deleted by pressing {\bf DELETE} key on the keyboard. Tile will be completely erased from the tile map. Every occurrence will be replaced with tile zero.
+
+\paragraph{Pitch optimization}\mbox{}
+\vspace{\baselineskip}
+
+Pressing {\bf CONTROL}+{\bf O} activates pitch optimization. This will reassign tile numbers in the order of appearance on the pitch, starting from top left. Any left-over tiles not appearing on the pitch will be dropped. Note that animated tiles are ignored (effectively dropped).
+
+This process creates minimal representation of the current pitch and usually comes at the end, when you're satisfied how the things are looking.
+
+\paragraph{Saving changes}\mbox{}
+\vspace{\baselineskip}
+
+To save pitch changes to the disk press {\bf CONTROL}+{\bf S}. In case no changes have been detected it will not do anything. To force the save even if there are no changes press {\bf CONTROL}+{\bf SHIFT}+{\bf S}.
+
+\pagebreak
+\paragraph{Undo/redo}\mbox{}
+\vspace{\baselineskip}
+
+Any pitch operation can be undone and redone practically unlimited number of times. {\bf CONTROL}+{\bf Z} undoes and {\bf CONTROL}+{\bf Y} redoes last action.
+
+It's a recent addition to the program and hasn't been extensively tested. Save your work often to be on the safe side.
+
+\newpage
+\subsection{Tile mode} \label{tileMode}
+
+This mode is for viewing and replacing individual tiles. Tiles are displayed in the center of the window with their number, pitch number and usage count shown top-left. Unused patterns are marked with \verb|**UNUSED**|.
+
+To edit tile pixels use the following workflow:
+\begin{itemize}[noitemsep]
+\item navigate to the desired pitch and tile
+\item use {\bf F2} key to export the tile to bitmap
+\item edit the bitmap in a graphics editor
+\item import the bitmap back into the tile via {\bf INSERT} key
+\end{itemize}
+
+The exported filename follows the pattern: \verb|pt|$<${\it pitch number}$>$\verb|-|$<${\it tile number}$>$\verb|.bmp|, where $<${\it pitch number}$>$ is a single digit and $<${\it tile number}$>$ is four digits zero padded, for example: \verb|pt2-0023.bmp|.
+
+Same filename pattern is used when importing. There is no undo command for importing tiles, so use it with care. For more details see \nameref{replacingTiles}.
+
+``Insert all tiles'' command will look in game directory, and insert first continuous range of bitmaps following the forementioned filename pattern.
+
+In case you want to add more tiles than the pitch is currently containing you can use {\bf CONTROL}+{\bf INSERT} to add new empty tile, which can then be used as an import tile target. This is meant for adding a small number of tiles, to add large quantity use {\bf SHIFT}+{\bf INSERT} command.
+
+When highlighting a tile, it will also be highlighted in pitch mode, and vice versa. When changing tile number, old and new tile simply swap places. Tile deletion works the same way as in {\bf PITCH} mode and can be undone.
+
+\vspace{\baselineskip}
+
+\noindent Commands:
+
+\vspace{\baselineskip}
+
+\begin{tabular}{lll}
+{\bf ARROWS RIGHT/LEFT} &--& next/previous pitch\\
+{\bf ARROWS UP/DOWN}    &--& next/previous tile\\
+{\bf HOME/END}          &--& first/last tile\\
+{\bf PAGE UP/DOWN}      &--& 10 tiles forward/backward\\
+{\bf SPACE/BACKSPACE}   &--& change pitch type\\
+{\bf F2}                &--& save tile to bitmap\\
+{\bf SHIFT}+{\bf F2}    &--& save all tiles to bitmaps\\
+{\bf G}                 &--& go to tile\\
+{\bf C}                 &--& change tile number\\
+{\bf H}                 &--& highlight current tile\\
+{\bf DELETE}            &--& delete current tile\\
+{\bf INSERT}            &--& replace current tile with corresponding bitmap\\
+{\bf SHIFT}+{\bf INSERT} &--& insert all tiles in game directory\\    
+{\bf CONTROL}+{\bf INSERT} &--& insert new empty tile at the end\\
+{\bf CONTROL}+{\bf Z} &--& undo\\
+{\bf CONTROL}+{\bf Y} &--& redo\\
+\end{tabular}
+
+\begin{figure}[H]
+  \begin{center}
+    \includegraphics[width=320px,height=200px]{images/tile-mode}
+    \caption{Tile mode}
+  \end{center}
+\end{figure}
+
+
+\subsubsection{Replacing tiles}\label{replacingTiles}
+
+Process of replacing tiles is similar to replacing sprites. Here the only
+allowed bitmap dimension is 16 x 16. Bitmap data are simply copied into
+corresponding place in the pitch file. Also index of the tile can be changed
+in pitch mode.
+
+When editing a tile in graphics editor, note that colors 10 and 11 will be
+converted. Color no.\  10 will be shorts color if team is using one color
+shirt, or shirt basic color if not, and color 11 will always be primary shirt
+color. Only 42 tiles have this color converting property, and those are
+mostly crowd tiles. Those colors are red and blue, and you can see in
+{\bf PITCH} mode that fans are mostly covered with it.
+
+Pitch types are achieved by palette modification. Palette entries: 0, 7, 9, 78,
+79, 80, 81, 106 and 107 are changed depending on pitch type accomplishing
+visual changes according to conditions.
+
+Tiles 1 to 24 have special properties - they are animated crowd. Tiles
+1..12 are upper crowd, and tiles 13..24 are lower crowd. Odd indices are
+pictures when not moving, and even indices are pictures when animated (jumping,
+cheering, etc.). Tile 0 is usually empty tile (except in training
+pitch).
+
+You can replace individual tiles without any special considerations,
+but inserting whole pitch from bitmaps requires some attention. Following
+does not hold for training pitch, which does not have crowd, and therefore
+animated tiles. When some pitch with crowd is inserted, tile zero
+will be set to empty tile (filled with zeros), and tiles from 1 to 24
+will be set: 1 = 2, 3 = 4, etc., every odd and following even number will hold
+the same tile. By default, this will turn animation off. To re-enable
+it, use change tile number feature and set tiles that will be
+animated into odd tiles 1..24. Even tiles must be inserted manually.
+
+Important thing to know when inserting bitmaps is that maximum allowed
+number of unique tiles on pitch is 296. {\bf SWOS} uses only 75,776 bytes of
+memory for tiles, and if that limit is exceeded each tile with index
+greater than 295 will be overwritten.
+
+
+\newpage
+\subsection{Replay mode}
+
+This mode is in fact external replayer for {\bf SWOS} replay and highlight files. In
+main menu you choose between highlight and replay files. If there are files of
+selected kind in directory, you will be presented with a menu with names of
+files. Bring cursor to file you wish to watch and press enter. Hopefully,
+program will start replaying file.
+
+\vspace{\baselineskip}
+
+Shortcut keys available in menus, apart from arrows, are:
+
+\vspace{\baselineskip}
+
+\begin{tabular}{lll}
+{\bf BACKSPACE} &--& return to previous menu (if any)\\
+{\bf HOME}      &--& go to first menu entry\\
+{\bf END}       &--& go to last menu entry
+\end{tabular}
+
+\begin{verbatim}
+
+\end{verbatim}
+
+While replaying, use following commands:
+
+\vspace{\baselineskip}
+
+\begin{tabular}{lll}
+{\bf ESCAPE} &--& stop replaying\\
+{\bf F}      &--& toggle frame rate display\\
+{\bf +/-}    &--& speed up/slow down replay\\
+{\bf P}      &--& pause replay\\
+{\bf N}      &--& (while paused) step one frame
+\end{tabular}
+
+\begin{verbatim}
+
+\end{verbatim}
+
+Please note that the replayer is not completely finished at the moment. There
+are still a few things missing such as sound, sliding advertisements, animated
+fans and their colors.
+
+\begin{figure}[H]
+  \begin{center}
+    \includegraphics{images/replay-mode}
+    \caption{Replay mode}
+  \end{center}
+\end{figure}
+
+\newpage
+\section{Known bugs/limitations}
+
+This program is provided as is, there is no support and there will definitely be no more official releases (but never say never -- like, for example right now).
+
+Some of the latest changes were quickly hacked in and the program might crash occasionally. If it does crash really badly and bothers you a lot, you can try messaging me. I probably won't fix it, but if you include detailed info with screenshots, videos and steps to reproduce, miracles might happen. There is also file named \verb|errlog.txt| in the program directory which could be helpful.
+
+With all that said, I hope the program can still prove to be useful, and I know poor looks and badly behaving interfaces were never enough to stop {\bf true SWOS maniacs :)}
+
+\vspace{\baselineskip}
+\noindent Wishing you all the best,\\
+Z.
+
+
+\end{document}

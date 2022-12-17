@@ -19,6 +19,7 @@
 #include <dirent.h>
 
 #define MAKE_FULL_VERSION(major, minor) (((major) << 8) | (minor))
+#define IS_VERSION(vMajor, vMinor) (MAKE_FULL_VERSION(m_header.major, m_header.minor) >= MAKE_FULL_VERSION(vMajor, vMinor))
 
 // ensure animation and frame tables are contiguous
 static_assert(SwosVM::refSecondYellowFrames - SwosVM::frameIndicesTablesStart == 2'328);
@@ -44,7 +45,7 @@ static const DefaultKeySet kPlayer1Keys = {
     SDL_SCANCODE_UP, SDL_SCANCODE_DOWN, SDL_SCANCODE_LEFT, SDL_SCANCODE_RIGHT, SDL_SCANCODE_RCTRL, SDL_SCANCODE_RSHIFT,
 };
 static const DefaultKeySet kPlayer2Keys = {
-    SDL_SCANCODE_W, SDL_SCANCODE_S, SDL_SCANCODE_A, SDL_SCANCODE_D, SDL_SCANCODE_LSHIFT, SDL_SCANCODE_GRAVE,
+    SDL_SCANCODE_W, SDL_SCANCODE_X, SDL_SCANCODE_A, SDL_SCANCODE_D, SDL_SCANCODE_LSHIFT, SDL_SCANCODE_GRAVE,
 };
 
 struct {
@@ -152,11 +153,22 @@ void RecordedDataTest::verifyRecordedData()
 {
     std::tie(m_dataFile, m_header) = openDataFile(m_files[m_currentDataIndex]);
 
-    m_frameSize = MAKE_FULL_VERSION(m_header.major, m_header.minor) >= MAKE_FULL_VERSION(1, 3) ?
-        sizeof(FrameV1p3) : sizeof(FrameV1p0);
+    static const auto kVersionSizes = {
+        std::make_tuple(1, 5, sizeof(FrameV1p5)),
+        std::make_tuple(1, 4, sizeof(FrameV1p4)),
+        std::make_tuple(1, 3, sizeof(FrameV1p3)),
+    };
+
+    m_frameSize = sizeof(FrameV1p0);
+    for (auto [major, minor, size] : kVersionSizes) {
+        if (IS_VERSION(major, minor)) {
+            m_frameSize = size;
+            break;
+        }
+    }
 
     assert(m_header.inputControls == kSwosKeyboardOnly || m_header.inputControls == kSwosKeyboardAndJoypad ||
-        m_header.inputControls == kSwosJoypadOnly);
+        m_header.inputControls == kSwosJoypadAndKeyboard || m_header.inputControls == kSwosJoypadOnly);
 
     swos.pitchTypeOrSeason = m_header.pitchTypeOrSeason;
     swos.g_pitchType = m_header.pitchType;
@@ -172,7 +184,7 @@ void RecordedDataTest::verifyRecordedData()
 
     memcpy(&swos.USER_A, m_header.userTactics, sizeof(m_header.userTactics));
 
-	static int timesCalled;
+    static int timesCalled;
     timesCalled = 0;
     SWOS_UnitTest::setMenuCallback([this] {
         if (getCurrentPackedMenu() != swos.playMatchMenu)
@@ -187,7 +199,7 @@ void RecordedDataTest::verifyRecordedData()
         } else {
             assert(timesCalled == 1);
             assert(m_header.topTeamFile.teamControls != kComputerTeam && m_header.bottomTeamFile.teamControls != kComputerTeam);
-			plNum = m_header.bottomTeamFile.teamControls == kCoach ? m_header.bottomTeamCoachNo : m_header.bottomTeamPlayerNo;
+            plNum = m_header.bottomTeamFile.teamControls == kCoach ? m_header.bottomTeamCoachNo : m_header.bottomTeamPlayerNo;
         }
         timesCalled++;
         swos.playerNumThatStarted = plNum;
@@ -255,6 +267,12 @@ void RecordedDataTest::setFrameInput()
     for (auto vec : { &m_player1Keys, &m_player2Keys })
         for (auto key : *vec)
             key == SDL_SCANCODE_ESCAPE ? queueSdlKeyDown(key) : setSdlKeyDown(key);
+
+    if (IS_VERSION(1, 4)) {
+        assert(!m_frame.userKey || m_frame.userKey == 'S');
+        if (m_frame.userKey == 'S')
+            queueSdlKeyDown(SDL_SCANCODE_S);
+    }
 }
 
 void RecordedDataTest::verifyFrame()
@@ -294,8 +312,14 @@ void RecordedDataTest::verifyFrame()
     assertEqual(m_frame.gameState, static_cast<int>(swos.gameState));
     assertEqual(m_frame.gameStatePl, static_cast<int>(swos.gameStatePl));
 
-    if (MAKE_FULL_VERSION(m_header.major, m_header.minor) >= MAKE_FULL_VERSION(1, 3))
+    if (IS_VERSION(1, 3))
         verifyBench();
+
+    if (IS_VERSION(1, 4)) {
+        assertEqual(m_frame.fireBlocked, swos.fireBlocked);
+        assertEqual(!!m_frame.statsTimer, !!swos.statsTimer);
+        assertEqual(m_frame.resultTimer, swos.resultTimer);
+    }
 
     // SWOS resets game tick to 0 when fading in, and that happens when the game ends; this is just a
     // minor implementation detail, this procedure executes *after* reset and SWOS++'s *before*,
@@ -344,7 +368,7 @@ void RecordedDataTest::verifyTeam(const TeamGeneralInfo& recTeam, const TeamGene
     assertEqual(recTeam.tactics, team.tactics);
     assertEqual(recTeam.updatePlayerIndex, team.updatePlayerIndex);
     assertEqual(recTeam.playerHasBall, team.playerHasBall);
-    assertEqual(recTeam.playerHadBall, team.playerHadBall);
+    assertEqual(recTeam.allowedDirections, team.allowedDirections);
     assertEqual(recTeam.currentAllowedDirection, team.currentAllowedDirection);
     assertEqual(recTeam.direction, team.direction);
     assertEqual(recTeam.quickFire, team.quickFire);
@@ -463,8 +487,8 @@ void RecordedDataTest::verifySprites(const Sprite *sprites)
             else if (getCameraY() >= kCenterY)
                 spriteIndex += 2;
         } else if (i == kCurrentPlayerNameSprite) {
-            auto [actualTopTeam, actualPlayerNumber] = getDisplayedPlayerNumberAndTeam();
-            bool playerNameDisplayed = actualPlayerNumber >= 0;
+            auto [actualTopTeam, shirtNumber] = getDisplayedPlayerNumberAndTeam();
+            bool playerNameDisplayed = shirtNumber >= 0;
             bool spriteVisible = sprite1.visible && sprite1.hasImage() &&
                 sprite1.x < 25'000 && sprite1.y < 25'000 && sprite1.z < 25'000;
             if (spriteVisible) {
@@ -475,6 +499,7 @@ void RecordedDataTest::verifySprites(const Sprite *sprites)
                 bool topTeam = imageIndex <= kTeam1PlayerNamesEndSprite;
                 int playerNumber = imageIndex - (topTeam ? kTeam1PlayerNamesStartSprite : kTeam2PlayerNamesStartSprite);
                 assertEqual(topTeam, actualTopTeam);
+                int actualPlayerNumber = getBenchPlayerShirtNumber(topTeam, shirtNumber);
                 assertEqual(playerNumber, actualPlayerNumber);
             } else {
                 assertFalse(playerNameDisplayed);
@@ -525,7 +550,7 @@ void RecordedDataTest::verifySprites(const Sprite *sprites)
         assertEqual(sprite1.cycleFramesTimer, sprite2.cycleFramesTimer);
         assertEqual(sprite1.frameSwitchCounter, sprite2.frameSwitchCounter);
         if (sprite1.onScreen || i != kCornerFlagSprite)
-			assertEqual(sprite1.imageIndex, sprite2.imageIndex);
+            assertEqual(sprite1.imageIndex, sprite2.imageIndex);
         assertEqual(sprite1.unk006, sprite2.unk006);
         assertEqual(sprite1.unk007, sprite2.unk007);
         assertEqual(sprite1.unk008, sprite2.unk008);
@@ -577,6 +602,10 @@ void RecordedDataTest::verifyBench()
     assertEqual(data.playerToBeSubstitutedOrd, m_frame.bench.playerToBeSubstitutedOrd);
     assertEqual(data.selectedFormationEntry, m_frame.bench.selectedFormationEntry);
     assertMemEqual(data.shirtNumberTable, m_frame.bench.shirtNumberTable);
+    if (IS_VERSION(1, 5)) {
+        assertEqual(data.pl1TapTimeoutCounter, m_frame.pl1TapTimeoutCounter);
+        assertEqual(data.pl2TapTimeoutCounter, m_frame.pl2TapTimeoutCounter);
+    }
 }
 
 PlayerAnimationTable *RecordedDataTest::convertAnimationTable(int offset)
@@ -588,7 +617,7 @@ PlayerAnimationTable *RecordedDataTest::convertAnimationTable(int offset)
 
 int16_t *RecordedDataTest::convertFrameIndicesTable(int offset)
 {
-    constexpr int kHeaderFramesAreaLength = SwosVM::strongHeaderUpFrames - SwosVM::choosingPreset;
+    constexpr int kHeaderFramesAreaLength = SwosVM::jumpHeaderTeam1UpFrames - SwosVM::choosingPreset;
     if (offset == -1) {
         return nullptr;
     } else if (offset == -2) {
@@ -596,7 +625,7 @@ int16_t *RecordedDataTest::convertFrameIndicesTable(int offset)
     } else if (offset == -3) {
         return swos.ballStaticFrameIndices;
     } else if (offset & 0x80000000) {
-        return reinterpret_cast<int16_t *>(swos.strongHeaderUpFrames + (offset & 0x7fffffff));
+        return reinterpret_cast<int16_t *>(swos.jumpHeaderTeam1UpFrames + (offset & 0x7fffffff));
     } else {
         constexpr int kFrameIndicesTablesAreaLength = SwosVM::animTablesStart - SwosVM::frameIndicesTablesStart;
         assert(static_cast<unsigned>(offset) < kFrameIndicesTablesAreaLength);
@@ -619,11 +648,11 @@ void RecordedDataTest::verifyShotChanceTable(int recOffset, SwosDataPointer<int1
     if (recOffset == -1)
         assert(table.getRaw() == 0 || table.getRaw() == -1);
     else if (recOffset == 0)
-        assert(table == swos.playerShotChanceTable);
+        assert(table == swos.kPlayerShotChanceTable);
     else {
-        auto it = std::find(std::begin(swos.goalieSkillTables), std::end(swos.goalieSkillTables), table.asPtr());
-        assertNotEqual(it, std::end(swos.goalieSkillTables));
-        int index = it - std::begin(swos.goalieSkillTables);
+        auto it = std::find(std::begin(swos.kGoalieSkillTables), std::end(swos.kGoalieSkillTables), table.asPtr());
+        assertNotEqual(it, std::end(swos.kGoalieSkillTables));
+        int index = it - std::begin(swos.kGoalieSkillTables);
         assertEqual(index, recOffset - 1);
     }
 }

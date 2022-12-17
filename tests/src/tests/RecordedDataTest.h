@@ -5,7 +5,7 @@
 #include "resData.h"
 
 #pragma pack(push, 1)
-struct BenchData {
+struct BenchDataV1 {
     byte pl1TapCount;
     byte pl2TapCount;
     int8_t pl1PreviousDirection;
@@ -35,6 +35,11 @@ struct BenchData {
     int8_t selectedFormationEntry;
     byte shirtNumberTable[2 * kNumPlayersInTeam];
 };
+struct BenchDataV2 : public BenchDataV1 {
+    word pl1TapTimeoutCounter;
+    word pl2TapTimeoutCounter;
+};
+#define BenchData BenchDataV2
 #pragma pack(pop)
 
 class RecordedDataTest : public BaseTest
@@ -114,9 +119,19 @@ private:
         Sprite sprites[kFrameNumSprites];
     };
     struct FrameV1p3 : public FrameV1p0 {
-        BenchData bench;
+        BenchDataV1 bench;
     };
-    using Frame = FrameV1p3;
+    struct FrameV1p4 : public FrameV1p3 {
+        char userKey;
+        byte fireBlocked;
+        word statsTimer;
+        word resultTimer;
+    };
+    struct FrameV1p5 : public FrameV1p4 {
+        word pl1TapTimeoutCounter;
+        word pl2TapTimeoutCounter;
+    };
+    using Frame = FrameV1p5;
 #pragma pack(pop)
 
     void setupRecordedDataVerification();

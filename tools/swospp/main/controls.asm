@@ -20,6 +20,7 @@ section .text
 extern replayStatus
 extern rplFrameSkip
 extern HandleMPKeys
+extern GameDataCheckKeys
 
 
 ; RegisterControlsOptions [called from C++]
@@ -47,6 +48,7 @@ global HookMainKeysCheck
 HookMainKeysCheck:
         xor  eax, eax
         mov  al, [convertedKey]
+        call GameDataCheckKeys
         push eax
 
 %ifdef DEBUG

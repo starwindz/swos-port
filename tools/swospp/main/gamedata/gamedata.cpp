@@ -5,13 +5,20 @@
 #include "bfile.h"
 #include <initializer_list>
 
+#define MAKE_FULL_VERSION(major, minor) (((major) << 8) | (minor))
+#define IS_VERSION(major, minor) (MAKE_FULL_VERSION(m_version[0], m_version[1]) >= \
+    MAKE_FULL_VERSION(major, minor))
+
 constexpr int kVersionMajor = 1;
-constexpr int kVersionMinor = 2;
+constexpr int kVersionMinor = 5;
+constexpr int kFullVersion = MAKE_FULL_VERSION(kVersionMajor, kVersionMinor);
 
 #define kDir "recdata"
 constexpr int kDirSize = sizeof(kDir) - 1;
 
 constexpr int kNumSprites = 78;
+
+constexpr int kNumPlayersInTeam = 16;
 
 enum TeamControls {
     kTeamNotSelected = 0,
@@ -33,7 +40,7 @@ enum ControlFlags {
 constexpr int kFrameNumSprites = 33;
 
 #pragma pack(push, 1)
-struct Frame {
+struct FrameV1p0 {  // v1.0
     dword frameNo;
     int16_t player1Controls;
     int16_t player2Controls;
@@ -56,6 +63,49 @@ struct Frame {
     byte gameStatePl;
     Sprite sprites[kFrameNumSprites];
 };
+struct FrameV1p3 : public FrameV1p0 {   // v1.3
+    struct {
+        byte pl1TapCount;
+        byte pl2TapCount;
+        int8_t pl1PreviousDirection;
+        int8_t pl2PreviousDirection;
+        byte pl1BlockWhileHoldingDirection;
+        byte pl2BlockWhileHoldingDirection;
+        int8_t controls;
+        int8_t teamData;
+        int8_t teamGame;
+        byte state;
+        int goToBenchTimer;
+        byte bench1Called;
+        byte bench2Called;
+        byte blockDirections;
+        int fireTimer;
+        byte blockFire;
+        int8_t lastDirection;
+        int movementDelayTimer;
+        bool trainingTopTeam;
+        bool teamsSwapped;
+        int alternateTeamsTimer;
+        int8_t arrowPlayerIndex;
+        int8_t selectedMenuPlayerIndex;
+        int8_t playerToEnterGameIndex;
+        int8_t playerToBeSubstitutedPos;
+        int8_t playerToBeSubstitutedOrd;
+        int8_t selectedFormationEntry;
+        byte shirtNumberTable[2 * kNumPlayersInTeam];
+    } bench;
+};
+struct FrameV1p4 : public FrameV1p3 {   // v1.4
+    char userKey;
+    byte fireBlocked;
+    word statsTimer;
+    word resultTimer;
+};
+struct FrameV1p5 : public FrameV1p4 {
+    word pl1TapTimeoutCounter;
+    word pl2TapTimeoutCounter;
+};
+using Frame = FrameV1p5;
 #pragma pack(pop)
 
 // keep synced with code in tests
@@ -77,6 +127,9 @@ static char m_spriteIndexMap[kNumSprites];
 static BFile m_file;
 static char m_dataBuffer[64 * 1024];
 
+uint8_t m_version[2];
+int m_frameSize;
+
 static uint32_t m_frameNo;
 static byte m_randomValue;
 
@@ -86,6 +139,8 @@ static bool m_firstFrame;
 static bool m_gameRunning;
 static bool m_firstPl1Controls;
 static bool m_firstPl2Controls;
+static char m_userKey;
+static uint32_t m_userKeyFrame = -1;
 
 static char m_replayFilenameToRead[64];
 static bool m_replaying;
@@ -102,12 +157,9 @@ static int8_t m_penaltyShootout;
 static int8_t m_topTeamMarkedPlayer = -1;
 static int8_t m_bottomTeamMarkedPlayer = -1;
 
-static byte m_mainKeysCheck1stByte;
 static bool m_aborted;
 static bool m_trainingGame;
 
-bool Player1StatusProcHook();
-bool Player1StatusProcHook();
 static void initSpriteIndexMap();
 static void startRecordingGame();
 static void readOrRecordFrame();
@@ -117,10 +169,12 @@ static void fillControlFlags(Frame& f);
 static void fillTeam(const TeamGeneralInfo& team, TeamGeneralInfo& outTeam, char *spriteIndices);
 static void fillSprites(Frame& f);
 static void fillSprite(Sprite& dstSprite, const Sprite& src);
+static void fillBenchData(Frame& f);
 static void setShotChanceTable(TeamGeneralInfo& team);
 static Sprite *spriteToIndex(const Sprite *sprite);
 static bool pointerValid(void *ptr);
 static void hookGameLoopInit();
+static void hookKeepStatisticsOnScreen();
 static void hookPlayTrainingGame();
 static void startGameReplay();
 static void enqueueEscapeKey();
@@ -152,6 +206,7 @@ void initGameData()
     PatchCall(Rand2, 1, fixedRand);
 
     PatchCall(StartMainGameLoop, 0x39, hookGameLoopInit);
+    PatchCall(KeepStatisticsOnScreen, 1, hookKeepStatisticsOnScreen);
 
     PatchByte(Flip, 0, 0xe8);
     PatchCall(Flip, 1, readOrRecordFrame);
@@ -169,9 +224,6 @@ void initGameData()
 
     // g_currentTick is used in calculation which player wins the ball, so we will replace it with stoppageTimer
     memcpy((char *)CalculateIfPlayerWinsBall + 0x30d, (char *)GameLoop + 0x592, 4);
-
-    m_mainKeysCheck1stByte = *(byte *)MainKeysCheck;
-    *(byte *)MainKeysCheck = 0xc3;
 
     spinBigS = 0;
 
@@ -217,6 +269,32 @@ extern "C" bool Player2StatusProcAllowed()
     bool result = m_firstPl2Controls;
     m_firstPl2Controls = false;
     return result;
+}
+
+// Be careful, this could be invoked more than once per frame, but has to record/deliver only the first time.
+extern "C" word GameDataCheckKeys(char key)
+{
+    if (m_replaying) {
+        assert(!m_frame.userKey || m_frame.userKey == 'S');
+        if (m_frame.userKey == 'S' && m_userKeyFrame != m_frameNo) {
+            lastKey = 31;
+            m_userKeyFrame = m_frameNo;
+            return 'S';
+        }
+    } else {
+        if (m_userKeyFrame != m_frameNo)
+            m_userKey = 0;
+        if (lastKey && (key == 'S' || key == 1)) {
+            if (key == 'S') {
+                m_userKey = key;
+                m_userKeyFrame = m_frameNo;
+            }
+            return key;
+        }
+    }
+
+    lastKey = 0;
+    return 0;
 }
 
 static void initSpriteIndexMap()
@@ -277,8 +355,9 @@ static void readOrRecordFrame()
         }
 
         // when reading don't skip first Flip() call since it puts us in ideal position (just before 1st frame)
-        safeRead(&m_frame, sizeof(m_frame));
+        safeRead(&m_frame, m_frameSize);
         m_frameNo = m_frame.frameNo;
+
         // apply the inputs
         applyControlFlags();
     } else {
@@ -330,7 +409,17 @@ Frame getCurrentStateFrame()
     f.gameState = gameState;
     f.gameStatePl = gameStatePl;
 
+    if (!m_replaying) {
+        assert(!m_userKey || m_userKey == 'S');
+        f.userKey = m_userKey;
+    }
+
+    f.fireBlocked = fireBlocked;
+    f.statsTimer = statsTimeout;
+    f.resultTimer = resultTimer;
+
     fillSprites(f);
+    fillBenchData(f);
 
     return f;
 }
@@ -445,6 +534,46 @@ static void fillSprite(Sprite& dst, const Sprite& src)
     }
 }
 
+static void fillBenchData(Frame& f)
+{
+    if (IS_VERSION(1, 3)) {
+        f.bench.pl1TapCount = subsPl1TapCount;
+        f.bench.pl2TapCount = subsPl2TapCount;
+        f.bench.pl1PreviousDirection = subsPrevPl1Direction;
+        f.bench.pl2PreviousDirection = subsPrevPl2Direction;
+        f.bench.pl1BlockWhileHoldingDirection = pl1BenchBlockWhileHoldingDirection;
+        f.bench.pl2BlockWhileHoldingDirection = pl2BenchBlockWhileHoldingDirection;
+        f.bench.controls = subsDirection;
+        assert(!benchTeam || benchTeam == &leftTeamData || benchTeam == &rightTeamData);
+        f.bench.teamData = !benchTeam ? -1 : benchTeam == &leftTeamData ? 0 : 1;
+        assert(!benchTeamGame || benchTeamGame == &leftTeamIngame || benchTeamGame == &rightTeamIngame);
+        f.bench.teamGame = !benchTeamGame ? -1 : benchTeamGame == &leftTeamIngame ? 0 : 1;
+        f.bench.state = subsState;
+        f.bench.goToBenchTimer = goToSubsTimer;
+        f.bench.bench1Called = bench1Called;
+        f.bench.bench2Called = bench2Called;
+        f.bench.blockDirections = subsBlockDirections;
+        f.bench.fireTimer = subsFireTimer;
+        f.bench.blockFire = subsBlockFire;
+        f.bench.lastDirection = subsPrevDirection;
+        f.bench.movementDelayTimer = subsMovementDelayTimer;
+        f.bench.trainingTopTeam = subsTrainingTopTeam;
+        f.bench.teamsSwapped = subsTeamsSwapped;
+        f.bench.alternateTeamsTimer = benchPickTeamTimer;
+        f.bench.arrowPlayerIndex = benchPlayerIndex;
+        f.bench.selectedMenuPlayerIndex = selectedPlayerInSubs;
+        f.bench.playerToEnterGameIndex = plToEnterGameIndex;
+        f.bench.playerToBeSubstitutedPos = plToBeSubstitutedPos;
+        f.bench.playerToBeSubstitutedOrd = plToBeSubstitutedOrd;
+        f.bench.selectedFormationEntry = selectedFormationEntry;
+        memcpy(f.bench.shirtNumberTable, plOrdinalsTable, 2 * kNumPlayersInTeam);
+    }
+    if (IS_VERSION(1, 5)) {
+        f.pl1TapTimeoutCounter = pl1BenchTimeoutCounter;
+        f.pl2TapTimeoutCounter = pl2BenchTimeoutCounter;
+    }
+}
+
 static void setShotChanceTable(TeamGeneralInfo& team)
 {
     assert(!team.shotChanceTable || team.shotChanceTable == teamPlOfs24Table ||
@@ -499,6 +628,15 @@ static void hookGameLoopInit()
     m_gameRunning = false;
 }
 
+static void hookKeepStatisticsOnScreen()
+{
+    if (!m_replaying) {
+        m_firstPl1Controls = true;
+        m_firstPl2Controls = true;
+    }
+    calla(GetKey);
+}
+
 static void hookPlayTrainingGame()
 {
     if (!m_replaying)
@@ -519,11 +657,13 @@ static void startGameReplay()
         PatchWord(Player1StatusProc, 8, 0x15eb);
         PatchWord(Player2StatusProc, 8, 0x15eb);
 
-        *(byte *)MainKeysCheck = 0xc3;
+        PatchWord(KeepStatisticsOnScreen, 0x1d, 0x9090);
 
         readHeader();
 
         if (m_trainingGame) {
+            memcpy(&careerTeam, g_selectedTeams, sizeof(TeamFile));
+            memcpy(&currentTeam, g_selectedTeams + 1, sizeof(TeamFile));
             calla(PlayTrainingGame);
         } else {
             g_numSelectedTeams = 2;
@@ -560,7 +700,6 @@ static void startGameReplay()
 
 static void enqueueEscapeKey()
 {
-    *(byte *)MainKeysCheck = m_mainKeysCheck1stByte;
     keyCount = 1;
     keyBuffer[0] = 1;
 }
@@ -569,10 +708,12 @@ static void enqueueEscapeKey()
 static void resetSwosVariables()
 {
     teamSwitchCounter = 0;
-    gameStoppedTimer = 0;
+    benchPickTeamTimer = 0;
     goalCounter = 0;
     stateGoal = 0;
-    pl1BenchTimeoutCounter = benchCounter2 = 0;
+
+    pl1BenchTimeoutCounter = pl2BenchTimeoutCounter = 0;
+    subsDirection = subsPrevDirection = -1;
 
     // not sure if we need these, but just in case
     longFireFlag = longFireTime = longFireCounter = 0;
@@ -661,7 +802,7 @@ static void generateFixedRandomValue(const char *filename)
     while (*filename)
         m_randomValue += 17 * (*filename++ ^ i++);
 
-    WriteToLog("Fixed random value: %hhu/%hhx", m_randomValue);
+    WriteToLog("Fixed random value: %hhu/%hhx", m_randomValue, m_randomValue);
 }
 
 // header format:
@@ -686,7 +827,7 @@ static void generateFixedRandomValue(const char *filename)
 //  all 6 user tactics
 //  selected input controls (word)
 //  initial frame # (dword)
-//  v1.2 only:
+//  v1.2+ only:
 //    size of career file for training game that follows (dword)
 //    season (int8_t)
 //    minSubstitutes (int8_t)
@@ -694,8 +835,9 @@ static void generateFixedRandomValue(const char *filename)
 //
 static void writeHeader()
 {
-    uint8_t version[] = { kVersionMajor, kVersionMinor };
-    safeWrite(version, sizeof(version));
+    m_version[0] = kVersionMajor;
+    m_version[1] = kVersionMinor;
+    safeWrite(m_version, sizeof(m_version));
     safeWrite(&m_randomValue, sizeof(uint8_t));
     if (m_trainingGame) {
         gamePitchTypeOrSeason = 0;
@@ -751,13 +893,21 @@ static void readHeader()
 
     WriteToLog("Reading replay file header...");
 
-    uint8_t version[2];
-    safeRead(version, 2);
-    WriteToLog("Reading replay file version %d.%d", version[0], version[1]);
-    if (version[0] != kVersionMajor) {
-        WriteToLog("Incompatible file, major version %d, can only read up to %d", version[0], kVersionMajor);
+    safeRead(m_version, 2);
+    WriteToLog("Reading replay file version %d.%d", m_version[0], m_version[1]);
+    if (MAKE_FULL_VERSION(m_version[0], m_version[1]) > kFullVersion) {
+        WriteToLog("Incompatible file, version %d.%d, can only read up to %d.%d",
+            m_version[0], m_version[1], kVersionMajor, kVersionMinor);
         exit(1);
     }
+
+    m_frameSize = sizeof(FrameV1p0);
+    if (IS_VERSION(1, 5))
+        m_frameSize = sizeof(FrameV1p5);
+    else if (IS_VERSION(1, 4))
+        m_frameSize = sizeof(FrameV1p4);
+    else if (IS_VERSION(1, 3))
+        m_frameSize = sizeof(FrameV1p3);
 
     safeRead(&m_randomValue, 1);
     WriteToLog("Random value: %d", m_randomValue);
@@ -795,7 +945,7 @@ static void readHeader()
     safeRead(&g_joyKbdWord, sizeof(word));
     safeRead(&m_frameNo, sizeof(uint32_t));
 
-    if (version[0] > 1 || version[1] >= 2) {
+    if (m_version[0] > 1 || m_version[1] >= 2) {
         int careerSize;
         safeRead(&careerSize, 4);
         m_trainingGame = !!careerSize;
@@ -828,6 +978,7 @@ static void readHeader()
     }
 }
 
+// Invoked at the end of a frame.
 static void verifyFrame()
 {
     auto frame = getCurrentStateFrame();
@@ -835,15 +986,15 @@ static void verifyFrame()
     auto p1 = (byte *)&m_frame;
     auto p2 = (byte *)&frame;
 
-    size_t i;
-    for (i = 0; i < sizeof(frame); i++)
-        if (p1[i] != p2[i])
+    int i;
+    for (i = 0; i < m_frameSize; i++)
+        if (i != offsetof(Frame, userKey) && (p1[i] != p2[i]))
             break;
 
-    if (i != sizeof(frame)) {
+    if (i != m_frameSize) {
         WriteToLog("Frame mismatch at frame %d offset %d", m_frameNo, i);
-        HexDumpToLog(&m_frame, sizeof(m_frame), "Expected Frame");
-        HexDumpToLog(&frame, sizeof(frame), "Actual Frame");
+        HexDumpToLog(&m_frame, m_frameSize, "Expected Frame");
+        HexDumpToLog(&frame, m_frameSize, "Actual Frame");
         exit(1);
     }
 }

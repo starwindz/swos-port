@@ -11,8 +11,8 @@ public:
     static constexpr char kCppFilename[] = "vm.cpp";
     static constexpr char kHeaderFilename[] = "vm.h";
 
-    VmFileWriter(const std::string& baseDir, int extraMemorySize, const SymbolFileParser& symFileParser,
-        const DataBank& dataBank, const StructStream& structs);
+    VmFileWriter(const std::string& baseDir, int extraMemorySize, bool disableAlignmentChecks,
+        const SymbolFileParser& symFileParser, const DataBank& dataBank, const StructStream& structs);
     void outputVmFiles();
 
 private:
@@ -58,11 +58,12 @@ private:
 
     const std::string m_baseDir;
     int m_extendedMemorySize;
+    bool m_disableAlignmentChecks;
     const SymbolFileParser& m_symFileParser;
     const DataBank& m_dataBank;
     const StructStream& m_structs;
 
     FILE *m_f = nullptr;
     int m_pos = 0;
-    const char *m_filename;
+    const char *m_filename = nullptr;
 };

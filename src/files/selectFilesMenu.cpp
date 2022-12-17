@@ -249,7 +249,7 @@ static void setSaveFilename()
 
 static bool isLongFilename(const FoundFile& file)
 {
-    assert(file.extensionOffset < file.name.size());
+    assert(file.extensionOffset < static_cast<int>(file.name.size()));
 
     auto extensionLength = file.name.size() - file.extensionOffset;
     auto baseLength = file.extensionOffset - 1;

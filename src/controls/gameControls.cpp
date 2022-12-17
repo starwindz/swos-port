@@ -27,7 +27,6 @@ static GameControlEvents m_pl2LastHorizontal;
 
 static GameControlEvents filterOverlappedEvents(PlayerNumber player, GameControlEvents events);
 static void updateGameControls(PlayerNumber player, GameControlEvents events);
-static bool updateFireBlocked();
 static void updateTeamControls(TeamGeneralInfo *team, PlayerNumber player, GameControlEvents events);
 static void updatePlayerFire(PlayerNumber player, GameControlEvents events);
 
@@ -46,6 +45,16 @@ void resetGameControls()
     m_pl2LastHorizontal = kNoGameEvents;
 }
 
+bool updateFireBlocked()
+{
+    if (swos.fireBlocked) {
+        if (!isAnyPlayerFiring())
+            swos.fireBlocked = 0;
+        return true;
+    }
+    return false;
+}
+
 TeamGeneralInfo *selectTeamForUpdate()
 {
     auto team = ++m_teamSwitchCounter & 1 ? &swos.topTeamData : &swos.bottomTeamData;
@@ -55,11 +64,8 @@ TeamGeneralInfo *selectTeamForUpdate()
 // Sets control related fields in team structure. Called once per frame.
 // Handles one team per frame (next team next frame).
 // Returns a function to run after the main game update.
-std::function<void()> updateTeamControls(TeamGeneralInfo *team)
+void updateTeamControls(TeamGeneralInfo *team)
 {
-    if (updateFireBlocked())
-        return [] {};
-
     A6 = team;
     UpdateControlledPlayer();
     UpdatePlayerBeingPassedTo();
@@ -81,14 +87,15 @@ std::function<void()> updateTeamControls(TeamGeneralInfo *team)
             team->fireCounter = 0;
         }
     }
+}
 
-    return [team]() {
-        if (team->headerOrTackle) {
-            team->headerOrTackle = 0;
-            auto& fireCounter = team->playerNumber == 2 ? m_pl2FireCounter : m_pl1FireCounter;
-            fireCounter = 0;
-        }
-    };
+void postUpdateTeamControls(TeamGeneralInfo *team)
+{
+    if (team->headerOrTackle) {
+        team->headerOrTackle = 0;
+        auto& fireCounter = team->playerNumber == 2 ? m_pl2FireCounter : m_pl1FireCounter;
+        fireCounter = 0;
+    }
 }
 
 GameControlEvents getPlayerEvents(PlayerNumber player)
@@ -279,18 +286,6 @@ void SWOS::Player2StatusProc()
 {
     auto events = getPlayerEvents(kPlayer2);
     updatePlayerFire(kPlayer2, events);
-}
-
-static bool updateFireBlocked()
-{
-    if (swos.fireBlocked) {
-        if (!((getPlayerEvents(kPlayer1) | getPlayerEvents(kPlayer2)) & kGameEventKick))
-            swos.fireBlocked = 0;
-
-        return true;
-    }
-
-    return false;
 }
 
 void updateTeamControls(TeamGeneralInfo *team, PlayerNumber player, GameControlEvents events)

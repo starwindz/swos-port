@@ -10,9 +10,9 @@
 class CppOutput : public OutputWriter
 {
 public:
-    CppOutput(const char *path, int index, int extraMemorySize, bool disableOptimizations, const SymbolFileParser& symFileParser,
-        const StructStream& structs, const DefinesMap& defines, const References& references, const OutputItemStream& outputItems,
-        const DataBank& dataBank);
+    CppOutput(const char *path, int index, int extraMemorySize, bool disableOptimizations, bool disableAlignmentChecks,
+        const SymbolFileParser& symFileParser, const StructStream& structs, const DefinesMap& defines, const References& references,
+        const OutputItemStream& outputItems, const DataBank& dataBank);
     void setOutputPrefix(const std::string&) override {}
     void setCImportSymbols(const StringSet *syms) override;
     void setCExportSymbols(const StringList *syms) override;
@@ -21,6 +21,7 @@ public:
     const char *getDefsFilename() const override;
     std::string segmentDirective(const TokenRange&) const override { return {}; }
     std::string endSegmentDirective(const TokenRange&) const override { return {}; }
+    bool disableAlignmentChecks() const;
 
 private:
     void outputStructs();
@@ -55,6 +56,8 @@ private:
     bool m_insideProc = false;
     int m_index;
     int m_extendedMemorySize;
+
+    bool m_disableAlignmentChecks;
 
     const DataBank& m_dataBank;
     IntermediateFormConverter m_irConverter;

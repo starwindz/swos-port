@@ -1,4 +1,5 @@
 #include "SdlMappingParser.h"
+#include "util.h"
 
 SdlMappingParser::SdlMappingParser(const char *mapping) : m_mapping(mapping)
 {
@@ -50,15 +51,15 @@ void SdlMappingParser::parseMappingEntry(const char *input, int inputLen, const 
     if (*input == '+' || *input == '-')
         range = *input++ == '+' ? Range::kPositiveOnly : Range::kNegativeOnly;
 
-    if (*input == 'a' && isdigit(input[1])) {
+    if (*input == 'a' && isDigit(input[1])) {
         inputType = InputType::kAxis;
         index = SDL_atoi(input + 1);
-    } else if (*input == 'b' && isdigit(input[1])) {
+    } else if (*input == 'b' && isDigit(input[1])) {
         inputType = InputType::kButton;
         index = SDL_atoi(input + 1);
-    } else if (*input == 'h' && isdigit(input[1])) {
+    } else if (*input == 'h' && isDigit(input[1])) {
         index = SDL_atoi(++input);
-        while (isdigit(*input))
+        while (isDigit(*input))
             input++;
         if (*input == '.') {
             inputType = InputType::kHat;

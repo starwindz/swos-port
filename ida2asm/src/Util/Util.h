@@ -65,7 +65,7 @@ namespace Util {
         return c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || isDigit(c) || c == '_';
     }
 
-    void exit(const char *format, int exitCode = EXIT_FAILURE, ...);
+    [[noreturn]] void exit(const char *format, int exitCode = EXIT_FAILURE, ...);
     const char *getFilename(const char *path);
     std::string getBasePath(const char *path);
     std::string joinPaths(const std::string& dest, const char *additionalComponent);

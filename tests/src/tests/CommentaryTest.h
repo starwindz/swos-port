@@ -29,9 +29,16 @@ private:
     void setupEndGameCommentsTest();
     void testEndGameComment();
     void testEndGameChantsAndCrowdSamples();
+    void setupZipFileCommentsTest();
+    void finishZipFileCommentsTest();
+    void testZipFileComments();
+    void testRawFileFromZip();
 
+    void loadFakeCommentsZipFile();
     void applyEnqueuedSamplesData(const EnqueuedSamplesData& data, const std::vector<int>& values);
     bool createNextPermutation(std::vector<int>& values);
     void testResultChants();
     void testEndGameCrowdSample();
+
+    std::unique_ptr<char []> m_commentaryZipData;
 };

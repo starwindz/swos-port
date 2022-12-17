@@ -4465,12 +4465,15 @@
  0002:000B18A2       plToBeSubstitutedPos
  0002:000B18A4       plToEnterGameIndex
  0002:000B18A6       benchTeam
- 0002:000B18AA       currentSubsTeam
+ 0002:000B18AA       benchTeamGame
  0002:000B18B0       pl1BenchTimeoutCounter
- 0002:000B18B2       benchCounter2
+ 0002:000B18B2       pl2BenchTimeoutCounter
  0002:000B18B4       subsPrevPl1Direction
+ 0002:000B18B6       subsPrevPl2Direction
  0002:000B18B8       subsPl1TapCount
+ 0002:000B18BA       subsPl2TapCount
  0002:000B18BC       pl1BenchBlockWhileHoldingDirection
+ 0002:000B18BE       pl2BenchBlockWhileHoldingDirection
  0002:000B18C0       subsBlockDirections
  0002:000B18C2       subsBlockFire
  0002:000B18C4       subsPrevDirection
@@ -4705,7 +4708,7 @@
  0002:000BD068       otherTeamScored
  0002:000BD06A       animPatternsState
  0002:000BD418       tours_table
- 0002:000BD728       gameStoppedTimer
+ 0002:000BD728       benchPickTeamTimer
  0002:000BD72E       playerNumberString
  0002:000BD732       playerFacesTable
  0002:000BD738       benchColors
@@ -4784,7 +4787,7 @@
  0002:000BDD2E       penalty
  0002:000BDD30       goalOut
  0002:000BDD32       stoppageTimerWriteOnly
- 0002:000BDD34       statsFireExit
+ 0002:000BDD34       fireBlocked
  0002:000BDD36       lastPlayedTeam
  0002:000BDD3A       stoppageTimerTotal
  0002:000BDD3C       stoppageTickTimer
@@ -4910,7 +4913,7 @@
  0002:000BE59C       goalieSkill0Table
  0002:000BE5DA       staticHeaderPlayerSpeed
  0002:000BE5DC       numberBuffer
- 0002:000BE5EB       plNamesLengthTable16
+ 0002:000BE5EB       plOrdinalsTable
  0002:000BE60B       plNamesLengthTable
  0002:000BE62B       plNamesLengthTableCopy
  0002:000BE64B       prevLastPlayer

@@ -4,7 +4,6 @@
 static constexpr int kMenuTargetFps = 30;
 
 static constexpr int kMaxLastFrames = 32;
-static constexpr int kMaxFramesDelay = 32;
 
 static int m_targetFps = kTargetFpsPC;
 
@@ -27,7 +26,7 @@ public:
             m_additionalTicks -= m_targetFps;
             desiredDelay++;
         }
-        desiredDelay = std::max(0ULL, desiredDelay);
+        desiredDelay = std::max<Sint64>(0, desiredDelay);
         Sint64 diff = SDL_GetPerformanceCounter() - m_frameStartTime;
         return desiredDelay - diff;
     }
@@ -78,7 +77,7 @@ static DurationsBuffer m_renderTimes;
 
 static Sint64 calculateDelay(TicksPerFrame& ticks);
 static void timerProc();
-static void delay(Uint64 ticks);
+static void delay(Sint64 ticks);
 static void sleep(Sint64 ticks);
 
 // One-time initialization.
@@ -159,7 +158,7 @@ static void timerProc()
 }
 
 // Returns how much the wait missed the target. Positive = overshoot, negative = undershoot.
-static void delay(Uint64 ticks)
+static void delay(Sint64 ticks)
 {
     constexpr int kMinTicksToWait = 50;
 

@@ -5,12 +5,15 @@ class SoundSample
 public:
     SoundSample() = default;
     SoundSample(const char *path, int chance = 1);
+    SoundSample(const char *path, char *buf, int bufSize, int chance = 1);
     SoundSample(const SoundSample& other);
-    SoundSample(SoundSample&& other);
-    ~SoundSample() { free(); }
+    SoundSample(SoundSample&& other) noexcept;
+    ~SoundSample();
 
-    SoundSample& operator=(SoundSample&& other);
+    SoundSample& operator=(SoundSample&& other) noexcept;
     SoundSample& operator=(const SoundSample& other) = delete;
+
+    static int additionalHeaderSize(const char *path);
 
     void free();
     bool loadFromFile(const char *path);
@@ -26,16 +29,17 @@ public:
 
 private:
     void assign(const SoundSample& other);
+    bool load(const char *path, char *buf = nullptr, int bufSize = 0);
     void convertRawToWav();
     void loadChunk();
     std::tuple<char *, unsigned, bool> loadWithAnyAudioExtension(const char *path, unsigned baseNameLength, const char *ext);
 
-    static unsigned getAudioFileOffset(const char *ext, bool isRaw);
+    static int getAudioFileOffset(bool isRaw);
     static bool isRawExtension(const char *ext);
     static bool is11KhzSample(const char *name);
     static int getMaxAudioExensionLength();
 
-    char *m_buffer = nullptr;
+    std::unique_ptr<char []> m_buffer;
     unsigned m_size = 0;
     bool m_isRaw = false;
     bool m_is11Khz = false;

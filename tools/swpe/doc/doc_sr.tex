@@ -1,0 +1,608 @@
+\documentclass[a4paper,12pt]{article}
+
+\def\today{\number\day.~\ifcase\month\or
+    januar \or februar \or mart \or april \or maj \or jun \or jul \or
+    avgust \or septembar \or oktobar \or novembar \or decembar \fi \space
+    \number\year.}
+
+\def\figurename{Slika}
+
+\usepackage{indentfirst}
+\addtolength{\oddsidemargin}{-15mm}
+\addtolength{\textwidth}{25mm}
+\addtolength{\textheight}{35mm}
+\setlength{\topmargin}{-0.5in}
+\pdfpagewidth=\paperwidth
+\pdfpageheight=\paperheight
+
+\def\d{d\kern-0.4em\symbol{22}\kern-0.1em}
+\def\D{D\kern-0.8em\raise0.2ex\hbox{--}\kern0.3em}
+
+\author{Karaka\v s Zlatko $<$\href{mailto:zlatko.karakas@gmail.com}{zlatko.karakas@gmail.com}$>$}
+\title{{\bf Uputstvo za SWOS Picture Editor}\\v0.99.2023}
+
+\usepackage[pdftex,colorlinks,bookmarks=false,pdfstartview=FitH]{hyperref}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{enumitem}
+\usepackage{longtable}
+\usepackage[T1]{fontenc}
+
+\setcounter{secnumdepth}{5}
+
+\begin{document}
+
+\hyphenation{do-zvo-lje-ne}
+\hyphenation{skra-\'ce-no}
+\hyphenation{naj-vid-lji-vi-ja}
+
+\maketitle
+
+\section{Uvod}
+Hvala \v sto koristite {\bf SWOS Ure\dj iva\v c Slika}, odnosno {\bf SWOS Picture Editor}, skra\'ceno {\bf SWPE}.
+Ovaj program je napisan da omogu\'ci izmenu i zamenu grafike u igri. To \v cini menjaju\'ci originalne datoteke igre.
+
+Prva verzija programa nastala je davne 2002., i na neki na\v cin predstavlja deo {\bf SWOS} istorije. Napisana
+je prvenstveno kao alatka za istra\v zivanje i eksperimentisanje, naro\v cito fajlova sa podacima, i
+sadr\v zi u sebi mnoga {\bf SWOS} otkri\'ca do kojih sam do\v sao godinama. Tokom vremena aplikacija je
+nadogra\dj ivana stihijski, bez jasnog pravca, kojekakvim zakrpama pa \v cak i delovima koda samog {\bf SWOS}-a,
+te ne \v cudi \v sto je grafi\v cki interfejs trpeo: uglavnom je zasnovan na kori\v s\'cenju tastature, iako ova
+verzija uvodi upotrebu mi\v sa za izmenu terena.
+
+Ovo uputstvo navodi sve komande i prikazuje razne korisne na\v cine za upotrebu aplikacije. Kao dodatak, postoji i
+\href{https://youtu.be/MOIL5FJbcWQ}{kratak video demo} koji prikazuje komande za ure\dj ivanje terena.
+
+Budite pa\v zljivi da ne pokre\'cete {\bf SWOS} dok koristite {\bf SWPE}, jer zaklju\v cava grafi\v cke fajlove
+i spre\v cava {\bf SWOS} da im pristupi.
+
+\newpage
+\section{Re\v zimi rada programa}
+
+Radi bolje organizacije, program je podeljen u pet delova:
+{\bf SPRITE}, {\bf PICTURE}, {\bf PITCH}, {\bf PATTERN} i {\bf REPLAY}
+({\bf SPRAJTOVI}, {\bf SLIKE}, {\bf TERENI}, {\bf PLO\v CICE} i {\bf REPRIZE}).
+Svaki deo ima druga\v ciju namenu i sopstvene komande. Pritisnite
+{\bf F1} u bilo kom modu da vidite koji se tasteri koriste.
+
+%\vspace{baselineskip}
+
+\noindent Komande dostupne na svim ekranima su:
+
+%\vspace{baselineskip}
+
+\begin{tabular}{lll}
+{\bf F1}          &--& uklju\v ci/isklju\v ci pomo\'c\\
+{\bf F5}          &--& re\v zim sprajtova\\
+{\bf F6}          &--& re\v zim slika\\
+{\bf F7}          &--& re\v zim terena\\
+{\bf F8}          &--& re\v zim plo\v cica\\
+{\bf F9}          &--& re\v zim repriza\\
+{\bf ALT + ENTER} &--& zauzmi ceo ekran/radi u prozoru\footnotemark[1]\\
+{\bf ESCAPE}      &--& izlazak iz programa\\
+{\bf A}           &--& informacije o programu
+\end{tabular}
+
+\footnotetext[1]{Prikaz preko \v citavog ekrana ne radi, i popravka nije u planu}
+
+\begin{verbatim}
+\end{verbatim}
+
+Glavni prozor se mo\v ze pomerati pomeranjem mi\v sa dok se dr\v zi levo dugme (osim ukoliko se ne nalazimo
+u re\v zimu izmene terena). Prozor se mo\v ze smanjiti duplim levim klikom dok je pritisnut taster {\bf CONTROL}.
+
+\newpage
+\subsection{Re\v zim sprajtova}
+
+Re\v zim sprajtova je bio sve \v sto je ovaj program mogao da radi u po\v cetku. Tada se zvao {\bf SWSPR} --
+{\bf SWOS Sprite Viewer}. Sada je to samo jedan od podr\v zanih re\v zima rada i slu\v zi za pregled i zamenu
+sprajtova. Postoji 1334 sprajtova u {\bf SWOS}-u. Indeksni fajl je SPRITE.DAT, a fajlovi sa podacima su CHARSET.DAT,
+SCORE.DAT, TEAM1.DAT, TEAM2.DAT, TEAM3.DAT, GOAL1.DAT, BENCH.DAT.\\
+
+\vspace{\baselineskip}
+
+\noindent Komande:\\
+
+\vspace{\baselineskip}
+
+\begin{tabular}{lll}
+{\bf SPACE/BACKSPACE}\\
+{\bf STRELICE DESNO/LEVO} &--& naredni/prethodni sprajt\\
+{\bf G}                   &--& direktan skok na sprajt\\
+{\bf PAGE UP/DOWN}        &--& 10 sprajtova napred/nazad\\
+{\bf 0..9}                &--& promena boje pozadine\\
+{\bf HOME/END}            &--& prvi/poslednji sprajt\\
+{\bf +/-}                 &--& uve\'canje/umanjenje slike\\
+{\bf F2}                  &--& snimi trenutni sprajt u bitmapu\\
+{\bf SHIFT + F2}          &--& snimi sve sprajtove\\
+{\bf I}                   &--& uklju\v ci/isklju\v ci informacije o sprajtu\\
+{\bf INSERT}              &--& zameni trenutni sprajt sa\\
+                          &  & odgovaraju\'com bitmapom\\
+{\bf SHIFT + INSERT}      &--& zameni sve sprajtove odgovaraju\'cim\\
+                          &  & bitmapama iz trenutnog direktorijuma\\
+{\bf CTRL + R}            &--& povratak na snimljeno stanje\\
+{\bf CTRL + T}            &--& prebacivanje izme\dj u team2.dat i team3.dat
+\end{tabular}
+
+\begin{verbatim}
+
+\end{verbatim}
+
+Strelice su tu za prolazak kroz sprajtove. Za brzo pozicioniranje na odre\dj eni
+sprajt pritisnite {\bf G} i otkucajte njegov broj.
+
+{\bf F2} snima sprajt na disk u bitmap formatu radi lak\v se izmene. Ukoliko sprajt ima koordinate centra, tekst
+fajl sa istim osnovnim imenom \'ce biti kreiran, i sadr\v za\'ce x koordinatu centra u prvoj i y koordinatu centra
+u drugoj liniji. Ukoliko je centar na (0, 0) tekst fajl ne\'ce biti kreiran.
+
+Taster {\bf INSERT} \'ce prouzrokovati izmenu sprajta sadr\v zajem spolja\v snjeg fajla. Snimanje i izmena velikog broja
+sprajtova obavlja se istim tasterom, ali uz pritisnuto {\bf SHIFT}. {\bf SHIFT + F2} snima sve sprajtove na
+disk, dok {\bf SHIFT + INSERT} u\v citava sprajtove iz svih fajlova koje mo\v ze da prona\dj e u trenutnom
+direktorijumu.
+
+Pri startu programa sprajtovi 644 -- 946 bi\'ce mapirani na fajl team2.dat. Pritiskom na
+{\bf CTRL + T}, sprajtovi 644 -- 946 bi\'ce mapirani na fajl team3.dat, tako da
+i on mo\v ze biti izmenjen. Ponovnim pritiskom na tastere vra\'ca se fajl
+team2.dat.
+
+\subsubsection{Izmena sprajtova}
+
+Pri zameni sprajta, program tra\v zi bitmapu sa imenom u formi \verb|spr|{\it nnnn}\verb|.bmp|, gde je
+{\it nnnn} broj trenutnog sprajta (npr. \verb|spr0007.bmp|). Bitmapa mora biti osmobitna sa paletom od 256 boja,
+bez kompresije. Dimenzije moraju biti: 0 $\le$ \v sirina $<$ 320, 0 $\le$ visina $<$ 200.
+
+Preporu\v ceni na\v cin izmene sprajtova je:
+
+\begin{enumerate}
+\item Prona\dj ite sprajt koji \v zelite da izmenite (trebalo bi da je prikazan u programu)
+\item Zapamtite njegov broj (prikazan u gornjem levom uglu)
+\item Pritisnite {\bf F2} -- sprajt je sada snimljen na disk kao bitmapa
+\item Prona\dj ite bitmapu, koja je u istom direktorijumu, i po\v cinje sa ``spr'', a zavr\v sava se sa
+\v cetiri cifre broja sprajta
+\item U\v citajte bitmapu u svoj omiljeni softver za obradu slika i napravite \v zeljene izmene
+\item Vratite se u {\bf SWOS Picture Editor}, prona\dj ite polazni sprajt i pritisnite {\bf INSERT} na tastaturi
+\item Pritisnite {\bf ESCAPE}, pritisnite {\bf Y} kao odgovor na pitanje da li \v zelite da snimite promene
+\item Pokrenite {\bf SWOS} i u\v zivajte u va\v soj novoj grafici\ldots
+\end{enumerate}
+
+Budite pa\v zljivi ako menjate veli\v cinu sprajtova -- ovo mo\v ze imati nepredvidive posledice, naro\v cito pri
+uve\'canju. Prilikom testiranja sve je uglavnom bilo u redu, ali se povremeno de\v savalo da {\bf SWOS}
+nasumi\v cno pukne zbog unesenih izmena.
+
+Pri obradi bitmapa postoji par stvari na koje treba da obratite pa\v znju. Providna boja pozadine \'ce biti boja
+broj 17 u paleti. Ukoliko \v zelite da dodate providne povr\v sine sprajtu, jednostavno crtajte ovom bojom.
+Mo\v zete \v cak i da ``obri\v sete'' sprajt tako \v sto \'cete ga kompletno obojiti providnom bojom.
+Providna boja \'ce biti boja pozadine u trenutku snimanja, tako da je najbolje da izaberete boju koja se ne
+pojavljuje u sprajtu.
+
+Tako\dj e treba da znate da \'ce odre\dj ene boje biti konvertovane u zavisnosti od boje ko\v ze igra\v ca i boje
+dresova timova koji igraju:
+
+\begin{tabular}{lll}
+ 0 &--& bez promene\\
+ 1 &--& bez promene\\
+ 2 &--& bez promene\\
+ 3 &--& bez promene\\
+ 4 &--& boja ko\v ze (svetlija nijansa)\\
+ 5 &--& boja ko\v ze (srednja nijansa)\\
+ 6 &--& boja ko\v ze (tamnija nijansa)\\
+ 7 &--& anulira se\\
+ 8 &--& bez promene\\
+ 9 &--& boja kose (srednja nijansa)\\
+10 &--& osnovna boja dresa\\
+11 &--& boja pruga na dresu (zamenjena sa 10 u slu\v caju vertikalnih pruga)\\
+12 &--& boja kose (tamnija nijansa)\\
+13 &--& boja kose (svetlija nijansa)\\
+14 &--& boja \v sorca\\
+15 &--& boja \v carapa
+\end{tabular}
+
+\newpage
+\subsection{Re\v zim slika}
+
+Osnovni cilj ovog re\v zima je pregled *.256 slika. Mogu\'ce ih je snimati u
+bitmape pritiskom na {\bf F2}.\\
+
+\vspace{\baselineskip}
+
+\noindent Komande:\\
+
+\vspace{\baselineskip}
+
+\begin{tabular}{lll}
+{\bf SPACE/BACKSPACE}\\
+{\bf STRELICE DESNO/LEVO} &--& naredna/prethodna slika\\
+{\bf F2}                  &--& snimi sliku kao bitmapu\\
+{\bf F3}                  &--& ponovo u\v citaj sliku\\
+{\bf +/-}                 &--& osvetli/zatamni sliku\\
+\end{tabular}
+
+\begin{figure}[H]
+  \begin{center}
+    \includegraphics{images/picture-mode}
+    \caption{Re\v zim slika}
+  \end{center}
+\end{figure}
+
+\newpage
+\subsection{Re\v zim terena}
+
+Ovaj re\v zim omogu\'cava korisniku pregled \v citavog terena, kao i njegovu
+izmenu. Teren je 42 x 53 matrica sastavljena od sli\v cica dimenzija 16 x 16 (nazva\'cemo ih plo\v cice).
+Pritiskom na {\bf CONTROL + E}, ulazi se u re\v zim izmena, i pojavljuje se
+svetle\'ci kursor. Videti \ref{editingPitch}.
+
+Za prikaz brojeva plo\v cica pritisnite {\bf CONTROL}+{\bf N}. Pritisnite {\bf CONTROL}+{\bf N} ponovo da
+isklju\v cite. Pritiskom na {\bf CONTROL}+{\bf U} dobijate prikaz koliko je puta svaka plo\v cica upotrebljena na
+terenu. Isklju\v cuje se ponovnim pritiskom.
+
+Pri snimanju i u\v citavanju terena, \v sablon za ime je jednostavno:
+
+\verb|pitch|$<${\it broj terena}$>$\verb|.bmp|, npr. \verb|pitch3.bmp|.
+
+\begin{figure}[H]
+  \begin{center}
+    \includegraphics[width=320px,height=200px]{images/pitch-mode}
+    \caption{Re\v zim terena}
+  \end{center}
+\end{figure}
+
+\begin{figure}[H]
+  \begin{center}
+    \includegraphics[width=320px,height=200px]{images/pitch-mode-tile-numbers}
+    \caption{Re\v zim terena sa prikazanim brojevima plo\v cica}
+  \end{center}
+\end{figure}
+
+\pagebreak
+\begin{samepage}
+\noindent Komande:
+
+\vspace{\baselineskip}
+
+\begin{longtable}{@{\extracolsep{\fill}}lll}
+{\bf STRELICE}          &--& pomeranje terena\\
+{\bf PAGE UP/DOWN}      &--& pomeranje gore/dole za pribli\v zno\\
+                        &  & pola ekrana\\
+{\bf SPACE/BACKSPACE}   &--& prika\v zi naredni/prethodni teren\\
+{\bf HOME/END}          &--& prika\v zi gornji-levi/donji-desni\\
+                        &  & ugao terena\\
+{\bf +/-}               &--& promena uslova na terenu\\
+                        &  & (smrznut, blatnjav itd.)\\
+{\bf CTRL + N}          &--& prika\v zi/ukloni brojeve plo\v cica\\
+{\bf CONTROL}+{\bf U}   &--& prika\v zi/ukloni koliko puta\\
+                        &  & su plo\v cice upotrebljene\\
+{\bf CONTROL}+{\bf Z}   &--& poni\v sti prethodnu akciju\\
+{\bf CONTROL}+{\bf Y}   &--& ponovi poslednje poni\v stenu akciju\\
+{\bf CONTROL}+{\bf S}   &--& snimi izmene\\
+{\bf CONTROL}+{\bf SHIFT}+{\bf S} &--& prisilno snimanje\\
+                        &  & (\v cak i ako nema izmena)\\
+{\bf CONTROL}+{\bf R}   &--& u\v citaj stanje sa diska\\
+{\bf CONTROL}+{\bf O}   &--& optimizuj plo\v cice terena\\
+{\bf CTRL + E}          &--& u\dj i/iza\dj i iz re\v zima izmena\\
+{\bf F2}                &--& snimi teren u bitmapu\\
+{\bf INSERT}            &--& pro\v citaj teren iz odgovaraju\'ce\\
+                        &  & bitmape\\
+U re\v zimu izmena:     &  &\\
+{\bf CTRL + STRELICE GORE/DOLE} &--& promeni broj plo\v cice\\
+                        &  & za plus/minus jedan\\
+{\bf G}                 &--& unesi broj trenutne plo\v cice sa tastature\\
+{\bf C}                 &--& izmeni sve instance trenutne plo\v cice
+\end{longtable}
+\end{samepage}
+
+\subsubsection{Izmena terena}\label{editingPitch}
+Pritisak na {\bf CONTROL+E} prebacuje prikaz terena u re\v zim izmena. Najvidljivija izmena je prikaz
+mre\v ze koja ozna\v cava granice izme\dj u plo\v cica, \v sto ih \v cini mnogo uo\v cljivijim.
+
+Klju\v cni koncept u re\v zimu izmena je kursor. On treperi i ozna\v cava plo\v cicu nad kojom se nalazi kao
+trenutno izabranu plo\v cicu. Mnoge operacije koriste trenutnu plo\v cicu kao odredi\v ste. Kursor se mo\v ze
+pomerati po terenu mi\v sem ili preko strelica na tastaturi.
+
+Treba uvideti da se u ovom re\v zimu samo menja to koje se plo\v cice prikazuju gde na terenu, ali ne i njihov
+sadr\v zaj (pikseli). Za to imamo \nameref{tileMode}.
+
+\begin{figure}[H]
+  \begin{center}
+    \includegraphics[width=1.0\textwidth]{images/pitch-edit-mode}
+    \caption{Re\v zim izmena terena gde kursor ozna\v cava trenutnu plo\v cicu }
+  \end{center}
+\end{figure}
+
+\paragraph{Upotreba mi\v sa}\mbox{}
+\vspace{\baselineskip}
+
+Najnovija verzija programa koristi mi\v s za navigaciju i izmenu terena. Dr\v zanje levog dugmeta i pomeranje mi\v sa \'ce
+izvr\v siti pomeranje terena. Vrtenje to\v cki\'ca mi\v sa \'ce pomerati teren gore/dole.
+
+Ako kliknemo na plo\v cicu dok dr\v zimo {\bf CONTROL}+{\bf SHIFT}, plo\v cica postaje ozna\v cena tako \v sto
+dobija plavi okvir i crta se tamnijim bojama. Svaka plo\v cica sa tim brojem na terenu \'ce tako\dj e biti
+ozna\v cena. Ovo mo\v ze biti veoma korisno za razlikovanje sli\v cnih plo\v cica i otkrivanje propu\v stenih.
+Ponovo kliknite na ozna\v cenu plo\v cicu dok dr\v zite {\bf CONTROL}+{\bf SHIFT} da je vratite u normalu.
+
+Za privremeni prikaz broja konkretne plo\v cice bez uklju\v civanja sveukupnog prikaza kliknite na nju srednjim dugmetom
+mi\v sa. Prikaz je vidljiv samo dok se dr\v zi dugme. Isti efekat se posti\v ze dr\v zanjem tastera {\bf TAB}
+na tastaturi.
+
+Klikom na plo\v cicu dok se dr\v zi {\bf ALT} program se prebacuje u re\v zim plo\v cica sa prikazanom trenutnom
+plo\v cicom.
+
+Sve ove operacije, osim pomeranja terena mi\v sem, rade i izvan re\v zima izmena.
+
+\paragraph{Izmena plo\v cica}\mbox{}
+\vspace{\baselineskip}
+
+Postoji nekoliko na\v cina za izmenu brojeva plo\v cica. U svim slu\v cajevima osim slikanja plo\v cicom prvi
+korak je da se kursor postavi na plo\v cicu koja \'ce biti izmenjena.
+
+\begin{itemize}
+\setlength\itemsep{0em}
+\item \v Setnja kroz plo\v cice: {\bf CONTROL}+{\bf GORE}/{\bf DOLE} ili {\bf CONTROL}+to\v cki\'c mi\v sa
+\item Direktno uno\v senje broja plo\v cice: {\bf G} ili dupli klik levim dugmetom mi\v sa
+\item Masovna izmena {\bf C}
+\item Slikanje plo\v cicom: desni klik mi\v sem ili {\bf SHIFT+STRELICE}
+\end{itemize}
+
+{\bf CONTROL}+{\bf GORE}/{\bf DOLE} prolazi kroz plo\v cice na izabranom mestu jednu po jednu. {\bf GORE}
+pove\'cava broj plo\v cice a {\bf DOLE} smanjuje. Ovo mo\v ze biti veoma korisno ako su plo\v cice pore\dj ane po
+redosledu pojavljivanja. Isti efekat se posti\v ze mi\v sem, kada se dr\v zi {\bf CONTROL} i vrti to\v cki\'c
+mi\v sa. Skrolovanje na gore pove\'cava broj plo\v cice, a skrolovanje na dole smanjuje.
+
+Ukoliko \v zelite da podesite ta\v can broj plo\v cice mo\v zete da pritisnete {\bf G} na tastaturi. {\bf SWPE}
+\'ce aktivirati unos broja, i ako je uneseni broj ispravan dodeliti ga trenutno izabranom polju. Dupli klik na
+plo\v cicu radi istu stvar.
+
+Kada se pritisne {\bf C}, {\bf SWPE} pita za broj plo\v cice, i ako je ispravan, menja svaku plo\v cicu koja ima
+isti broj kao trenutna sa unesenom. Na primer, ako je trenutna plo\v cica broj 40, a unesena 41, ova komanda \'ce
+promeniti svaku plo\v cicu broj 40 u plo\v cicu broj 41.
+
+\begin{figure}[H]
+  \begin{center}
+    \includegraphics[width=1.0\textwidth]{images/pitch-mode-mass-replace-before}
+    \caption{Ozna\v cena plo\v cica \#40 koja \'ce uskoro biti zamenjena}
+  \end{center}
+\end{figure}
+
+\begin{figure}[H]
+  \begin{center}
+    \includegraphics[width=1.0\textwidth]{images/pitch-mode-mass-replace-after}
+    \caption{Nakon zamene plo\v cice \#40 plo\v cicom \#41}
+  \end{center}
+\end{figure}
+
+
+\paragraph{Slikanje plo\v cicom}\mbox{}
+\vspace{\baselineskip}
+
+Uz pomo\'c mi\v sa mo\v zete da ``slikate plo\v cicom'': kliknite desnim dugmetom mi\v sa na plo\v cicu koju
+\v zelite da duplirate, i pomerajte mi\v s (bez pu\v stanja dugmeta). Prva plo\v cica na koju je kliknuto \'ce
+dobiti crveni okvir, ozna\v cavaju\'ci je kao glavnu ili ``pe\v cat'' plo\v cicu. Svaka plo\v cica preko koje
+se pre\dj e mi\v sem postaje ista kao pe\v cat plo\v cica. Dr\v zanje {\bf SHIFT} tastera ``slikanje''
+ograni\v cava na prave linije.
+
+Drugi na\v cin da se podesi izvorna plo\v cica je da se na nju klikne levim dugmetom mi\v sa dok se dr\v zi
+{\bf CONTROL}. Ovaj na\v cin je koristan kada se \v zeli popuniti podru\v cje koje nije susedno pe\v cat-plo\v cici.
+
+Isto se mo\v ze posti\'ci i putem tastature:
+\begin{itemize}[noitemsep,topsep=0pt]
+\item {\bf CONTROL}+{\bf ENTER} ozna\v cava ili otkazuje pe\v cat plo\v cicu
+\item {\bf SHIFT}+{\bf STRELICE} tasteri pomeraju kursor i dupliraju glavnu plo\v cicu
+\end{itemize}
+
+\begin{figure}[H]
+  \begin{center}
+    \includegraphics[width=1.0\textwidth]{images/pitch-mode-tile-painting}
+    \caption{Slikanje plo\v cicom, primetimo pe\v cat plo\v cicu ozna\v cenu crvenim okvirom}
+  \end{center}
+\end{figure}
+
+\paragraph{Brisanje plo\v cica}\mbox{}
+\vspace{\baselineskip}
+
+Izabrana plo\v cica se mo\v ze obrisati pritiskom na {\bf DELETE} taster na tastaturi. Plo\v cica \'ce biti
+potpuno obrisana sa terena. U svako mesto gde se pojavljuje bi\'ce upisana nulta plo\v cica.
+
+\paragraph{Optimizacija terena}\mbox{}
+\vspace{\baselineskip}
+
+{\bf CONTROL}+{\bf O} aktivira optimizaciju terena. Ovo \'ce dodeliti brojeve plo\v cicama redom onako kako se
+pojavljuju na terenu. Plo\v cice koje se ne pojavljuju na terenu bi\'ce obrisane. Animirane plo\v cice se
+ignori\v su (te efektivno bri\v su).
+
+Ovaj proces kreira minimalnu predstavu trenutnog terena i obi\v cno dolazi na kraju, kada ste zadovoljni kako
+stvari izgledaju.
+
+\paragraph{Snimanje izmena}\mbox{}
+\vspace{\baselineskip}
+
+Da snimite izmene terena na disk pritisnite {\bf CONTROL}+{\bf S}. U slu\v caju da nikakve izmene nisu
+detektovane ni\v sta se ne\'ce dogoditi. Da biste prisilili program da ipak izvr\v si snimanje bez obzira da li
+ima ili nema promena, pritisnite {\bf CONTROL}+{\bf SHIFT}+{\bf S}.
+
+\pagebreak
+\paragraph{Poni\v stavanje/ponavljanje poni\v stenih akcija}\mbox{}
+\vspace{\baselineskip}
+
+Bilo koja operacija nad terenom mo\v ze biti poni\v stena i zatim ponovljena prakti\v cno neograni\v cen broj
+puta. {\bf CONTROL}+{\bf Z} poni\v stava poslednju operaciju, a {\bf CONTROL}+{\bf Y} ponavlja poslednje
+poni\v stenu operaciju.
+
+Ovo je skora\v snji dodatak programu i nije bio ozbiljno testiran. Snimajte \v cesto da ne bude posle kuku lele.
+
+\newpage
+\subsection{Re\v zim plo\v cica} \label{tileMode}
+
+
+U ovom re\v zimu se pregledaju i menjaju pojedina\v cne \v plo\v cice. Plo\v cice su iscrtane u sredini prozora, a
+njihov broj, broj terena i koliko su puta upotrebljene u gornjem levom uglu. Neupotrebljene plo\v cice su
+ozna\v cene sa \verb|**UNUSED**|.
+
+Za izmenu piksela u plo\v cicama mo\v zemo koristiti slede\'ce korake:
+\begin{itemize}[noitemsep]
+\item pozicionirajte se na \v zeljeni teren i plo\v cicu
+\item pritisnite taster {\bf F2} da bi snimili plo\v cicu u bitmapu
+\item izmenite bitmapu u grafi\v ckom editoru
+\item u\v citajte izmenjenu bitmapu nazad u plo\v cicu putem {\bf INSERT} tastera
+\end{itemize}
+
+Ime fajla je u obliku: \verb|pt|$<${\it broj terena}$>$\verb|-|$<${\it broj plo\v cice}$>$\verb|.bmp|,
+gde je $<${\it broj terena}$>$ jedna cifra a $<${\it broj plo\v cice}$>$ je predstavljen sa \v cetiri cifre i dopunjen nulama, kao na primer: \verb|pt2-0023.bmp|.
+
+Isti \v sablon imena fajla se koristi i za snimanje i za u\v citavanje. Ne postoji komanda za poni\v stavanje
+izmene plo\v cice sadr\v zajem fajla, tako da je koristite obazrivo. Za vi\v se detalja pogledajte
+\nameref{replacingTiles}.
+
+``Ubacite sve plo\v cice'' komanda \'ce pretra\v ziti trenutni direktorijum i ubaciti prvi neprekidni opseg
+bitmapa imenovane prema prethodno pomenutom \v sablonu.
+
+U slu\v caju da \v zelite da ubacite vi\v se plo\v cica nego \v sto teren trenutno sadr\v zi, mo\v zete upotrebiti
+{\bf CONTROL}+{\bf INSERT} komandu koja \'ce dodati novu praznu plo\v cicu na kraj niza, i koja mo\v ze
+poslu\v ziti kao odredi\v ste za ubacivanje iz fajla. Ovo je predvi\dj eno za ubacivanje manjeg broja plo\v cica,
+za masovno ubacivanje koristite {\bf SHIFT}+{\bf INSERT} komandu.
+
+Kada se ozna\v ci plo\v cica, ona \'ce tako\dj e biti ozna\v cena i u re\v zimu terena, i obratno. Prilikom izmene
+broja plo\v cice, stara i nova jednostavno zamene mesta. Brisanje plo\v cica funkcioni\v se isto kao i u re\v zimu
+terena i obrisana plo\v cica se mo\v ze povratiti.
+
+\vspace{\baselineskip}
+
+\noindent Komande:
+
+\vspace{\baselineskip}
+
+\begin{tabular}{lll}
+{\bf STRELICE DESNO/LEVO} &--& naredni/prethodni teren\\
+{\bf STRELICE GORE/DOLE}  &--& naredna/prethodna plo\v cica\\
+{\bf HOME/END}            &--& prva/poslednja plo\v cica\\
+{\bf PAGE UP/DOWN}        &--& 10 plo\v cica napred/nazad\\
+{\bf SPACE/BACKSPACE}     &--& promena tipa (uslova) terena\\
+{\bf F2}                  &--& snimi plo\v cicu u bitmapu\\
+{\bf SHIFT}+{\bf F2}      &--& snimi sve plo\v cice u bitmape\\
+{\bf G}                   &--& direktan skok na plo\v cicu\\
+{\bf C}                   &--& izmena broja plo\v cice\\
+{\bf H}                   &--& ozna\v ci trenutnu plo\v cicu\\
+{\bf DELETE}              &--& obri\v si trenutnu plo\v cicu\\
+{\bf INSERT}              &--& zameni trenutnu plo\v cicu sa\\
+                          &  & odgovaraju\'com bitmapom\\
+{\bf SHIFT}+{\bf INSERT}  &--& zameni sve plo\v cice u direktorijumu\\
+{\bf CONTROL}+{\bf INSERT} &--& ubaci praznu plo\v cicu na kraj\\
+{\bf CONTROL}+{\bf Z}     &--& poni\v sti poslednju operaciju\\
+{\bf CONTROL}+{\bf Y}     &--& ponovi poslednju poni\v stenu operaciju\\
+\end{tabular}
+
+\begin{figure}[H]
+  \begin{center}
+    \includegraphics[width=320px,height=200px]{images/tile-mode}
+    \caption{Re\v zim plo\v cica}
+  \end{center}
+\end{figure}
+
+\subsubsection{Izmena plo\v cica}\label{replacingTiles}
+
+Procedura zamene plo\v cica je sli\v cna proceduri zamene sprajtova, s tim \v sto su ovde jedine dozvoljene
+dimenzije bitmape 16 x 16. Pikseli bitmape se prosto kopiraju na odgovaraju\'ce mesto u fajlu terena. Indeksni
+fajl terena se mo\v ze izmeniti u re\v zimu terena.
+
+Prilikom obrade plo\v cice u grafi\v ckom editoru, treba da znate da \'ce boje 10 i 11 biti prepisane. Boja 10
+\'ce biti boja \v sorca ako tim koristi jednobojni dres, ili boja pozadine dresa u suprotnom. Boja 11 \'ce uvek
+biti osnovna boja dresa. Ova promena boja se primenjuje samo na prve 42 plo\v cice, i to su uglavnom plo\v cice
+koje \v cine publiku. Te boje su crvena i plava, i mo\v zete videti u re\v zimu terena da su navija\v ci uglavnom
+njima prekriveni.
+
+Tipovi terena se posti\v zu izmenom palete. Boje u paleti: 0, 7, 9, 78, 79, 80,
+81, 106 i 107 se menjaju u zavisnosti od tipa terena i time se posti\v zu
+vizualne promene u skladu sa uslovima na terenu.
+
+\v Sabloni od 1 do 24 imaju posebna svojstva -- oni su animirana publika.
+\v Sabloni 1..12 su gornja publika, a \v sabloni 13..24 su donja. Neparni
+indeksi su stati\v cne slike, a parni indeksi animirane (navija\v ci koji
+ska\v cu, ma\v su \v salovima itd.). \v Sablon 0 je uglavnom prazna plo\v cica
+(izuzev u slu\v caju trening terena).
+
+Zamena plo\v cica je poprili\v cno bezbedna operacija, dok se na \v citanje
+celog terena iz bitmape mora obratiti posebna pa\v znja. Ukoliko se zamenjuje
+trening teren, slede\'ce ne va\v zi, jer taj teren nema publiku, pa ni
+animirane plo\v cice. Kada se menja teren sa publikom, nulta plo\v cica \'ce
+biti prazna (popunjena nulama), a plo\v cice od 1 do 24 \'ce biti pode\v sene:
+1 = 2, 3 = 4, itd., svaki paran broj i naredni neparan \'ce sadr\v zati istu
+plo\v cicu. To \'ce prouzrokovati isklju\v cenje animacije. Da bi animacija
+ponovo proradila, potrebno je izmeniti brojeve animiranih plo\v cica u neparne
+brojeve u opsegu 1..24. Parne animirane plo\v cice moraju biti ru\v cno
+unesene.
+
+Bitna stvar kod uno\v senja terena iz bitmape je da maksimalni broj
+jedinstvenih plo\v cica na terenu iznosi 296. SWOS koristi samo 75,776 bajtova
+memorije za plo\v cice, i ako se ta granica prekora\v ci, svaka plo\v cica sa
+indeksom vi\v sim od 295 bi\'ce prepisana.
+
+\newpage
+\subsection{Re\v zim repriza}
+
+Ovaj re\v zim je u osnovi eksterni program za pregled SWOS-ovih *.rpl i *.hil
+fajlova. U glavnom meniju birate izme\dj u higlights i replay fajlova. Ukoliko
+takvih fajlova ima u trenutnom direktorijumu, pojavi\'ce se meni sa imenima
+fajlova. Postavite kursor na \v zeljeni fajl i pritisnite enter. Uz malo
+sre\'ce projekcija po\v cinje.
+
+\vspace{\baselineskip}
+
+Tasteri dostupni u menijima, izuzev strelica, su:
+
+\vspace{\baselineskip}
+
+\begin{tabular}{lll}
+{\bf BACKSPACE} &--& povratak u prethodni meni (ako postoji)\\
+{\bf HOME}      &--& skok na prvu stavku menija\\
+{\bf END}       &--& skok na poslednju stavku menija
+\end{tabular}
+
+\begin{verbatim}
+
+\end{verbatim}
+
+Za vreme snimka, mo\v zete koristiti slede\'ce naredbe:
+
+\vspace{\baselineskip}
+
+\begin{tabular}{lll}
+{\bf ESCAPE} &--& prekid snimka\\
+{\bf F}      &--& uklju\v ci/isklju\v ci ispis broja frejmova u sekundi\\
+{\bf +/-}    &--& ubrzaj/uspori\\
+{\bf P}      &--& pauza\\
+{\bf N}      &--& (za vreme pauze) prika\v zi slede\'ci frejm
+\end{tabular}
+
+\begin{verbatim}
+
+\end{verbatim}
+
+Imajte u vidu da podprogram za pregled nije kompletan. Jo\v s uvek nedostaju
+neke stvari poput zvuka, pokretnih reklama, animirane publike i njihovih boja.
+
+\begin{figure}[H]
+  \begin{center}
+    \includegraphics{images/replay-mode}
+    \caption{Re\v zim repriza}
+  \end{center}
+\end{figure}
+
+
+\newpage
+\section{Poznati bagovi/ograni\v cenja}
+
+Ovaj program je dat takav kakav je, nema podr\v ske niti garancije, i ne\'ce vi\v se biti novih zvani\v cnih
+verzija (ali nikad ne reci nikad -- kao na primer upravo sada).
+
+Neke od poslednjih izmena su brzinski izhakovane i mo\v ze se de\v savati da program povremeno pukne. Ukoliko je
+to ba\v s intenzivno i jako vas uzrujava, mo\v zete poku\v sati da me kontaktirate. Verovatno ne\'cu popraviti,
+ali ako uklju\v cite detaljne informacije sa snimcima ekrana, videom i ta\v cnim koracima za reprodukovanje baga,
+\v cuda su mogu\'ca. Potra\v zite tako\dj e fajl po imenu \verb|errlog.txt| koji mo\v ze sad\v zati korisne
+informacije.
+
+Uz sve ovo, ipak se nadam da \'ce se program pokazati korisnim, jer znam da lo\v s dizajn i slab korisni\v cki
+interfejs nikada nisu mogli da zaustave {\bf istinske SWOS manijake :)}
+
+\vspace{\baselineskip}
+\noindent Sve najbolje,\\
+Z.
+
+\end{document}

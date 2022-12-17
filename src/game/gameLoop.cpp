@@ -9,6 +9,7 @@
 #include "sprites.h"
 #include "gameSprites.h"
 #include "updateSprite.h"
+#include "updatePlayers.h"
 #include "gameTime.h"
 #include "bench.h"
 #include "drawBench.h"
@@ -54,7 +55,8 @@ static void initGameLoop();
 static void drawFrame(bool recordingEnabled);
 static void gameFadeOut();
 static void gameFadeIn();
-static void updateTimersHandlePauseAndStats();
+static void updateTimers();
+static void handlePauseAndStats();
 static void handleKeys();
 static void coreGameUpdate();
 static void handleHighlightsAndReplays();
@@ -81,7 +83,8 @@ void gameLoop(TeamGame *topTeam, TeamGame *bottomTeam)
             m_gameLoopStartHook();
 #endif
             loadCrowdChantSampleIfNeeded();
-            updateTimersHandlePauseAndStats();
+            updateTimers();
+            handlePauseAndStats();
 
             handleKeys();
 
@@ -225,19 +228,22 @@ static void gameFadeIn()
     fadeIn([]() { drawFrame(false); });
 }
 
-void updateTimersHandlePauseAndStats()
+static void updateTimers()
 {
     ReadTimerDelta();
-
-    pausedLoop();
-
-    if (statsEnqueued())
-        showStatsLoop();
 
     swos.frameCount++;
 
     if (swos.spaceReplayTimer)
         swos.spaceReplayTimer--;
+}
+
+static void handlePauseAndStats()
+{
+    pausedLoop();
+
+    if (statsEnqueued())
+        showStatsLoop();
 }
 
 static void handleKeys()
@@ -253,11 +259,12 @@ static void coreGameUpdate()
     updateGameTime();
     initGoalSprites();
     UpdateCameraBreakMode();    // convert
-    auto team = selectTeamForUpdate();
-    auto postUpdateTeamControls = updateTeamControls(team);
-    A6 = team;
-    UpdatePlayersAndBall();    // main game engine update
-    postUpdateTeamControls();
+    if (!updateFireBlocked()) {
+        auto team = selectTeamForUpdate();
+        updateTeamControls(team);
+        updatePlayers(team);    // main game engine update
+        postUpdateTeamControls(team);
+    }
     UpdateBall();
     movePlayers();
     updateReferee();

@@ -310,14 +310,20 @@ static DeltasAndAngle calculateDeltaXAndY(int speed, int x, int y, int destX, in
         assert(sin >= -32'768 && sin <= 32'767 && cos >= -32'768 && cos <= 32'767);
         assert(static_cast<unsigned>(speed) < 65'538);
 
-        // by doing multiplication first, and shift later we could get more precision
-        // but left as is, to comply with the original code
+        // by doing multiplication first, and shift later we get more precision
+        // for testing it's left as is, to comply with the original code
+#ifdef SWOS_TEST
         sin = (sin >> 8) * speed;
         cos = (cos >> 8) * speed;
+#else
+        sin = sin * speed >> 8;
+        cos = cos * speed >> 8;
+#endif
 
         if (!amigaModeActive()) {
             // this is multiplying by 41/64 (0.640625), using this method gets exactly the same result as SWOS,
             // but shifts have to be used explicitly, divisions end up with slightly different result
+            // due to some sort of sign adjustment
             sin = sin - (sin >> 2) - (sin >> 4) - (sin >> 5) - (sin >> 6);
             cos = cos - (cos >> 2) - (cos >> 4) - (cos >> 5) - (cos >> 6);
         }

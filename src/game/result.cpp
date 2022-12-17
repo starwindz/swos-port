@@ -39,7 +39,7 @@ constexpr int kResultSmallDigitWidth = 6;
 constexpr int kResultDigit1Offset = 4;
 
 constexpr int kResultAtHalfTimeLength = 275;
-constexpr int kResultAtGameBreakLength = 265;
+constexpr int kResultAtGameBreakLength = 165;
 
 constexpr int kEndOfHalfResult = 30'000;
 constexpr int kGameBreakResult = 31'000;

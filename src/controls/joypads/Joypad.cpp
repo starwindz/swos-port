@@ -1,5 +1,6 @@
 #include "Joypad.h"
 #include "JoypadConfig.h"
+#include "hash.h"
 #include "util.h"
 
 Joypad::Joypad(int index)

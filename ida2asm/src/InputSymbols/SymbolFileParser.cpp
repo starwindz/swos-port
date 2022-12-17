@@ -175,7 +175,7 @@ auto SymbolFileParser::introducedVariables() const -> const StringMap<Introduced
 int SymbolFileParser::getTypeSize(const String& type) const
 {
     auto size = m_typeSizes.get(type);
-    assert(!size || size > 0);
+    assert(!size || *size > 0);
 
     return size ? *size : -1;
 }

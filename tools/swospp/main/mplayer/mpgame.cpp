@@ -812,10 +812,10 @@ void InitMultiplayerGame(int playerNo, IPX_Address *playerAddresses, int numWatc
     memset(framesToRender, 0, sizeof(framesToRender));
     m_lastAppliedFrame = -1;
     teamSwitchCounter = 0;
-    gameStoppedTimer = 0;
+    benchPickTeamTimer = 0;
     goalCounter = 0;
     stateGoal = 0;
-    pl1BenchTimeoutCounter = benchCounter2 = 0;
+    pl1BenchTimeoutCounter = pl2BenchTimeoutCounter = 0;
 
     /* not sure if we need these, but just in case */
     longFireFlag = longFireTime = longFireCounter = 0;

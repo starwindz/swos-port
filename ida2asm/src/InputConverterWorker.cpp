@@ -33,14 +33,14 @@ void InputConverterWorker::process()
 }
 
 void InputConverterWorker::output(OutputFormatResolver::OutputFormat format, const char *path, int extraMemorySize,
-    bool disableOptimizations, const StructStream& structs, const DefinesMap& defines, const std::string& prefix,
-    std::pair<CToken *, bool> openingSegments)
+    bool disableOptimizations, bool disableAlignmentChecks, const StructStream& structs, const DefinesMap& defines,
+    const std::string& prefix, std::pair<CToken *, bool> openingSegments)
 {
     assert(m_segments);
 
     m_filename = formOutputPath(path);
     m_outputWriter = OutputFactory::create(format, m_filename.c_str(), m_index, extraMemorySize, disableOptimizations,
-        m_symFileParser, structs, defines, m_parser.references(), m_parser.outputItems(), *m_dataBank);
+        disableAlignmentChecks, m_symFileParser, structs, defines, m_parser.references(), m_parser.outputItems(), *m_dataBank);
 
     auto outputPrefix = segmentsOutput(openingSegments.first);
     m_outputWriter->setOutputPrefix(prefix + outputPrefix);

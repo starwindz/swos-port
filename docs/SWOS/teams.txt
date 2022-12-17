@@ -407,7 +407,7 @@ offset:  size:  desc.
   40       2    is our player controlling the ball?
   42       2    something about turn flags (some bit number)
                 camera direction gets written here
-  44       2    current direction, or -1 if nothing is pressed
+  44       2    current allowed direction, or -1 if nothing is pressed
                 it doesn't change if direction isn't allowed (say opposite
                 direction when taking throw-in)
   46       2    current direction, or -1 if nothing is pressed
@@ -452,6 +452,7 @@ offset:  size:  desc.
   70       2    ??? something when goalkeeper dives
   72       2    ??? 4 bytes pointer to a player
                 I'd say pointer to a last player hitting the ball with the head
+                player that's tackling is written here (tackle at distance 64 or less from the ball)
   74       2    distance from the ball
   76       2    ??? 5, -5 (timer)
                 if positive decrease, if negative increase
@@ -476,8 +477,8 @@ offset:  size:  desc.
                 (npr. izvodi aut)
   98       2    ball x coordinate
  100       2    ball y coordinate
- 102       2    counter, initially 25, ticks down once the player gets rid of
-                the ball by kicking or passing (but not otherwise), else zero
+ 102       2    counter, initially 25, ticks down once the player gets rid of the ball by kicking, passing,
+                tackling or heading (but not otherwise), else zero
                 decremented until zero
                 AI compares it to 13
  104       4    pointer na nekakav sprajt (koji jos ne znam)
@@ -534,10 +535,8 @@ offset:  size:  desc.
                 != 0:  1, 2, 3                      ; right spin
                 == 0 && offset 134 != 1: 0, -999, 4 ; normal, standard or
                                                     ; strong kick
- 138       2    ??? (tajmer)
-                nula za vreme utakmice
-                possibly timer, while active ball can't be won over from the
-                player that controls it
+ 138       2    possibly timer, while active ball can't be won over from the player that controls it
+                gets set to 12 when a player in the opposing team tackles the ball
  140       2    true ako golman vodi loptu kao obican igrac
                 koliko sam video, za vreme utakmice nula
  142       2    ako je != 0 preskoci AI

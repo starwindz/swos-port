@@ -379,13 +379,16 @@ offset  length  description
   92        2   direction player is facing 0..7 (0 = up, 4 = down...)
   94        2   if the player is moving, value is 255, if standing 0
                 (treated as a byte)
-  96        2   something about fouls (it's set to 1 at first foul and stays
-                that way for a long time, gets reset almost randomly)
-                if 2, after a tackle foul comment will be played
+  96        2   0 = tackle started
+                to go into states below, player must be at 64 or less units away from the ball, and the ball height
+                has to be 8 or less:
+                1 = player tackled the ball (or bad tackle?)
+                2 = good tackle (opponent has a player that's controlling the ball, but he's 9 or more units away
+                from it and distance between two players is more than 32 units -- why 32? maybe takes some time to
+                get into perfect tackling position)
                 it could be tackle state, 1 if player tackling, 2 for
                 successful tackle (player manages to pick up the ball)
-  98        2   ??? something about headers
-                set to 1 after strong header
+  98        2   set to 1 when player is heading (any type)
  100        2   some sort of state when game is stopped, when they're running to their positions
                 values: 0,1,2,3
                 initialized to 1 when the game is starting

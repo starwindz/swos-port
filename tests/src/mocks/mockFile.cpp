@@ -18,12 +18,12 @@ enum NodeType { kFile, kDirectory, };
 struct Node
 {
     Node() : type(kDirectory) {}
-    Node(NodeType type, std::string name, const char *data = nullptr, size_t size = 0)
+    Node(NodeType type, std::string name, const char *data = nullptr, int size = 0)
         : type(type), name(name), data(data), size(size) {}
 
     bool isDirectory() const { return type == kDirectory; };
     bool isFile() const { return type == kFile; };
-    bool filenameEqual(const char *otherName, size_t len) const {
+    bool filenameEqual(const char *otherName, int len) const {
 #ifdef _WIN32
             return _strnicmp(name.c_str(), otherName, len) == 0;
 #else
@@ -37,10 +37,10 @@ struct Node
 
     // union with vector seems unsafe, so let's just waste a bit of memory
     const char *data;
-    size_t size;
-    std::vector<size_t> children;   // use indices instead of pointers as vector might reallocate and invalidate them
+    int size;
+    std::vector<int> children;   // use indices instead of pointers as vector might reallocate and invalidate them
     bool isBad = false;
-    size_t numWrites = 0;
+    int numWrites = 0;
 };
 
 static std::vector<Node> m_nodes = {{ kDirectory, "C:\\" }};
@@ -50,9 +50,9 @@ void enableFileMocking(bool mockingEnabled)
     m_enableMocking = mockingEnabled;
 }
 
-static std::tuple<const char *, size_t> extractNextPathComponent(const char *path)
+static std::tuple<const char *, int> extractNextPathComponent(const char *path)
 {
-    size_t len = 0;
+    int len = 0;
     auto endPtr = strchr(path, getDirSeparator());
 
     if (endPtr) {
@@ -65,11 +65,11 @@ static std::tuple<const char *, size_t> extractNextPathComponent(const char *pat
     return { endPtr, len };
 }
 
-static int getSubnodeIndex(const Node& node, const char *filename, size_t len)
+static int getSubnodeIndex(const Node& node, const char *filename, int len)
 {
     assert(node.isDirectory());
 
-    for (size_t i = 0; i < node.children.size(); i++) {
+    for (int i = 0; i < node.children.size(); i++) {
         auto nodeIndex = node.children[i];
         assert(nodeIndex < m_nodes.size());
 
@@ -131,15 +131,15 @@ static std::string normalizePath(const char *path)
     return ignoreVolume(normalPath);
 }
 
-static void addNode(const char *path, NodeType nodeType, const char *data = nullptr, size_t size = 0)
+static void addNode(const char *path, NodeType nodeType, const char *data = nullptr, int size = 0)
 {
     assert(nodeType == kFile || nodeType == kDirectory);
     assert(!m_nodes.empty() && m_nodes[0].isDirectory());
 
-    size_t currentDirIndex = 0;
+    int currentDirIndex = 0;
     const auto& normalPath = normalizePath(path);
 
-    visitEachPathComponent(normalPath.c_str(), [&](const char *component, size_t len, bool isLastComponent) {
+    visitEachPathComponent(normalPath.c_str(), [&](const char *component, int len, bool isLastComponent) {
         assert(currentDirIndex < m_nodes.size() && m_nodes[currentDirIndex].isDirectory());
 
         auto subnodeIndex = getSubnodeIndex(m_nodes[currentDirIndex], component, len);
@@ -204,7 +204,7 @@ static std::tuple<int, int, int> findNodeAndParent(const char *path)
     int parentNodeIndex = -1;
     int childIndex = -1;
 
-    visitEachPathComponent(path, [&](const char *component, size_t len, bool isLastComponent) {
+    visitEachPathComponent(path, [&](const char *component, int len, bool isLastComponent) {
         assert(currentNodeIndex >= 0 && currentNodeIndex < static_cast<int>(m_nodes.size()));
         const auto& currentNode = m_nodes[currentNodeIndex];
         assert(currentNode.isDirectory());
@@ -253,7 +253,7 @@ bool deleteFakeFile(const char *path)
     return true;
 }
 
-size_t getNumFakeFiles()
+int getNumFakeFiles()
 {
     return std::count_if(m_nodes.begin(), m_nodes.end(), [](const auto& node) {
         return node.type == kFile && !node.isBad;
@@ -291,7 +291,7 @@ bool fakeFilesEqualByContent(const char *path1, const char *path2)
     return true;
 }
 
-const char *getFakeFileData(const char *path, size_t& size, size_t& numWrites)
+const char *getFakeFileData(const char *path, int& size, int& numWrites)
 {
     auto nodeIndex = findNode(path);
     if (nodeIndex < 0)
@@ -307,9 +307,9 @@ const char *getFakeFileData(const char *path, size_t& size, size_t& numWrites)
     return node.data;
 }
 
-size_t getFakeFileSize(const char *path)
+int getFakeFileSize(const char *path)
 {
-    size_t size = 0, numWrites;
+    int size = 0, numWrites;
     getFakeFileData(path, size, numWrites);
     return size;
 }
@@ -347,7 +347,7 @@ dirent *readdir(DIR *dirp)
     if (!m_enableMocking)
         return readdir_REAL(dirp);
 
-    size_t parentNodeIndex = dirp->ent.d_ino;
+    int parentNodeIndex = dirp->ent.d_ino;
     if (parentNodeIndex >= m_nodes.size())
         return nullptr;
 
@@ -367,7 +367,6 @@ dirent *readdir(DIR *dirp)
     return nullptr;
 }
 
-
 #define LoadFile LoadFile_REAL
 #define WriteFile WriteFile_REAL
 namespace SWOS {
@@ -377,7 +376,7 @@ namespace SWOS {
 
 #define createDir createDir_REAL
 #define dirExists dirExists_REAL
-int loadFile_REAL(const char *path, void *buffer, int maxSize = -1, size_t skipBytes = 0, bool required = true);
+int loadFile_REAL(const char *path, void *buffer, int maxSize = -1, int skipBytes = 0, bool required = true);
 #define loadFile loadFile_REAL
 SDL_RWops *openFile_REAL(const char *path, const char *mode = "rb");
 #define openFile openFile_REAL
@@ -420,7 +419,7 @@ SDL_RWops *openFile(const char *path, const char *mode /* = "rb" */)
     return node >= 0 ? reinterpret_cast<SDL_RWops *>(node) : nullptr;
 }
 
-int loadFile(const char *path, void *buffer, int bufferSize /* = -1 */, size_t skipBytes /* = 0 */, bool required /* = true */)
+int loadFile(const char *path, void *buffer, int bufferSize /* = -1 */, int skipBytes /* = 0 */, bool required /* = true */)
 {
     if (!m_enableMocking)
         return loadFile_REAL(path, buffer, bufferSize, skipBytes, required);
@@ -438,7 +437,7 @@ int loadFile(const char *path, void *buffer, int bufferSize /* = -1 */, size_t s
     return node.size;
 }
 
-std::pair<char *, size_t> loadFile(const char *path, size_t bufferOffset /* = 0 */, size_t skipBytes /* = 0 */)
+std::pair<char *, int> loadFile(const char *path, int bufferOffset /* = 0 */, int skipBytes /* = 0 */)
 {
     if (!m_enableMocking)
         return loadFile_REAL(path, bufferOffset, skipBytes);

@@ -22,8 +22,8 @@ enum class PlayerState : uint8_t
     kThrowIn = 5,
     kGoalieDivingHigh = 6,
     kGoalieDivingLow = 7,
-    kNormal2 = 8,
-    kHeading = 9,
+    kStaticHeader = 8,
+    kJumpHeader = 9,
     kDown = 10,
     kGoalieClaimed = 11,
     kBooked = 12,
@@ -49,7 +49,7 @@ struct Sprite
     SwosDataPointer<PlayerAnimationTable> animTablePtr;
     int16_t startingDirection;
     PlayerState state;
-    uint8_t playerDownTimer;
+    int8_t playerDownTimer;
     uint16_t unk001;
     uint16_t unk002;
     SwosDataPointer<int16_t> frameIndicesTable;

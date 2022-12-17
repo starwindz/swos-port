@@ -5,6 +5,7 @@
 #include "chants.h"
 #include "unitTest.h"
 #include "mockFile.h"
+#include "resData.h"
 #include "wavFormat.h"
 #include "mockSdlMixer.h"
 #include "mockUtil.h"
@@ -68,6 +69,9 @@ auto CommentaryTest::getCases() -> CaseList
             bind(&CommentaryTest::setupEndGameCommentsTest), bind(&CommentaryTest::testEndGameComment) },
         { "test end game comments", "end-game-comments",
             bind(&CommentaryTest::setupEndGameCommentsTest), bind(&CommentaryTest::testEndGameChantsAndCrowdSamples) },
+        { "test zip file comments", "zip-file-comments",
+            bind(&CommentaryTest::setupZipFileCommentsTest), bind(&CommentaryTest::testZipFileComments), 1, false,
+            bind(&CommentaryTest::finishZipFileCommentsTest) },
     };
 }
 
@@ -359,7 +363,7 @@ static void testEmptyCategories()
     LogSilencer logSilencer;
     const std::vector<int> timerValues(7);
 
-    for (const auto data : kEmptyDirsData) {
+    for (const auto& data : kEmptyDirsData) {
         if (data.setupFunc)
             data.setupFunc();
 
@@ -591,9 +595,8 @@ void CommentaryTest::testEnqueuedComments()
 
 void CommentaryTest::setupEndGameCommentsTest()
 {
-    loadFakeCustomSamples();
     clearCommentsSampleCache();
-    loadCommentary();
+    loadFakeCustomSamples();
 }
 
 void CommentaryTest::testEndGameComment()
@@ -637,6 +640,103 @@ void CommentaryTest::testEndGameChantsAndCrowdSamples()
 {
     testResultChants();
     testEndGameCrowdSample();
+}
+
+void CommentaryTest::setupZipFileCommentsTest()
+{
+    clearCommentsSampleCache();
+    addFakeCustomComments();
+    loadFakeCommentsZipFile();
+    loadCommentary();
+    setCrowdChantsEnabled(false);
+}
+
+void CommentaryTest::finishZipFileCommentsTest()
+{
+    m_commentaryZipData.release();
+}
+
+void CommentaryTest::testZipFileComments()
+{
+    struct {
+        int numTimesToTrigger;
+        int expectedNumSamplesPlayed;
+        void (*triggerFunction)();
+        const char *content;
+        int contentLen;
+        int sameSamples = 1;
+        void (*setupFunction)() = nullptr;
+    } static const kSampleData[] = {
+        { 6, 6, triggerCornerSample, "corner06", 8, },
+        { 3, 6, triggerItsBeenACompleteRoutComment, "rout3", 5, },
+        { 3, 6, triggerSensationalGameComment,
+            "ZAMENITI HERZ I DRUGI DELOVI, NAPRAVITI VEELIKA ZEZANCIJA!!\r\n"
+            "Herr Doktor, nein zezancija, senzacija versteh, SEN-ZA-CI-JA!\r\n"
+            "Ah ja, ja, natürlich, senzacija.\r\n", 158 },
+        { 3, 6, triggerDrawComment, "Za dlaku sinko", 14 },
+        { 6, 6, PlayFoulComment, "free_kick", 9 },
+        { 3, 3, PlayGoalComment, "goal", 4, 3 },
+        { 4, 1, triggerGoodPassComment, "good_pay", 8 },
+        { 4, 1, PlayGoodTackleComment, "tackled.mp3", 12 },
+        { 4, 1, PlayHeaderComment, "header", 7, 1, setupHeaderComment },
+        { 3, 0, PlayBarHitComment, nullptr, 0, 0 },
+        { 4, 4, triggerRedCardSample, "red_card", 8 },
+        { 3, 3, triggerRedCardSample, "red_card3", 9, },
+    };
+
+    for (const auto& data : kSampleData) {
+        resetRandomInRange();
+        resetMockSdlMixer();
+        if (data.setupFunction)
+            data.setupFunction();
+
+        bool oldLogMode;
+        if (!data.expectedNumSamplesPlayed)
+            oldLogMode = setStrictLogMode(false);
+
+        for (int i = 0; i < data.numTimesToTrigger; i++)
+            data.triggerFunction();
+
+        assertEqual(numTimesPlayChunkCalled(), data.expectedNumSamplesPlayed);
+        const auto& playedChunks = getLastPlayedChunks();
+        assertEqual(playedChunks.size(), data.expectedNumSamplesPlayed);
+
+        assertTrue(data.sameSamples <= data.expectedNumSamplesPlayed);
+
+        for (int i = 0; i < data.sameSamples; i++) {
+            int index = playedChunks.size() - i - 1;
+            const auto chunk = playedChunks[index];
+            assertTrue(chunk && chunk->alen == data.contentLen);
+            assertTrue(!memcmp(chunk->abuf, data.content, data.contentLen));
+        }
+
+        if (!data.expectedNumSamplesPlayed)
+            setStrictLogMode(oldLogMode);
+    }
+
+    testRawFileFromZip();
+}
+
+void CommentaryTest::testRawFileFromZip()
+{
+    resetMockSdlMixer();
+    triggerTacticsChangeSample();
+
+    assertEqual(numTimesPlayChunkCalled(), 1);
+    const auto& chunk = getLastPlayedChunk();
+    assertTrue(chunk);
+
+    assertEqual(chunk->alen, 14 + sizeof(kWaveHeader));
+    assertTrue(!memcmp(chunk->abuf, kWaveHeader, 4));
+    assertTrue(!memcmp(chunk->abuf + sizeof(kWaveHeader), "Telegraph Road", 14));
+}
+
+void CommentaryTest::loadFakeCommentsZipFile()
+{
+    int size;
+    std::tie(m_commentaryZipData, size) = loadResFile("commentary.zip");
+    MockFile fakeCommentsZip("audio\\commentary.zip", m_commentaryZipData.get(), size);
+    addFakeFile(fakeCommentsZip);
 }
 
 void CommentaryTest::applyEnqueuedSamplesData(const EnqueuedSamplesData& data, const std::vector<int>& values)
@@ -785,25 +885,25 @@ static void triggerCornerSample()
 
 static void triggerYellowCardSample()
 {
-    enqueueYellowCardSample();
+    setEnqueueTimers({ 1, 0, 0, 0, 0, 0, 0 });
     playEnqueuedSamples();
 }
 
 static void triggerRedCardSample()
 {
-    enqueueRedCardSample();
+    setEnqueueTimers({ 0, 1, 0, 0, 0, 0, 0 });
     playEnqueuedSamples();
 }
 
 static void triggerSubstituteSample()
 {
-    enqueueSubstituteSample();
+    setEnqueueTimers({ 0, 0, 0, 0, 0, 1, 0 });
     playEnqueuedSamples();
 }
 
 static void triggerTacticsChangeSample()
 {
-    enqueueTacticsChangedSample();
+    setEnqueueTimers({ 0, 0, 0, 0, 0, 0, 1 });
     playEnqueuedSamples();
 }
 

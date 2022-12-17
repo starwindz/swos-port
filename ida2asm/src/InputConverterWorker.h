@@ -15,7 +15,8 @@ public:
         const SymbolFileParser& symFileParser, SymbolTable& symbolTable);
     void process();
     void output(OutputFormatResolver::OutputFormat format, const char *path, int extraMemorySize, bool disableOptimizations,
-        const StructStream& structs, const DefinesMap& defines, const std::string& prefix, std::pair<CToken *, bool> openSegment);
+        bool disableAlignmentChecks, const StructStream& structs, const DefinesMap& defines, const std::string& prefix,
+        std::pair<CToken *, bool> openSegment);
     void resolveReferences(const std::vector<const InputConverterWorker *>& workers, const SegmentSet& segments,
         const StructStream& structs, const DefinesMap& defines);
     void setCImportSymbols(const StringSet& syms);

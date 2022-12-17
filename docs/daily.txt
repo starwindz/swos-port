@@ -5742,7 +5742,7 @@ earlier:
 - pushed to Github
 14.11.2022.
 - whoops, seems I broke my Github account data limit, will need to compress *.rgd files and add decompression
-  functionality to tests; will probably link dynamically to zlib1.dll (already used by some of the project
+  functionality to the tests; will probably link dynamically to zlib1.dll (already used by some of the project
   libraries), and provide a local directory pointed to by an environment variable where the uncompressed files
   could reside and override the compressed equivalents when looked up; will need some of the functionality to go
   in the game as the sound files will be loaded from an archive
@@ -5754,7 +5754,156 @@ earlier:
   every cpp file; kRandomTable wasn't const, whoops!
 - refactored directory file search routine, much shorter and simpler now
 - added support for test resource files as compressed *.gz files, they are transparently decompressed as if they
-  are ordinary files (via SDL SDLRwops mechanism); this made tests even faster by 5 seconds!! the only slightly
+  are ordinary files (via SDL SDLRwops mechanism); this even made tests faster by 5 seconds!! the only slightly
   annoying thing is I've added another dll to the deployment, zlib-ng along with ordinary zlib (opted for ng since
   it's faster -- optimized for modern machines and easier to build); also went with dll over static lib to avoid
   CRT linking conundrum; the way I added zlib-ng will be applied as a model for the rest of external libraries
+16.11.2022.
+- was trying to create an image of IDA graph; found a Python script, and it even worked, but not on
+  UpdatePlayersAndBall() :( it works by setting graph widget size, making it gradually bigger, screen-shotting,
+  and trying to trim the image (if it can trim it, the job's done, if not keep resizing); the problem is when
+  widget reaches sizes close to 32k the grabbing function fails (possibly a limitation of QPixmap); some other way
+  will have to be found, like writing a parser for that weird IDA-specific graph format
+17.11.2022.
+- created initial version of the graph image: wrote a parser that converts IDA gdl graph to dot format, and with
+  that generating various output formats with graphviz; still needs some tweaking, but not too bad :)
+- found some way to get decent looking images, converted graph to SVG then unzoomed and did screen capture with a
+  plugin in Chrome (PDF format, and it automatically splits it in pages)
+- looked how the gdl file is generated, I might just generate dot directly from the code
+18.11.2022.
+- wrote IDA assembly to dot converter, it was harder than expected, but a rough version is up, still needs to be
+  debugged
+19.11.2022.
+- finally, the script is working great, and the output is looking good!
+20.11.2022.
+- managed to create code coverage report on tests, results are pretty intriguing, I was looking at
+  UpdatePlayersAndBall() and unfortunately there are some missed spots (e.g. a player that's about to take
+  throw-in gets substituted), although it's mostly covered; it'll be interesting moving forward
+21.11.2022.
+- went to printer's to try printing the UpdatePlayersAndBall() graph, but all shrunken versions failed :/ text is
+  unreadable, and the full version is too big to be useful... left them a phone number in case they figure
+  something out while I tried with the other printer, these guys are printing big posters, dude over there printed
+  small short test sheet in full width; it was really close, only the text was a bit too small :/ created few
+  other versions with increased font and somewhat compressed graph, and printed the one with 26pt size, it's almost
+  1x3 meters, the text is barely readable (need a magnifying glass), but it's here :)
+22.11.2022.
+/
+23.11.2022.
+- the plan is to raise coverage of UpdatePlayers() to 100% (bar those unreachable places), and then begin with the
+  conversion; for that it will be good to understand the code better, and one pass over the function should help
+- been deciphering the code, went through tackling and tackled/injured branches
+24.11.2022.
+- went through heading (all three types), started with throw-ins, peeling it slowly like an onion ;)
+25.11.2022.
+- went through throw-ins
+- clarified confusion about header type animation tables: there are 4 tables, 2 per header type (flying/lob &
+  static) and 2 for attempt and hit -- player has to jump first, and then just maybe hits the ball, in which case a
+  different animation table start rolling
+26.11.2022.
+- went through goalkeepers diving and a code for players in normal state, it's a bit complicated, didn't catch
+  everything
+- put breakpoints on uncovered code and managed to trigger plenty of them, will be making another game recording
+  to cover as much of those as possible, but it will require RGD format upgrade (it will need to be able to handle
+  'S' key during the game)
+27.11.2022.
+- during implementation of 'S' key in SWOS++ discovered that Watcom library functions were set up with wrong
+  registers (firstly memset() which started crashing the program after GCC update); fixed it, but no idea how it
+  worked in the first place
+- unfortunately, couldn't finish, since I get desync at benchPickTeamTimer in SWOS++
+28.11.2022.
+/
+29.11.2022.
+/
+30.11.2022.
+- fixed desync in SWOS++, format is v1.4 now, and recorded a game with:
+    - substitution of player that's taking throw-in
+    - double digit score on each team
+    - scoring own goals
+    - weak tackle
+    - stats aborted with fire during throw-in
+    - use invalid turn directions on throw-in and penalty
+    - tackling out of pitch
+    - passing to player that's out of pitch
+    - heading out of pitch/inside goal
+    - goalkeeper playing as normal player
+    - end a game in a draw
+    - end a game with ball in motion
+01.12.2022.
+- implemented RGD v1.4 in tester, immediately found a bug: kResultAtGameBreakLength was initialized with a wrong
+  value, 256 instead of 165
+- now triggering another assertion at frame 3039: mismatch in team allowed directions, the new file is already
+  turning out to be a success
+02.12.2022.
+- it was just that the player 2 was using 'S' for down, so he got issued down command instead of opening the
+  stats, changed it to 'X'; also fixed comparison of statsTimer, since SWOS uses 32'000 as a true value
+- now desync happens at the next frame in team player update index, turns out the logic wasn't correct,
+  UpdatePlayers() was called when it shouldn't be (when fireBlocked is true)
+- desync at 13858 but it turned out to be just inconsistent comparison of statsTimer (just had to compare them as
+  bools)
+- something related to bench previous direction at 16153
+03.12.2022.
+- accidentally found tab infected file, wrote a script to detect it, removed it and now we're clean
+- argh, somehow I missed to include tapTimeoutCounter (or wrongly deemed it unnecessary) in v1.3 format, and it
+  has come back to bite me: the last desync was caused by wrong tapTimeoutCounter value, which was caused by a
+  small error in logic (I wasn't immediately clearing it when a new direction press was detected)
+- desync at 17592: there was an error in calculating which team scored (in goalScored()) but it's fixed easily; no
+  more asserts! this file proved to be a gold mine for bug catching and extending coverage
+- noticed line when penalty is scored isn't covered, recorded quick penalty goal with stats (removed with fire),
+  but it seems a queued 'S' key somehow gets lost
+04.12.2022.
+- it wasn't a case of lost 'S', it was a small logic discrepancy: if fireBlocked is true the controls team isn't
+  chosen, and pick team counter isn't incremented (a small thing, but let's be consistent); and with this, the
+  penalty goal is covered
+- fixed invalid player name top-left when the player got substituted (it was much simpler than I thought, the
+  index is just an ordinal in the team, no need to track anything when substituted)
+05.12.2022.
+- [ida2asm] implemented a switch to disable alignment checks; results are pretty nice, exe went down in size by
+  700-800kb, x64: ~3.3mb -> ~2.6mb, x86: ~3.3mb -> ~2.5mb, and even the speed improved, tests are down from ~29 to
+  ~22sec (x86) and from ~24 to ~20sec (x64)
+06.12.2022.
+- started with 3rd party libraries reorganization, created separate 3rd-party directory with separate directory
+  per library, I think the layout is better now and more standardized; also made C++ additional include
+  directories more consistent by moving everything to VC++ directories tab (vs C++/General tab), now it's possible
+  to override if need be; super-boring job...
+07.12.2022.
+- finished with libraries reorganization... ewww
+- noticed I wrongfully removed external pointer access when I implemented alignment checks off option...
+  readMemory/writeMemory will have to go back in, a painful code deletion ensues... phew, it seems to not have
+  added much to the exe, but it's a very rarely used feature, I wonder if there's some better (more efficient) way
+  to implement it...
+- something is messed up in 64-bit version, ZeroOutStars() zeros out too much
+08.12.2022.
+- just a silly mistake, writeMemory() was missing breaks in switch
+- returned code for constant memory access with disabled alignment checks (only dynamic access had to go)
+- introduced DISABLE_ALIGNMENT_CHECKS symbol for platforms that support unaligned access and modified fetch/store
+  routines to do trivial data access if it's defined
+09.12.2022.
+/
+10.12.2022.
+- picked and compiled zip access library, minizip; replaced zlib dlls with zlib-ng in compatible mode, let's see
+  if it works well and performs better
+11.12.2022.
+- recompiled minizip and removed some unnecessary stuff (mostly compression ability)
+- added commentary loading from zip file, but haven't debugged it
+12.12.2022.
+- debugged comments zip loading and added tests (even Chinese characters in filename); actually works quite well,
+  I've switched to using them, it's much cleaner now ;) could use some more testing in the wild, but so far
+  looking good
+13.12.2022.
+- finished SWPE manual
+- recorded raw videos for SWPE demo (and crashed during the take lol)
+14.12.2022.
+- SWPE demo video is edited and published on YouTube! And the program itself published on Discord
+15.12.2022.
+- compiled zlib-ng and minizip for Android, seems it wasn't all that complicated, just needed to set path to
+  toolchain bin dir, and a few cmake toolchain-related variables and it went smooth; now, no idea if it will all
+  work at runtime :) that will have to wait; also, it's questionable if these libs are at all required on Android,
+  since are currently only used for zipped comments, which might be unnecessary for Android, as the files are
+  packed into bundles anyway, but that might require a bit of research and Android build is so far ahead that
+  things might change again until then
+16.12.2022.
+- pushed changes to Github
+17.12.2022.
+- started converting UpdatePlayers(), generated code pasted and only compiling
+18.12.2022.
+/

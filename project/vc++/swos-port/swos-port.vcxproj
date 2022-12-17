@@ -76,6 +76,7 @@
       <AssemblerOutput Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
       </AssemblerOutput>
     </ClCompile>
+    <ClCompile Include="..\..\..\src\game\ball\ball.cpp" />
     <ClCompile Include="..\..\..\src\game\bench\updateBench.cpp" />
     <ClCompile Include="..\..\..\src\game\bench\drawBench.cpp" />
     <ClCompile Include="..\..\..\src\game\camera.cpp" />
@@ -91,6 +92,7 @@
     <ClCompile Include="..\..\..\src\game\spinningLogo.cpp" />
     <ClCompile Include="..\..\..\src\game\stats.cpp" />
     <ClCompile Include="..\..\..\src\game\updateGoals.cpp" />
+    <ClCompile Include="..\..\..\src\game\updatePlayers\updatePlayers.cpp" />
     <ClCompile Include="..\..\..\src\init.cpp" />
     <ClCompile Include="..\..\..\src\menus\continueAbortMenu.cpp" />
     <ClCompile Include="..\..\..\src\menus\continueMenu.cpp" />
@@ -104,6 +106,7 @@
     <ClCompile Include="..\..\..\src\sprites\updateSprite.cpp" />
     <ClCompile Include="..\..\..\src\sprites\util\loadTexture.cpp" />
     <ClCompile Include="..\..\..\src\sprites\util\SharedTexture.cpp" />
+    <ClCompile Include="..\..\..\src\util\hash.cpp" />
     <ClCompile Include="..\..\..\src\util\log.cpp" />
     <ClCompile Include="..\..\..\src\main.cpp" />
     <ClCompile Include="..\..\..\src\menus\engine\drawMenu.cpp" />
@@ -135,6 +138,7 @@
     <ClCompile Include="..\..\..\src\text\textInput.cpp" />
     <ClCompile Include="..\..\..\src\util\random.cpp" />
     <ClCompile Include="..\..\..\src\util\util.cpp" />
+    <ClCompile Include="..\..\..\src\util\zip.cpp" />
     <ClCompile Include="..\..\..\src\video\assetManager.cpp" />
     <ClCompile Include="..\..\..\src\video\drawPrimitives.cpp" />
     <ClCompile Include="..\..\..\src\video\gameFieldMapping.cpp" />
@@ -270,6 +274,7 @@
     <ClInclude Include="..\..\..\src\files\file.h" />
     <ClInclude Include="..\..\..\src\files\selectFilesMenu.h" />
     <ClInclude Include="..\..\..\src\game\amigaMode.h" />
+    <ClInclude Include="..\..\..\src\game\ball\ball.h" />
     <ClInclude Include="..\..\..\src\game\bench\updateBench.h" />
     <ClInclude Include="..\..\..\src\game\bench\drawBench.h" />
     <ClInclude Include="..\..\..\src\game\camera.h" />
@@ -287,6 +292,7 @@
     <ClInclude Include="..\..\..\src\game\bench\bench.h" />
     <ClInclude Include="..\..\..\src\game\spinningLogo.h" />
     <ClInclude Include="..\..\..\src\game\stats.h" />
+    <ClInclude Include="..\..\..\src\game\updatePlayers\updatePlayers.h" />
     <ClInclude Include="..\..\..\src\init.h" />
     <ClInclude Include="..\..\..\src\menus\continueAbortMenu.h" />
     <ClInclude Include="..\..\..\src\menus\continueMenu.h" />
@@ -309,6 +315,7 @@
     <ClInclude Include="..\..\..\src\sprites\util\SharedTexture.h" />
     <ClInclude Include="..\..\..\src\swos\SwosPointer.h" />
     <ClInclude Include="..\..\..\src\util\FixedPoint.h" />
+    <ClInclude Include="..\..\..\src\util\hash.h" />
     <ClInclude Include="..\..\..\src\util\log.h" />
     <ClInclude Include="..\..\..\src\menus\engine\drawMenu.h" />
     <ClInclude Include="..\..\..\src\menus\mainMenu.h" />
@@ -333,6 +340,7 @@
     <ClInclude Include="..\..\..\src\util\flags.h" />
     <ClInclude Include="..\..\..\src\util\random.h" />
     <ClInclude Include="..\..\..\src\util\util.h" />
+    <ClInclude Include="..\..\..\src\util\zip.h" />
     <ClInclude Include="..\..\..\src\video\assetManager.h" />
     <ClInclude Include="..\..\..\src\video\drawPrimitives.h" />
     <ClInclude Include="..\..\..\src\video\gameFieldMapping.h" />
@@ -390,8 +398,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(SolutionDir)..\..\tmp\mnu2h;$(VC_IncludePath);$(WindowsSDK_IncludePath);..\..\..\include;..\..\..\include\SDL2;..\..\..\include\SDL2_image;..\..\..\include\SDL_net;..\..\..\include\crashrpt;..\..\..\include\simpleini;..\..\..\include\dirent;$(SolutionDir)..\..\src;$(SolutionDir)..\..\src\audio;$(SolutionDir)..\..\src\controls;$(SolutionDir)..\..\src\debug;$(SolutionDir)..\..\src\files;$(SolutionDir)..\..\src\game;$(SolutionDir)..\..\src\game\bench;$(SolutionDir)..\..\src\game\pitch;$(SolutionDir)..\..\src\menus;$(SolutionDir)..\..\src\menus\engine;$(SolutionDir)..\..\src\options;$(SolutionDir)..\..\src\replays;$(SolutionDir)..\..\src\sprites;$(SolutionDir)..\..\src\sprites\util;$(SolutionDir)..\..\src\swos;$(SolutionDir)..\..\src\swos;$(SolutionDir)..\..\src\text;$(SolutionDir)..\..\src\video;$(SolutionDir)..\..\src\util;$(SolutionDir)..\..\src\controls\joypads;$(SolutionDir)..\..\src\controls\joypads\ui;$(SolutionDir)..\..\src\controls\keyboard;$(SolutionDir)..\..\src\controls\mouse;$(SolutionDir)..\..\tmp\swos-cpp-gen-32;$(SolutionDir)..\..\tmp\assets;$(IncludePath)</IncludePath>
-    <LibraryPath>..\..\..\lib\win32\$(Configuration);$(LibraryPath)</LibraryPath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)..\..\3rd-party\SDL2\include;$(SolutionDir)..\..\3rd-party\SDL2_image\include;$(SolutionDir)..\..\3rd-party\SDL_mixer\include;$(SolutionDir)..\..\3rd-party\CrashRpt\include;$(SolutionDir)..\..\3rd-party\minizip\include;$(SolutionDir)..\..\3rd-party\SimpleIni;$(SolutionDir)..\..\3rd-party\dirent;$(SolutionDir)..\..\tmp\mnu2h;$(SolutionDir)..\..\src;$(SolutionDir)..\..\src\audio;$(SolutionDir)..\..\src\controls;$(SolutionDir)..\..\src\debug;$(SolutionDir)..\..\src\files;$(SolutionDir)..\..\src\game;$(SolutionDir)..\..\src\game\ball;$(SolutionDir)..\..\src\game\bench;$(SolutionDir)..\..\src\game\pitch;$(SolutionDir)..\..\src\game\updatePlayers;$(SolutionDir)..\..\src\menus;$(SolutionDir)..\..\src\menus\engine;$(SolutionDir)..\..\src\options;$(SolutionDir)..\..\src\replays;$(SolutionDir)..\..\src\sprites;$(SolutionDir)..\..\src\sprites\util;$(SolutionDir)..\..\src\swos;$(SolutionDir)..\..\src\text;$(SolutionDir)..\..\src\util;$(SolutionDir)..\..\src\video;$(SolutionDir)..\..\src\controls\joypads;$(SolutionDir)..\..\src\controls\joypads\ui;$(SolutionDir)..\..\src\controls\keyboard;$(SolutionDir)..\..\src\controls\mouse;$(SolutionDir)..\..\tmp\assets;$(SolutionDir)..\..\tmp\swos-cpp-gen-32;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)..\..\3rd-party\SDL2\lib\win32\$(Configuration);$(SolutionDir)..\..\3rd-party\SDL2_image\lib\win32\$(Configuration);$(SolutionDir)..\..\3rd-party\SDL_mixer\lib\win32\$(Configuration);$(SolutionDir)..\..\3rd-party\zlib-ng\lib\win32;$(SolutionDir)..\..\3rd-party\minizip\lib\win32\$(Configuration);$(SolutionDir)..\..\3rd-party\SDL2_mixer\lib\win32\$(Configuration);$(SolutionDir)..\..\3rd-party\CrashRpt\lib\win32\$(Configuration);$(LibraryPath)</LibraryPath>
     <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <RunCodeAnalysis>false</RunCodeAnalysis>
     <IntDir>$(SolutionDir)..\..\tmp\$(ProjectName)-$(Platform)-$(Configuration)\</IntDir>
@@ -399,8 +407,8 @@
     <OutDir>$(SolutionDir)..\..\bin\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>$(SolutionDir)..\..\tmp\mnu2h;$(VC_IncludePath);$(WindowsSDK_IncludePath);..\..\..\include;..\..\..\include\SDL2;..\..\..\include\SDL2_image;..\..\..\include\SDL_net;..\..\..\include\crashrpt;..\..\..\include\simpleini;..\..\..\include\dirent;$(SolutionDir)..\..\src;$(SolutionDir)..\..\src\audio;$(SolutionDir)..\..\src\controls;$(SolutionDir)..\..\src\debug;$(SolutionDir)..\..\src\files;$(SolutionDir)..\..\src\game;$(SolutionDir)..\..\src\game\bench;$(SolutionDir)..\..\src\game\pitch;$(SolutionDir)..\..\src\menus;$(SolutionDir)..\..\src\menus\engine;$(SolutionDir)..\..\src\options;$(SolutionDir)..\..\src\replays;$(SolutionDir)..\..\src\sprites;$(SolutionDir)..\..\src\sprites\util;$(SolutionDir)..\..\src\swos;$(SolutionDir)..\..\src\text;$(SolutionDir)..\..\src\video;$(SolutionDir)..\..\src\util;$(SolutionDir)..\..\src\controls\joypads;$(SolutionDir)..\..\src\controls\joypads\ui;$(SolutionDir)..\..\src\controls\keyboard;$(SolutionDir)..\..\src\controls\mouse;$(SolutionDir)..\..\tmp\swos-cpp-gen-32;$(SolutionDir)..\..\tmp\assets;$(IncludePath)</IncludePath>
-    <LibraryPath>..\..\..\lib\win32\$(Configuration);$(LibraryPath)</LibraryPath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)..\..\3rd-party\SDL2\include;$(SolutionDir)..\..\3rd-party\SDL2_image\include;$(SolutionDir)..\..\3rd-party\SDL_mixer\include;$(SolutionDir)..\..\3rd-party\CrashRpt\include;$(SolutionDir)..\..\3rd-party\minizip\include;$(SolutionDir)..\..\3rd-party\SimpleIni;$(SolutionDir)..\..\3rd-party\dirent;$(SolutionDir)..\..\tmp\mnu2h;$(SolutionDir)..\..\src;$(SolutionDir)..\..\src\audio;$(SolutionDir)..\..\src\controls;$(SolutionDir)..\..\src\debug;$(SolutionDir)..\..\src\files;$(SolutionDir)..\..\src\game;$(SolutionDir)..\..\src\game\ball;$(SolutionDir)..\..\src\game\bench;$(SolutionDir)..\..\src\game\pitch;$(SolutionDir)..\..\src\game\updatePlayers;$(SolutionDir)..\..\src\menus;$(SolutionDir)..\..\src\menus\engine;$(SolutionDir)..\..\src\options;$(SolutionDir)..\..\src\replays;$(SolutionDir)..\..\src\sprites;$(SolutionDir)..\..\src\sprites\util;$(SolutionDir)..\..\src\swos;$(SolutionDir)..\..\src\text;$(SolutionDir)..\..\src\util;$(SolutionDir)..\..\src\video;$(SolutionDir)..\..\src\controls\joypads;$(SolutionDir)..\..\src\controls\joypads\ui;$(SolutionDir)..\..\src\controls\keyboard;$(SolutionDir)..\..\src\controls\mouse;$(SolutionDir)..\..\tmp\assets;$(SolutionDir)..\..\tmp\swos-cpp-gen-32;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)..\..\3rd-party\SDL2\lib\win32\$(Configuration);$(SolutionDir)..\..\3rd-party\SDL2_image\lib\win32\$(Configuration);$(SolutionDir)..\..\3rd-party\SDL_mixer\lib\win32\$(Configuration);$(SolutionDir)..\..\3rd-party\zlib-ng\lib\win32;$(SolutionDir)..\..\3rd-party\minizip\lib\win32\$(Configuration);$(SolutionDir)..\..\3rd-party\SDL_mixer\lib\win32\$(Configuration);$(SolutionDir)..\..\3rd-party\CrashRpt\lib\win32\$(Configuration);$(LibraryPath)</LibraryPath>
     <IntDir>$(SolutionDir)..\..\tmp\$(ProjectName)-$(Platform)-$(Configuration)\</IntDir>
     <TargetName>$(ProjectName)-$(Platform)-$(Configuration)</TargetName>
     <OutDir>$(SolutionDir)..\..\bin\</OutDir>
@@ -410,16 +418,16 @@
     <IntDir>$(SolutionDir)..\..\tmp\$(ProjectName)-$(Platform)-$(Configuration)\</IntDir>
     <OutDir>$(SolutionDir)..\..\bin\x64\</OutDir>
     <TargetName>$(ProjectName)-$(Platform)-$(Configuration)</TargetName>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
-    <LibraryPath>..\..\..\lib\win64\$(Configuration);$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)</LibraryPath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)..\..\3rd-party\SDL2\include;$(SolutionDir)..\..\3rd-party\SDL2_image\include;$(SolutionDir)..\..\3rd-party\SDL_mixer\include;$(SolutionDir)..\..\3rd-party\CrashRpt\include;$(SolutionDir)..\..\3rd-party\minizip\include;$(SolutionDir)..\..\3rd-party\SimpleIni;$(SolutionDir)..\..\3rd-party\dirent;$(SolutionDir)..\..\tmp\mnu2h;$(SolutionDir)..\..\src;$(SolutionDir)..\..\src\audio;$(SolutionDir)..\..\src\controls;$(SolutionDir)..\..\src\debug;$(SolutionDir)..\..\src\files;$(SolutionDir)..\..\src\game;$(SolutionDir)..\..\src\game\ball;$(SolutionDir)..\..\src\game\bench;$(SolutionDir)..\..\src\game\pitch;$(SolutionDir)..\..\src\game\updatePlayers;$(SolutionDir)..\..\src\menus;$(SolutionDir)..\..\src\menus\engine;$(SolutionDir)..\..\src\options;$(SolutionDir)..\..\src\replays;$(SolutionDir)..\..\src\sprites;$(SolutionDir)..\..\src\sprites\util;$(SolutionDir)..\..\src\swos;$(SolutionDir)..\..\src\text;$(SolutionDir)..\..\src\util;$(SolutionDir)..\..\src\video;$(SolutionDir)..\..\src\controls\joypads;$(SolutionDir)..\..\src\controls\joypads\ui;$(SolutionDir)..\..\src\controls\keyboard;$(SolutionDir)..\..\src\controls\mouse;$(SolutionDir)..\..\tmp\assets;$(SolutionDir)..\..\tmp\swos-cpp-gen-64;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)..\..\3rd-party\SDL2\lib\win64\$(Configuration);$(SolutionDir)..\..\3rd-party\SDL2_image\lib\win64\$(Configuration);$(SolutionDir)..\..\3rd-party\SDL_mixer\lib\win64\$(Configuration);$(SolutionDir)..\..\3rd-party\CrashRpt\lib\win64\$(Configuration);$(SolutionDir)..\..\3rd-party\zlib-ng\lib\win64;$(SolutionDir)..\..\3rd-party\minizip\lib\win64\$(Configuration);$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)</LibraryPath>
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IntDir>$(SolutionDir)..\..\tmp\$(ProjectName)-$(Platform)-$(Configuration)\</IntDir>
     <OutDir>$(SolutionDir)..\..\bin\x64\</OutDir>
     <TargetName>$(ProjectName)-$(Platform)-$(Configuration)</TargetName>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
-    <LibraryPath>..\..\..\lib\win64\$(Configuration);$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)</LibraryPath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)..\..\3rd-party\SDL2\include;$(SolutionDir)..\..\3rd-party\SDL2_image\include;$(SolutionDir)..\..\3rd-party\SDL_mixer\include;$(SolutionDir)..\..\3rd-party\CrashRpt\include;$(SolutionDir)..\..\3rd-party\minizip\include;$(SolutionDir)..\..\3rd-party\SimpleIni;$(SolutionDir)..\..\3rd-party\dirent;$(SolutionDir)..\..\tmp\mnu2h;$(SolutionDir)..\..\src;$(SolutionDir)..\..\src\audio;$(SolutionDir)..\..\src\controls;$(SolutionDir)..\..\src\debug;$(SolutionDir)..\..\src\files;$(SolutionDir)..\..\src\game;$(SolutionDir)..\..\src\game\ball;$(SolutionDir)..\..\src\game\bench;$(SolutionDir)..\..\src\game\pitch;$(SolutionDir)..\..\src\game\updatePlayers;$(SolutionDir)..\..\src\menus;$(SolutionDir)..\..\src\menus\engine;$(SolutionDir)..\..\src\options;$(SolutionDir)..\..\src\replays;$(SolutionDir)..\..\src\sprites;$(SolutionDir)..\..\src\sprites\util;$(SolutionDir)..\..\src\swos;$(SolutionDir)..\..\src\text;$(SolutionDir)..\..\src\util;$(SolutionDir)..\..\src\video;$(SolutionDir)..\..\src\controls\joypads;$(SolutionDir)..\..\src\controls\joypads\ui;$(SolutionDir)..\..\src\controls\keyboard;$(SolutionDir)..\..\src\controls\mouse;$(SolutionDir)..\..\tmp\assets;$(SolutionDir)..\..\tmp\swos-cpp-gen-64;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)..\..\3rd-party\SDL2\lib\win64\$(Configuration);$(SolutionDir)..\..\3rd-party\SDL2_image\lib\win64\$(Configuration);$(SolutionDir)..\..\3rd-party\SDL_mixer\lib\win64\$(Configuration);$(SolutionDir)..\..\3rd-party\CrashRpt\lib\win64\$(Configuration);$(SolutionDir)..\..\3rd-party\zlib-ng\lib\win64;$(SolutionDir)..\..\3rd-party\minizip\lib\win64\$(Configuration);$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)</LibraryPath>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -430,17 +438,17 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>$(SolutionDir)..\..\src\stdinc.h</PrecompiledHeaderFile>
       <ForcedIncludeFiles>$(SolutionDir)..\..\src\stdinc.h</ForcedIncludeFiles>
-      <PreprocessorDefinitions>SWOS_VM;DEBUG;_MBCS;_CRT_SECURE_NO_WARNINGS;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DISABLE_ALIGNMENT_CHECKS=1;SWOS_VM;DEBUG;_MBCS;_CRT_SECURE_NO_WARNINGS;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AssemblerOutput>NoListing</AssemblerOutput>
       <UndefinePreprocessorDefinitions>NDEBUG</UndefinePreprocessorDefinitions>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <DisableSpecificWarnings>4731</DisableSpecificWarnings>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp14</LanguageStandard>
       <EnablePREfast>false</EnablePREfast>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>SDL2d.lib;SDL2maind.lib;SDL2_image.lib;SDL2_net.lib;SDL2_mixer.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;winmm.lib;CrashRpt1403d.lib;CrashRptProbe1403d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>zlib.lib;libminizip.lib;SDL2d.lib;SDL2maind.lib;SDL2_image.lib;SDL2_mixer.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;winmm.lib;CrashRpt1403d.lib;CrashRptProbe1403d.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
@@ -460,7 +468,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>$(SolutionDir)..\..\src\stdinc.h</PrecompiledHeaderFile>
       <ForcedIncludeFiles>$(SolutionDir)..\..\src\stdinc.h</ForcedIncludeFiles>
-      <PreprocessorDefinitions>SWOS_VM;_MBCS;_CRT_SECURE_NO_WARNINGS;NOMINMAX;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DISABLE_ALIGNMENT_CHECKS=1;SWOS_VM;_MBCS;_CRT_SECURE_NO_WARNINGS;NOMINMAX;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AssemblerOutput>NoListing</AssemblerOutput>
       <CallingConvention>Cdecl</CallingConvention>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -475,7 +483,7 @@
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_image.lib;SDL2_net.lib;SDL2_mixer.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;winmm.lib;CrashRpt1403.lib;CrashRptProbe1403.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>zlib.lib;libminizip.lib;SDL2.lib;SDL2main.lib;SDL2_image.lib;SDL2_mixer.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;winmm.lib;CrashRpt1403.lib;CrashRptProbe1403.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
@@ -489,9 +497,9 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <ConformanceMode>true</ConformanceMode>
-      <PreprocessorDefinitions>SWOS_VM;NOMINMAX;DEBUG;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DISABLE_ALIGNMENT_CHECKS=1;SWOS_VM;NOMINMAX;DEBUG;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <UndefinePreprocessorDefinitions>NDEBUG</UndefinePreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\..\tmp\mnu2h;$(VC_IncludePath);$(WindowsSDK_IncludePath);..\..\..\include;..\..\..\include\SDL2;..\..\..\include\SDL2_image;..\..\..\include\SDL_net;..\..\..\include\crashrpt;..\..\..\include\simpleini;..\..\..\include\dirent;$(SolutionDir)..\..\src;$(SolutionDir)..\..\src\audio;$(SolutionDir)..\..\src\controls;$(SolutionDir)..\..\src\debug;$(SolutionDir)..\..\src\files;$(SolutionDir)..\..\src\game;$(SolutionDir)..\..\src\game\pitch;$(SolutionDir)..\..\src\game\bench;$(SolutionDir)..\..\src\menus;$(SolutionDir)..\..\src\menus\engine;$(SolutionDir)..\..\src\options;$(SolutionDir)..\..\src\replays;$(SolutionDir)..\..\src\sprites;$(SolutionDir)..\..\src\sprites\util;$(SolutionDir)..\..\src\swos;$(SolutionDir)..\..\src\swos;$(SolutionDir)..\..\src\text;$(SolutionDir)..\..\src\video;$(SolutionDir)..\..\src\util;$(SolutionDir)..\..\src\controls\joypads;$(SolutionDir)..\..\src\controls\joypads\ui;$(SolutionDir)..\..\src\controls\keyboard;$(SolutionDir)..\..\src\controls\mouse;$(SolutionDir)..\..\tmp\swos-cpp-gen-64;$(SolutionDir)..\..\tmp\assets;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>$(SolutionDir)..\..\src\stdinc.h</ForcedIncludeFiles>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>$(SolutionDir)..\..\src\stdinc.h</PrecompiledHeaderFile>
@@ -500,7 +508,7 @@
       <CallingConvention>FastCall</CallingConvention>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>SDL2d.lib;SDL2maind.lib;SDL2_image.lib;SDL2_net.lib;SDL2_mixer.lib;winmm.lib;CrashRpt1403d.lib;CrashRptProbe1403d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>zlib.lib;libminizip.lib;SDL2d.lib;SDL2maind.lib;SDL2_image.lib;SDL2_mixer.lib;winmm.lib;CrashRpt1403d.lib;CrashRptProbe1403d.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>false</OptimizeReferences>
       <EnableCOMDATFolding>false</EnableCOMDATFolding>
@@ -512,8 +520,8 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <ConformanceMode>true</ConformanceMode>
-      <PreprocessorDefinitions>SWOS_VM;NOMINMAX;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\..\tmp\mnu2h;$(VC_IncludePath);$(WindowsSDK_IncludePath);..\..\..\include;..\..\..\include\SDL2;..\..\..\include\SDL2_image;..\..\..\include\SDL_net;..\..\..\include\crashrpt;..\..\..\include\simpleini;..\..\..\include\dirent;$(SolutionDir)..\..\src;$(SolutionDir)..\..\src\audio;$(SolutionDir)..\..\src\controls;$(SolutionDir)..\..\src\debug;$(SolutionDir)..\..\src\files;$(SolutionDir)..\..\src\game;$(SolutionDir)..\..\src\game\pitch;$(SolutionDir)..\..\src\game\bench;$(SolutionDir)..\..\src\menus;$(SolutionDir)..\..\src\menus\engine;$(SolutionDir)..\..\src\options;$(SolutionDir)..\..\src\replays;$(SolutionDir)..\..\src\sprites;$(SolutionDir)..\..\src\sprites\util;$(SolutionDir)..\..\src\swos;$(SolutionDir)..\..\src\text;$(SolutionDir)..\..\src\video;$(SolutionDir)..\..\src\util;$(SolutionDir)..\..\src\controls\joypads;$(SolutionDir)..\..\src\controls\joypads\ui;$(SolutionDir)..\..\src\controls\keyboard;$(SolutionDir)..\..\src\controls\mouse;$(SolutionDir)..\..\tmp\swos-cpp-gen-64;$(SolutionDir)..\..\tmp\assets;$(IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>DISABLE_ALIGNMENT_CHECKS=1;SWOS_VM;NOMINMAX;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>$(SolutionDir)..\..\src\stdinc.h</ForcedIncludeFiles>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>$(SolutionDir)..\..\src\stdinc.h</PrecompiledHeaderFile>
@@ -527,7 +535,7 @@
       <ExceptionHandling>Sync</ExceptionHandling>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_image.lib;SDL2_net.lib;SDL2_mixer.lib;winmm.lib;CrashRpt1403.lib;CrashRptProbe1403.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>zlib.lib;libminizip.lib;SDL2.lib;SDL2main.lib;SDL2_image.lib;SDL2_mixer.lib;winmm.lib;CrashRpt1403.lib;CrashRptProbe1403.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <OptimizeReferences>true</OptimizeReferences>

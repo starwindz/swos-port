@@ -6,12 +6,13 @@
 
 constexpr int kDefinesCapacity = 45'000;
 
-InputConverter::InputConverter(const char *inputPath, const char *outputPath, const char *swosHeaderFile, OutputFormatResolver::OutputFormat format,
-    int numFiles, int extraMemorySize, bool disableOptimizations, SymbolFileParser& symFileParser)
+InputConverter::InputConverter(const char *inputPath, const char *outputPath, const char *swosHeaderFile,
+    OutputFormatResolver::OutputFormat format, int numFiles, int extraMemorySize, bool disableOptimizations,
+    bool disableAlignmentChecks, SymbolFileParser& symFileParser)
 :
     m_inputPath(inputPath), m_outputPath(outputPath), m_headerPath(swosHeaderFile), m_format(format), m_numFiles(numFiles),
-    m_extraMemorySize(extraMemorySize), m_disableOptimizations(disableOptimizations), m_defines(kDefinesCapacity),
-    m_symFileParser(symFileParser), m_dataBank(symFileParser)
+    m_extraMemorySize(extraMemorySize), m_disableOptimizations(disableOptimizations), m_disableAlignmentChecks(disableAlignmentChecks),
+    m_defines(kDefinesCapacity), m_symFileParser(symFileParser), m_dataBank(symFileParser)
 {
     loadFile(inputPath);
 }
@@ -240,8 +241,8 @@ void InputConverter::output(const String& commonPrefix, const AllowedChunkList& 
         m_workers[i]->setCExportSymbols(m_symFileParser.exports());
 
         auto future = std::async(std::launch::async, &InputConverterWorker::output, m_workers[i], m_format, m_outputPath,
-            m_extraMemorySize, m_disableOptimizations, std::ref(m_structs), std::ref(m_defines), std::cref(prefix),
-            std::make_pair(openSegment, i == 0));
+            m_extraMemorySize, m_disableOptimizations, m_disableAlignmentChecks, std::ref(m_structs), std::ref(m_defines),
+            std::cref(prefix), std::make_pair(openSegment, i == 0));
         m_futures[i] = std::move(future);
     }
 
@@ -335,7 +336,8 @@ void InputConverter::checkForUnusedSymbols()
 void InputConverter::outputStructsAndDefines()
 {
     m_outputWriter = OutputFactory::create(m_format, m_outputPath, m_workers.size() + 1, m_extraMemorySize,
-        m_disableOptimizations, m_symFileParser, m_structs, m_defines, References(), OutputItemStream(), m_dataBank);
+        m_disableOptimizations, m_disableAlignmentChecks, m_symFileParser, m_structs, m_defines, References(),
+        OutputItemStream(), m_dataBank);
 
     if (!m_outputWriter->output(OutputWriter::kStructs | OutputWriter::kDefines))
         Util::exit("Error writing output file!\n%s", EXIT_FAILURE,

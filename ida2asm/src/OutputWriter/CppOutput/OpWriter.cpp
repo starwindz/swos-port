@@ -390,8 +390,8 @@ void OpWriter::writeToConstantAddress(const OpInfo& op, DestMemoryData source)
 
     const auto& typeInfo = getTypeInfo(op.size);
 
-    if (op.size == 1) {
-        outMemAccess(op.constantAddress);
+    if (m_outputWriter.disableAlignmentChecks() || op.size == 1) {
+        outMemAccess(op.constantAddress, op.size);
         out(" = ");
         outputData();
     } else {
@@ -524,8 +524,8 @@ void OpWriter::readConstantMemory(const OpInfo& op) const
 
     const auto& typeInfo = getTypeInfo(size);
 
-    if (size == 1) {
-        outMemAccess(op.constantAddress);
+    if (m_outputWriter.disableAlignmentChecks() || size == 1) {
+        outMemAccess(op.constantAddress, size);
     } else {
         switch (op.constantAddress % size) {
         case 0:
@@ -647,7 +647,8 @@ bool OpWriter::outputOpValue(const OperandInfo::Component& comp, const OpInfo& o
                     (op.size != 4 &&
                     (category == kRvalue && comp.offset ||
                     category == kLvalue || !op.otherOp.opInfo.isRegister() ||
-                    op.size != op.otherOp.size));
+                    op.size != op.otherOp.size) ||
+                    m_outputWriter.disableAlignmentChecks() && op.fetchMemory);
 
                 if (needsCast) {
                     out("*(", getType(op), " *)");
@@ -742,19 +743,25 @@ void OpWriter::outFlagAssignment(const char *flag) const
 
 void OpWriter::outMemAccess(size_t address, size_t size /* = 1 */) const
 {
-    assert(address % size == 0);
+    assert(m_outputWriter.disableAlignmentChecks() || address % size == 0);
 
-    switch (size) {
-    case 4:
-        out("g_memDword[");
-        address /= 4;
-        break;
-    case 2: out("g_memWord[");
-        address /= 2;
-        break;
-    default:
+    if (m_outputWriter.disableAlignmentChecks()) {
+        if (size > 1)
+            out("*(", getTypeInfo(size).unsignedType, " *)&");
         out("g_memByte[");
-        assert(size == 1);
+    } else {
+        switch (size) {
+        case 4:
+            out("g_memDword[");
+            address /= 4;
+            break;
+        case 2: out("g_memWord[");
+            address /= 2;
+            break;
+        default:
+            out("g_memByte[");
+            assert(size == 1);
+        }
     }
 
     out(address, ']');

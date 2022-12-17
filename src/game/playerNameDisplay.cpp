@@ -84,7 +84,7 @@ static void getPlayerNumberAndSurname(char *buf, const PlayerGame& player)
 
     A0 = player.shortName;
     D0 = 0x4000 | 11;   // copy surname only, 11 characters max.
-    GetSurname();
+    ExtractSurname();
 
     strcpy(buf + shirtNumberLen + 1, A0.asPtr());
 }
@@ -94,9 +94,7 @@ static void showCurrentPlayerName(const Sprite *lastPlayer, const TeamGeneralInf
     assert(lastPlayer && lastTeam);
 
     m_topTeam = lastTeam->inGameTeamPtr.asAligned() == &swos.topTeamInGame;
-
-    int index = lastPlayer->playerOrdinal - 1;
-    m_playerOrdinal = getBenchPlayerShirtNumber(m_topTeam, index);
+    m_playerOrdinal = lastPlayer->playerOrdinal - 1;
 }
 
 static void hideCurrentPlayerName()

@@ -2,6 +2,7 @@
 #include "mockLog.h"
 #include "sdlProcs.h"
 #include "joypads.h"
+#include "util.h"
 
 namespace SWOS_UnitTest {
     namespace Detail {
@@ -136,7 +137,7 @@ int JoypadsTest::extractNameSuffix(const char *name)
     int tens = 1;
     auto p = rParen - 1;
 
-    while (p >= name && isdigit(*p)) {
+    while (p >= name && isDigit(*p)) {
         suffix += tens * (*p-- - '0');
         tens *= 10;
     }

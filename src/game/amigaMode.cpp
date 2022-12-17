@@ -27,9 +27,6 @@ void setAmigaModeEnabled(bool enable)
             swos.letPlayerControlCameraInterval = 500;
             swos.playerDownTacklingInterval = 50;
             swos.playerDownHeadingInterval = 50;
-            swos.penaltyLockInterval = 50;
-            swos.goalkeeperCatchLimitZ = 22;
-            swos.hideResultInterval = 50;
             swos.clearResultInterval = 600;
             swos.clearResultHalftimeInterval = 350;
             swos.kKeeperSaveDistance = 24;
@@ -48,9 +45,6 @@ void setAmigaModeEnabled(bool enable)
             swos.letPlayerControlCameraInterval = 550;
             swos.playerDownTacklingInterval = 55;
             swos.playerDownHeadingInterval = 55;
-            swos.penaltyLockInterval = 55;
-            swos.goalkeeperCatchLimitZ = 27;
-            swos.hideResultInterval = 55;
             swos.clearResultInterval = 660;
             swos.clearResultHalftimeInterval = 385;
             swos.kKeeperSaveDistance = 16;

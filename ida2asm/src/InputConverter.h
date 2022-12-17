@@ -14,7 +14,7 @@ class InputConverter
 {
 public:
     InputConverter(const char *inputPath, const char *outputPath, const char *swosHeaderFile, OutputFormatResolver::OutputFormat format,
-        int numFiles, int extraMemorySize, bool disableOptimizations, SymbolFileParser& symFileParser);
+        int numFiles, int extraMemorySize, bool disableOptimizations, bool disableAlignmentChecks, SymbolFileParser& symFileParser);
     void convert();
 
 private:
@@ -42,6 +42,7 @@ private:
     int m_numFiles;
     int m_extraMemorySize;
     bool m_disableOptimizations;
+    bool m_disableAlignmentChecks;
 
     const char *m_inputPath;
     const char *m_outputPath;

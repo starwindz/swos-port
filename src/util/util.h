@@ -29,10 +29,16 @@ std::string formatNumberWithCommas(int64_t num);
 int formatDoubleNoTrailingZeros(double value, char *buf, int bufLen, int digits);
 int numDigits(int num);
 
+static inline bool isDigit(char c)
+{
+    return c >= '0' && c <= '9';
+}
+
 static inline int sgn(int num) {
     return num < 0 ? -1 : 1;
 }
 
+#if __ANDROID_API__ < 21
 static inline char *stpcpy(char *dest, const char *src)
 {
     while (*dest++ = *src++)
@@ -40,6 +46,7 @@ static inline char *stpcpy(char *dest, const char *src)
 
     return dest - 1;
 }
+#endif
 
 template<typename T>
 size_t vectorByteSize(const std::vector<T>& vec)
@@ -63,8 +70,6 @@ void invokeWithSaved68kRegisters(F f)
     restore68kRegisters();
 }
 
-unsigned hash(const char *str);
-unsigned hash(const void *buffer, size_t length);
 int getRandomInRange(int min, int max);
 void beep();
 bool isDebuggerPresent();

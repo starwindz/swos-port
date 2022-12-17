@@ -4,6 +4,9 @@
 template<typename T, std::enable_if_t<std::is_integral<T>::value && sizeof(T) == 2, int> = 0>
 T fetch(const T *t)
 {
+#ifdef DISABLE_ALIGNMENT_CHECKS
+    return *t;
+#else
     auto p = reinterpret_cast<const uint8_t *>(t);
     auto address = reinterpret_cast<uintptr_t>(t);
 
@@ -16,11 +19,15 @@ T fetch(const T *t)
         assert(false);
         return 0;
     }
+#endif
 }
 
 template<typename T, std::enable_if_t<std::is_integral<T>::value && sizeof(T) == 4, int> = 0>
 T fetch(const T *t)
 {
+#ifdef DISABLE_ALIGNMENT_CHECKS
+    return *t;
+#else
     auto p = reinterpret_cast<const uint8_t *>(t);
     auto address = reinterpret_cast<uintptr_t>(t);
 
@@ -37,11 +44,15 @@ T fetch(const T *t)
         assert(false);
         return 0;
     }
+#endif
 }
 
 template<typename T, std::enable_if_t<std::is_integral<T>::value && sizeof(T) == 8, int> = 0>
 T fetch(const T *t)
 {
+#ifdef DISABLE_ALIGNMENT_CHECKS
+    return *t;
+#else
     auto p = reinterpret_cast<const uint8_t *>(t);
     auto address = reinterpret_cast<uintptr_t>(t);
 
@@ -66,11 +77,15 @@ T fetch(const T *t)
         assert(false);
         return 0;
     }
+#endif
 }
 
 template<typename T1, typename T2, std::enable_if_t<!std::is_integral<T1>::value && (sizeof(T1) == 4 || sizeof(T1) == 8), int> = 0>
 T1 fetch(const T2 *t)
 {
+#ifdef DISABLE_ALIGNMENT_CHECKS
+    return *(T1 *)t;
+#else
     using Uint = typename std::conditional<sizeof(T1) == 8, uint64_t, uint32_t>::type;
     union U1 {
         U1() {}
@@ -79,11 +94,15 @@ T1 fetch(const T2 *t)
     } u;
     u.temp = fetch<Uint>((Uint *)t);
     return u.result;
+#endif
 }
 
 template<typename T, std::enable_if_t<std::is_integral<T>::value && sizeof(T) == 2, int> = 0>
 void store(T *t, int value)
 {
+#ifdef DISABLE_ALIGNMENT_CHECKS
+    *t = value;
+#else
     auto p = reinterpret_cast<uint8_t *>(t);
     auto address = reinterpret_cast<uintptr_t>(t);
 
@@ -98,11 +117,15 @@ void store(T *t, int value)
     default:
         assert(false);
     }
+#endif
 }
 
 template<typename T, std::enable_if_t<std::is_integral<T>::value && sizeof(T) == 4, int> = 0>
 void store(T *t, int value)
 {
+#ifdef DISABLE_ALIGNMENT_CHECKS
+    *t = value;
+#else
     auto p = reinterpret_cast<uint8_t *>(t);
     auto address = reinterpret_cast<uintptr_t>(t);
 
@@ -125,11 +148,15 @@ void store(T *t, int value)
     default:
         assert(false);
     }
+#endif
 }
 
 template<typename T, std::enable_if_t<std::is_integral<T>::value && sizeof(T) == 8, int> = 0>
 void store(T *t, T value)
 {
+#ifdef DISABLE_ALIGNMENT_CHECKS
+    *t = value;
+#else
     auto p = reinterpret_cast<uint8_t *>(t);
     auto address = reinterpret_cast<uintptr_t>(t);
 
@@ -168,4 +195,5 @@ void store(T *t, T value)
     default:
         assert(false);
     }
+#endif
 }

@@ -1,6 +1,5 @@
 #include "sdlProcs.h"
 #include "SdlAddressTableFetcher.h"
-#include <SDL2/SDL.h>
 
 static void **m_table;
 static std::unique_ptr<void *[]> m_originalTable;

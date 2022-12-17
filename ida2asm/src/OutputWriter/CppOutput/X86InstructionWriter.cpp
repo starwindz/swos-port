@@ -8,10 +8,11 @@
 #define kNewLine (Util::kNewLine)
 #define kDoubleNewLine (Util::kDoubleNewLine)
 
-X86InstructionWriter::X86InstructionWriter(CppOutput *outputWriter, const DataBank& dataBank,
+X86InstructionWriter::X86InstructionWriter(bool disableAlignmentChecks, CppOutput *outputWriter, const DataBank& dataBank,
     const SymbolFileParser& symFileParser, const StringSet& inProcLabels)
 :
-    m_outputWriter(*outputWriter), m_dataBank(dataBank), m_symFileParser(symFileParser), m_inProcLabels(inProcLabels)
+    m_disableAlignmentChecks(disableAlignmentChecks), m_outputWriter(*outputWriter),
+    m_dataBank(dataBank), m_symFileParser(symFileParser), m_inProcLabels(inProcLabels)
 {
     assert(outputWriter);
 }

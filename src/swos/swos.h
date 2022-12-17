@@ -335,7 +335,7 @@ struct TeamGeneralInfo
     SwosDataPointer<Sprite> controlledPlayerSprite;
     SwosDataPointer<Sprite> passToPlayerPtr;
     word playerHasBall;
-    word playerHadBall;
+    word allowedDirections;
     word currentAllowedDirection;
     word direction;
     byte quickFire;
@@ -501,7 +501,7 @@ enum PCKeys
     kKeyF2         = 0x3c,
 };
 
-constexpr int kCursorChar = -1;
+constexpr char kCursorChar = -1;
 
 enum Nationalities
 {

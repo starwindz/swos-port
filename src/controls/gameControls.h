@@ -4,8 +4,10 @@
 #include "controls.h"
 
 void resetGameControls();
+bool updateFireBlocked();
 TeamGeneralInfo *selectTeamForUpdate();
-std::function<void()> updateTeamControls(TeamGeneralInfo *team);
+void updateTeamControls(TeamGeneralInfo *team);
+void postUpdateTeamControls(TeamGeneralInfo *team);
 GameControlEvents getPlayerEvents(PlayerNumber player);
 bool isPlayerFiring(PlayerNumber player);
 bool getFireStartedAndBumpFireCounter(bool currentFire, PlayerNumber player = kPlayer1);

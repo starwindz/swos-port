@@ -1,0 +1,14 @@
+Size: 60 bytes.
+
+For goalkeepers: kGoalieSkillTables
+For players: kPlayerShotChanceTable
+
+offset  length  description
+------  ------  -----------
+   6      2     some player speed
+  48      2     goalkeeper catching the ball chance, 0..15
+                if random value (bits 4..7 of currentGameTick) is less than this, goalkeeper catches the ball
+                so the bigger the value, the greater the chance of catching (15 = 93.75%)
+  52      2     0..15
+  54      2     0..15 ..maybe?
+  58      2     0..15

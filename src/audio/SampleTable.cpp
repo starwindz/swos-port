@@ -1,10 +1,13 @@
 #include "SampleTable.h"
 #include "file.h"
+#include "hash.h"
 #include "util.h"
 #include <dirent.h>
 
-SampleTable::SampleTable(const char *dir) : m_dir(dir)
+SampleTable::SampleTable(const char *dir, int dirLen, uint32_t dirHash)
+    : m_dir(dir), m_dirLen(dirLen), m_dirHash(dirHash)
 {
+    assert(hash(dir) == dirHash);
 }
 
 void SampleTable::reset()
@@ -22,6 +25,16 @@ bool SampleTable::empty() const
 const char *SampleTable::dir() const
 {
     return m_dir;
+}
+
+int SampleTable::dirLen() const
+{
+    return m_dirLen;
+}
+
+uint32_t SampleTable::dirHash() const
+{
+    return m_dirHash;
 }
 
 Mix_Chunk *SampleTable::getRandomSample(const Mix_Chunk *lastPlayedSample, size_t lastPlayedHash)
@@ -57,26 +70,33 @@ void SampleTable::loadSamples(const std::string& baseDir)
         auto samplePath = dirPrefix + filename;
         int chance = parseSampleChanceMultiplier(filename, len);
         SoundSample sample(samplePath.c_str(), chance);
-
-        if (sample.hasData()) {
-            if (std::find(m_samples.begin(), m_samples.end(), sample) == m_samples.end()) {
-                m_samples.push_back(std::move(sample));
-                m_totalSampleChance += chance;
-#ifndef DEBUG
-                logInfo("`%s' loaded OK, chance: %d", samplePath.c_str(), chance);
-#endif
-            } else {
-                logInfo("Duplicate detected, rejecting: `%s'", samplePath.c_str());
-            }
-        } else {
-            logWarn("Failed to load sample `%s'", samplePath.c_str());
-        }
+        addSample(sample, samplePath.c_str());
         return true;
     });
 }
 
-void SampleTable::removeSample(int index)
+void SampleTable::addSample(const char *filename, int filenameLen, char *buf, int bufLen)
 {
+    int chance = parseSampleChanceMultiplier(filename, filenameLen);
+    SoundSample sample(filename, buf, bufLen, chance);
+    addSample(sample, filename);
+}
+
+void SampleTable::addSample(const SoundSample& sample, const char *path)
+{
+    if (sample.hasData()) {
+        if (std::find(m_samples.begin(), m_samples.end(), sample) == m_samples.end()) {
+            m_samples.push_back(sample);
+            m_totalSampleChance += sample.chanceModifier();
+#ifndef DEBUG
+            logInfo("`%s' loaded OK, chance: %d", path, sample.chanceModifier());
+#endif
+        } else {
+            logInfo("Duplicate detected, rejecting: `%s'", path);
+        }
+    } else {
+        logWarn("Failed to load sample `%s'", path);
+    }
 }
 
 int SampleTable::getRandomSampleIndex() const
@@ -138,12 +158,12 @@ int SampleTable::parseSampleChanceMultiplier(const char *str, size_t len)
             }
         }
 
-        if (end - str >= 4 && isdigit(*end)) {
+        if (end - str >= 4 && isDigit(*end)) {
             int value = 0;
             int power = 1;
             auto digit = end;
 
-            while (digit >= str && isdigit(*digit)) {
+            while (digit >= str && isDigit(*digit)) {
                 value += power * (*digit - '0');
                 power *= 10;
                 digit--;

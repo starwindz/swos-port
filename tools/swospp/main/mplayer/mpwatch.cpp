@@ -779,7 +779,7 @@ static void ApplyBenchData(const BenchInfo *benchInfo)
 {
     HexDumpToLog(LM_WATCHER, benchInfo, sizeof(BenchInfo), "bench info");
     benchTeam = benchInfo->benchTeam ? &rightTeamData : &leftTeamData;
-    currentSubsTeam = benchTeam->teamNumber == 2 ? rightTeamPtr : leftTeamPtr;
+    benchTeamGame = benchTeam->teamNumber == 2 ? rightTeamPtr : leftTeamPtr;
 
     if (benchInfo->showingSubsMenu)
         DrawSubstitutesMenu((const SubsMenuData *)&benchInfo[1]);

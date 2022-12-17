@@ -1,0 +1,127 @@
+uradjeno:
+- dodat minimized flag, i SWOSProc se ne poziva dok je setovan
+- ispravio sam duplu deinicijalizaciju moda: kada se pritisne enter, i kada se
+  primi WM_DESTROY poruka (ostavio sam samo prvu)
+- postavljena negativna visina u DIB pa se ne mora obrtati slika svaki frejm
+- optimizovan algoritam za gamma correction u picture.c
+- ispravljen (redak) bag kada se crta neispravna slika - ostatak praistorijskog
+  koda, kada se CreateDIB() poziva, a ne preuzima povratna vrednost, vec cita
+  globalna, koja se sada i ne setuje!
+- godina promenjena
+
+za verziju 0.9x:
+- kada se prikazuje 100 ili vise fps broj nije lepo poravnat po desnoj ivici
+- srediti poravnanje u global.h global info-a
+- pred sam kraj, igraci se recimo pobiju/posvadjaju, i onda igrac mora da da
+  gol jedan na jedan protiv golmana
+- videti da li bi palete mogle pod const?
+- prebaciti tajmer stvarcice u timer.c/h
+- izmeniti godine u release tekstovima!
+- tekst baloncici ;)
+- alpha blended health barovi - mozda neka snaga suta, energija, i tako to...
+- kao passing shot - face koja reaguje na desavanja na terenu (trener,
+  pomocnik...)
+- specijalne reakcije za neke super golove
+- zvuk/muzika?
+- i kad igrac predje "igru", ostaviti mogucnost nastavka tako sto glavni
+  zlikovac (silueta, ili samo oci koje se vide iz senke) kaze
+  "srescemo se jos..." ili "dobio si ovu rundu..." :)
+- a pred partiju neka vestica upozorava igraca, mozda mu daje i neku magiju :)
+- bira se broj igraca (recimo 0..127 ili 255 ili koliko god treba...)
+- bira se boja kose igraca, tip dresa (ubaciti bar jos jedan koga nema u
+  originalnom SWOS-u!), itd. a igrac (uvelican) trci u pozadini, menja pravce,
+  poze itd.
+- njive u pozadini :-)))) (mislim, oranice :))
+- naravno, celokupnu pricu ubaciti u docs
+- izbor imena na foru LORD-a: npr. dobijes telefonski poziv, covek kaze: "jeli
+  tu...", pa onda igrac ukuca, igra ga pita jeli zadovoljan, ako jeste ide se
+  dalje, a ako nije, onda ce to biti pogresan broj ;)
+- nasa slova, pa da bude neki klub FK CALMA, ili FK MIKA IZ SLJIVIKA itd... ;)
+- a mogao bi i teren da se specijalno napise: da trava bude krsh, da se publika
+  izbaci, gol da bude kriv i oronuo, mreza suplja...
+- glavni lik u "bandi opasnika" (onaj sto krshi)imace gusarski povez preko oka,
+  i dugu crnu kosu (da bude prepoznatljiv)
+- versus mode: na pocetku se kreira karakter, kao u frp-u, ime, osobine, pa
+  reroll, itd... to se mora negde snimiti...
+- napraviti fastscreenupdate proceduru (ptr) i rendeder proceduru (ptr) - one
+  ce zaobilaziti klasicne "spore" mode-update f-je; takodje napraviti par
+  f-ja begin/end draw sa kojima moze da se crta po baferu na bilo kom mestu
+  u programu; napraviti i idle()
+- u prozoru, kada izgubi fokus, mogao bi da postavi neku sivu paletu (da se
+  vidi)
+- na 'v' da se pali/gasi vertical retrace za vreme replay-a
+- blendovani tekst! (pa i ksorovani, a moze i zatamnjeni (za vreme partije))
+- smisliti neki normalan nacin da korisnik menija ne mora da koristi Menu
+  strukturu
+- popraviti baratanje sa listama u menu.c sa onim Deltanskim pointerom na root
+- SavePattern() - provera fajla u if, SaveChangesToPatterns() takodje
+- napisao sam funkcije za otvaranje, kreiranje i zatvaranje fajlova; ne bi bilo
+  lose konvertovati i funkcije za citanje i seek-ovanje, kao jos jedan korak ka
+  "portabilnosti"
+- vs mode - igrac bira jednog fudbalera iz team fajlova i igra protiv cetovrice
+  "opasnika"; svaki ce imati poseban AI: jedan ce da ide da krlja po svaku
+  cenu, drugi ce pokusavati da fino oduzme loptu, treci da blokira sut, cetvrti
+  da ostaje u senaestercu... (sva cetvorica bi trebalo da imaju posebne
+  sprajtove) - takodje kontrola preko joypada; mozda i neki mali nivoi
+- napisati ultra-dobar kompresor za rpl-ove i smestiti gomilu na moj sajt :)
+  (moze i tesla da posluzi)
+- ubaciti 'f' (ili vec nesto) za dublo brzi replay
+- meni sistem bi morao da bude reentrant u pogledu modova
+- stadion u pozadini i timovi ispred pred pustanje replaya
+- napraviti mehanizam za refresh fajlova u menijima
+- izmeniti meni strukturu da sadrzi pointer na sliku koja je pozadina (ili NULL
+  ako nema)
+- da cim dobije fokus proverava brzinu tastature i namesta svoju ako treba
+- publika na terenu se ne boji, i ne animira
+- dodati funkciji za gamma correction jedan bool parametar force, da mora da
+  osvezi paletu, mozda i onoj funkciji za crtanje terena
+- uraditi inerciju pri skrolovanju terena (naravno ako budem znao neki normalan
+  nacin)
+- (za test mode) odabir jednog igraca iz bilo kog od team fajlova
+- mozda ne hvatati handle prethodnog prozora ako je g.fscreen setovan
+- (za kasnije) videti za ono upozorenje da se nesto nije snimilo pri izlasku
+  iz programa (mozda cak zaustaviti izlazak i vratiti se u program)
+- (za kasnije) kursor, pa na desni klik da se uvek dobija neki glavni meni,
+  mozda pomalo izmenjen u zavisnosti od moda, mozda neki auto-hide taskbar,
+  itd, itd...
+- srediti da kada se pritisne escape u fscreen modu, da se ne vraca u prozor,
+  vec da se odmah zatvori
+- mozda ispisivati neki info o hil fajlu?
+- test mode - igrac trcka po terenu i vodi lopticu - {umem da nacrtam teren,
+  umem da crtam sprajtove, zasto ne bi to spojio - radi zabave, a mnogi
+  klonovi nisu stigli do nivoa koji ovaj programcic prikazuje, moze se reci
+  svojevrsna parodija}
+- detekcija SWOS++/obican SWOS; moglo bi nesto kao system (SWOS)
+  informations: verzija, da li je patchovan, da li je SWOS++ instaliran, da li
+  je key patch instaliran...
+- nesto se mnogo cudno desava sa najnovijom verzijom pod 2k - nece da se
+  pokrene kada je MSDN startovan i obrnuto, Winamp takodje (a sve to dok
+  Photoshop radi) (a log fajl nista ne prikazuje)
+- u 9x-u onaj drljavi intelli mouse dll pravi exception na kraju programa, ali
+  je sve handle-ovano
+- ona return ok fora bi mogla da se primeni na jos par mesta i znatno uprosti
+  kod
+- razmisliti o 'm'-move pattern, 'c'-copy pattern
+- uraditi neki kursor
+- ostaje problem pristupa nevidljivim patternima - patternima koji se
+  prilagodjavaju timovima koji igraju
+- dodati insert all za patterne
+- povratak na nesnimljeno stanje i za ostale modove osim sprajtova (mozda)
+- srediti "dualnost" goal1.dat - slucaj ako se sprajtovi ne poklapaju, to
+  teoretski moze dovesti do neispravnog sprite.dat fajla
+- izjednaciti interfejs od SaveSprite i InsertSprite
+- srediti InsertAllSprites, u slucaju kada dodje do greske
+- team edit mode
+- interfejs misem i direktno sprite editovanje
+- problem sa listom taskova i dalje postoji, ali se bar program po zavrsetku
+  vraca na prethodni program - osim iz full screen moda
+- mnogobrojna fenomenalna i fantasticna poboljsanja
+- fix CPU usage
+
+Pitch editor additions:
+- fill whole pitch/screen with a pattern
+- select[ants frame]/copy/paste? + clear selection // scroll left/right/up/down when on pitch borders
+- reassign pattern number to a pattern (and move others automatically)
+- show all patterns at once on screen with numbers (scroll if needed)
+- fali donja caklja ulaza (na teren, pattern)
+- crashzzz tweaking patterns ctrl up/down then undo few timesz

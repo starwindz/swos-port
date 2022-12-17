@@ -81,8 +81,7 @@ echo "Creating archive: $destPath"
     'project/vc++/*.filters' \
     'project/vc++/*.tmLanguage' \
     'project/vc++/Types.natvis' \
-    'tools/swospp/*' \
-    'tools/swpe/*' \
+    'tools/*' \
     'assets/*.py' \
     'assets/*.docx' \
     'tests/meson.build' \

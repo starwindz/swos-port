@@ -3,12 +3,14 @@
 #include "chants.h"
 #include "comments.h"
 #include "file.h"
-#include "util.h"
+#include "hash.h"
+#include "zip.h"
 #include "SampleTable.h"
 #include "SoundSample.h"
 
 constexpr int kEnqueuedSampleDelay = 70;
 constexpr int kEnqueuedCardSampleDelay = 100;
+
 
 static SoundSample m_endGameCrowdSample;
 
@@ -19,6 +21,7 @@ static int m_lastPlayedCategory;
 static int m_commentaryChannel = -1;
 
 static bool m_muteCommentary;
+static bool m_commentaryLoaded;
 
 static bool m_performingPenalty;
 
@@ -27,6 +30,8 @@ static int m_substituteSampleTimer;
 static int m_playingYellowCardTimer;
 static int m_playingRedCardTimer;
 
+static void loadZipComments();
+static bool sampleTablesEmpty();
 static void playGoodPassComment();
 static void playYellowCardSample();
 static void playRedCardSample();
@@ -53,32 +58,32 @@ enum CommentarySampleTableIndex {
 
 // all the categories of comments heard in the game
 static std::array<SampleTable, kNumSampleTables> m_sampleTables = {{
-    { "corner" },
-    { "dirty_tackle" },
-    { "end_game_rout" },
-    { "end_game_sensational" },
-    { "end_game_so_close" },
-    { "free_kick" },
-    { "goal" },
-    { "good_play" },
-    { "good_tackle" },
-    { "header" },
-    { "hit_bar" },
-    { "hit_post" },
-    { "injury" },
-    { "keeper_claimed" },
-    { "keeper_saved" },
-    { "near_miss" },
-    { "own_goal" },
-    { "penalty" },
-    { "penalty_missed" },
-    { "penalty_saved" },
-    { "penalty_scored" },
-    { "red_card" },
-    { "substitution" },
-    { "tactic_changed" },
-    { "throw_in" },
-    { "yellow_card" },
+    { "corner", 6, 79207 },
+    { "dirty_tackle", 12, 4961164 },
+    { "end_game_rout", 13, 9908804 },
+    { "end_game_sensational", 20, 1268374675 },
+    { "end_game_so_close", 17, 158539751 },
+    { "free_kick", 9, 625437 },
+    { "goal", 4, 19087 },
+    { "good_play", 9, 616451 },
+    { "good_tackle", 11, 2461583 },
+    { "header", 6, 78775 },
+    { "hit_bar", 7, 158036 },
+    { "hit_post", 8, 316199 },
+    { "injury", 6, 77918 },
+    { "keeper_claimed", 14, 20053633 },
+    { "keeper_saved", 12, 5012667 },
+    { "near_miss", 9, 625525 },
+    { "own_goal", 8, 311795 },
+    { "penalty", 7, 156363 },
+    { "penalty_missed", 14, 20030505 },
+    { "penalty_saved", 13, 10016272 },
+    { "penalty_scored", 14, 20031917 },
+    { "red_card", 8, 310733 },
+    { "substitution", 12, 5082073 },
+    { "tactic_changed", 14, 19200561 },
+    { "throw_in", 8, 305761 },
+    { "yellow_card", 11, 2401124 },
 }};
 
 static void loadCustomCommentary();
@@ -90,7 +95,10 @@ void loadCommentary()
 
     logInfo("Loading commentary...");
 
-    loadCustomCommentary();
+    if (sampleTablesEmpty() || !m_commentaryLoaded) {
+        loadCustomCommentary();
+        m_commentaryLoaded = true;
+    }
 
     m_muteCommentary = !commentaryEnabled();
 }
@@ -123,12 +131,6 @@ void playEndGameCrowdSampleAndComment()
         playDrawComment();
     else if (swos.statsTeam1Goals + swos.statsTeam2Goals >= 4)
         playSensationalGameComment();
-}
-
-void clearCommentsSampleCache()
-{
-    for (auto& table : m_sampleTables)
-        table.reset();
 }
 
 void initCommentsBeforeTheGame()
@@ -209,21 +211,6 @@ void toggleMuteCommentary()
     m_muteCommentary = !m_muteCommentary;
 }
 
-#ifdef SWOS_TEST
-void setEnqueueTimers(const std::vector<int>& values)
-{
-    assert(values.size() >= 7);
-
-    m_playingYellowCardTimer = values[0];
-    m_playingRedCardTimer = values[1];
-    swos.playingGoodPassTimer = values[2];
-    swos.playingThrowInSample = values[3];
-    swos.playingCornerSample = values[4];
-    m_substituteSampleTimer = values[5];
-    m_tacticsChangedSampleTimer = values[6];
-}
-#endif
-
 static void loadCustomCommentary()
 {
     assert(m_sampleTables.size() == kNumSampleTables);
@@ -234,9 +221,59 @@ static void loadCustomCommentary()
 
     for (int i = 0; i < kNumSampleTables; i++) {
         auto& table = m_sampleTables[i];
-        if (table.empty())
-            table.loadSamples(audioPath);
+        table.loadSamples(audioPath);
     }
+
+    loadZipComments();
+}
+
+static void loadZipComments()
+{
+    // Uniquely maps directory hash values mod 97 to their indices in the sample tables.
+    constexpr int kModValue = 97;
+    static const int8_t kHashToIndex[kModValue] = {
+        0, 0, 2, 0, 0, 19, 0, 0, 0, 0, 0, 10, 0, 0, 9, 0, 8, 25, 0, 0, 0, 0, 0, 11, 0, 0, 0, 13,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 17, 0, 0, 0, 5, 22, 0, 0, 0, 0, 14, 0, 23, 0, 0, 20, 0, 0, 1,
+        4, 0, 0, 21, 3, 0, 0, 0, 0, 0, 0, 0, 0, 16, 0, 0, 0, 0, 0, 7, 12, 0, 6, 0, 0, 0, 0, 26,
+        0, 0, 0, 0, 0, 0, 24, 0, 0, 0, 0, 15, 18
+    };
+    assert(m_sampleTables.size() == 26);
+    assert(m_sampleTables[18].dirHash() % kModValue == 5 && m_sampleTables[17].dirHash() % kModValue == 96);
+
+    SampleTable *table{};
+    auto filterCustomComments = [&](const char *path, int pathLength) {
+        auto hash = initialHash();
+        for (int i = 0; i < pathLength && path[i] && path[i] != '/' && path[i] != '\\'; i++)
+            hash = updateHash(hash, path[i], i);
+        int index = kHashToIndex[hash % kModValue] - 1;
+        if (index >= 0) {
+            table = &m_sampleTables[index];
+            if (table->dirHash() == hash && !_strnicmp(table->dir(), path, table->dirLen()))
+                return SoundSample::additionalHeaderSize(path);
+        }
+        return -1;
+    };
+
+    auto processCommentData = [&](const char *path, int pathLength, char *buffer, int bufferLength) {
+        assert(table);
+        table->addSample(path, pathLength, buffer, bufferLength);
+    };
+
+    const auto& relativePath = joinPaths("audio", "commentary.zip");
+    const auto& zipPath = pathInRootDir(relativePath.c_str());
+
+    logInfo("Loading zipped commentaries...");
+    if (traverseZipFile(zipPath.c_str(), filterCustomComments, processCommentData))
+        logInfo("Zipped commentaries loaded successfully");
+    else
+        logWarn("Couldn't open commentary zip file");
+}
+
+static bool sampleTablesEmpty()
+{
+    return std::all_of(m_sampleTables.begin(), m_sampleTables.end(), [](const auto& table) {
+        return table.empty();
+    });
 }
 
 static bool commentPlaying()
@@ -502,3 +539,27 @@ static void playItsBeenACompleteRoutComment()
 {
     playComment(kEndGameRout);
 }
+
+#ifdef SWOS_TEST
+void clearCommentsSampleCache()
+{
+    for (auto& table : m_sampleTables)
+        table.reset();
+    setEnqueueTimers({ -1,-1,-1,-1,-1,-1,-1 });
+    m_performingPenalty = false;
+    m_commentaryLoaded = false;
+}
+
+void setEnqueueTimers(const std::vector<int>& values)
+{
+    assert(values.size() >= 7);
+
+    m_playingYellowCardTimer = values[0];
+    m_playingRedCardTimer = values[1];
+    swos.playingGoodPassTimer = values[2];
+    swos.playingThrowInSample = values[3];
+    swos.playingCornerSample = values[4];
+    m_substituteSampleTimer = values[5];
+    m_tacticsChangedSampleTimer = values[6];
+}
+#endif

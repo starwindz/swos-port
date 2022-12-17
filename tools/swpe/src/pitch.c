@@ -874,8 +874,7 @@ void CursorFlashOn()
 {
     if (timer)
         KillTimer(g.hWnd, PITCH_TIMER_ID);
-    SetTimer(g.hWnd, PITCH_TIMER_ID, CURSOR_INTERVAL,
-             (TIMERPROC)CursorFlashCallBack);
+    SetTimer(g.hWnd, PITCH_TIMER_ID, CURSOR_INTERVAL, (TIMERPROC)CursorFlashCallBack);
     timer = TRUE;
 }
 

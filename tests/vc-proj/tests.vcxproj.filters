@@ -83,6 +83,9 @@
     <Filter Include="Source Files\project-files\sprites\util">
       <UniqueIdentifier>{896cb19f-70f2-4126-a5da-5718792d3184}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\project-files\game\updatePlayers">
+      <UniqueIdentifier>{fe75935a-0132-4d76-be20-04ed8d52c90d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\main.cpp">
@@ -463,6 +466,15 @@
     <ClCompile Include="..\..\src\sprites\updateSprite.cpp">
       <Filter>Source Files\project-files\sprites</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\util\zip.cpp">
+      <Filter>Source Files\project-files\util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\util\hash.cpp">
+      <Filter>Source Files\project-files\util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\game\updatePlayers\updatePlayers.cpp">
+      <Filter>Source Files\project-files\game\updatePlayers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\controls\controlOptionsMenu.h">
@@ -794,6 +806,15 @@
     </ClInclude>
     <ClInclude Include="..\..\src\sprites\updateSprite.h">
       <Filter>Source Files\project-files\sprites</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\util\zip.h">
+      <Filter>Source Files\project-files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\util\hash.h">
+      <Filter>Source Files\project-files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\game\updatePlayers\updatePlayers.h">
+      <Filter>Source Files\project-files\game\updatePlayers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

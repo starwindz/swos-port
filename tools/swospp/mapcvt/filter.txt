@@ -7,6 +7,14 @@
 # Optional part following will also add the symbol to C header file, with
 # specified type. Symbols without type will not go into C header file.
 
+lastPlayerPlayed, Sprite *
+fireBlocked, word
+resultTimer, word
+KeepStatisticsOnScreen, function
+plOrdinalsTable, array byte
+subsPrevDirection, word
+subsBlockFire, word
+subsFireTimer, word
 subsTrainingTopTeam, word
 subsTeamsSwapped, word
 careerFileBuffer, array char
@@ -19,10 +27,15 @@ SelectTraining, function
 trainingGame, word
 keyBuffer, array byte[10]
 spinBigS, word
+subsDirection, word
 subsPrevPl1Direction, int16_t
+subsPrevPl2Direction, int16_t
 pl1BenchBlockWhileHoldingDirection, word
+pl2BenchBlockWhileHoldingDirection, word
 pl1BenchTimeoutCounter, word
+pl2BenchTimeoutCounter, word
 subsPl1TapCount, word
+subsPl2TapCount, word
 team2Player10Sprite, Sprite
 extraTimeState, word
 penaltiesState, word
@@ -77,7 +90,7 @@ StartMainGameLoop, function
 breakCameraMode
 PlayGame
 substituteInProgress, word
-subsMovementDelayTimer
+subsMovementDelayTimer, word
 subsBlockDirections, word
 leavingSubsMenu, word
 MoveCamera, function
@@ -237,7 +250,7 @@ foundFilenamesBuffer
 BenchCheckControls
 SaveCoordinatesForHighlights
 inSubstitutesMenu, word
-goToSubsTimer
+goToSubsTimer, word
 SetHilFileHeader
 MainKeysCheck, function
 convertedKey, byte
@@ -358,10 +371,9 @@ pl1LastFired, word
 pl2LastFired, word
 pl1ShortFireCounter, word
 pl2ShortFireCounter, word
-gameStoppedTimer, word
+benchPickTeamTimer, word
 goalCounter, word
 stateGoal, word
-benchCounter2, word
 longFireCounter, word
 longFireTime, word
 ballSprite, array Sprite
@@ -410,7 +422,7 @@ DrawFormationMenu, prefix SWOS_, function
 SubstitutePlayerIfFiring, function
 EnqueueSubstituteSample, function
 subsState, short
-currentSubsTeam, TeamGame *
+benchTeamGame, TeamGame *
 plToBeSubstitutedPos, short
 plToEnterGameIndex, short
 selectedFormationEntry, word

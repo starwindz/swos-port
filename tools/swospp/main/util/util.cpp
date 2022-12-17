@@ -225,7 +225,7 @@ char *strncpy(char *dst, const char *src, size_t n)
     asm volatile (
         "mov  %[tmp], offset swos_libc_strncpy_     \n"
         "call %[tmp]                                \n"
-        : "+a" (dst), "+d" (src), "+b" (n), [tmp] "=r" (dummy)
+        : "+eax" (dst), "+edx" (src), "+ebx" (n), [tmp] "=&r" (dummy)
         :
         : "cc", "memory"
     );
@@ -240,8 +240,8 @@ void *memset(void *ptr, int value, size_t num)
     asm volatile (
         "mov  %[tmp], offset swos_libc_memset_  \n"
         "call %[tmp]                            \n"
-        : "+a" (ptr), "+d" (value), [tmp] "=r" (dummy)
-        : "b" (num)
+        : [tmp] "=&r" (dummy)
+        : "eax" (ptr), "edx" (value), "ebx" (num)
         : "cc", "memory"
     );
 
@@ -252,12 +252,12 @@ int strcmp(const char *str1, const char *str2)
 {
     assert(str1 && str2);
     int result;
-    int dummy, dummy2;
+    int dummy;
     asm volatile (
         "mov  %[tmp], offset swos_libc_strcmp_  \n"
         "call %[tmp]                            \n"
-        : "=a" (result), [tmp] "=r" (dummy), "=d" (dummy2)
-        : "a" (str1), "d" (str2)
+        : "=eax" (result), [tmp] "=&r" (dummy)
+        : "eax" (str1), "edx" (str2)
         : "cc"
     );
 
@@ -272,8 +272,8 @@ int strncmp(const char *str1, const char *str2, size_t n)
     asm volatile (
         "mov  %[tmp], offset swos_libc_strncmp_     \n"
         "call %[tmp]                                \n"
-        : "=a" (result), "+d" (str2), "+b" (n), [tmp] "=r" (dummy)
-        : "a" (str1)
+        : "=eax" (result), "+edx" (str2), "+ebx" (n), [tmp] "=&r" (dummy)
+        : "eax" (str1)
         : "cc"
     );
 
@@ -288,8 +288,8 @@ int strlen(const char *str)
     asm volatile (
         "mov  %[tmp], offset swos_libc_strlen_      \n"
         "call %[tmp]                                \n"
-        : "=a" (result), [tmp] "=r" (dummy)
-        : "a" (str)
+        : "=eax" (result), [tmp] "=&r" (dummy)
+        : "eax" (str)
         : "cc"
     );
 
@@ -303,7 +303,7 @@ void segread(struct SREGS *sregs)
     asm volatile (
         "mov  %[tmp], offset swos_libc_segread_     \n"
         "call %[tmp]                                \n"
-        : "+a" (sregs), [tmp] "=r" (dummy)
+        : "+eax" (sregs), [tmp] "=&r" (dummy)
         :
         : "memory"
     );
@@ -316,7 +316,7 @@ int int386x(int vec, union REGS *in, union REGS *out, struct SREGS *sregs)
     asm volatile (
         "mov  %[tmp], offset swos_libc_int386x_     \n"
         "call %[tmp]                                \n"
-        : "+a" (vec), "+d" (in), "+b" (out), "+c" (sregs), [tmp] "=r" (dummy)
+        : "+eax" (vec), "+edx" (in), "+ebx" (out), "+ecx" (sregs), [tmp] "=&r" (dummy)
         :
         : "cc", "memory"
     );
@@ -337,7 +337,7 @@ void *memmove(void *dst, const void *src, size_t n)
     asm volatile (
         "mov  %[tmp], offset swos_libc_memmove_     \n"
         "call %[tmp]                                \n"
-        : "+a" (dst), "+d" (src), "+b" (n), [tmp] "=r" (dummy)
+        : "+eax" (dst), "+edx" (src), "+ebx" (n), [tmp] "=&r" (dummy)
         :
         : "cc", "memory"
     );

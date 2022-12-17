@@ -2,7 +2,6 @@
 
 void loadCommentary();
 void playEndGameCrowdSampleAndComment();
-void clearCommentsSampleCache();
 void initCommentsBeforeTheGame();
 void enqueueTacticsChangedSample();
 void enqueueSubstituteSample();
@@ -13,5 +12,6 @@ bool commenteryOnChannelFinished(int channel);
 void toggleMuteCommentary();
 
 #ifdef SWOS_TEST
+void clearCommentsSampleCache();
 void setEnqueueTimers(const std::vector<int>& values);
 #endif

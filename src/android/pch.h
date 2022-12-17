@@ -25,7 +25,7 @@
 
 #include <SimpleIni.h>
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include <SDL_mixer.h>
 #include <SDL_image.h>
 
@@ -54,6 +54,7 @@ static_assert(sizeof(void *) == 4, "Define pointer size");
 #endif
 
 #define _stricmp strcasecmp
+#define _strnicmp strncasecmp
 
 template <size_t size> size_t strcpy_s(char (&dst)[size], const char *src)
 {
