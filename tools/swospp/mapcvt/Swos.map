@@ -1082,7 +1082,7 @@
  0001:0006E5A5       ResetPlayerPassingKicking
  0001:0006E6B8       PlayerDoingStrongHeader
  0001:0006E92F       DoStaticHeader
- 0001:0006EA0C       UpdatePlayersAndBall
+ 0001:0006EA0C       UpdatePlayers
  0001:00073E45       MakeSpritesFromPlayerNames
  0001:00073ED7       MakePlayerNameSprite
  0001:0007407F       CopyPlayerNameLengths

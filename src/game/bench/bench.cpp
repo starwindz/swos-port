@@ -2,6 +2,9 @@
 #include "updateBench.h"
 #include "drawBench.h"
 #include "pitchConstants.h"
+#include "player.h"
+#include "team.h"
+#include "game.h"
 
 constexpr FixedPoint kBenchX = 27;
 
@@ -19,7 +22,6 @@ static int m_opponentBenchY;
 static void initBench();
 static void invokeBench();
 static void checkForThrowInAndKeepersBall();
-static void checkIfGoalkeeperClaimedTheBall();
 
 void initBenchBeforeMatch()
 {
@@ -73,7 +75,7 @@ FixedPoint benchCameraX()
     return kBenchX;
 }
 
-const PlayerGame& getBenchPlayer(int index)
+const PlayerInfo& getBenchPlayer(int index)
 {
     return getBenchTeamData()->players[getBenchPlayerPosition(index)];
 }
@@ -128,7 +130,7 @@ static void invokeBench()
 // (if not it looks weird if the throw-in is near the bench)
 static void checkForThrowInAndKeepersBall()
 {
-    auto player = swos.lastTeamPlayedBeforeBreak->controlledPlayerSprite;
+    auto player = swos.lastTeamPlayedBeforeBreak->controlledPlayer;
     if (player && player->state == PlayerState::kThrowIn) {
         swos.hideBall = 0;
         player->state = PlayerState::kNormal;
@@ -138,23 +140,4 @@ static void checkForThrowInAndKeepersBall()
     }
 
     checkIfGoalkeeperClaimedTheBall();
-}
-
-static void checkIfGoalkeeperClaimedTheBall()
-{
-    if (swos.gameState == GameState::kKeeperHoldsTheBall) {
-        auto team = swos.lastTeamPlayedBeforeBreak;
-        A6 = team;
-        A1 = team->players[0];
-        A2 = &swos.ballSprite;  // the original game fails to set this
-        GoalkeeperClaimedTheBall();
-    } else {
-        swos.breakCameraMode = -1;
-        swos.gameStatePl = GameState::kStopped;
-        swos.stoppageTimerTotal = 0;
-        swos.stoppageTimerActive = 0;
-        StopAllPlayers();
-        swos.cameraXVelocity = 0;
-        swos.cameraYVelocity = 0;
-    }
 }

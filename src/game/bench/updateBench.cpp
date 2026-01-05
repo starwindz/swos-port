@@ -408,7 +408,7 @@ static void handleFormationMenuControls()
 
 static void markPlayersMenuHandler()
 {
-    const PlayerGame *player{};
+    const PlayerInfo *player{};
 
     if (m_playerToBeSubstitutedPos >= 0) {
         assert(m_playerToBeSubstitutedPos <= 10);
@@ -567,7 +567,7 @@ static void initiateSubstitution()
     swos.plSubstitutedY = kSubstitutedPlayerY;
 }
 
-// Old player has left the field, new one is about to go it. Does the actual swap of the player data.
+// Old player has left the field, new one is about to go in. Does the actual swap of the player data.
 static void substitutePlayer()
 {
     swos.substitutedPlSprite->injuryLevel = 0;

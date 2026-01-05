@@ -193,6 +193,12 @@ void setCrowdChantsEnabled(bool crowdChantsEnabled)
     }
 }
 
+void enqueueCrowdChantsReload()
+{
+    // fix SWOS bug where crowd chants only get reloaded when auto replays are on
+    swos.loadCrowdChantSampleFlag = 1;
+}
+
 #ifdef SWOS_TEST
 auto getPlayChants10lFunction() -> void (*)()
 {
@@ -273,12 +279,6 @@ static void setVolumeOrStopChants(int volume)
             stopChants();
         }
     }
-}
-
-void SWOS::EnqueueCrowdChantsReload()
-{
-    // fix SWOS bug where crowd chants only get reloaded when auto replays are on
-    swos.loadCrowdChantSampleFlag = 1;
 }
 
 static int getChantSampleIndex()

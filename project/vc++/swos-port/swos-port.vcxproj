@@ -81,6 +81,7 @@
     <ClCompile Include="..\..\..\src\game\bench\drawBench.cpp" />
     <ClCompile Include="..\..\..\src\game\camera.cpp" />
     <ClCompile Include="..\..\..\src\game\color.cpp" />
+    <ClCompile Include="..\..\..\src\game\player.cpp" />
     <ClCompile Include="..\..\..\src\game\playerNameDisplay.cpp" />
     <ClCompile Include="..\..\..\src\game\darkRectangle.cpp" />
     <ClCompile Include="..\..\..\src\game\game.cpp" />
@@ -91,6 +92,7 @@
     <ClCompile Include="..\..\..\src\game\result.cpp" />
     <ClCompile Include="..\..\..\src\game\spinningLogo.cpp" />
     <ClCompile Include="..\..\..\src\game\stats.cpp" />
+    <ClCompile Include="..\..\..\src\game\team.cpp" />
     <ClCompile Include="..\..\..\src\game\updateGoals.cpp" />
     <ClCompile Include="..\..\..\src\game\updatePlayers\updatePlayers.cpp" />
     <ClCompile Include="..\..\..\src\init.cpp" />
@@ -280,6 +282,7 @@
     <ClInclude Include="..\..\..\src\game\camera.h" />
     <ClInclude Include="..\..\..\src\game\color.h" />
     <ClInclude Include="..\..\..\src\game\pitch\pitchConstants.h" />
+    <ClInclude Include="..\..\..\src\game\player.h" />
     <ClInclude Include="..\..\..\src\game\playerNameDisplay.h" />
     <ClInclude Include="..\..\..\src\game\darkRectangle.h" />
     <ClInclude Include="..\..\..\src\game\game.h" />
@@ -292,6 +295,7 @@
     <ClInclude Include="..\..\..\src\game\bench\bench.h" />
     <ClInclude Include="..\..\..\src\game\spinningLogo.h" />
     <ClInclude Include="..\..\..\src\game\stats.h" />
+    <ClInclude Include="..\..\..\src\game\team.h" />
     <ClInclude Include="..\..\..\src\game\updatePlayers\updatePlayers.h" />
     <ClInclude Include="..\..\..\src\init.h" />
     <ClInclude Include="..\..\..\src\menus\continueAbortMenu.h" />
@@ -378,10 +382,10 @@
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <UseDebugLibraries>
     </UseDebugLibraries>
   </PropertyGroup>
@@ -506,6 +510,7 @@
       <Optimization>Disabled</Optimization>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <CallingConvention>FastCall</CallingConvention>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <AdditionalDependencies>zlib.lib;libminizip.lib;SDL2d.lib;SDL2maind.lib;SDL2_image.lib;SDL2_mixer.lib;winmm.lib;CrashRpt1403d.lib;CrashRptProbe1403d.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -533,6 +538,7 @@
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <CallingConvention>FastCall</CallingConvention>
       <ExceptionHandling>Sync</ExceptionHandling>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <AdditionalDependencies>zlib.lib;libminizip.lib;SDL2.lib;SDL2main.lib;SDL2_image.lib;SDL2_mixer.lib;winmm.lib;CrashRpt1403.lib;CrashRptProbe1403.lib;%(AdditionalDependencies)</AdditionalDependencies>

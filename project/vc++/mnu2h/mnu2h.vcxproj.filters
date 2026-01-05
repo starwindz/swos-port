@@ -147,9 +147,6 @@
     <CustomBuild Include="..\..\..\src\menus\mnu\videoOptions.mnu">
       <Filter>mnu</Filter>
     </CustomBuild>
-    <CustomBuild Include="..\..\..\src\menus\mnu\configureHat.mnu" />
-    <CustomBuild Include="..\..\..\src\menus\mnu\configureAxis.mnu" />
-    <CustomBuild Include="..\..\..\src\menus\mnu\configureTrackball.mnu" />
     <CustomBuild Include="..\..\..\src\menus\mnu\selectMatchControls.mnu">
       <Filter>mnu</Filter>
     </CustomBuild>
@@ -166,6 +163,15 @@
       <Filter>mnu</Filter>
     </CustomBuild>
     <CustomBuild Include="..\..\..\src\menus\mnu\continue.mnu">
+      <Filter>mnu</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\..\src\menus\mnu\configureAxis.mnu">
+      <Filter>mnu</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\..\src\menus\mnu\configureHat.mnu">
+      <Filter>mnu</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\..\src\menus\mnu\configureTrackball.mnu">
       <Filter>mnu</Filter>
     </CustomBuild>
   </ItemGroup>

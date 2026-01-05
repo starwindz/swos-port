@@ -12,6 +12,7 @@
       <Item Name="loWord">(word)data</Item>
       <Item Name="hiWordSigned">(int16_t)(data >> 16)</Item>
       <Item Name="loWordSigned">(int16_t)data</Item>
+      <Item Name="asFixedPoint">((int)data &gt;&gt; 16) + float((int16_t)(data &amp; 0xffff)) / 0x10000</Item>
     </Expand>
   </Type>
   <Type Name="Token">

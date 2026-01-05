@@ -18,12 +18,19 @@ QuitToDosPromptLoop - SWOSMainMenuInit
 # game loop + intro pics + animations
 UpdateCornerFlagSprite - FadeAndPlayWinCupAnimation
 FadeAndPlayRelegatedAnimation - PlayNewSeasonAnimations
-ShowRestOfPics - StartingMatch
-ClearSaveFlagForGoalSprites - MarkPlayer
+ShowRestOfPics - GameOver
 copySpriteAllowAND - stateGoal
+NextPenalty - DoGoalkeeperSprites
+StartFirstExtraTime - SetPlayerAnimationTable
+SetJumpHeaderHitAnimTable
+PlayStopGoodPassSampleIfNeeded
+EnqueueDeletedSample - PlayGoodTackleComment
+SetStaticHeaderDirection
+AI_DecideWhetherToTriggerFire - GetFilenameAndExtension
+kPlayerShotChanceTable - AI_turnDirection
 
 # advertisements + some of sprites code
-CopyAdvertisementsData - InitTeamsData
+CopyAdvertisementsData - UpdateControlledPlayer
 # + game time + pitch type tables + ref. booking tables
 advertIndex - team1StatsData
 
@@ -37,7 +44,7 @@ aSprite_dat
 UnchainSpriteInMenus - DrawSpriteCentered
 ClearSprite - ShowMenu
 DrawSprite_entry2
-UpdatePlayers - AI_SetControlsDirection
+PlayerHittingStaticHeader - AI_DecideWhetherToTriggerFire
 MovePlayers
 numberBuffer - prevLastPlayer
 bookedPlayerCardOrNumberSprite
@@ -57,9 +64,7 @@ whiteGuyConvertTable - topTeamPtr
 kBallSpeedBounceFactorTable - kGravityConstant
 
 # pitches
-ReadPitchFile - ActivateReferee
-ResetAnimatedPatterns - cseg_63919
-SwapTwoRandomIndicesFromAnimPatternsTable
+UpdateGameTimersAndCameraBreakMode - ActivateReferee
 DrawPatternFromIndex
 # also removes game initialization error strings
 aChris_0 - aDataPoolplyr_d
@@ -86,7 +91,7 @@ UnpackMenu
 RestorePreviousMenu
 DrawBackAllItems - CopyWholeSprite
 DrawMenuItemOuterFrame
-EuropeanChampionshipInit - DrawAnimatedPatterns
+EuropeanChampionshipInit - cseg_63919
 continueMenu - DesignDIYTournamentInit
 continueAbortMenu - designDiyTournamentMenu
 errorPromptsEnabled - dseg_114BE0
@@ -112,7 +117,6 @@ FindFirstFile - SelectFileToSaveDialog
 
 # controls/joypads
 # + FadeOut & SetPalette
-UpdateAndApplyTeamControls
 FadeOutToBlack - InitMenuMusic
 # + char tables + camera vars
 smallCharsTable - pl1Fire
@@ -124,7 +128,7 @@ g_joy1Fire2 - dosMemOfs60c00h
 
 # commentary & SFX
 PlayHitFrameComment
-SetVolumeOrStopChants - EnqueueCornerSample
+SetVolumeOrStopChants - PlayPenaltyComment
 nullsub_1 - PlayFansChant10lSample
 PlayEndGameWhistleSample
 #g_commentary   # career file buffer
@@ -144,10 +148,10 @@ InitIntroAnimation - Rand
 # merge with top range
 introSampleStarted - menuCursorFrame
 g_gotExtraMemoryForSamples - playingCornerSample
-substituteSampleTimer - playingThrowInSample
+playingCornerSample - playingGoodPassTimer
 
 # referee
-UpdateReferee - PlayStopGoodPassSampleIfNeeded
+CheckIfBallOutOfPlay - PlayStopGoodPassSampleIfNeeded
 InitRefereeAnimationTable
 kRefereeSpeed
 
@@ -171,8 +175,6 @@ startGameSamples - endGameCrowdSamples
 aSfxFx11Bgcrd3l - aSfxFxCombrown_
 
 # bench
-EnqueueTacticsChangedSample - PlayPenaltyComment
-PlayGoodPassComment
 subsWriteOnly
 subsTeamsSwapped - g_inSubstitutesMenu
 benchOff - g_waitForPlayerToGoInTimer
@@ -186,7 +188,7 @@ substitutedPlX - throwInPassOrKick
 tacticsStringTable - avgTeamValueBases
 
 # stats + bench, highlights, sprite coloring
-WriteStatsNumber - UpdateControlledPlayerNumbers
+WriteStatsNumber - SetCurrentPlayerName
 AllowStatistics - DrawStatistics
 
 # random number generator and some MainKeysCheck() variables
@@ -219,9 +221,6 @@ ReplayExitMenuAfterFriendly - PlayMissGoalSample
 # highlights + camera
 SetPitchTypeAndNumber - ScrollToCurrent
 
-throwInDeadVar
-hilStarted
-deadHilVar
 # removes some pitch variables too
 currentHilBuffer - averagePlayerPrice
 goalBasePtr - userRequestedReplay
@@ -232,6 +231,12 @@ hilLeftTeamGoals - winningTeamPtr
 dosMemSegment
 dosMemSelector
 dosMemLinAdr - aSensibleWorldOfSoccerV2_0
+
+# dead vars
+throwInDeadVar
+hilStarted
+deadHilVar
+writeOnlyVar02 - dseg_132804
 
 
 #
@@ -245,16 +250,12 @@ CallDrawMultipleItems
 # sound
 InitMenuMusic
 CycleMenuMusic
-EnqueueDeletedSample
 
 # sprites
 ConvertSpriteColors
 CopyWholeSprite
 DrawSprite
 DrawSpriteCentered
-
-# pitch patterns
-ResetAnimatedPatternsForBothTeams
 
 # animations
 FadeAndPlayWinCupAnimation
@@ -297,9 +298,6 @@ InitHighestScorersTable
 InitUserTactics
 EndFirstHalf
 EndOfGame
-EndFirstExtraTime
-StartPenalties
-StartFirstExtraTime
 
 
 #
@@ -486,8 +484,6 @@ breakCameraMode, word
 
 # comments
 playingGoodPassTimer, int16_t
-playingThrowInSample, int16_t
-playingCornerSample, int16_t
 goalCounter, int16_t
 
 goodPassTimer, word
@@ -502,8 +498,6 @@ endGameCrowdSamples, array const char *
 
 # bench
 SetPlayerAnimationTable, function
-GoalkeeperClaimedTheBall, function
-StopAllPlayers, function
 g_inSubstitutesMenu, word
 g_substituteInProgress, int16_t
 plComingX, word
@@ -534,11 +528,7 @@ nobodysBallTimer, word
 dosMemOfs60c00h, char *
 
 # game loop
-UpdateBall, function
 DoGoalkeeperSprites, function
-MarkPlayer, function
-UpdateControlledPlayerNumbers, function
-SetBallPosition, function
 frameCount, word
 goalCameraMode, word
 isGameFriendly, word
@@ -549,7 +539,6 @@ ballInGoalkeeperArea, word
 
 # game
 InitAndPlayGame, function
-UpdateCameraBreakMode, function
 UpdateControlledPlayer, function
 UpdatePlayerBeingPassedTo, function
 UpdatePlayerInjuries, function
@@ -584,6 +573,7 @@ penalty, word
 strikeDestX, word
 playersLeavingPitchBottom, array word[22]
 playersLeavingPitchTop, array word[22]
+halfNumber, word
 
 # game constants
 kKeeperSaveDistance, word
@@ -675,7 +665,6 @@ bottomTeamPlayerNo, word
 Randomize2, function
 ReadTimerDelta, function
 ZeroOutStars, function
-StartingMatch, function
 
 aSensibleWorldOfSoccerV2_0, array const char
 skillsPerQuadrant, array char[245]
@@ -719,7 +708,6 @@ playMatchTeam1Ptr, TeamFile *
 playMatchTeam2Ptr, TeamFile *
 squadChangesAllowed, word
 
-StartPenalties, function
 gameStatePl, GameState
 gameState, GameState
 playingPenalties, word
@@ -729,9 +717,7 @@ playing2ndGame, word
 
 # time
 EndFirstHalf, function
-EndFirstExtraTime, function
 EndOfGame, function
-StartFirstExtraTime, function
 lastFrameTicks, word
 extraTimeState, word
 gameLengthInGame, word
@@ -761,8 +747,6 @@ jumpHeaderTeam1UpFrames, array char
 refSecondYellowFrames, array int16_t
 ballMovingFrameIndices, array int16_t
 ballStaticFrameIndices, array int16_t
-kPlayerShotChanceTable, array int16_t[30]
-kGoalieSkillTables, array int16_t *[8]
 AI_turnDirection, word
 USER_A, TeamTactics (align: 1)
 
@@ -775,7 +759,7 @@ USER_A, TeamTactics (align: 1)
 #
 
 @on-enter
-
+# currently empty
 
 #
 # insert a call to given C++ function into a proc at a given line
@@ -791,15 +775,6 @@ USER_A, TeamTactics (align: 1)
 AdjustPlayerSkills, 248, FixTwoCPUsGameCrash
 ViewOpponentsSelect, 66, RecalculateReachableEntries
 ReturnFromViewOpponent, 9, RecalculateReachableEntries
-
-CheckIfBallOutOfPlay, 252, FixPenaltyBug
-PlayerHittingJumpHeader, 161, PlayHeaderComment
-PlayerTackled, 59, PlayInjuryComment
-UpdateCameraBreakMode, 321, EnqueueCrowdChantsReload
-
-# small part of Amiga mode support in AI_SetControlsDirection
-AI_SetControlsDirection, 1248, CheckForAmigaModeDirectionFlipBan
-AI_SetControlsDirection, 820, WriteAmigaModeDirectionFlip
 
 
 #
@@ -903,15 +878,8 @@ Int2Ascii
 #
 
 @constant-to-variable
-UpdateCameraBreakMode, 8, penaltiesInterval, 110
-UpdateCameraBreakMode, 39, initalKickInterval, 825
-UpdateCameraBreakMode, 281, goalCameraInterval, 55
-UpdateCameraBreakMode, 537, letPlayerControlCameraInterval, 550
-PlayerBeginTackling, 15, playerDownTacklingInterval, 55
-PlayerAttemptingJumpHeader, 9, playerDownHeadingInterval, 55
-AI_SetControlsDirection, 127, clearResultInterval, 660
-AI_SetControlsDirection, 133, clearResultInterval, 660
-AI_SetControlsDirection, 139, clearResultHalftimeInterval, 385
+# currently empty
+
 
 #
 # Let ida2asm know about the sizes of types used in the export section so it can generate offsets properly.

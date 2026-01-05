@@ -3,6 +3,8 @@
 void loadCommentary();
 void playEndGameCrowdSampleAndComment();
 void initCommentsBeforeTheGame();
+void enqueueThrowInSample();
+void enqueueCornerSample();
 void enqueueTacticsChangedSample();
 void enqueueSubstituteSample();
 void enqueueYellowCardSample();
@@ -10,6 +12,9 @@ void enqueueRedCardSample();
 void playEnqueuedSamples();
 bool commenteryOnChannelFinished(int channel);
 void toggleMuteCommentary();
+void playHeaderComment(const TeamGeneralInfo& team);
+void playInjuryComment(const TeamGeneralInfo& team);
+void clearPenaltyFlag();
 
 #ifdef SWOS_TEST
 void clearCommentsSampleCache();

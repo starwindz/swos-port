@@ -14,6 +14,7 @@
 using namespace SWOS;
 
 static CommentaryTest t;
+static TeamGeneralInfo *team;
 
 static void disablePenalties();
 static void enablePenalties();
@@ -28,11 +29,13 @@ static void triggerItsBeenACompleteRoutComment();
 static void triggerDrawComment();
 static void triggerSensationalGameComment();
 static void setupKeeperClaimedComment();
-static void setupHeaderComment();
 
 void CommentaryTest::init()
 {
     enableFileMocking(true);
+
+    team = SwosVM::allocateMemory(sizeof(TeamGeneralInfo)).as<TeamGeneralInfo *>();
+    team->playerNumber = 1;
 }
 
 void CommentaryTest::finish()
@@ -345,7 +348,7 @@ static void testEmptyCategories()
         { "good_tackle", PlayGoodTackleComment },
         { "hit_bar", PlayBarHitComment },
         { "hit_post", PlayPostHitComment },
-        { "injury", PlayInjuryComment, setupHeaderComment },
+        { "injury", [] { playInjuryComment(*team); } },
         { "keeper_claimed", PlayKeeperClaimedComment, disablePenalties },
         { "keeper_saved", PlayGoalkeeperSavedComment, disablePenalties },
         { "near_miss", PlayNearMissComment, disablePenalties },
@@ -382,7 +385,7 @@ static void testEmptyCategories()
 
 static void testCustomCommentary()
 {
-    testCustomIdenticalSamplesCategory(PlayHeaderComment, "header", setupHeaderComment);
+    testCustomIdenticalSamplesCategory([] { playHeaderComment(*team); }, "header");
     testCustomIdenticalSamplesCategory(PlayPenaltyComment, "penalty");
     testCustomCornerSamples();
     testCustomFreeKickSamples();
@@ -554,8 +557,8 @@ void CommentaryTest::testEnqueuedComments()
         enqueueYellowCardSample,
         enqueueRedCardSample,
         [] { swos.playingGoodPassTimer = 1; },
-        [] { swos.playingThrowInSample = 1; },
-        [] { swos.playingCornerSample = 1; },
+        enqueueThrowInSample,
+        enqueueCornerSample,
         enqueueSubstituteSample,
         enqueueTacticsChangedSample,
     };
@@ -678,7 +681,7 @@ void CommentaryTest::testZipFileComments()
         { 3, 3, PlayGoalComment, "goal", 4, 3 },
         { 4, 1, triggerGoodPassComment, "good_pay", 8 },
         { 4, 1, PlayGoodTackleComment, "tackled.mp3", 12 },
-        { 4, 1, PlayHeaderComment, "header", 7, 1, setupHeaderComment },
+        { 4, 1, [] { playHeaderComment(*team); }, "header", 7, 1},
         { 3, 0, PlayBarHitComment, nullptr, 0, 0 },
         { 4, 4, triggerRedCardSample, "red_card", 8 },
         { 3, 3, triggerRedCardSample, "red_card3", 9, },
@@ -879,8 +882,9 @@ static void enablePenalties()
 
 static void triggerCornerSample()
 {
-    swos.playingCornerSample = 1;
-    playEnqueuedSamples();
+    enqueueCornerSample();
+    for (int i = 0; i < 100; i++)
+        playEnqueuedSamples();
 }
 
 static void triggerYellowCardSample()
@@ -909,8 +913,9 @@ static void triggerTacticsChangeSample()
 
 static void triggerThrowInSample()
 {
-    swos.playingThrowInSample = 1;
-    playEnqueuedSamples();
+    enqueueThrowInSample();
+    for (int i = 0; i < 70; i++)
+        playEnqueuedSamples();
 }
 
 static void triggerGoodPassComment()
@@ -943,11 +948,4 @@ static void setupKeeperClaimedComment()
 {
     // make sure no comments are playing
     Mix_HaltChannel(-1);
-}
-
-static void setupHeaderComment()
-{
-    static auto team = SwosVM::allocateMemory(sizeof(TeamGeneralInfo)).as<TeamGeneralInfo *>();
-    team->playerNumber = 1;
-    A6 = team;
 }

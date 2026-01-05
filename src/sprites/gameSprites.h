@@ -9,6 +9,7 @@ void drawSprites(float xOffset, float yOffset);
 int getGoalkeeperSpriteOffset(bool topTeam, int face);
 int getPlayerSpriteOffsetFromFace(int face);
 void updateCornerFlags();
+void updateControlledPlayerNumbers();
 
 PlayerSprites getPlayerSprites();
 #ifdef SWOS_TEST

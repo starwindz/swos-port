@@ -330,8 +330,8 @@ static std::pair<int, int> getGameStoppedCameraDirections()
     int direction;
     bool gotPlayerDirection = false;
 
-    if (swos.lastTeamPlayedBeforeBreak && swos.lastTeamPlayedBeforeBreak->controlledPlayerSprite) {
-        direction = swos.lastTeamPlayedBeforeBreak->controlledPlayerSprite->direction;
+    if (swos.lastTeamPlayedBeforeBreak && swos.lastTeamPlayedBeforeBreak->controlledPlayer) {
+        direction = swos.lastTeamPlayedBeforeBreak->controlledPlayer->direction;
         gotPlayerDirection = true;
     } else {
         direction = swos.cameraDirection;

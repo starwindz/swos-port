@@ -881,7 +881,7 @@ CToken *IdaAsmParser::ignoreLine(CToken *token)
     return token;
 }
 
-CToken *IdaAsmParser::handleSymbolActions(SymbolAction action, const String& rangeEnd, CToken * token)
+CToken *IdaAsmParser::handleSymbolActions(SymbolAction action, const String& rangeEnd, CToken *token)
 {
     if (action & (kRemove | kNull)) {
         // the proc better be terminated and without sub-procs :)
@@ -1214,7 +1214,8 @@ std::pair<CToken *, std::vector<CToken *>> IdaAsmParser::collectComments(CToken 
 CToken *IdaAsmParser::handleSymbolRemoval(CToken *token, SymbolAction action, const String& sym)
 {
     if (action & kRemoveSolo) {
-        assert(sym.empty());
+        // imported symbol could be end-range as well
+        assert(sym.empty() || (action & (kRemoveEndRange | kImport)));
         token = skipUntilNewLine(token);
     } else {
         assert(!sym.empty());

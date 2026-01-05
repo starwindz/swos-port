@@ -11,7 +11,7 @@ constexpr int kPlayerNameY = 0;
 static bool m_topTeam;
 static int m_playerOrdinal;
 
-static void getPlayerNumberAndSurname(char *buf, const PlayerGame& player);
+static void getPlayerNumberAndSurname(char *buf, const PlayerInfo& player);
 static void hideCurrentPlayerName();
 static void showNameBlinking(const Sprite *lastPlayer, const TeamGeneralInfo *lastTeam);
 static void prolongLastPlayersName(const Sprite *lastPlayer, const TeamGeneralInfo *lastTeam);
@@ -41,7 +41,7 @@ void updateCurrentPlayerName()
             } else {
                 hideCurrentPlayerName();
             }
-        } else if (!lastPlayer || !lastTeam->controlledPlayerSprite) {
+        } else if (!lastPlayer || !lastTeam->controlledPlayer) {
             s_nobodysBallLastFrame = 1;
             hideCurrentPlayerName();
         } else if (s_nobodysBallLastFrame) {
@@ -76,7 +76,7 @@ std::pair<bool, int> getDisplayedPlayerNumberAndTeam()
 }
 #endif
 
-static void getPlayerNumberAndSurname(char *buf, const PlayerGame& player)
+static void getPlayerNumberAndSurname(char *buf, const PlayerInfo& player)
 {
     SDL_itoa(player.shirtNumber, buf, 10);
     int shirtNumberLen = strlen(buf);

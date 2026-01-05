@@ -3183,8 +3183,8 @@ earlier:
 26.12.2020.
 - randomly took to reversing AI routine, and had quite some success, learned a lot
 27.12.2020.
-- had some results but completely analyze it as I hoped, so putting it back on ice for now, it's not so
-  important at this moment
+- had some results but couldn't completely analyze it as I hoped, so putting it back on ice for now, it's
+  not so important at this moment
 28.12.2020.
 - been trying to determine where the routine for calculating "VIEW RESULT" is, it's been pretty difficult
   I've finally located it (at least I'm pretty sure of it), however it's quite a mess, can't tell a thing,
@@ -5527,7 +5527,7 @@ earlier:
 - frame indices table problem was on SWOS++ side, needed to set highest bit for header-related tables, and I used
   AND instead of OR... sheesh...
 - after the fix it still wasn't working, but found the root cause of the problem on port side: tables inside frame
-  tables are were declared as words and picked up automatic 2-byte alignment, 1 inserted byte of alignment ruined
+  tables were declared as words and picked up automatic 2-byte alignment, 1 inserted byte of alignment ruined
   entire frame tables area; their alignment had to be turned off (hope it won't trigger unaligned access)
 22.10.2022.
 - [ida2asm] removed extraneous space after type name for exported variables with alignment specifier
@@ -5904,6 +5904,158 @@ earlier:
 16.12.2022.
 - pushed changes to Github
 17.12.2022.
-- started converting UpdatePlayers(), generated code pasted and only compiling
+- started converting UpdatePlayers(), pasted generated code and just compiling it
 18.12.2022.
 /
+19.12.2022.
+/
+20.12.2022.
+/
+21.12.2022.
+/
+22.12.2022.
+/
+
+----
+
+30.10.2023.
+- been messing with the source past few days, fixed the build on latest VS2022, and been trying to pass the tests
+  (unsuccessfully)
+
+----
+
+08.11.2024.
+- going for UpdatePlayers() conversion :) 1st task is making it compile, and that requires copying generated
+  C++ code for entire call tree (some 50-ish functions); it's kind of like opening Pandora's box
+09.11.2024.
+- transfered some more C++ generated functions to source but it's pretty tough
+10.11.2024.
+/
+11.11.2024.
+/
+12.11.2024.
+/
+13.11.2024.
+/
+14.11.2024.
+- did some more transferring
+15.11.2024.
+- finally transfered all the connected functions to C++ files, now to fix cross-references
+16.11.2024.
+- only undefined references from UpdatePlayers() left!
+17.11.2024.
+- finally it compiles! tests fail though... it seems sprites pointer table inside a team contains bogus
+  values; trying to think what could've caused it.. there are 3 functions from which I took off save-regs
+  attribute, but they are only called at extra time, and this happens when the first game starts, so it
+  can't be it (but it's good to keep it in mind for later); initTeamsData() initializes those fields, but
+  it's a pretty old function, no way the problem is there; but what could it be? maybe a few functions that
+  I've copied from old generated files?
+- arggh!! found out the reason after a bit of debugging, seems I removed a couple of variables, but that
+  caused offsets to change and invalidate all the procs pasted before that (+ a couple I carelessly copied
+  from old files) cause they use raw numeric offsets... this will be a major PITA...
+18.11.2024.
+- since it was a huge job to do manually I went and wrote the script for it... except the script itself
+  turned out to be arduous task as well.. but got it mostly working, except for dot variables where struct
+  members are accessed directly from data segment variables; will need to figure something to patch those up
+19.11.2024.
+- phew, finally finished the damn thing; saving it under tools, so the rest of my hair doesn't turn white
+  if I have to write something like this again
+- it's finally compiling, but failing tests
+20.11.2024.
+- desync is in a sprite coordinate that wasn't getting fractional part trimmed
+21.11.2024.
+- chased down the desync to invalid top/bottomTeamData variable offsets, there was an error in script, it
+  would miss blocks that don't have g_memByte reference (e.g. mov D1, offset topTeamData); fixed that +
+  another error where 2nd variable reference would get skipped (an offset), but it's still desyncing, even
+  at the same sprite again
+22.11.2024.
+- guess I was that desperate, enough to bring old SWOS++ DOSBox debugging machinery out of mothballs; not
+  only was it blast from the past, it was quite efficient, solved the desync; somehow two old offsets got
+  forgotten in game.cpp, changed those but now it's desyncing again, at frame 66
+23.11.2024.
+- checking side by side with SWOS++ works nicely, desync was caused because the script didn't properly
+  handle expressions like: mov ax, lastPlayerTurnFlags+1, as well as `.' struct member addressing
+- new desync at frame 113; because I missed to process a whole file, ball.cpp, whoops
+- now a crash at frame 117; missed entering some struct fields into mapping, so they weren't recognized and
+  replaced, added a warning for that
+- desync at 621; after tracing UpdatePlayers(), ran into yet another unrecognized expression type:
+  // mov A1, (offset ballYQuadrantLimits+2)
+  inside UpdateBall()
+- and with this one it finally passes!! :) "only" needed to copy functions and run tests, famous last
+  words.. hehehe... now "only" to convert the functions
+24.11.2024.
+- been working on updatePlayerSpeed(), didn't manage to finish though
+25.11.2024.
+- finished the proc, but it's failing tests
+26.11.2024.
+- passed! these tests are gold :) now just need to catch some time and slowly convert everything around
+  updatePlayers()
+27.11.2024.
+/
+28.11.2024.
+/
+28.11.2024.
+/
+29.11.2024.
+/
+30.11.2024.
+/
+01.12.2024.
+/
+02.12.2024.
+/
+03.12.2024.
+/
+04.12.2024.
+/
+05.12.2024.
+/
+06.12.2024.
+/
+07.12.2024.
+- been thinking some, maybe I could do the new sprites myself, backed by some AI image generation ;)
+08.12.2024.
+/
+
+...
+
+28.12.2025.
+- took this out of mothballs ;) got some weird errors, updated IDE and compiler, and it seems to be working
+but some new errors appear
+29.12.2025.
+- "fixed" pointer verification verifyShotChanceTable(), no idea how that worked before (probably didn't?);
+but now the whole thing crashes :D
+- some weirdness happening inside updatePlayerShotChanceTable(), team pointer seems corrupted, will
+investigate later
+30.12.2025.
+- seems some templates somehow generated wrong code with a new compiler... now there's no crash but a
+desync happens at frame 771, and of the worst kind: player pointers (controlledPlayer, passToPlayerPtr,
+lastHeadingPlayer, passingKickingPlayer) aren't being cleared when they're supposed to; this will probably
+require SWOS++ to resolve
+31.12.2025.
+- finally learned how to disable damned spell checker plugin for individual files
+- the problem from yesterday was that I removed some data lines with symbols.txt, but haven't recalculated
+hard-coded VM offsets in code copied over for conversion... luckily there was already a script to do that
+(thank you past me); of course, only remembered about that after setting up DOSBox debugger, and debugging
+it for a while; well, at least I managed to remember how to do it :P
+- template error returned, since I wrote them in auto-generated files that got overwritten (d-oh);
+pinpointed it to reference casting
+- now a new desync occurs, some kind of sprite speed error (it's set to 0xdddd)
+01.01.2026.
+- huh, trying this game in SWOS++ and it desyncs there too?? the difference in frames is that actual frame
+has controls set to 0x80 (escape pressed), and it's the last frame of a game that was aborted; let's just
+ignore it since it's the last frame (+ old v1.1 file) and hope for the best :|
+- argh, bit of a mess here but solved it; due to VM interactions (VM needs a pointer to shot chance table),
+the tables must be allocated in VM memory space, but they were static and got destroyed between the
+games... however, with fixing this all tests pass!!
+- but only in debug... something nasty is going on in release, maybe even a memory overwrite... give me a
+break
+02.01.2026.
+- seems like overflow flag calculation in static emulator had a subtle potential edge case bug that got
+exposed on a different compiler with optimizations on... fixed it in the ida2asm generator
+03.01.2026.
+- had to fix already copied VM C++ code separately using the Python script, but finally the tests pass both
+debug and release!
+- converted a few short functions
+04.01.2026.
+- converted updateControlledPlayerNumbers(), now there's no generated code in game sprites anymore

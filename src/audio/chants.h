@@ -9,6 +9,7 @@ void playFansChant4lSample();
 bool areCrowdChantsEnabled();
 void initCrowdChantsEnabled(bool crowdChantsEnabled);
 void setCrowdChantsEnabled(bool crowdChantsEnabled);
+void enqueueCrowdChantsReload();
 
 #ifdef SWOS_TEST
 auto getPlayChants10lFunction() -> void (*)();

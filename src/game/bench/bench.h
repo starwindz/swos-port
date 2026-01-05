@@ -11,5 +11,5 @@ int getOpponentBenchY();
 void swapBenchWithOpponent();
 void setBenchOff();
 FixedPoint benchCameraX();
-const PlayerGame& getBenchPlayer(int index);
+const PlayerInfo& getBenchPlayer(int index);
 int getBenchPlayerPosition(int index);

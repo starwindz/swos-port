@@ -1,0 +1,92 @@
+#include "team.h"
+#include "player.h"
+
+using GoalieSkillTableRow = int16_t[30];
+static const GoalieSkillTableRow kGoalieSkillTables[8] = {
+    { 7, 424, -50, 832, 160, 4, 5, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 3, 5, 8, 5, 11, 2, 6, 8, 5 },
+    { 6, 588, -4, 864, 176, 3, 4, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 7, 7, 7, 4, 5, 7, 6, 10, 3, 6, 7, 6 },
+    { 5, 752, 42, 896, 192, 2, 3, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 7, 7, 5, 5, 6, 7, 9, 4, 6, 6, 7 },
+    { 4, 916, 88, 928, 208, 1, 2, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 6, 7, 6, 5, 5, 8, 8, 5, 6, 5, 8 },
+    { 3, 1080, 134, 960, 224, 0, 1, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 5, 6, 6, 6, 4, 9, 7, 6, 6, 4, 9 },
+    { 2, 1244, 180, 992, 240, 0, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 4, 5, 7, 6, 3, 10, 6, 7, 6, 3, 10 },
+    { 1, 1408, 226, 1024, 256, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 4, 8, 6, 2, 11, 5, 8, 6, 2, 11 },
+    { 99, 1408, 226, 1024, 256, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 9, 6, 1, 12, 4, 9, 6, 1, 12 },
+};
+static const int16_t kPlayerShotChanceTable[] = {
+    8, 1024, 112, 800, 144, 7, 7, 7, 3, 4, 5, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7, 1, 6, 9, 4, 12, 1, 6, 9, 4
+};
+
+static SwosDataPointer<GoalieSkillTableRow> m_goalieSkillsTable;
+static SwosDataPointer<int16_t> m_playerShotChanceTable;
+
+static void stopPlayers(TeamGeneralInfo& team);
+
+using namespace SwosVM;
+
+void stopAllPlayers()
+{
+    for (auto& team : { &swos.topTeamData, &swos.bottomTeamData }) {
+        stopPlayers(*team);
+        team->ballInPlay = 0;
+        team->ballOutOfPlay = 0;
+        team->controlledPlayer.reset();
+        team->passToPlayerPtr.reset();
+        team->passingBall = 0;
+        team->passingToPlayer = 0;
+        team->playerSwitchTimer = 0;
+        team->passingKickingPlayer.reset();
+#ifdef SWOS_TEST
+        // original SWOS fails to reset goalkeeperPlaying for top team
+        if (team == &swos.bottomTeamData)
+#endif
+        team->goalkeeperPlaying = 0;
+    }
+}
+
+static void stopPlayers(TeamGeneralInfo& team)
+{
+    for (int i = 0; i < 11; i++) {
+        auto& player = team.players[i];
+        if (player->inNormalState() && !player->sentAway) {
+            player->destX = player->x.whole();
+            player->destY = player->y.whole();
+        }
+    }
+}
+
+// Remove this when we don't rely on VM for the gameplay anymore.
+void initPlayerShotChanceTables()
+{
+    m_goalieSkillsTable = SwosVM::allocateMemory(sizeof(kGoalieSkillTables)).as<GoalieSkillTableRow *>();
+    memcpy(m_goalieSkillsTable, kGoalieSkillTables, sizeof(kGoalieSkillTables));
+    m_playerShotChanceTable = SwosVM::allocateMemory(sizeof(kPlayerShotChanceTable)).as<int16_t *>();
+    memcpy(m_playerShotChanceTable, kPlayerShotChanceTable, sizeof(kPlayerShotChanceTable));
+}
+
+void updatePlayerShotChanceTable(TeamGeneralInfo& team, const Sprite& player)
+{
+    const auto& playerInfo = getPlayerPointerFromShirtNumber(team, player);
+    if (playerInfo.position == PlayerPosition::kGoalkeeper) {
+        assert(playerInfo.goalieSkill < 8);
+        team.shotChanceTable = m_goalieSkillsTable.as<GoalieSkillTableRow *>()[playerInfo.goalieSkill];
+    } else {
+        team.shotChanceTable = *m_playerShotChanceTable;
+    }
+}
+
+#ifdef SWOS_TEST
+const int16_t *getPlayerShotChanceTable()
+{
+    return kPlayerShotChanceTable;
+}
+
+int getGoalieShotChanceTableIndex(const int16_t *ptr)
+{
+    for (size_t i = 0; i < std::size(kGoalieSkillTables); ++i) {
+        if (ptr == m_goalieSkillsTable[i])
+            return static_cast<int>(i);
+    }
+
+    return -1;
+}
+#endif

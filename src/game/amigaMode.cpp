@@ -1,4 +1,6 @@
 #include "amigaMode.h"
+#include "gameLoop.h"
+#include "updatePlayers.h"
 #include "timer.h"
 
 static bool m_enabled;
@@ -21,14 +23,14 @@ void setAmigaModeEnabled(bool enable)
     if (enable != m_enabled) {
         if (m_enabled = enable) {
             logInfo("Switching to Amiga game mode");
-            swos.penaltiesInterval = 100;
-            swos.initalKickInterval = 750;
-            swos.goalCameraInterval = 50;
-            swos.letPlayerControlCameraInterval = 500;
-            swos.playerDownTacklingInterval = 50;
-            swos.playerDownHeadingInterval = 50;
-            swos.clearResultInterval = 600;
-            swos.clearResultHalftimeInterval = 350;
+            setPenaltiesInterval(100);
+            setInitalKickInterval(750);
+            setGoalCameraInterval(50);
+            setAllowPlayerControlCameraInterval(500);
+            setPlayerDownTacklingInterval(50);
+            setPlayerDownHeadingInterval(50);
+            setClearResultInterval(600);
+            setClearResultHalftimeInterval(350);
             swos.kKeeperSaveDistance = 24;
             swos.kBallGroundConstant = 16;
             swos.kBallAirConstant = 10;
@@ -39,14 +41,14 @@ void setAmigaModeEnabled(bool enable)
             setTargetFps(kTargetFpsAmiga);
         } else {
             logInfo("Switching to PC game mode");
-            swos.penaltiesInterval = 110;
-            swos.initalKickInterval = 825;
-            swos.goalCameraInterval = 55;
-            swos.letPlayerControlCameraInterval = 550;
-            swos.playerDownTacklingInterval = 55;
-            swos.playerDownHeadingInterval = 55;
-            swos.clearResultInterval = 660;
-            swos.clearResultHalftimeInterval = 385;
+            setPenaltiesInterval(110);
+            setInitalKickInterval(825);
+            setGoalCameraInterval(55);
+            setAllowPlayerControlCameraInterval(550);
+            setPlayerDownTacklingInterval(55);
+            setPlayerDownHeadingInterval(55);
+            setClearResultInterval(660);
+            setClearResultHalftimeInterval(385);
             swos.kKeeperSaveDistance = 16;
             swos.kBallGroundConstant = 13;
             swos.kBallAirConstant = 4;
@@ -59,21 +61,19 @@ void setAmigaModeEnabled(bool enable)
     }
 }
 
-void SWOS::CheckForAmigaModeDirectionFlipBan()
+void checkForAmigaModeDirectionFlipBan(const Sprite *sprite)
 {
     m_preventDirectionFlip = false;
     if (amigaModeActive()) {
-        auto sprite = A5.as<Sprite *>();
         m_preventDirectionFlip = sprite->x.whole() >= 273 && sprite->x.whole() <= 398 &&
             (sprite->y.whole() <= 158 || sprite->y.whole() >= 740);
         SwosVM::flags.zero = !m_preventDirectionFlip;
     }
 }
 
-void SWOS::WriteAmigaModeDirectionFlip()
+void writeAmigaModeDirectionFlip(TeamGeneralInfo *team)
 {
     if (m_preventDirectionFlip) {
-        auto team = A6.as<TeamGeneralInfo *>();
         team->currentAllowedDirection = -1;
         D0.lo16 = -1;
         SwosVM::ax = -1;

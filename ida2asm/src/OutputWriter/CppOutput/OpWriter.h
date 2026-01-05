@@ -99,7 +99,7 @@ private:
     void outputData(DestMemoryData source);
     bool handleLocalVariable(const OperandInfo& op);
     void setFlag(const char *flag, std::function<void()> f);
-    void setFlag(const char *flag, const char *val);
+    void setFlag(const char *flag, const char *val, bool compareWithZero = true);
     void setFlag(const char *flag, bool val);
     void outFlagAssignment(const char *flag) const;
     void outMemAccess(size_t address, size_t size = 1) const;

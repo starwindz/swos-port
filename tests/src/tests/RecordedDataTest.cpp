@@ -9,6 +9,7 @@
 #include "camera.h"
 #include "pitch.h"
 #include "gameTime.h"
+#include "team.h"
 #include "playerNameDisplay.h"
 #include "audio.h"
 #include "controls.h"
@@ -356,7 +357,7 @@ void RecordedDataTest::verifyTeam(const TeamGeneralInfo& recTeam, const TeamGene
 
     verifyShotChanceTable(recTeam.shotChanceTable.getRaw(), team.shotChanceTable);
 
-    verifySpritePointer(recTeam.controlledPlayerSprite, team.controlledPlayerSprite);
+    verifySpritePointer(recTeam.controlledPlayer, team.controlledPlayer);
     verifySpritePointer(recTeam.passToPlayerPtr, team.passToPlayerPtr);
     verifySpritePointer(recTeam.lastHeadingPlayer, team.lastHeadingPlayer);
     verifySpritePointer(recTeam.passingKickingPlayer, team.passingKickingPlayer);
@@ -466,7 +467,7 @@ void RecordedDataTest::verifyTeamGame(const TeamGame& recTeam, const TeamGame& t
         assertEqual(recPlayer.ballControl, player.ballControl);
         assertEqual(recPlayer.speed, player.speed);
         assertEqual(recPlayer.finishing, player.finishing);
-        assertEqual(recPlayer.goalieDirection, player.goalieDirection);
+        assertEqual(recPlayer.goalieSkill, player.goalieSkill);
         assertEqual(recPlayer.injuriesBitfield, player.injuriesBitfield);
         assertEqual(recPlayer.halfPlayed, player.halfPlayed);
         assertEqual(recPlayer.face2, player.face2);
@@ -643,16 +644,15 @@ void RecordedDataTest::verifyPlayerSpriteOrder(char *players, const TeamGeneralI
     }
 }
 
-void RecordedDataTest::verifyShotChanceTable(int recOffset, SwosDataPointer<int16_t> table)
+void RecordedDataTest::verifyShotChanceTable(int recOffset, SwosDataPointer<const int16_t> table)
 {
     if (recOffset == -1)
         assert(table.getRaw() == 0 || table.getRaw() == -1);
     else if (recOffset == 0)
-        assert(table == swos.kPlayerShotChanceTable);
+        assert(table == getPlayerShotChanceTable());
     else {
-        auto it = std::find(std::begin(swos.kGoalieSkillTables), std::end(swos.kGoalieSkillTables), table.asPtr());
-        assertNotEqual(it, std::end(swos.kGoalieSkillTables));
-        int index = it - std::begin(swos.kGoalieSkillTables);
+        int index = getGoalieShotChanceTableIndex(table);
+        assertNotEqual(index, -1);
         assertEqual(index, recOffset - 1);
     }
 }

@@ -8,6 +8,7 @@
 #include "mockRender.h"
 #include "mockLog.h"
 #include <iomanip>
+#include <chrono>
 
 std::vector<BaseTest *> BaseTest::m_tests;
 std::condition_variable BaseTest::m_condition;

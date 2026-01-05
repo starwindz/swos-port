@@ -74,11 +74,6 @@ void activateReferee()
     swos.refState = kRefIncoming;
 }
 
-void SWOS::ActivateReferee()
-{
-    activateReferee();
-}
-
 bool refereeActive()
 {
     return swos.refState != kRefOffScreen;

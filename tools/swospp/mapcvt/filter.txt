@@ -7,7 +7,9 @@
 # Optional part following will also add the symbol to C header file, with
 # specified type. Symbols without type will not go into C header file.
 
+UpdatePlayers, function
 lastPlayerPlayed, Sprite *
+prevLastPlayer, Sprite *
 fireBlocked, word
 resultTimer, word
 KeepStatisticsOnScreen, function

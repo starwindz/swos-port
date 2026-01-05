@@ -366,7 +366,7 @@ void X86InstructionWriter::outputLods(const InstructionNode& node)
         out("al = g_memByte[esi++]");
         break;
     case Token::T_LODSW:
-        out("ax = (word)readMemory(esi, 2);", kNewLine, kIndent);
+        out("ax = (uint16_t)readMemory(esi, 2);", kNewLine, kIndent);
         out("esi += 2");
         break;
     case Token::T_LODS:
@@ -508,13 +508,19 @@ void X86InstructionWriter::outputCmpSubAdd(const InstructionNode& node, bool com
     op.startNewLine();
 
     op.setOverflowFlag([&] {
-        out("dstSigned < 0 ? "
-            "srcSigned > dstSigned - ", op.signedMin(), " : "
-            "srcSigned < dstSigned - ", op.signedMax());
+        out("((dstSigned ^ ");
+        if (add) {
+            out("static_cast<");
+            out(op.signedType());
+            out(">(res)");
+        } else {
+            out("srcSigned");
+        }
+        out(") & ("); out(add ? "srcSigned" : "dstSigned"); out("^ static_cast<"); out(op.signedType()); out(">(res))) < 0");
     });
     op.setCarryFlag([&] {
-        out('('); out(op.unsignedType()); out(")(dstSigned ", add ? '+' : '-',
-            " srcSigned) ", add ? '<' : '>', " (", op.unsignedType(), ")dstSigned");
+        out("static_cast<"); out(op.unsignedType()); out(">("); out(add ? "res" : "dstSigned");
+        out(") < static_cast<"); out(op.unsignedType()); out(">("); out(add ? "dstSigned" : "srcSigned"); out(')');
     });
     op.setSignFlag([&] {
         out("(res & "); out(op.signMask()); out(") != 0");
@@ -721,9 +727,9 @@ void X86InstructionWriter::outputDiv(const InstructionNode& node)
             out("int16_t quot = (int16_t)(dividend / "); op.outputDestVar(OpWriter::kRvalue); out(')'); op.startNewLine();
             out("int16_t rem = (int16_t)(dividend % "); op.outputDestVar(OpWriter::kRvalue); out(')'); op.startNewLine();
         } else {
-            out("dword dividend = (dx << 16) | ax"); op.startNewLine();
-            out("word quot = (word)(dividend / "); op.outputDestVar(OpWriter::kRvalue); out(')'); op.startNewLine();
-            out("word rem = (word)(dividend % "); op.outputDestVar(OpWriter::kRvalue); out(')'); op.startNewLine();
+            out("uint32_t dividend = (dx << 16) | ax"); op.startNewLine();
+            out("uint16_t quot = (uint16_t)(dividend / "); op.outputDestVar(OpWriter::kRvalue); out(')'); op.startNewLine();
+            out("uint16_t rem = (uint16_t)(dividend % "); op.outputDestVar(OpWriter::kRvalue); out(')'); op.startNewLine();
         }
 
         out("ax = quot"); op.startNewLine();
@@ -736,8 +742,8 @@ void X86InstructionWriter::outputDiv(const InstructionNode& node)
             out("int32_t rem = (int32_t)(dividend % "); op.outputDestVar(OpWriter::kRvalue); out(')'); op.startNewLine();
         } else {
             out("uint64_t dividend = ((uint64_t)edx << 32) | eax"); op.startNewLine();
-            out("dword quot = (dword)(dividend / "); op.outputDest(OpWriter::kRvalue); out(')'); op.startNewLine();
-            out("dword rem = (dword)(dividend % "); op.outputDestVar(OpWriter::kRvalue); out(')'); op.startNewLine();
+            out("uint32_t quot = (uint32_t)(dividend / "); op.outputDest(OpWriter::kRvalue); out(')'); op.startNewLine();
+            out("uint32_t rem = (uint32_t)(dividend % "); op.outputDestVar(OpWriter::kRvalue); out(')'); op.startNewLine();
         }
 
         out("eax = quot"); op.startNewLine();
@@ -882,7 +888,7 @@ void X86InstructionWriter::outputRotate(const InstructionNode& node)
     case Token::T_RCL:
     case Token::T_ROL:
         if (!node.suppressCarryFlag) {
-            out("dword newCarry = ("); op.outputDestVar(OpWriter::kRvalue); out(" >> ");
+            out("uint32_t newCarry = ("); op.outputDestVar(OpWriter::kRvalue); out(" >> ");
             if (srcConst)
                 out(op.bitCount() - rotationCount);
             else

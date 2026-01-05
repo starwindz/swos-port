@@ -50,7 +50,7 @@ static const ColorSet *m_colors;
 static void drawBenchPlayerArrow();
 static void drawOpponentsBench();
 static void drawBenchPlayersAndCoach(BenchState state, int y, const TeamGeneralInfo& team, const TeamGame& teamData, bool drawTrainingTopHalf);
-static void drawBenchPlayers(const PlayerGame *players, int reservePlayersFrameTeamOffset, int y, BenchState state, bool drawTrainingTopHalf);
+static void drawBenchPlayers(const PlayerInfo *players, int reservePlayersFrameTeamOffset, int y, BenchState state, bool drawTrainingTopHalf);
 static void drawCoach(BenchState state, const TeamGeneralInfo& team, int coachY);
 static bool isPlayerStanding(BenchState state, int currentPlayerIndex);
 static void drawFormationMenu();
@@ -151,7 +151,7 @@ static void drawBenchPlayersAndCoach(BenchState state, int y, const TeamGeneralI
     drawBenchPlayers(players, reservePlayersFrameTeamOffset, y, state, drawTrainingTopHalf);
 }
 
-static void drawBenchPlayers(const PlayerGame *players, int reservePlayersFrameTeamOffset, int y, BenchState state, bool drawTrainingTopHalf)
+static void drawBenchPlayers(const PlayerInfo *players, int reservePlayersFrameTeamOffset, int y, BenchState state, bool drawTrainingTopHalf)
 {
     for (int currentPlayerIndex = 1; currentPlayerIndex < kMaxBenchPlayerIndex; currentPlayerIndex++) {
         const auto& player = *players++;
@@ -277,7 +277,7 @@ static void drawPlayerFaceIcon(int y, int playerIndex)
     }
 }
 
-static void drawShirtNumber(int y, const PlayerGame& player)
+static void drawShirtNumber(int y, const PlayerInfo& player)
 {
     constexpr int kNameX = kMenuX + kShadowOffset + 13;
 
@@ -296,7 +296,7 @@ static void drawCards(int y, int playerIndex, const Sprite *playerSprite)
     }
 }
 
-static void drawName(int y, const PlayerGame& player)
+static void drawName(int y, const PlayerInfo& player)
 {
     constexpr int kNameX = kMenuX + kShadowOffset + 18;
 
@@ -304,7 +304,7 @@ static void drawName(int y, const PlayerGame& player)
     drawText(kNameX, y + 1, name);
 }
 
-static void drawPosition(int y, const PlayerGame& player)
+static void drawPosition(int y, const PlayerInfo& player)
 {
     constexpr int kPositionX = kMenuX + kShadowOffset + 116;
 
@@ -315,7 +315,7 @@ static void drawPosition(int y, const PlayerGame& player)
     drawTextCentered(kPositionX, y + 1, posString);
 }
 
-static void drawInjuryIcon(int y, const PlayerGame& player)
+static void drawInjuryIcon(int y, const PlayerInfo& player)
 {
     constexpr int kInjuryIconX = kMenuX + kShadowOffset + 101;
 

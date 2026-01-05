@@ -159,7 +159,7 @@ enum class PlayerPosition : int8_t
     kAttacker = 7,
 };
 
-struct PlayerGame
+struct PlayerInfo
 {
     byte substituted;
     byte index;
@@ -181,7 +181,7 @@ struct PlayerGame
     byte ballControl;
     byte speed;
     byte finishing;
-    byte goalieDirection;
+    byte goalieSkill;
     byte injuriesBitfield;
     byte halfPlayed;
     byte face2;
@@ -207,7 +207,7 @@ struct PlayerGame
     }
 };
 
-static_assert(sizeof(PlayerGame) == 61, "PlayerGame is invalid");
+static_assert(sizeof(PlayerInfo) == 61, "PlayerInfo is invalid");
 
 struct TeamStatsData
 {
@@ -310,14 +310,23 @@ struct TeamGame
     byte unk_1;
     byte numOwnGoals;
     byte unk_2;
-    PlayerGame players[kNumPlayersInTeam];
+    PlayerInfo players[kNumPlayersInTeam];
     byte unknownTail[686];
 };
 
-struct PlayerGameHeader : private TeamGame, public PlayerGame {
+constexpr int kTeamGameHeaderSize = offsetof(TeamGame, players);
+
+namespace SWOS
+{
+    struct TeamGameHeader {
+        char filler[kTeamGameHeaderSize];
+    };
+}
+
+struct PlayerGameHeader : private SWOS::TeamGameHeader, public PlayerInfo {
 };
 
-static_assert(sizeof(PlayerGameHeader) == sizeof(TeamGame) + sizeof(PlayerGame), "PlayerGameHeader invalid");
+static_assert(sizeof(PlayerGameHeader) == kTeamGameHeaderSize + sizeof(PlayerInfo), "PlayerGameHeader invalid");
 
 struct TeamGeneralInfo
 {
@@ -329,10 +338,10 @@ struct TeamGeneralInfo
     SwosDataPointer<TeamStatsData> teamStatsPtr;
     word teamNumber;
     SwosDataPointer<SwosDataPointer<Sprite>> players;   // 11
-    SwosDataPointer<int16_t> shotChanceTable;
+    SwosDataPointer<const int16_t> shotChanceTable;
     word tactics;
     word updatePlayerIndex;
-    SwosDataPointer<Sprite> controlledPlayerSprite;
+    SwosDataPointer<Sprite> controlledPlayer;
     SwosDataPointer<Sprite> passToPlayerPtr;
     word playerHasBall;
     word allowedDirections;

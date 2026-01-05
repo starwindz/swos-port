@@ -278,6 +278,39 @@ void updateCornerFlags()
     }
 }
 
+void updateControlledPlayerNumbers()
+{
+    constexpr int kPlayerNumberOfset = 20;
+
+    for (int i = 0; i < 2; i++) {
+        auto curPlayerNumSprite = i == 0 ? &swos.team1CurPlayerNumSprite : &swos.team2CurPlayerNumSprite;
+        const auto team = i == 0 ? &swos.topTeamData : &swos.bottomTeamData;
+        const auto teamInfo = team->inGameTeamPtr.asPtr();
+        // mark and player number are shown alternately every 16 ticks (they kinda blink)
+        auto shouldShowMark = [&i]() { return i > 0 == ((swos.currentGameTick & 0x10) != 0); };
+        bool drawPlayerNumber = (team->isPlCoach || team->playerNumber || swos.g_trainingGame) &&
+            team->controlledPlayer &&
+            (team->controlledPlayer->playerOrdinal - 1 != teamInfo->markedPlayer || !shouldShowMark());
+        if (drawPlayerNumber) {
+            assert(team->controlledPlayer->playerOrdinal - 1 < std::size(teamInfo->players));
+            auto shirtNumber = teamInfo->players[team->controlledPlayer->playerOrdinal - 1].shirtNumber;
+            curPlayerNumSprite->setImage(kSmallDigit1 + shirtNumber - 1);
+            assert(curPlayerNumSprite->imageIndex >= kSmallDigit1 && curPlayerNumSprite->imageIndex <= kSmallDigit16);
+#ifdef SWOS_TEST
+            curPlayerNumSprite->x.setWhole(team->controlledPlayer->x.whole());
+            curPlayerNumSprite->y.setWhole(team->controlledPlayer->y.whole());
+            curPlayerNumSprite->z.setWhole(team->controlledPlayer->z.whole() + kPlayerNumberOfset);
+#else
+            curPlayerNumSprite->x = team->controlledPlayer->x;
+            curPlayerNumSprite->y = team->controlledPlayer->y;
+            curPlayerNumSprite->z = team->controlledPlayer->z + kPlayerNumberOfset;
+#endif
+        } else {
+            curPlayerNumSprite->clearImage();
+        }
+    }
+}
+
 PlayerSprites getPlayerSprites()
 {
     assert(std::all_of(&kAllSprites[kPlayerSpritesStart], &kAllSprites[kPlayerSpritesStart] + 2 * kNumPlayersInLineup,

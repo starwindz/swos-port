@@ -22,7 +22,7 @@ public:
         m_offset = SwosVM::ptrToOffset(t);
     }
     constexpr SwosDataPointer() : m_offset(0) {}
-    constexpr SwosDataPointer(uint32_t offset) : m_offset(offset) {}
+    constexpr SwosDataPointer(int32_t offset) : m_offset(offset) {}
     constexpr SwosDataPointer(SwosVM::Offsets offset) : m_offset(static_cast<uint32_t>(offset)) {}
     bool isNull() const {
         return !m_offset || m_offset == -1;
@@ -105,7 +105,9 @@ public:
 
 private:
     Type *get() const {
+#ifndef DISABLE_ALIGNMENT_CHECKS
         assert(reinterpret_cast<uintptr_t>(&m_offset) % 4 == 0);
+#endif
         return reinterpret_cast<Type *>(SwosVM::offsetToPtr(m_offset));
     }
 

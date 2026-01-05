@@ -1,5 +1,6 @@
 #pragma once
 
+void activateReferee();
 bool refereeActive();
 bool cardHandingInProgress();
 void updateReferee();

@@ -393,8 +393,9 @@ offset:  size:  desc.
                            frame to save this shots
                 word 48  - gets compared with high 4 bits of stoppageTimer
                            after that the keeper claimed comment is played
-                word 52
-                word 54
+                word 52  - strong goalkeeper deflect chance, must be greater than a random number 0..15
+                word 54  - medium goalkeeper deflect chance, must be greater than a random number 0..15;
+                           first offset 52 is tested, then this, if both fail weak deflect ball speed is used
                 word 58  - gets compared to random value based on bits 4-7 of
                            stoppageTimer
   28       2    team tactics
@@ -467,22 +468,22 @@ offset:  size:  desc.
                 0 otherwise
   88       2    1 if a pass has started; remains one until the ball touches
                 a team mate (and probably the one to who the pass is for)
-  90       2    true samo kada se vrsi precizno dodavanje, tj. kada je igrac
-                kome se dodaje privremeno kontrolisan od strane kompjutera
-  92       2    tajmer, inicijalizovan na 25; pocinje da otkucava kada igrac
-                koji nije bio kontrolisan postane kontrolisan; kada stigne do
-                nule ostaje tako
-  94       2    1 dok je lopta u igri, nula za vreme prekida
-  96       2    izgleda 1 kada igrac kontrolise kameru za vreme prekida
-                (npr. izvodi aut)
+  90       2    true only when the precise pass is in progress, ie. when the
+                player being passed to is temporarily controlled by the CPU
+  92       2    timer, initialized to 25; starts ticking when a player that
+                wasn't controlled becomes controlled; when reaches 0 stays that
+                way
+  94       2    1 while the ball is in play, zero during breaks
+  96       2    seems to be 1 when the player controls camera during breaks
+                (e.g. taking throw-in)
   98       2    ball x coordinate
  100       2    ball y coordinate
  102       2    counter, initially 25, ticks down once the player gets rid of the ball by kicking, passing,
                 tackling or heading (but not otherwise), else zero
                 decremented until zero
                 AI compares it to 13
- 104       4    pointer na nekakav sprajt (koji jos ne znam)
-                menja se prilikom dodavanja lopte i suta
+ 104       4    pointer to some sprite (which one I don't know yet)
+                changes during passes and kicks
  108       2    ???
  110       2    true kada lopta moze da se vodi, kada "miruje", false prilikom
                 suta i dodavanja (sticky)

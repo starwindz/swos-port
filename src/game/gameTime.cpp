@@ -1,4 +1,5 @@
 #include "gameTime.h"
+#include "game.h"
 #include "gameSprites.h"
 #include "sprites.h"
 #include "renderSprites.h"
@@ -35,7 +36,7 @@ static bool isNextMinuteLastInPeriod();
 static void bumpGameTime();
 static void bumpPlayersLastPlayedHalfAtHalfStart();
 static void bumpPlayersLastPlayedHalfAtHalfEnd();
-static void forEachPlayer(std::function<void(PlayerGame&)> f);
+static void forEachPlayer(std::function<void(PlayerInfo&)> f);
 static void setupLastMinuteSwitchNextFrame();
 
 void resetGameTime()
@@ -158,10 +159,10 @@ static void endSecondHalf()
         if (gameTied) {
             if (swos.extraTimeState) {
                 swos.extraTimeState = -1;
-                StartFirstExtraTime();
+                startFirstExtraTime();
             } else if (swos.penaltiesState) {
                 swos.penaltiesState = -1;
-                StartPenalties();
+                startPenalties();
             } else {
                 swos.winningTeamPtr = nullptr;
                 EndOfGame();
@@ -194,11 +195,6 @@ static bool prolongLastMinute()
     return ballInsidePenaltyArea || attackInProgress;
 }
 
-static void endFirstExtraTime()
-{
-    EndFirstExtraTime();
-}
-
 static void endSecondExtraTime()
 {
     int totalTeam1Goals = swos.team1TotalGoals;
@@ -212,7 +208,7 @@ static void endSecondExtraTime()
         if (gameTied) {
             if (swos.penaltiesState) {
                 swos.penaltiesState = -1;
-                StartPenalties();
+                startPenalties();
             } else {
                 swos.winningTeamPtr = nullptr;
                 EndOfGame();
@@ -303,7 +299,7 @@ static void bumpPlayersLastPlayedHalfAtHalfEnd()
     });
 }
 
-static void forEachPlayer(std::function<void(PlayerGame&)> f)
+static void forEachPlayer(std::function<void(PlayerInfo&)> f)
 {
     for (auto players : { swos.topTeamInGame.players, swos.bottomTeamInGame.players }) {
         for (size_t i = 0; i < 11; i++) {

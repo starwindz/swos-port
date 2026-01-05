@@ -309,7 +309,7 @@ void OpWriter::setZeroFlag(std::function<void()> f)
 void OpWriter::setZeroFlag(const char *val)
 {
     if (!m_node.suppressZeroFlag)
-        setFlag("zero", val);
+        setFlag("zero", val, false);
 }
 
 void OpWriter::outputOp(const OpInfo& op, ValueCategory category)
@@ -720,10 +720,13 @@ void OpWriter::setFlag(const char *flag, std::function<void()> f)
     startNewLine();
 }
 
-void OpWriter::setFlag(const char *flag, const char *val)
+void OpWriter::setFlag(const char *flag, const char *val, bool compareWithZero /* = true */)
 {
     outFlagAssignment(flag);
-    out(val, " != 0");
+    if (compareWithZero)
+        out(val, " != 0");
+    else
+        out(val);
     startNewLine();
 }
 

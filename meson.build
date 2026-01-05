@@ -6,18 +6,19 @@ project('swos-port', 'cpp',
 
 isReleaseBuild = get_option('buildtype').startswith('release')
 
-if isReleaseBuild
-    add_global_arguments('-DNDEBUG', language: 'cpp')
-else
-    add_global_arguments('-DDEBUG', '-MTd', language: 'cpp')
-endif
+if host_machine.system() == 'windows':
+    if isReleaseBuild
+        add_global_arguments('-DNDEBUG', language: 'cpp')
+    else
+        add_global_arguments('-DDEBUG', '-MTd', language: 'cpp')
+    endif
 
-add_global_arguments(
-    '/Zc:__cplusplus',
-    '-DNOMINMAX',
-    '/wd4731',
-    language: 'cpp'
-)
+    add_global_arguments(
+        '/Zc:__cplusplus',
+        '-DNOMINMAX',
+        '/wd4731',
+        language: 'cpp'
+    )
 
 fs = import('fs')
 

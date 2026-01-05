@@ -7,6 +7,11 @@ void requestFadeAndInstantReplay();
 void requestFadeAndReplayHighlights();
 bool isMatchRunning();
 
+void setPenaltiesInterval(int interval);
+void setInitalKickInterval(int interval);
+void setGoalCameraInterval(int interval);
+void setAllowPlayerControlCameraInterval(int interval);
+
 #ifdef SWOS_TEST
 void setGameLoopStartHook(std::function<void()> hook = {});
 void setGameLoopEndHook(std::function<void()> hook = {});

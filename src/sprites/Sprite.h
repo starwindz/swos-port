@@ -85,7 +85,7 @@ struct Sprite
     uint16_t unk009;
     DestinationState destReachedState;
     int16_t cards;
-    int16_t injuryLevel;
+    uint16_t injuryLevel;
     uint16_t tacklingTimer;
     uint16_t sentAway;
 
@@ -127,6 +127,12 @@ struct Sprite
     }
     void clearImage() {
         imageIndex = -1;
+    }
+    bool inNormalState() const {
+        return state == PlayerState::kNormal;
+    }
+    void setToNormalState() {
+        state = PlayerState::kNormal;
     }
 };
 #pragma pack(pop)

@@ -9,7 +9,7 @@
 #include "SoundSample.h"
 
 constexpr int kEnqueuedSampleDelay = 70;
-constexpr int kEnqueuedCardSampleDelay = 100;
+constexpr int kEnqueuedLongerSampleDelay = 100;
 
 
 static SoundSample m_endGameCrowdSample;
@@ -25,10 +25,12 @@ static bool m_commentaryLoaded;
 
 static bool m_performingPenalty;
 
-static int m_tacticsChangedSampleTimer;
-static int m_substituteSampleTimer;
-static int m_playingYellowCardTimer;
-static int m_playingRedCardTimer;
+static int m_playingThrowInSample = -1;
+static int m_playingCornerSample = -1;
+static int m_tacticsChangedSampleTimer = -1;
+static int m_substituteSampleTimer = -1;
+static int m_playingYellowCardTimer = -1;
+static int m_playingRedCardTimer = -1;
 
 static void loadZipComments();
 static bool sampleTablesEmpty();
@@ -55,6 +57,8 @@ enum CommentarySampleTableIndex {
     kPenaltySaved, kPenaltyGoal, kRedCard, kSubstitution, kChangeTactics, kThrowIn, kYellowCard,
     kNumSampleTables,
 };
+
+static void playComment(CommentarySampleTableIndex tableIndex, bool interrupt = true);
 
 // all the categories of comments heard in the game
 static std::array<SampleTable, kNumSampleTables> m_sampleTables = {{
@@ -143,6 +147,16 @@ void initCommentsBeforeTheGame()
     m_endGameCrowdSample.free();
 }
 
+void enqueueThrowInSample()
+{
+    m_playingThrowInSample = kEnqueuedSampleDelay;
+}
+
+void enqueueCornerSample()
+{
+    m_playingCornerSample = kEnqueuedLongerSampleDelay;
+}
+
 void enqueueTacticsChangedSample()
 {
     m_tacticsChangedSampleTimer = kEnqueuedSampleDelay;
@@ -155,12 +169,12 @@ void enqueueSubstituteSample()
 
 void enqueueYellowCardSample()
 {
-    m_playingYellowCardTimer = kEnqueuedCardSampleDelay;
+    m_playingYellowCardTimer = kEnqueuedLongerSampleDelay;
 }
 
 void enqueueRedCardSample()
 {
-    m_playingRedCardTimer = kEnqueuedCardSampleDelay;
+    m_playingRedCardTimer = kEnqueuedLongerSampleDelay;
 }
 
 void playEnqueuedSamples()
@@ -174,12 +188,12 @@ void playEnqueuedSamples()
     } else if (swos.playingGoodPassTimer >= 0 && !--swos.playingGoodPassTimer) {
         playGoodPassComment();
         swos.playingGoodPassTimer = -1;
-    } else if (swos.playingThrowInSample >= 0 && !--swos.playingThrowInSample) {
+    } else if (m_playingThrowInSample >= 0 && !--m_playingThrowInSample) {
         playThrowInSample();
-        swos.playingThrowInSample = -1;
-    } else if (swos.playingCornerSample >= 0 && !--swos.playingCornerSample) {
+        m_playingThrowInSample = -1;
+    } else if (m_playingCornerSample >= 0 && !--m_playingCornerSample) {
         playCornerSample();
-        swos.playingCornerSample = -1;
+        m_playingCornerSample = -1;
     } else if (m_substituteSampleTimer >= 0 && !--m_substituteSampleTimer) {
         playSubstituteSample();
         m_substituteSampleTimer = -1;
@@ -209,6 +223,23 @@ bool commenteryOnChannelFinished(int channel)
 void toggleMuteCommentary()
 {
     m_muteCommentary = !m_muteCommentary;
+}
+
+void playHeaderComment(const TeamGeneralInfo& team)
+{
+    if (team.playerNumber)
+        playComment(kHeader, false);
+}
+
+void playInjuryComment(const TeamGeneralInfo& team)
+{
+    if (team.playerNumber)
+        playComment(kInjury);
+}
+
+void clearPenaltyFlag()
+{
+    m_performingPenalty = 0;
 }
 
 static void loadCustomCommentary()
@@ -302,7 +333,7 @@ static void playComment(Mix_Chunk *chunk, bool interrupt = true)
     m_lastPlayedCommentHash = hash(chunk->abuf, chunk->alen);
 }
 
-static void playComment(CommentarySampleTableIndex tableIndex, bool interrupt = true)
+static void playComment(CommentarySampleTableIndex tableIndex, bool interrupt /* = true */)
 {
     if (!soundEnabled() || !commentaryEnabled() || m_muteCommentary || swos.g_trainingGame)
         return;
@@ -334,34 +365,6 @@ static void vibrate()
     }
 }
 #endif
-
-//
-// SWOS sound hooks
-//
-
-// in:
-//     A6 -> player's team
-//
-void SWOS::PlayHeaderComment()
-{
-    auto team = A6.as<TeamGeneralInfo *>();
-    assert(team);
-
-    if (team->playerNumber)
-        playComment(kHeader, false);
-}
-
-// in:
-//     A6 -> player's team
-//
-void SWOS::PlayInjuryComment()
-{
-    auto team = A6.as<TeamGeneralInfo *>();
-    assert(team);
-
-    if (team->playerNumber)
-        playComment(kInjury);
-}
 
 static void playPenaltyGoalComment()
 {
@@ -443,12 +446,6 @@ void SWOS::PlayGoalkeeperSavedComment()
         playPenaltySavedComment();
     else
         playComment(kKeeperSaved);
-}
-
-// fix original SWOS bug where penalty flag remains set when penalty is missed, but it's not near miss
-void SWOS::FixPenaltyBug()
-{
-    m_performingPenalty = 0;
 }
 
 void SWOS::PlayOwnGoalComment()
@@ -557,8 +554,8 @@ void setEnqueueTimers(const std::vector<int>& values)
     m_playingYellowCardTimer = values[0];
     m_playingRedCardTimer = values[1];
     swos.playingGoodPassTimer = values[2];
-    swos.playingThrowInSample = values[3];
-    swos.playingCornerSample = values[4];
+    m_playingThrowInSample = values[3];
+    m_playingCornerSample = values[4];
     m_substituteSampleTimer = values[5];
     m_tacticsChangedSampleTimer = values[6];
 }

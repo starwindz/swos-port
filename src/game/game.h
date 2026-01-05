@@ -11,3 +11,12 @@ bool isMatchRunning();
 bool isGamePaused();
 void pauseTheGame();
 void togglePause();
+
+void initTeamsData();
+void initPlayersBeforeEnteringPitch();
+void playersLeavingPitch();
+void startPenalties();
+void nextPenalty();
+void startFirstExtraTime();
+void endFirstExtraTime();
+void checkIfGoalkeeperClaimedTheBall();

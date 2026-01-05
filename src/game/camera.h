@@ -10,4 +10,3 @@ void setCameraY(FixedPoint value);
 void moveCamera();
 void setCameraToInitialPosition();
 void switchCameraToLeavingBenchMode();
-
